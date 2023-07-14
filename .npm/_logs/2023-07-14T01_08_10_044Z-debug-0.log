@@ -1,0 +1,63 @@
+0 verbose cli /Users/carolineeastwood/nf-core-riboseq/.cache/pre-commit/repop53w_kpk/node_env-default/bin/node /Users/carolineeastwood/nf-core-riboseq/.cache/pre-commit/repop53w_kpk/node_env-default/bin/npm
+1 info using npm@9.7.2
+2 info using node@v20.4.0
+3 timing npm:load:whichnode Completed in 8ms
+4 timing config:load:defaults Completed in 3ms
+5 timing config:load:file:/Users/carolineeastwood/nf-core-riboseq/.cache/pre-commit/repop53w_kpk/node_env-default/lib/node_modules/npm/npmrc Completed in 6ms
+6 timing config:load:builtin Completed in 7ms
+7 warn config dev Please use --include=dev instead.
+8 warn config production Use `--omit=dev` instead.
+9 timing config:load:cli Completed in 4ms
+10 timing config:load:env Completed in 1ms
+11 timing config:load:file:/Users/carolineeastwood/nf-core-riboseq/.cache/pre-commit/repop53w_kpk/.npmrc Completed in 3ms
+12 timing config:load:project Completed in 19ms
+13 timing config:load:file:/Users/carolineeastwood/nf-core-riboseq/.npmrc Completed in 2ms
+14 timing config:load:user Completed in 3ms
+15 timing config:load:file:/Users/carolineeastwood/nf-core-riboseq/.cache/pre-commit/repop53w_kpk/node_env-default/etc/npmrc Completed in 2ms
+16 timing config:load:global Completed in 2ms
+17 timing config:load:setEnvs Completed in 2ms
+18 timing config:load Completed in 41ms
+19 timing npm:load:configload Completed in 41ms
+20 timing config:load:flatten Completed in 4ms
+21 timing npm:load:mkdirpcache Completed in 8ms
+22 timing npm:load:mkdirplogs Completed in 8ms
+23 verbose title npm install
+24 verbose argv "install" "--dev" "--prod" "--ignore-prepublish" "--no-progress" "--no-save"
+25 timing npm:load:setTitle Completed in 1ms
+26 timing npm:load:display Completed in 4ms
+27 verbose logfile logs-max:10 dir:/Users/carolineeastwood/nf-core-riboseq/.npm/_logs/2023-07-14T01_08_10_044Z-
+28 verbose logfile /Users/carolineeastwood/nf-core-riboseq/.npm/_logs/2023-07-14T01_08_10_044Z-debug-0.log
+29 timing npm:load:logFile Completed in 65ms
+30 timing npm:load:timers Completed in 0ms
+31 timing npm:load:configScope Completed in 0ms
+32 timing npm:load Completed in 206ms
+33 timing arborist:ctor Completed in 1ms
+34 timing arborist:ctor Completed in 1ms
+35 silly logfile done cleaning log files
+36 timing idealTree:init Completed in 42ms
+37 timing idealTree:userRequests Completed in 0ms
+38 silly idealTree buildDeps
+39 timing idealTree:#root Completed in 0ms
+40 timing idealTree:buildDeps Completed in 5ms
+41 timing idealTree:fixDepFlags Completed in 0ms
+42 timing idealTree Completed in 56ms
+43 timing reify:loadTrees Completed in 59ms
+44 timing reify:diffTrees Completed in 1ms
+45 silly reify moves {}
+46 timing reify:retireShallow Completed in 3ms
+47 timing reify:createSparse Completed in 0ms
+48 timing reify:loadBundles Completed in 0ms
+49 silly audit report null
+50 timing reify:audit Completed in 3ms
+51 timing reify:unpack Completed in 1ms
+52 timing reify:unretire Completed in 0ms
+53 timing build:queue Completed in 0ms
+54 timing build:deps Completed in 2ms
+55 timing build Completed in 4ms
+56 timing reify:build Completed in 6ms
+57 timing reify:trash Completed in 0ms
+58 timing reify Completed in 183ms
+59 timing command:install Completed in 232ms
+60 verbose exit 0
+61 timing npm Completed in 4858ms
+62 info ok

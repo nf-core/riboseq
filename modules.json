@@ -10,6 +10,11 @@
                         "git_sha": "76cc4938c1f6ea5c7d83fed1eeffc146787f9543",
                         "installed_by": ["modules"]
                     },
+                    "cutadapt": {
+                        "branch": "master",
+                        "git_sha": "0efbaeb95c58da5a1096c99b5e919bc0c99cc952",
+                        "installed_by": ["modules"]
+                    },
                     "fastqc": {
                         "branch": "master",
                         "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
