@@ -9,6 +9,7 @@ process CUTADAPT {
 
     input:
     tuple val(meta), path(reads)
+    
 
     output:
     tuple val(meta), path('*.trim.fastq.gz'), emit: reads
@@ -22,6 +23,7 @@ process CUTADAPT {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def trimmed  = meta.single_end ? "-o ${prefix}.trim.fastq.gz" : "-o ${prefix}_1.trim.fastq.gz -p ${prefix}_2.trim.fastq.gz"
+    println("Adapter Sequence: ${params.adapter_sequence}")
     """
     cutadapt \\
         --cores $task.cpus \\

@@ -80,7 +80,22 @@
                     "hidden": true,
                     "help_text": "Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`."
                 }
+
             }
+            
+        },
+        "Trimming_options": {
+            "title": "adapter trimming options",
+            "type": "object",
+            "description": "adapter sequence trimming required in the workflow.",
+            "required": ["adapter_sequence"],
+            "properties": {   
+                "adapter_sequence": {
+                    "type": "string",
+                    "default": "AGATCGGAAGAGCACACGTCTGAA"
+                }
+            }
+            
         },
         "institutional_config_options": {
             "title": "Institutional config options",

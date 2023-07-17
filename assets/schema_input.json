@@ -31,9 +31,14 @@
                 "errorMessage": "replicate must be provided and be one of 1, 2, 3",
                 "enum": [1, 2, 3],
                 "meta": ["replicate"]
-              }
+              },
+              "single_end": {
+                "type": "boolean",
+                "errorMessage": "single_end must be provided and be either true (for single-end data) or false (for paired-end data)",
+                "meta": ["single_end"]
+              } 
               
             },
-            "required": ["sample", "fastq", "library_type", "replicate"]
+            "required": ["sample", "fastq", "library_type", "replicate","single_end"]
           }
         }

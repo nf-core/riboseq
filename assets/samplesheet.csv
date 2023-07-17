@@ -1,5 +1,2 @@
-sample,fastq,library_type,replicate
-SSD1-HF_Rep1,/Users/carolineeastwood/Desktop/Diss_project/riboviz_pipeline/Ssd1RiboSeq2022/test_dataset_Ssd1RiboSeq/SSD1-HF_Rep1_rpf_1.fastq.gz,RiboSeq,1
-SSD1-HF_Rep3,/Users/carolineeastwood/Desktop/Diss_project/riboviz_pipeline/Ssd1RiboSeq2022/test_dataset_Ssd1RiboSeq/SSD1-HF_Rep3_rpf_1.fastq.gz,RiboSeq,3
-CDS-side_Rep1,/Users/carolineeastwood/Desktop/Diss_project/riboviz_pipeline/Ssd1RiboSeq2022/test_dataset_Ssd1RiboSeq/CDS-side_Rep1_rpf_1.fastq.gz,RiboSeq,1
-dSSD1_Rep1,/Users/carolineeastwood/Desktop/Diss_project/riboviz_pipeline/Ssd1RiboSeq2022/test_dataset_Ssd1RiboSeq/dSSD1_Rep1_rpf_1.fastq.gz,RiboSeq,1
+sample,fastq,library_type,replicate,single_end
+SSD1-HF_Rep3,/Users/carolineeastwood/Desktop/Diss_project/test_dataset/SSD1-HF_Rep3_rpf_1.fastq.gz,RiboSeq,3,true
