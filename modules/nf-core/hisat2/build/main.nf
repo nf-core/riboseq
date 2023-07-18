@@ -10,7 +10,7 @@ process HISAT2_BUILD {
         'biocontainers/hisat2:2.2.1--h1b792b2_3' }"
 
     input:
-    tuple val(meta), path(orf_fasta)
+    tuple val(meta), path(fasta)
     tuple val(meta2), path(gtf)
     tuple val(meta3), path(splicesites)
 

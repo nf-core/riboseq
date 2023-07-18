@@ -45,6 +45,7 @@ ch_multiqc_custom_methods_description = params.multiqc_methods_description ? fil
 // MODULE: Installed directly from nf-core/modules
 //
 include { FASTQC                      } from '../modules/nf-core/fastqc/main'
+include { HISAT2_EXTRACTSPLICESITES   } from '../modules/nf-core/hisat2/extractsplicesites/main' 
 include { HISAT2_BUILD                } from '../modules/nf-core/hisat2/build/main' 
 include { CUTADAPT                    } from '../modules/nf-core/cutadapt/main'
 include { MULTIQC                     } from '../modules/nf-core/multiqc/main'
@@ -74,7 +75,8 @@ workflow RIBOSEQ {
     ch_splicesites = params.splicesites ? Channel.fromPath(params.splicesites) : Channel.empty()
 
     
-
+    ch_fasta.view()
+    ch_gtf.view()
 
     // TODO: OPTIONAL, you can use nf-validation plugin to create an input channel from the samplesheet with Channel.fromSamplesheet("input")
     // See the documentation https://nextflow-io.github.io/nf-validation/samplesheets/fromSamplesheet/
@@ -91,13 +93,18 @@ workflow RIBOSEQ {
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
     )
+    // MODULE: Run Hisat2_extractsplicesites
+    //
+    ch_splicesites = HISAT2_EXTRACTSPLICESITES (
+        ch_gtf.map { [ [:], it ] } 
+        )
 
     // MODULE: Run Hisat2_Build
     //
     HISAT2_BUILD (
-        ch_fasta,
-        ch_gtf,
-        ch_splicesites
+        ch_fasta.map { [ [:], it ] },
+        ch_gtf.map { [ [:], it ] },
+        ch_splicesites.txt
     )
 
     // MODULE: Run cutadapt
