@@ -1,0 +1,49 @@
+### version information
+
+```
+pre-commit version: 3.3.3
+git --version: git version 2.20.1
+sys.version:
+    3.8.9 (default, Apr 10 2021, 15:55:09) 
+    [GCC 8.3.0]
+sys.executable: /usr/local/bin/python
+os.name: posix
+sys.platform: linux
+```
+
+### error information
+
+```
+An error has occurred: FatalError: git failed. Is it installed, and are you in a Git repository directory?
+```
+
+```
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.8/site-packages/pre_commit/git.py", line 58, in get_root
+    cmd_output('git', 'rev-parse', '--show-cdup')[1].strip(),
+  File "/usr/local/lib/python3.8/site-packages/pre_commit/util.py", line 116, in cmd_output
+    returncode, stdout_b, stderr_b = cmd_output_b(*cmd, **kwargs)
+  File "/usr/local/lib/python3.8/site-packages/pre_commit/util.py", line 110, in cmd_output_b
+    raise CalledProcessError(returncode, cmd, stdout_b, stderr_b)
+pre_commit.util.CalledProcessError: command: ('/usr/bin/git', 'rev-parse', '--show-cdup')
+return code: 128
+stdout: (none)
+stderr:
+    fatal: detected dubious ownership in repository at '/Users/carolineeastwood/nf-core-riboseq'
+    To add an exception for this directory, call:
+    
+    	git config --global --add safe.directory /Users/carolineeastwood/nf-core-riboseq
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.8/site-packages/pre_commit/error_handler.py", line 73, in error_handler
+    yield
+  File "/usr/local/lib/python3.8/site-packages/pre_commit/main.py", line 370, in main
+    _adjust_args_and_chdir(args)
+  File "/usr/local/lib/python3.8/site-packages/pre_commit/main.py", line 180, in _adjust_args_and_chdir
+    toplevel = git.get_root()
+  File "/usr/local/lib/python3.8/site-packages/pre_commit/git.py", line 64, in get_root
+    raise FatalError(
+pre_commit.errors.FatalError: git failed. Is it installed, and are you in a Git repository directory?
+```

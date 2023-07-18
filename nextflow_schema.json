@@ -79,10 +79,42 @@
                     "fa_icon": "fas fa-ban",
                     "hidden": true,
                     "help_text": "Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`."
-                }
-
+                },
+                "orf_fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
+                    "description": "Path to FASTA genome file."
+                },
+                "gtf": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^\\S+\\.gtf$",
+                    "description": "Path to gtf files"
+                },
+                "splicesites": {
+                    "type": "string",
+                    "format": "file-path",
+                    "mimetype": "text/plain",
+                    "fa_icon": "fas fa-hand-scissors",
+                    "description": "Splice sites file required for HISAT2."
+                }    
             }
-            
+        },
+        "Indexing": {
+            "title": "Building indexes",
+            "type": "object",
+            "description": "Building indexes for alignement.",
+            "required": ["build_indices"],
+            "properties": { 
+                "build_indices": {
+                    "type": "boolean",
+                    "default": "true"
+                }
+            }    
         },
         "Trimming_options": {
             "title": "adapter trimming options",

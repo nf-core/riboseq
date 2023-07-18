@@ -45,6 +45,7 @@ ch_multiqc_custom_methods_description = params.multiqc_methods_description ? fil
 // MODULE: Installed directly from nf-core/modules
 //
 include { FASTQC                      } from '../modules/nf-core/fastqc/main'
+include { HISAT2_BUILD                } from '../modules/nf-core/hisat2/build/main' 
 include { CUTADAPT                    } from '../modules/nf-core/cutadapt/main'
 include { MULTIQC                     } from '../modules/nf-core/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main'
@@ -68,6 +69,10 @@ workflow RIBOSEQ {
     
     ch_fastq = Channel.fromSamplesheet("input")
     ch_fastq.view()
+    ch_fasta = Channel.fromPath(params.orf_fasta)
+    ch_gtf = Channel.fromPath(params.gtf)
+    ch_splicesites = params.splicesites ? Channel.fromPath(params.splicesites) : Channel.empty()
+
     
 
 
@@ -85,6 +90,14 @@ workflow RIBOSEQ {
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
+    )
+
+    // MODULE: Run Hisat2_Build
+    //
+    HISAT2_BUILD (
+        ch_fasta,
+        ch_gtf,
+        ch_splicesites
     )
 
     // MODULE: Run cutadapt
