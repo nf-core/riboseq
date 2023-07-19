@@ -145,22 +145,6 @@
             "description": "Aligning the fastq files to transcriptome and rRNA.",
             "required": ["transcriptome_index"],
             "properties": {
-                "trimmed_fastq": {
-                    "type": "string",
-                    "format": "file-path",
-                    "exists": true,
-                    "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
-                    "description": "Path to trimmed fastq file."
-                },   
-                "transcriptome_index": {
-                    "type": "string",
-                    "format": "file-path",
-                    "exists": true,
-                    "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.ht2(\\.gz)?$",
-                    "description": "Path to transcriptome index file."
-                },
                 "seq_center": {
                     "type": "string",
                     "description": "Sequencing center information to be added to read group of BAM files.",

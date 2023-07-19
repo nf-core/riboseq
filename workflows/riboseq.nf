@@ -48,7 +48,7 @@ include { FASTQC                                                                
 include { HISAT2_EXTRACTSPLICESITES                                                     } from '../modules/nf-core/hisat2/extractsplicesites/main' 
 include { HISAT2_BUILD as HISAT2_BUILD_rRNA; HISAT2_BUILD as HISAT2_BUILD_transcriptome } from '../modules/nf-core/hisat2/build/main'
 include { CUTADAPT                                                                      } from '../modules/nf-core/cutadapt/main'
-include { HISAT2_ALIGN                                                                  } from '../modules/nf-core/hisat2/align/main'
+include { HISAT2_ALIGN as HISAT2_ALIGN_rRNA; HISAT2_ALIGN as HISAT2_ALIGN_transcriptome } from '../modules/nf-core/hisat2/align/main'
 include { MULTIQC                                                                       } from '../modules/nf-core/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS                                                   } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
@@ -76,8 +76,7 @@ workflow RIBOSEQ {
     ch_fasta = Channel.fromPath(params.orf_fasta)
     ch_gtf = Channel.fromPath(params.gtf)
     ch_rRNA_fasta = Channel.fromPath(params.rRNA_fasta)
-    ch_trimmed_fastq = Channel.fromPath(params.trimmed_fastq)
-    ch_transcriptome_index = Channel.fromPath(params.transcriptome_index)
+    
 
     // TODO: OPTIONAL, you can use nf-validation plugin to create an input channel from the samplesheet with Channel.fromSamplesheet("input")
     // See the documentation https://nextflow-io.github.io/nf-validation/samplesheets/fromSamplesheet/
@@ -123,12 +122,20 @@ workflow RIBOSEQ {
         ch_fastq
     )
 
+     // MODULE: Run Hisat2_Align 
+    //
+    HISAT2_ALIGN_rRNA (
+        CUTADAPT.out.reads.map { [ [:], it ] },
+        HISAT2_BUILD_rRNA.out.index.map { [ [:], it ] },
+        [[],[]]
+    )
+
     // MODULE: Run Hisat2_Align 
     //
-    HISAT2_ALIGN (
-        ch_trimmed_fastq.map { [ [:], it ] },
-        ch_transcriptome_index.map { [ [:], it ] },
-        ch_splicesites.txt
+    HISAT2_ALIGN_transcriptome (
+        CUTADAPT.out.reads.map { [ [:], it ] },
+        HISAT2_BUILD_transcriptome.out.index.map { [ [:], it ] },
+        ch_splicesites.txt.map { [ [:], it ] }
     )
 
     //
