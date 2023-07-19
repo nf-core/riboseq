@@ -101,6 +101,14 @@
                     "mimetype": "text/plain",
                     "fa_icon": "fas fa-hand-scissors",
                     "description": "Splice sites file required for HISAT2."
+                },
+                "rRNA_fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
+                    "description": "Path to FASTA rRNA file."
                 }    
             }
         },
@@ -123,12 +131,49 @@
             "required": ["adapter_sequence"],
             "properties": {   
                 "adapter_sequence": {
-                    "type": "string",
                     "default": "AGATCGGAAGAGCACACGTCTGAA"
+                },
+                "single_end": {
+                    "type": "boolean",
+                    "meta": ["single_end"]
+                }
+            }    
+        },
+        "Alignment_options": {
+            "title": "Alignment options using HISAT2_align",
+            "type": "object",
+            "description": "Aligning the fastq files to transcriptome and rRNA.",
+            "required": ["transcriptome_index"],
+            "properties": {
+                "trimmed_fastq": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
+                    "description": "Path to trimmed fastq file."
+                },   
+                "transcriptome_index": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.ht2(\\.gz)?$",
+                    "description": "Path to transcriptome index file."
+                },
+                "seq_center": {
+                    "type": "string",
+                    "description": "Sequencing center information to be added to read group of BAM files.",
+                    "fa_icon": "fas fa-synagogue"
+                },
+                "save_unaligned": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-save",
+                    "description": "Where possible, save unaligned reads from either STAR, HISAT2 or Salmon to the results directory.",
+                    "help_text": "This may either be in the form of FastQ or BAM files depending on the options available for that particular tool."
                 }
             }
-            
-        },
+        },    
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
