@@ -128,6 +128,7 @@ workflow RIBOSEQ {
     // MODULE: Run UMITOOLS_EXTRACT
     //
     with_umi = params.with_umi
+    skip_umi_extract = params.skip_umi_extract
     if (with_umi && !skip_umi_extract) {
     UMITOOLS_EXTRACT (
        CUTADAPT.out.reads 
