@@ -48,7 +48,10 @@ include { FASTQC                                                                
 include { HISAT2_EXTRACTSPLICESITES                                                     } from '../modules/nf-core/hisat2/extractsplicesites/main' 
 include { HISAT2_BUILD as HISAT2_BUILD_rRNA; HISAT2_BUILD as HISAT2_BUILD_transcriptome } from '../modules/nf-core/hisat2/build/main'
 include { CUTADAPT                                                                      } from '../modules/nf-core/cutadapt/main'
+include { UMITOOLS_EXTRACT                                                              } from '../modules/nf-core/umitools/extract/main'                                                            
 include { HISAT2_ALIGN as HISAT2_ALIGN_rRNA; HISAT2_ALIGN as HISAT2_ALIGN_transcriptome } from '../modules/nf-core/hisat2/align/main'
+include { SAMTOOLS_SORT                                                                 } from '../modules/nf-core/samtools/sort/main' 
+include { SAMTOOLS_INDEX                                                                } from '../modules/nf-core/samtools/index/main'                                                                
 include { MULTIQC                                                                       } from '../modules/nf-core/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS                                                   } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
@@ -107,7 +110,7 @@ workflow RIBOSEQ {
         [[],[]]
     )
 
-    // MODULE: Run Hisat2_Build
+    // MODULE: Run Hisat2_Build for transcriptome
     //
     HISAT2_BUILD_transcriptome (
         ch_fasta.map { [ [:], it ] },
@@ -122,20 +125,39 @@ workflow RIBOSEQ {
         ch_fastq
     )
 
-     // MODULE: Run Hisat2_Align 
+    // MODULE: Run UMITOOLS_EXTRACT
+    //
+    UMITOOLS_EXTRACT (
+       CUTADAPT.out.reads 
+    )
+
+    // MODULE: Run Hisat2_Align for rRNA 
     //
     HISAT2_ALIGN_rRNA (
-        CUTADAPT.out.reads.map { [ [:], it ] },
-        HISAT2_BUILD_rRNA.out.index.map { [ [:], it ] },
+        CUTADAPT.out.reads,
+        HISAT2_BUILD_rRNA.out.index,
         [[],[]]
     )
 
-    // MODULE: Run Hisat2_Align 
+    
+    // MODULE: Run Hisat2_Align for transcriptome
     //
     HISAT2_ALIGN_transcriptome (
-        CUTADAPT.out.reads.map { [ [:], it ] },
-        HISAT2_BUILD_transcriptome.out.index.map { [ [:], it ] },
-        ch_splicesites.txt.map { [ [:], it ] }
+        CUTADAPT.out.reads,
+        HISAT2_BUILD_transcriptome.out.index,
+        ch_splicesites.txt
+    )
+
+    // MODULE: Run SAMTOOLS_SORT
+    //
+    SAMTOOLS_SORT (
+        HISAT2_ALIGN_transcriptome.out.bam
+    )
+
+    // MODULE: Run SAMTOOLS_INDEX
+    //
+    SAMTOOLS_INDEX (
+        SAMTOOLS_SORT.out.bam
     )
 
     //
