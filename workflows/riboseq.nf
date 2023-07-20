@@ -127,9 +127,11 @@ workflow RIBOSEQ {
 
     // MODULE: Run UMITOOLS_EXTRACT
     //
+    if (with_umi && !skip_umi_extract) {
     UMITOOLS_EXTRACT (
        CUTADAPT.out.reads 
     )
+    }
 
     // MODULE: Run Hisat2_Align for rRNA 
     //
