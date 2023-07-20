@@ -128,6 +128,7 @@ workflow RIBOSEQ {
     // MODULE: Run UMITOOLS_EXTRACT
     //
     with_umi = params.with_umi
+    skip_umi_extract = params.skip_umi_extract
     if (with_umi && !skip_umi_extract) {
     UMITOOLS_EXTRACT (
        CUTADAPT.out.reads 
@@ -146,7 +147,7 @@ workflow RIBOSEQ {
     // MODULE: Run Hisat2_Align for transcriptome
     //
     HISAT2_ALIGN_transcriptome (
-        CUTADAPT.out.reads,
+        HISAT2_ALIGN_rRNA.out.fastq,
         HISAT2_BUILD_transcriptome.out.index,
         ch_splicesites.txt
     )
