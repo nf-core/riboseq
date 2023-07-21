@@ -80,6 +80,7 @@ workflow RIBOSEQ {
 
     // Creating channels for HISAT2_BUILD and HISAT2_ALIGN
     ch_fasta = Channel.fromPath(params.transcriptome_fasta)
+    ch_genome_fasta = Channel.fromPath(params.genome_fasta)
     ch_gtf = Channel.fromPath(params.gtf)
     ch_rRNA_fasta = Channel.fromPath(params.rRNA_fasta)
     
@@ -123,10 +124,10 @@ workflow RIBOSEQ {
     
     // MODULE: Run RSEM_PREPAREREFERENCE 
     //
-    // RSEM_PREPAREREFERENCE (
-    //     ch_fasta,
-    //    ch_gtf
-    // )
+    RSEM_PREPAREREFERENCE (
+        ch_genome_fasta,
+       ch_gtf
+    )
 
     // MODULE: Run UMITOOLS_EXTRACT
     //
