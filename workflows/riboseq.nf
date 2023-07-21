@@ -55,6 +55,7 @@ include { SAMTOOLS_SORT                                                         
 include { SAMTOOLS_INDEX                                                                } from '../modules/nf-core/samtools/index/main'                                                                
 include { UMITOOLS_DEDUP                                                                } from '../modules/nf-core/umitools/dedup/main'
 include { BEDTOOLS_BAMTOBED                                                             } from '../modules/nf-core/bedtools/bamtobed/main'                          
+include { SUBREAD_FEATURECOUNTS                                                         } from '../modules/nf-core/subread/featurecounts/main'                                                  
 include { MULTIQC                                                                       } from '../modules/nf-core/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS                                                   } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
@@ -124,10 +125,10 @@ workflow RIBOSEQ {
     
     // MODULE: Run RSEM_PREPAREREFERENCE 
     //
-    RSEM_PREPAREREFERENCE (
-        ch_genome_fasta,
-       ch_gtf
-    )
+    //RSEM_PREPAREREFERENCE (
+        //ch_genome_fasta,
+       //ch_gtf
+    //)
 
     // MODULE: Run UMITOOLS_EXTRACT
     //
@@ -192,6 +193,16 @@ workflow RIBOSEQ {
     BEDTOOLS_BAMTOBED (
         UMITOOLS_DEDUP.out.bam
     )
+
+    // MODULE: Run BEDTOOLS_BAMTOBED
+    //
+
+    
+    SUBREAD_FEATURECOUNTS (
+        UMITOOLS_DEDUP.out.bam
+            .combine(ch_gtf)
+    )
+
 
     //
     // MODULE: MultiQC
