@@ -5,6 +5,13 @@
         "https://github.com/nf-core/modules.git": {
             "modules": {
                 "nf-core": {
+                    "bedtools/bamtobed": {
+                        "branch": "master",
+                        "git_sha": "9e51255c4f8ec69fb6ccf68593392835f14fecb8",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
                     "custom/dumpsoftwareversions": {
                         "branch": "master",
                         "git_sha": "76cc4938c1f6ea5c7d83fed1eeffc146787f9543",
@@ -54,6 +61,13 @@
                             "modules"
                         ]
                     },
+                    "rsem/preparereference": {
+                        "branch": "master",
+                        "git_sha": "603ecbd9f45300c9788f197d2a15a005685b4220",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
                     "samtools/index": {
                         "branch": "master",
                         "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
@@ -64,6 +78,13 @@
                     "samtools/sort": {
                         "branch": "master",
                         "git_sha": "a0f7be95788366c1923171e358da7d049eb440f9",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "umitools/dedup": {
+                        "branch": "master",
+                        "git_sha": "7297204bf49273300a3dbfa4b7a4027c8683f1bd",
                         "installed_by": [
                             "modules"
                         ]
