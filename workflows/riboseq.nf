@@ -123,10 +123,10 @@ workflow RIBOSEQ {
     
     // MODULE: Run RSEM_PREPAREREFERENCE 
     //
-    //RSEM_PREPAREREFERENCE (
-        //ch_fasta,
-       //ch_gtf
-    //)
+    // RSEM_PREPAREREFERENCE (
+    //     ch_fasta,
+    //    ch_gtf
+    // )
 
     // MODULE: Run UMITOOLS_EXTRACT
     //
