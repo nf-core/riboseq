@@ -114,11 +114,12 @@ workflow RIBOSEQ {
         [[],[]],
         [[],[]]
     )
+    
 
     // MODULE: Run Hisat2_Build for transcriptome
     //
     HISAT2_BUILD_transcriptome (
-        ch_fasta.map { [ [:], it ] },
+        ch_transcriptome_fasta.map { [ [:], it ] },
         ch_gtf.map { [ [:], it ] },
         ch_splicesites.txt
     )
@@ -146,13 +147,16 @@ workflow RIBOSEQ {
         UMITOOLS_EXTRACT.out.reads
     )
 
+
     // MODULE: Run Hisat2_Align for rRNA 
     //
+    if (!params.skip_alignment && params.aligner == 'hisat2') {
     HISAT2_ALIGN_rRNA (
         CUTADAPT.out.reads,
         HISAT2_BUILD_rRNA.out.index,
         [[],[]]
     )
+    }
  
     // MODULE: Run Hisat2_Align for transcriptome
     //
@@ -181,12 +185,12 @@ workflow RIBOSEQ {
     ch_transcriptome_sorted_bai = SAMTOOLS_INDEX.out.bai
 
     // Deduplicate genome BAM file before downstream analysis
-    if (params.with_umi) {
+   //if (params.with_umi) {
     UMITOOLS_DEDUP (
         ch_transcriptome_sorted_bam.join(ch_transcriptome_sorted_bai, by: [0]),
             params.umitools_dedup_stats
     )
-    }
+    
 
     // MODULE: Run BEDTOOLS_BAMTOBED
     //
@@ -194,10 +198,8 @@ workflow RIBOSEQ {
         UMITOOLS_DEDUP.out.bam
     )
 
-    // MODULE: Run BEDTOOLS_BAMTOBED
+    // MODULE: Run Featurecoun
     //
-
-    
     SUBREAD_FEATURECOUNTS (
         UMITOOLS_DEDUP.out.bam
             .combine(ch_gtf)

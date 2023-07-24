@@ -182,6 +182,18 @@
             "description": "Aligning the fastq files to transcriptome and rRNA.",
             "required": ["transcriptome_index"],
             "properties": {
+                "aligner": {
+                    "type": "string",
+                    "default": "star_salmon",
+                    "description": "Specifies the alignment algorithm to use - available options are 'star_salmon', 'star_rsem' and 'hisat2'.",
+                    "fa_icon": "fas fa-map-signs",
+                    "enum": ["hisat2"]
+                },
+                "skip_alignment": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-fast-forward",
+                    "description": "Skip all of the alignment-based processes within the pipeline."
+                },
                 "seq_center": {
                     "type": "string",
                     "description": "Sequencing center information to be added to read group of BAM files.",
