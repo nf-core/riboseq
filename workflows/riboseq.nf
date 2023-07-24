@@ -126,11 +126,11 @@ workflow RIBOSEQ {
 
     // MODULE: Run Hisat2_Build for transcriptome
     //
-    //HISAT2_BUILD_transcriptome (
-        //ch_fasta.map { [ [:], it ] },
-        //ch_gtf.map { [ [:], it ] },
-        //ch_splicesites.txt
-    //)
+    HISAT2_BUILD_transcriptome (
+        ch_fasta.map { [ [:], it ] },
+        ch_gtf.map { [ [:], it ] },
+        ch_splicesites.txt
+    )
     
     // MODULE: Run RSEM_PREPAREREFERENCE 
     //
@@ -156,15 +156,6 @@ workflow RIBOSEQ {
     )
     }
 
-    
-
-    // MODULE: Run Bowtie_align for rRNA 
-    //
-    //BOWTIE_ALIGN (
-        //UMITOOLS_EXTRACT.out.reads,
-        //BOWTIE_BUILD.out.index
-    //)
-    
 
     // MODULE: Run Hisat2_Align for rRNA 
     //
@@ -179,50 +170,51 @@ workflow RIBOSEQ {
  
     // MODULE: Run Hisat2_Align for transcriptome
     //
-    //HISAT2_ALIGN_transcriptome (
-        //HISAT2_ALIGN_rRNA.out.fastq,
-        //HISAT2_BUILD_transcriptome.out.index,
-        //ch_splicesites.txt
-    //)
+    HISAT2_ALIGN_transcriptome (
+        HISAT2_ALIGN_rRNA.out.fastq,
+        HISAT2_BUILD_transcriptome.out.index,
+        ch_splicesites.txt
+    )
 
     // MODULE: Run SAMTOOLS_SORT
     //
-    //SAMTOOLS_SORT (
-        //HISAT2_ALIGN_transcriptome.out.bam
-    //)
+    SAMTOOLS_SORT (
+        HISAT2_ALIGN_transcriptome.out.bam
+    )
 
     // MODULE: Run SAMTOOLS_INDEX
     //
-    //SAMTOOLS_INDEX (
-        //SAMTOOLS_SORT.out.bam
-    //)
+    SAMTOOLS_INDEX (
+        SAMTOOLS_SORT.out.bam
+    )
 
     // MODULE: Run UMITOOLS_DEDUP 
     // 
     
-    //ch_transcriptome_sorted_bam = SAMTOOLS_SORT.out.bam
-    //ch_transcriptome_sorted_bai = SAMTOOLS_INDEX.out.bai
+    ch_transcriptome_sorted_bam = SAMTOOLS_SORT.out.bam
+    ch_transcriptome_sorted_bai = SAMTOOLS_INDEX.out.bai
 
     // Deduplicate genome BAM file before downstream analysis
-   //if (params.with_umi) {
-    //UMITOOLS_DEDUP (
-        //ch_transcriptome_sorted_bam.join(ch_transcriptome_sorted_bai, by: [0]),
-            //params.umitools_dedup_stats
-    //)
+    if (params.with_umi) {
+    UMITOOLS_DEDUP (
+        ch_transcriptome_sorted_bam.join(ch_transcriptome_sorted_bai, by: [0]),
+            params.umitools_dedup_stats
+    )
+    }
     
 
     // MODULE: Run BEDTOOLS_BAMTOBED
     //
-    //BEDTOOLS_BAMTOBED (
-        //UMITOOLS_DEDUP.out.bam
-    //)
+    BEDTOOLS_BAMTOBED (
+        UMITOOLS_DEDUP.out.bam
+    )
 
     // MODULE: Run Featurecoun
     //
-    //SUBREAD_FEATURECOUNTS (
-        //UMITOOLS_DEDUP.out.bam
-            //.combine(ch_gtf)
-    //)
+    SUBREAD_FEATURECOUNTS (
+        UMITOOLS_DEDUP.out.bam
+            .combine(ch_gtf)
+    )
 
 
     //
