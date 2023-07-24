@@ -47,6 +47,8 @@ ch_multiqc_custom_methods_description = params.multiqc_methods_description ? fil
 include { FASTQC                                                                        } from '../modules/nf-core/fastqc/main'
 include { HISAT2_EXTRACTSPLICESITES                                                     } from '../modules/nf-core/hisat2/extractsplicesites/main' 
 include { HISAT2_BUILD as HISAT2_BUILD_rRNA; HISAT2_BUILD as HISAT2_BUILD_transcriptome } from '../modules/nf-core/hisat2/build/main'
+include { BOWTIE_BUILD                                                                  } from '../modules/nf-core/bowtie/build/main'                                 
+include { BOWTIE_ALIGN                                                                  } from '../modules/nf-core/bowtie/align/main'                                 
 include { RSEM_PREPAREREFERENCE                                                         } from '../modules/nf-core/rsem/preparereference/main'                                                  
 include { UMITOOLS_EXTRACT                                                              } from '../modules/nf-core/umitools/extract/main'                                                            
 include { CUTADAPT                                                                      } from '../modules/nf-core/cutadapt/main'
@@ -107,22 +109,28 @@ workflow RIBOSEQ {
         ch_gtf.map { [ [:], it ] } 
         )
 
+    // MODULE: Run Bowtie_build for rRNA
+    //
+    BOWTIE_BUILD (
+        ch_rRNA_fasta
+        )
+
     // MODULE: Run Hisat2_Build for rRNA
     //
-    HISAT2_BUILD_rRNA (
-        ch_rRNA_fasta.map { [ [:], it ] },
-        [[],[]],
-        [[],[]]
-    )
+    //HISAT2_BUILD_rRNA (
+        //ch_rRNA_fasta.map { [ [:], it ] },
+        //[[],[]],
+        //[[],[]]
+    //)
     
 
     // MODULE: Run Hisat2_Build for transcriptome
     //
-    HISAT2_BUILD_transcriptome (
-        ch_transcriptome_fasta.map { [ [:], it ] },
-        ch_gtf.map { [ [:], it ] },
-        ch_splicesites.txt
-    )
+    //HISAT2_BUILD_transcriptome (
+        //ch_fasta.map { [ [:], it ] },
+        //ch_gtf.map { [ [:], it ] },
+        //ch_splicesites.txt
+    //)
     
     // MODULE: Run RSEM_PREPAREREFERENCE 
     //
@@ -148,62 +156,71 @@ workflow RIBOSEQ {
     )
 
 
+    // MODULE: Run Bowtie_align for rRNA 
+    //
+    BOWTIE_ALIGN (
+        CUTADAPT.out.reads,
+        BOWTIE_BUILD.out.index
+    )
+    
+
     // MODULE: Run Hisat2_Align for rRNA 
     //
-    if (!params.skip_alignment && params.aligner == 'hisat2') {
-    HISAT2_ALIGN_rRNA (
-        CUTADAPT.out.reads,
-        HISAT2_BUILD_rRNA.out.index,
-        [[],[]]
-    )
-    }
+
+    //if (!params.skip_alignment && params.aligner == 'hisat2') {
+    //HISAT2_ALIGN_rRNA (
+        //CUTADAPT.out.reads,
+        //HISAT2_BUILD_rRNA.out.index,
+        //[[],[]]
+    //)
+    //}
  
     // MODULE: Run Hisat2_Align for transcriptome
     //
-    HISAT2_ALIGN_transcriptome (
-        HISAT2_ALIGN_rRNA.out.fastq,
-        HISAT2_BUILD_transcriptome.out.index,
-        ch_splicesites.txt
-    )
+    //HISAT2_ALIGN_transcriptome (
+        //HISAT2_ALIGN_rRNA.out.fastq,
+        //HISAT2_BUILD_transcriptome.out.index,
+        //ch_splicesites.txt
+    //)
 
     // MODULE: Run SAMTOOLS_SORT
     //
-    SAMTOOLS_SORT (
-        HISAT2_ALIGN_transcriptome.out.bam
-    )
+    //SAMTOOLS_SORT (
+        //HISAT2_ALIGN_transcriptome.out.bam
+    //)
 
     // MODULE: Run SAMTOOLS_INDEX
     //
-    SAMTOOLS_INDEX (
-        SAMTOOLS_SORT.out.bam
-    )
+    //SAMTOOLS_INDEX (
+        //SAMTOOLS_SORT.out.bam
+    //)
 
     // MODULE: Run UMITOOLS_DEDUP 
     // 
     
-    ch_transcriptome_sorted_bam = SAMTOOLS_SORT.out.bam
-    ch_transcriptome_sorted_bai = SAMTOOLS_INDEX.out.bai
+    //ch_transcriptome_sorted_bam = SAMTOOLS_SORT.out.bam
+    //ch_transcriptome_sorted_bai = SAMTOOLS_INDEX.out.bai
 
     // Deduplicate genome BAM file before downstream analysis
    //if (params.with_umi) {
-    UMITOOLS_DEDUP (
-        ch_transcriptome_sorted_bam.join(ch_transcriptome_sorted_bai, by: [0]),
-            params.umitools_dedup_stats
-    )
+    //UMITOOLS_DEDUP (
+        //ch_transcriptome_sorted_bam.join(ch_transcriptome_sorted_bai, by: [0]),
+            //params.umitools_dedup_stats
+    //)
     
 
     // MODULE: Run BEDTOOLS_BAMTOBED
     //
-    BEDTOOLS_BAMTOBED (
-        UMITOOLS_DEDUP.out.bam
-    )
+    //BEDTOOLS_BAMTOBED (
+        //UMITOOLS_DEDUP.out.bam
+    //)
 
     // MODULE: Run Featurecoun
     //
-    SUBREAD_FEATURECOUNTS (
-        UMITOOLS_DEDUP.out.bam
-            .combine(ch_gtf)
-    )
+    //SUBREAD_FEATURECOUNTS (
+        //UMITOOLS_DEDUP.out.bam
+            //.combine(ch_gtf)
+    //)
 
 
     //

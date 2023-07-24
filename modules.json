@@ -12,6 +12,20 @@
                             "modules"
                         ]
                     },
+                    "bowtie/align": {
+                        "branch": "master",
+                        "git_sha": "603ecbd9f45300c9788f197d2a15a005685b4220",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "bowtie/build": {
+                        "branch": "master",
+                        "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
                     "custom/dumpsoftwareversions": {
                         "branch": "master",
                         "git_sha": "76cc4938c1f6ea5c7d83fed1eeffc146787f9543",

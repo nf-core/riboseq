@@ -109,7 +109,13 @@
                     "mimetype": "text/plain",
                     "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
                     "description": "Path to FASTA rRNA file."
-                }    
+                }, 
+                "riboviz_index": {
+                    "type": "string",
+                    "format": "dir-path",
+                    "exists": true,
+                    "description": "Path to directory containing index rRNA files from riboviz pipeline." 
+                } 
             }
         },
         "Indexing": {
