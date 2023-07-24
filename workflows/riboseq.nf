@@ -111,17 +111,17 @@ workflow RIBOSEQ {
 
     // MODULE: Run Bowtie_build for rRNA
     //
-    BOWTIE_BUILD (
-        ch_rRNA_fasta
-        )
+    //BOWTIE_BUILD (
+        //ch_rRNA_fasta
+        //)
 
-    // MODULE: Run Hisat2_Build for rRNA
+    //MODULE: Run Hisat2_Build for rRNA
     //
-    //HISAT2_BUILD_rRNA (
-        //ch_rRNA_fasta.map { [ [:], it ] },
-        //[[],[]],
-        //[[],[]]
-    //)
+    HISAT2_BUILD_rRNA (
+        ch_rRNA_fasta.map { [ [:], it ] },
+        [[],[]],
+        [[],[]]
+    )
     
 
     // MODULE: Run Hisat2_Build for transcriptome
@@ -139,41 +139,43 @@ workflow RIBOSEQ {
        //ch_gtf
     //)
 
+
+    // MODULE: Run cutadapt
+    //
+    CUTADAPT (
+        ch_fastq
+    )
+
     // MODULE: Run UMITOOLS_EXTRACT
     //
     with_umi = params.with_umi
     skip_umi_extract = params.skip_umi_extract
     if (with_umi && !skip_umi_extract) {
     UMITOOLS_EXTRACT (
-       ch_fastq 
+       CUTADAPT.out.reads
     )
     }
 
-    // MODULE: Run cutadapt
-    //
-    CUTADAPT (
-        UMITOOLS_EXTRACT.out.reads
-    )
-
+    
 
     // MODULE: Run Bowtie_align for rRNA 
     //
-    BOWTIE_ALIGN (
-        CUTADAPT.out.reads,
-        BOWTIE_BUILD.out.index
-    )
+    //BOWTIE_ALIGN (
+        //UMITOOLS_EXTRACT.out.reads,
+        //BOWTIE_BUILD.out.index
+    //)
     
 
     // MODULE: Run Hisat2_Align for rRNA 
     //
 
-    //if (!params.skip_alignment && params.aligner == 'hisat2') {
-    //HISAT2_ALIGN_rRNA (
-        //CUTADAPT.out.reads,
-        //HISAT2_BUILD_rRNA.out.index,
-        //[[],[]]
-    //)
-    //}
+    if (!params.skip_alignment && params.aligner == 'hisat2') {
+    HISAT2_ALIGN_rRNA (
+        UMITOOLS_EXTRACT.out.reads,
+        HISAT2_BUILD_rRNA.out.index,
+        [[],[]]
+    )
+    }
  
     // MODULE: Run Hisat2_Align for transcriptome
     //
