@@ -46,9 +46,7 @@ ch_multiqc_custom_methods_description = params.multiqc_methods_description ? fil
 //
 include { FASTQC                                                                        } from '../modules/nf-core/fastqc/main'
 include { HISAT2_EXTRACTSPLICESITES                                                     } from '../modules/nf-core/hisat2/extractsplicesites/main' 
-include { HISAT2_BUILD as HISAT2_BUILD_rRNA; HISAT2_BUILD as HISAT2_BUILD_transcriptome } from '../modules/nf-core/hisat2/build/main'
-include { BOWTIE_BUILD                                                                  } from '../modules/nf-core/bowtie/build/main'                                 
-include { BOWTIE_ALIGN                                                                  } from '../modules/nf-core/bowtie/align/main'                                 
+include { HISAT2_BUILD as HISAT2_BUILD_rRNA; HISAT2_BUILD as HISAT2_BUILD_transcriptome } from '../modules/nf-core/hisat2/build/main'                               
 include { RSEM_PREPAREREFERENCE                                                         } from '../modules/nf-core/rsem/preparereference/main'                                                  
 include { UMITOOLS_EXTRACT                                                              } from '../modules/nf-core/umitools/extract/main'                                                            
 include { CUTADAPT                                                                      } from '../modules/nf-core/cutadapt/main'
@@ -57,6 +55,7 @@ include { SAMTOOLS_SORT                                                         
 include { SAMTOOLS_INDEX                                                                } from '../modules/nf-core/samtools/index/main'                                                                
 include { UMITOOLS_DEDUP                                                                } from '../modules/nf-core/umitools/dedup/main'
 include { BEDTOOLS_BAMTOBED                                                             } from '../modules/nf-core/bedtools/bamtobed/main'                          
+ include { BEDTOOLS_GENOMECOV                                                           } from '../modules/nf-core/bedtools/genomecov/main'                                  
 include { SUBREAD_FEATURECOUNTS                                                         } from '../modules/nf-core/subread/featurecounts/main'                                                  
 include { MULTIQC                                                                       } from '../modules/nf-core/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS                                                   } from '../modules/nf-core/custom/dumpsoftwareversions/main'
@@ -206,6 +205,13 @@ workflow RIBOSEQ {
     // MODULE: Run BEDTOOLS_BAMTOBED
     //
     BEDTOOLS_BAMTOBED (
+        UMITOOLS_DEDUP.out.bam
+    )
+
+
+    // MODULE: Run BEDTOOLS_GENOMECOV
+    //
+    BEDTOOLS_GENOMECOV (
         UMITOOLS_DEDUP.out.bam
     )
 

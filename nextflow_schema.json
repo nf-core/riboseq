@@ -168,12 +168,14 @@
                     "fa_icon": "fas fa-compress-alt",
                     "description": "Skip the UMI extraction from the read in case the UMIs have been moved to the headers in advance of the pipeline run."
                 },
-                "umitools_bc_pattern": {
+                "umi_regexp": {
                     "type": "string",
-                    "fa_icon": "fas fa-barcode",
-                    "help_text": "More details can be found in the [UMI-tools documentation](https://umi-tools.readthedocs.io/en/latest/reference/extract.html#extract-method).",
-                    "description": "The UMI barcode pattern to use e.g. 'NNNNNN' indicates that the first 6 nucleotides of the read are from the UMI."
-                },
+                    "description": "Regular expression pattern for UMI extraction",
+                    "default": ".*(?P<umi_1>.{5})(?P<discard_1>.{5})$",
+                    "fa_icon": "fas fa-vial",
+                    "help_text": "The regular expression pattern used to extract UMIs from the reads. The pattern must include 'Ns' for the UMIs (Unique Molecular Identifiers) and can optionally include 'Bs' for the barcodes used for demultiplexing. The value of `umi_regexp` is expected to be a string that represents this pattern."
+                  },
+                  
                 "umitools_dedup_stats": {
                     "type": "boolean",
                     "fa_icon": "fas fa-barcode",

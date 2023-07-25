@@ -12,6 +12,13 @@
                             "modules"
                         ]
                     },
+                    "bedtools/genomecov": {
+                        "branch": "master",
+                        "git_sha": "9e51255c4f8ec69fb6ccf68593392835f14fecb8",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
                     "bowtie/align": {
                         "branch": "master",
                         "git_sha": "603ecbd9f45300c9788f197d2a15a005685b4220",
