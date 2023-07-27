@@ -52,10 +52,10 @@ include { UMITOOLS_EXTRACT                                                      
 include { CUTADAPT                                                                      } from '../modules/nf-core/cutadapt/main'
 include { HISAT2_ALIGN as HISAT2_ALIGN_rRNA; HISAT2_ALIGN as HISAT2_ALIGN_transcriptome } from '../modules/nf-core/hisat2/align/main'
 include { SAMTOOLS_SORT                                                                 } from '../modules/nf-core/samtools/sort/main' 
-include { SAMTOOLS_INDEX                                                                } from '../modules/nf-core/samtools/index/main'                                                                
+include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_transcriptome; SAMTOOLS_INDEX as SAMTOOLS_INDEX_umi_dedup } from '../modules/nf-core/samtools/index/main'                                                                
 include { UMITOOLS_DEDUP                                                                } from '../modules/nf-core/umitools/dedup/main'
 include { BEDTOOLS_BAMTOBED                                                             } from '../modules/nf-core/bedtools/bamtobed/main'                          
- include { BEDTOOLS_GENOMECOV                                                           } from '../modules/nf-core/bedtools/genomecov/main'                                  
+include { BEDTOOLS_GENOMECOV                                                            } from '../modules/nf-core/bedtools/genomecov/main'                                  
 include { SUBREAD_FEATURECOUNTS                                                         } from '../modules/nf-core/subread/featurecounts/main'                                                  
 include { MULTIQC                                                                       } from '../modules/nf-core/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS                                                   } from '../modules/nf-core/custom/dumpsoftwareversions/main'
@@ -81,10 +81,12 @@ workflow RIBOSEQ {
     ch_fastq.view()
 
     // Creating channels for HISAT2_BUILD and HISAT2_ALIGN
-    ch_fasta = Channel.fromPath(params.transcriptome_fasta)
+    ch_transcriptome_fasta = Channel.fromPath(params.transcriptome_fasta)
     ch_genome_fasta = Channel.fromPath(params.genome_fasta)
     ch_gtf = Channel.fromPath(params.gtf)
     ch_rRNA_fasta = Channel.fromPath(params.rRNA_fasta)
+    //ch_gtf_modified = Channel.fromPath(params.gtf_modified)
+    //ch_transcriptome_modified = Channel.fromPath(params.transcriptome_modified)
     
 
     // TODO: OPTIONAL, you can use nf-validation plugin to create an input channel from the samplesheet with Channel.fromSamplesheet("input")
@@ -108,11 +110,7 @@ workflow RIBOSEQ {
         ch_gtf.map { [ [:], it ] } 
         )
 
-    // MODULE: Run Bowtie_build for rRNA
-    //
-    //BOWTIE_BUILD (
-        //ch_rRNA_fasta
-        //)
+
 
     //MODULE: Run Hisat2_Build for rRNA
     //
@@ -126,17 +124,11 @@ workflow RIBOSEQ {
     // MODULE: Run Hisat2_Build for transcriptome
     //
     HISAT2_BUILD_transcriptome (
-        ch_fasta.map { [ [:], it ] },
+        ch_transcriptome_fasta.map { [ [:], it ] },
         ch_gtf.map { [ [:], it ] },
         ch_splicesites.txt
     )
-    
-    // MODULE: Run RSEM_PREPAREREFERENCE 
-    //
-    //RSEM_PREPAREREFERENCE (
-        //ch_genome_fasta,
-       //ch_gtf
-    //)
+
 
 
     // MODULE: Run cutadapt
@@ -183,7 +175,7 @@ workflow RIBOSEQ {
 
     // MODULE: Run SAMTOOLS_INDEX
     //
-    SAMTOOLS_INDEX (
+    SAMTOOLS_INDEX_transcriptome (
         SAMTOOLS_SORT.out.bam
     )
 
@@ -191,7 +183,7 @@ workflow RIBOSEQ {
     // 
     
     ch_transcriptome_sorted_bam = SAMTOOLS_SORT.out.bam
-    ch_transcriptome_sorted_bai = SAMTOOLS_INDEX.out.bai
+    ch_transcriptome_sorted_bai = SAMTOOLS_INDEX_transcriptome.out.bai
 
     // Deduplicate genome BAM file before downstream analysis
     if (params.with_umi) {
@@ -201,6 +193,11 @@ workflow RIBOSEQ {
     )
     }
     
+    // MODULE: Run SAMTOOLS_INDEX
+    //
+    SAMTOOLS_INDEX_umi_dedup (
+        UMITOOLS_DEDUP.out.bam
+    )
 
     // MODULE: Run BEDTOOLS_BAMTOBED
     //
@@ -211,9 +208,9 @@ workflow RIBOSEQ {
 
     // MODULE: Run BEDTOOLS_GENOMECOV
     //
-    BEDTOOLS_GENOMECOV (
-        UMITOOLS_DEDUP.out.bam
-    )
+    //BEDTOOLS_GENOMECOV (
+       // UMITOOLS_DEDUP.out.bam
+    //)
 
     // MODULE: Run Featurecoun
     //
