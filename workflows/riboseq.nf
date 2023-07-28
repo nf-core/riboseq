@@ -80,15 +80,14 @@ workflow RIBOSEQ {
     ch_fastq = Channel.fromSamplesheet("input")
     ch_fastq.view()
 
+
     // Creating channels for HISAT2_BUILD and HISAT2_ALIGN
     ch_transcriptome_fasta = Channel.fromPath(params.transcriptome_fasta)
     ch_genome_fasta = Channel.fromPath(params.genome_fasta)
     ch_gtf = Channel.fromPath(params.gtf)
     ch_rRNA_fasta = Channel.fromPath(params.rRNA_fasta)
-    //ch_gtf_modified = Channel.fromPath(params.gtf_modified)
-    //ch_transcriptome_modified = Channel.fromPath(params.transcriptome_modified)
     
-
+    
     // TODO: OPTIONAL, you can use nf-validation plugin to create an input channel from the samplesheet with Channel.fromSamplesheet("input")
     // See the documentation https://nextflow-io.github.io/nf-validation/samplesheets/fromSamplesheet/
     // ! There is currently no tooling to help you write a sample sheet schema
@@ -109,7 +108,6 @@ workflow RIBOSEQ {
     ch_splicesites = HISAT2_EXTRACTSPLICESITES (
         ch_gtf.map { [ [:], it ] } 
         )
-
 
 
     //MODULE: Run Hisat2_Build for rRNA
@@ -147,10 +145,10 @@ workflow RIBOSEQ {
     )
     }
 
-
     // MODULE: Run Hisat2_Align for rRNA 
     //
 
+    ch_hisat2_rRNA_multiqc = Channel.empty()
     if (!params.skip_alignment && params.aligner == 'hisat2') {
     HISAT2_ALIGN_rRNA (
         UMITOOLS_EXTRACT.out.reads,
@@ -158,23 +156,29 @@ workflow RIBOSEQ {
         [[],[]]
     )
     }
+    ch_hisat2_rRNA_multiqc = HISAT2_ALIGN_rRNA.out.summary
  
     // MODULE: Run Hisat2_Align for transcriptome
     //
+
+    ch_hisat2_transcriptome_multiqc = Channel.empty()
     HISAT2_ALIGN_transcriptome (
         HISAT2_ALIGN_rRNA.out.fastq,
         HISAT2_BUILD_transcriptome.out.index,
         ch_splicesites.txt
     )
+    ch_hisat2_transcriptome_multiqc = HISAT2_ALIGN_transcriptome.out.summary
 
     // MODULE: Run SAMTOOLS_SORT
     //
+
     SAMTOOLS_SORT (
         HISAT2_ALIGN_transcriptome.out.bam
     )
 
     // MODULE: Run SAMTOOLS_INDEX
     //
+
     SAMTOOLS_INDEX_transcriptome (
         SAMTOOLS_SORT.out.bam
     )
@@ -186,25 +190,21 @@ workflow RIBOSEQ {
     ch_transcriptome_sorted_bai = SAMTOOLS_INDEX_transcriptome.out.bai
 
     // Deduplicate genome BAM file before downstream analysis
+    
     if (params.with_umi) {
     UMITOOLS_DEDUP (
         ch_transcriptome_sorted_bam.join(ch_transcriptome_sorted_bai, by: [0]),
             params.umitools_dedup_stats
     )
     }
-    
-    // MODULE: Run SAMTOOLS_INDEX
-    //
-    SAMTOOLS_INDEX_umi_dedup (
-        UMITOOLS_DEDUP.out.bam
-    )
 
     // MODULE: Run BEDTOOLS_BAMTOBED
     //
+
+    ch_bedtools_multiqc = Channel.empty()
     BEDTOOLS_BAMTOBED (
         UMITOOLS_DEDUP.out.bam
     )
-
 
     // MODULE: Run BEDTOOLS_GENOMECOV
     //
@@ -212,12 +212,15 @@ workflow RIBOSEQ {
        // UMITOOLS_DEDUP.out.bam
     //)
 
-    // MODULE: Run Featurecoun
+    // MODULE: Run Featurecounts
     //
+    
+    ch_featurecounts_multiqc = Channel.empty()
     SUBREAD_FEATURECOUNTS (
         UMITOOLS_DEDUP.out.bam
             .combine(ch_gtf)
     )
+    ch_featurecounts_multiqc = SUBREAD_FEATURECOUNTS.out.summary
 
 
     //
@@ -234,6 +237,11 @@ workflow RIBOSEQ {
     ch_multiqc_files = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml'))
     ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
     ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(ch_hisat2_rRNA_multiqc.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(ch_hisat2_transcriptome_multiqc.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(ch_featurecounts_multiqc.collect{it[1]}.ifEmpty([]))
+
+
 
     MULTIQC (
         ch_multiqc_files.collect(),

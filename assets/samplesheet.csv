@@ -1,2 +1,5 @@
 sample,fastq,library_type,replicate,single_end
+SSD1-HF_Rep1,/Users/carolineeastwood/Desktop/Diss_project/test_dataset/SSD1-HF_Rep1_rpf_1.fastq.gz,RiboSeq,1,true
 SSD1-HF_Rep3,/Users/carolineeastwood/Desktop/Diss_project/test_dataset/SSD1-HF_Rep3_rpf_1.fastq.gz,RiboSeq,3,true
+CDS-side_Rep1,/Users/carolineeastwood/Desktop/Diss_project/test_dataset/CDS-side_Rep1_rpf_1.fastq.gz,RiboSeq,1,true
+dSSD1_Rep1,/Users/carolineeastwood/Desktop/Diss_project/test_dataset/dSSD1_Rep1_rpf_1.fastq.gz,RiboSeq,1,true
