@@ -80,19 +80,51 @@ workflow RIBOSEQ {
     ch_fastq = Channel.fromSamplesheet("input")
     ch_fastq.view()
 
-
-    // Creating channels for HISAT2_BUILD and HISAT2_ALIGN
-    ch_transcriptome_fasta = Channel.fromPath(params.transcriptome_fasta)
-    ch_genome_fasta = Channel.fromPath(params.genome_fasta)
-    ch_gtf = Channel.fromPath(params.gtf)
-    ch_rRNA_fasta = Channel.fromPath(params.rRNA_fasta)
-    
     
     // TODO: OPTIONAL, you can use nf-validation plugin to create an input channel from the samplesheet with Channel.fromSamplesheet("input")
     // See the documentation https://nextflow-io.github.io/nf-validation/samplesheets/fromSamplesheet/
     // ! There is currently no tooling to help you write a sample sheet schema
 
+    // PREPARING rRNA and transcriptome index files by runinng HISAT2_BUILD
+    // Creating channels for HISAT2_BUILD and HISAT2_ALIGN
+    ch_transcriptome_fasta = Channel.fromPath(params.transcriptome_fasta)
+    ch_genome_fasta = Channel.fromPath(params.genome_fasta)
+    ch_gtf = Channel.fromPath(params.gtf)
+    ch_rRNA_fasta = Channel.fromPath(params.rRNA_fasta)
+
+    // MODULE: Run Hisat2_extractsplicesites
     //
+    ch_splicesites = HISAT2_EXTRACTSPLICESITES (
+        ch_gtf.map { [ [:], it ] } 
+    )
+
+    //MODULE: Run Hisat2_Build for rRNA
+    //
+    HISAT2_BUILD_rRNA (
+        ch_rRNA_fasta.map { [ [:], it ] },
+        [[],[]],
+        [[],[]]
+    )
+    ch_hisat2_index_rRNA = HISAT2_BUILD_rRNA.out.index.first()
+
+
+    // MODULE: Run Hisat2_Build for transcriptome
+    //
+    HISAT2_BUILD_transcriptome (
+        ch_transcriptome_fasta.map { [ [:], it ] },
+        ch_gtf.map { [ [:], it ] },
+        ch_splicesites.txt
+    )
+    ch_hisat2_index_transcriptome = HISAT2_BUILD_transcriptome.out.index.first()
+
+
+    // SUBWORKFLOW: Read in samplesheet, validate and stage input files
+    //
+    
+    ch_fastq = Channel.fromSamplesheet("input")
+    ch_fastq.view()
+
+
     // MODULE: Run FastQC
     //
     FASTQC (
@@ -103,59 +135,52 @@ workflow RIBOSEQ {
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
     )
-    // MODULE: Run Hisat2_extractsplicesites
-    //
-    ch_splicesites = HISAT2_EXTRACTSPLICESITES (
-        ch_gtf.map { [ [:], it ] } 
-        )
-
-
-    //MODULE: Run Hisat2_Build for rRNA
-    //
-    HISAT2_BUILD_rRNA (
-        ch_rRNA_fasta.map { [ [:], it ] },
-        [[],[]],
-        [[],[]]
-    )
-    
-
-    // MODULE: Run Hisat2_Build for transcriptome
-    //
-    HISAT2_BUILD_transcriptome (
-        ch_transcriptome_fasta.map { [ [:], it ] },
-        ch_gtf.map { [ [:], it ] },
-        ch_splicesites.txt
-    )
-
 
 
     // MODULE: Run cutadapt
     //
+
+    ch_trimmed_reads = Channel.empty()
     CUTADAPT (
         ch_fastq
     )
+    ch_trimmed_reads = CUTADAPT.out.reads
+    ch_versions = ch_versions.mix(CUTADAPT.out.versions.first())
+
 
     // MODULE: Run UMITOOLS_EXTRACT
     //
+
+    ch_filtered_reads = Channel.empty()
+
     with_umi = params.with_umi
     skip_umi_extract = params.skip_umi_extract
     if (with_umi && !skip_umi_extract) {
     UMITOOLS_EXTRACT (
-       CUTADAPT.out.reads
+       ch_trimmed_reads
     )
+    
+    ch_filtered_reads = UMITOOLS_EXTRACT.out.reads
     }
 
     // MODULE: Run Hisat2_Align for rRNA 
     //
 
     ch_hisat2_rRNA_multiqc = Channel.empty()
+    ch_rRNA_alignment = Channel.empty()
+    ch_unaligned_reads = Channel.empty()
     if (!params.skip_alignment && params.aligner == 'hisat2') {
     HISAT2_ALIGN_rRNA (
-        UMITOOLS_EXTRACT.out.reads,
-        HISAT2_BUILD_rRNA.out.index,
+        ch_filtered_reads,
+        ch_hisat2_index_rRNA,
         [[],[]]
     )
+    .set { hisat2_rRNA_results }
     }
+    ch_rRNA_aligned_reads = hisat2_rRNA_results.bam
+    ch_unaligned_reads = hisat2_rRNA_results.fastq
+     
+    
     ch_hisat2_rRNA_multiqc = HISAT2_ALIGN_rRNA.out.summary
  
     // MODULE: Run Hisat2_Align for transcriptome
@@ -163,8 +188,8 @@ workflow RIBOSEQ {
 
     ch_hisat2_transcriptome_multiqc = Channel.empty()
     HISAT2_ALIGN_transcriptome (
-        HISAT2_ALIGN_rRNA.out.fastq,
-        HISAT2_BUILD_transcriptome.out.index,
+        ch_unaligned_reads,
+        ch_hisat2_index_transcriptome,
         ch_splicesites.txt
     )
     ch_hisat2_transcriptome_multiqc = HISAT2_ALIGN_transcriptome.out.summary
@@ -206,11 +231,6 @@ workflow RIBOSEQ {
         UMITOOLS_DEDUP.out.bam
     )
 
-    // MODULE: Run BEDTOOLS_GENOMECOV
-    //
-    //BEDTOOLS_GENOMECOV (
-       // UMITOOLS_DEDUP.out.bam
-    //)
 
     // MODULE: Run Featurecounts
     //
