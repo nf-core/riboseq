@@ -226,14 +226,20 @@ workflow RIBOSEQ {
     // MODULE: Run CUSTOM_GETCHROMSIZES 
     //
     CUSTOM_GETCHROMSIZES (
-        ch_transcriptome_fasta
+        ch_transcriptome_fasta.map { [ [:], it ] },
     )
 
     // MODULE: Run BEDTOOLS_GENOMECOV
     //
+    UMITOOLS_DEDUP.out.bam.view()
+    ch_bam_scale = UMITOOLS_DEDUP.out.bam.map {
+        row -> [ row[0], row[1], 1 ]
+    }
+    ch_bam_scale.view()
     BEDTOOLS_GENOMECOV (
-        UMITOOLS_DEDUP.out.bam,
-        CUSTOM_GETCHROMSIZES.out.sizes    
+        ch_bam_scale,
+        CUSTOM_GETCHROMSIZES.out.sizes.first().map { it[1] },
+        '.bedgraph'
     )
     
     // MODULE: Run BEDTOOLS_BAMTOBED
@@ -248,12 +254,12 @@ workflow RIBOSEQ {
     // MODULE: Run Featurecounts
     //
     
-    ch_featurecounts_multiqc = Channel.empty()
-    SUBREAD_FEATURECOUNTS (
-        UMITOOLS_DEDUP.out.bam
-            .combine(ch_gtf)
-    )
-    ch_featurecounts_multiqc = SUBREAD_FEATURECOUNTS.out.summary
+    // ch_featurecounts_multiqc = Channel.empty()
+    // SUBREAD_FEATURECOUNTS (
+    //     UMITOOLS_DEDUP.out.bam
+    //         .combine(ch_gtf)
+    // )
+    // ch_featurecounts_multiqc = SUBREAD_FEATURECOUNTS.out.summary
 
 
     //
@@ -272,7 +278,7 @@ workflow RIBOSEQ {
     ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(ch_hisat2_rRNA_multiqc.collect{it[1]}.ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(ch_hisat2_transcriptome_multiqc.collect{it[1]}.ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(ch_featurecounts_multiqc.collect{it[1]}.ifEmpty([]))
+    // ch_multiqc_files = ch_multiqc_files.mix(ch_featurecounts_multiqc.collect{it[1]}.ifEmpty([]))
 
 
 
