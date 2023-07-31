@@ -47,13 +47,13 @@ ch_multiqc_custom_methods_description = params.multiqc_methods_description ? fil
 include { FASTQC                                                                        } from '../modules/nf-core/fastqc/main'
 include { HISAT2_EXTRACTSPLICESITES                                                     } from '../modules/nf-core/hisat2/extractsplicesites/main' 
 include { HISAT2_BUILD as HISAT2_BUILD_rRNA; HISAT2_BUILD as HISAT2_BUILD_transcriptome } from '../modules/nf-core/hisat2/build/main'                               
-include { RSEM_PREPAREREFERENCE                                                         } from '../modules/nf-core/rsem/preparereference/main'                                                  
 include { UMITOOLS_EXTRACT                                                              } from '../modules/nf-core/umitools/extract/main'                                                            
 include { CUTADAPT                                                                      } from '../modules/nf-core/cutadapt/main'
 include { HISAT2_ALIGN as HISAT2_ALIGN_rRNA; HISAT2_ALIGN as HISAT2_ALIGN_transcriptome } from '../modules/nf-core/hisat2/align/main'
 include { SAMTOOLS_SORT                                                                 } from '../modules/nf-core/samtools/sort/main' 
 include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_transcriptome; SAMTOOLS_INDEX as SAMTOOLS_INDEX_umi_dedup } from '../modules/nf-core/samtools/index/main'                                                                
 include { UMITOOLS_DEDUP                                                                } from '../modules/nf-core/umitools/dedup/main'
+include { CUSTOM_GETCHROMSIZES                                                          } from '../modules/nf-core/custom/getchromsizes/main'                                              
 include { BEDTOOLS_BAMTOBED                                                             } from '../modules/nf-core/bedtools/bamtobed/main'                          
 include { BEDTOOLS_GENOMECOV                                                            } from '../modules/nf-core/bedtools/genomecov/main'                                  
 include { SUBREAD_FEATURECOUNTS                                                         } from '../modules/nf-core/subread/featurecounts/main'                                                  
@@ -223,13 +223,26 @@ workflow RIBOSEQ {
     )
     }
 
+    // MODULE: Run CUSTOM_GETCHROMSIZES 
+    //
+    CUSTOM_GETCHROMSIZES (
+        ch_transcriptome_fasta
+    )
+
+    // MODULE: Run BEDTOOLS_GENOMECOV
+    //
+    BEDTOOLS_GENOMECOV (
+        UMITOOLS_DEDUP.out.bam,
+        CUSTOM_GETCHROMSIZES.out.sizes    
+    )
+    
     // MODULE: Run BEDTOOLS_BAMTOBED
     //
 
-    ch_bedtools_multiqc = Channel.empty()
-    BEDTOOLS_BAMTOBED (
-        UMITOOLS_DEDUP.out.bam
-    )
+    //ch_bedtools_multiqc = Channel.empty()
+    //BEDTOOLS_BAMTOBED (
+        //UMITOOLS_DEDUP.out.bam
+    //)
 
 
     // MODULE: Run Featurecounts
