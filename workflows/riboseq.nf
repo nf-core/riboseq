@@ -113,7 +113,7 @@ workflow RIBOSEQ {
     HISAT2_BUILD_transcriptome (
         ch_transcriptome_fasta.map { [ [:], it ] },
         ch_gtf.map { [ [:], it ] },
-        ch_splicesites.txt
+        ch_splicesites.txt.first()
     )
     ch_hisat2_index_transcriptome = HISAT2_BUILD_transcriptome.out.index.first()
 
@@ -190,7 +190,7 @@ workflow RIBOSEQ {
     HISAT2_ALIGN_transcriptome (
         ch_unaligned_reads,
         ch_hisat2_index_transcriptome,
-        ch_splicesites.txt
+        ch_splicesites.txt.first()
     )
     ch_hisat2_transcriptome_multiqc = HISAT2_ALIGN_transcriptome.out.summary
 
