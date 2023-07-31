@@ -226,14 +226,14 @@ workflow RIBOSEQ {
     // MODULE: Run CUSTOM_GETCHROMSIZES 
     //
     CUSTOM_GETCHROMSIZES (
-        ch_transcriptome_fasta
+        ch_transcriptome_fasta.map { [ [:], it ] }
     )
 
     // MODULE: Run BEDTOOLS_GENOMECOV
     //
     BEDTOOLS_GENOMECOV (
         UMITOOLS_DEDUP.out.bam,
-        CUSTOM_GETCHROMSIZES.out.sizes    
+        CUSTOM_GETCHROMSIZES.out.sizes.map { [ [:], it ] }     
     )
     
     // MODULE: Run BEDTOOLS_BAMTOBED
