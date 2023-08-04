@@ -55,7 +55,7 @@ include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_transcriptome; SAMTOOLS_INDEX as SAMT
 include { UMITOOLS_DEDUP                                                                } from '../modules/nf-core/umitools/dedup/main'
 include { CUSTOM_GETCHROMSIZES                                                          } from '../modules/nf-core/custom/getchromsizes/main'                                              
 include { BEDTOOLS_BAMTOBED                                                             } from '../modules/nf-core/bedtools/bamtobed/main'                          
-include { BEDTOOLS_GENOMECOV                                                            } from '../modules/nf-core/bedtools/genomecov/main'                                  
+include { BEDTOOLS_GENOMECOV as BEDTOOLS_GENOMECOV_positive; BEDTOOLS_GENOMECOV as BEDTOOLS_GENOMECOV_negative } from '../modules/nf-core/bedtools/genomecov/main'                                  
 include { SUBREAD_FEATURECOUNTS                                                         } from '../modules/nf-core/subread/featurecounts/main'                                                  
 include { MULTIQC                                                                       } from '../modules/nf-core/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS                                                   } from '../modules/nf-core/custom/dumpsoftwareversions/main'
@@ -236,10 +236,19 @@ workflow RIBOSEQ {
         row -> [ row[0], row[1], 1 ]
     }
     ch_bam_scale.view()
-    BEDTOOLS_GENOMECOV (
-        UMITOOLS_DEDUP.out.bam,
-        CUSTOM_GETCHROMSIZES.out.sizes    
+    BEDTOOLS_GENOMECOV_positive (
+        ch_bam_scale,
+        CUSTOM_GETCHROMSIZES.out.sizes.first().map { it[1] },
+        '.bedgraph'    
     )
+
+    // MODULE: Run BEDTOOLS_GENOMECOV
+    //
+    BEDTOOLS_GENOMECOV_negative (
+        ch_bam_scale,
+        CUSTOM_GETCHROMSIZES.out.sizes.first().map { it[1] },
+        '.bedgraph'    
+    )    
     
     // MODULE: Run BEDTOOLS_BAMTOBED
     //
