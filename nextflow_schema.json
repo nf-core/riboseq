@@ -2,7 +2,7 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/nf-core/riboseq/master/nextflow_schema.json",
     "title": "nf-core/riboseq pipeline parameters",
-    "description": "improved riboseq pipeline using the advanced features of nextflow DSL2 and nf-core guidelines",
+    "description": "Analysis of ribosome profiling, or Ribo-Seq (also named ribosome footprinting)",
     "type": "object",
     "definitions": {
         "input_output_options": {
@@ -17,7 +17,6 @@
                     "format": "file-path",
                     "exists": true,
                     "mimetype": "text/csv",
-                    "schema": "assets/schema_input.json",
                     "pattern": "^\\S+\\.csv$",
                     "description": "Path to comma-separated file containing information about the samples in the experiment.",
                     "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row. See [usage docs](https://nf-co.re/riboseq/usage#samplesheet-input).",
@@ -65,164 +64,15 @@
                     "help_text": "This parameter is *mandatory* if `--genome` is not specified. If you don't have a BWA index available this will be generated for you automatically. Combine with `--save_reference` to save BWA index for future runs.",
                     "fa_icon": "far fa-file-code"
                 },
-                "igenomes_base": {
-                    "type": "string",
-                    "format": "directory-path",
-                    "description": "Directory / URL base for iGenomes references.",
-                    "default": "s3://ngi-igenomes/igenomes",
-                    "fa_icon": "fas fa-cloud-download-alt",
-                    "hidden": true
-                },
                 "igenomes_ignore": {
                     "type": "boolean",
                     "description": "Do not load the iGenomes reference config.",
                     "fa_icon": "fas fa-ban",
                     "hidden": true,
                     "help_text": "Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`."
-                },
-                "genome_fasta": {
-                    "type": "string",
-                    "format": "file-path",
-                    "exists": true,
-                    "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
-                    "description": "Path to FASTA genome file."
-                },
-                "transcriptome_fasta": {
-                    "type": "string",
-                    "format": "file-path",
-                    "exists": true,
-                    "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
-                    "description": "Path to FASTA transcriptome file."
-                },
-                "gtf": {
-                    "type": "string",
-                    "format": "file-path",
-                    "exists": true,
-                    "pattern": "^\\S+\\.gtf$",
-                    "description": "Path to gtf files"
-                },
-                "splicesites": {
-                    "type": "string",
-                    "format": "file-path",
-                    "mimetype": "text/plain",
-                    "fa_icon": "fas fa-hand-scissors",
-                    "description": "Splice sites file required for HISAT2."
-                },
-                "rRNA_fasta": {
-                    "type": "string",
-                    "format": "file-path",
-                    "exists": true,
-                    "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
-                    "description": "Path to FASTA rRNA file."
-                }, 
-                "riboviz_index": {
-                    "type": "string",
-                    "format": "dir-path",
-                    "exists": true,
-                    "description": "Path to directory containing index rRNA files from riboviz pipeline." 
-                } 
-            }
-        },
-        "Indexing": {
-            "title": "Building indexes",
-            "type": "object",
-            "description": "Building indexes for alignement.",
-            "required": ["build_indices"],
-            "properties": { 
-                "build_indices": {
-                    "type": "boolean",
-                    "default": "true"
-                }
-            }    
-        },
-        "Trimming_options": {
-            "title": "adapter trimming options",
-            "type": "object",
-            "description": "adapter sequence trimming required in the workflow.",
-            "required": ["adapter_sequence"],
-            "properties": {   
-                "adapter_sequence": {
-                    "default": "AGATCGGAAGAGCACACGTCTGAA"
-                },
-                "single_end": {
-                    "type": "boolean",
-                    "meta": ["single_end"]
-                }
-            }    
-        },
-        "umi_options": {
-            "title": "UMI options",
-            "type": "object",
-            "description": "Options for processing reads with unique molecular identifiers",
-            "default": "",
-            "properties": {
-                "with_umi": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-barcode",
-                    "description": "Enable UMI-based read deduplication."
-                },
-                "umitools_extract_method": {
-                    "type": "string",
-                    "default": "string",
-                    "fa_icon": "fas fa-barcode",
-                    "description": "UMI pattern to use. Can be either 'string' (default) or 'regex'.",
-                    "help_text": "More details can be found in the [UMI-tools documentation](https://umi-tools.readthedocs.io/en/latest/reference/extract.html#extract-method).\n"
-                },
-                "skip_umi_extract": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-compress-alt",
-                    "description": "Skip the UMI extraction from the read in case the UMIs have been moved to the headers in advance of the pipeline run."
-                },
-                "umi_regexp": {
-                    "type": "string",
-                    "description": "Regular expression pattern for UMI extraction",
-                    "default": ".*(?P<umi_1>.{5})(?P<discard_1>.{5})$",
-                    "fa_icon": "fas fa-vial",
-                    "help_text": "The regular expression pattern used to extract UMIs from the reads. The pattern must include 'Ns' for the UMIs (Unique Molecular Identifiers) and can optionally include 'Bs' for the barcodes used for demultiplexing. The value of `umi_regexp` is expected to be a string that represents this pattern."
-                  },
-                  
-                "umitools_dedup_stats": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-barcode",
-                    "help_text": "It can be quite time consuming generating these output stats - see [#827](https://github.com/nf-core/rnaseq/issues/827).",
-                    "description": "Generate output stats when running \"umi_tools dedup\"."
                 }
             }
         },
-        "Alignment_options": {
-            "title": "Alignment options using HISAT2_align",
-            "type": "object",
-            "description": "Aligning the fastq files to transcriptome and rRNA.",
-            "required": ["transcriptome_index"],
-            "properties": {
-                "aligner": {
-                    "type": "string",
-                    "default": "star_salmon",
-                    "description": "Specifies the alignment algorithm to use - available options are 'star_salmon', 'star_rsem' and 'hisat2'.",
-                    "fa_icon": "fas fa-map-signs",
-                    "enum": ["hisat2"]
-                },
-                "skip_alignment": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-fast-forward",
-                    "description": "Skip all of the alignment-based processes within the pipeline."
-                },
-                "seq_center": {
-                    "type": "string",
-                    "description": "Sequencing center information to be added to read group of BAM files.",
-                    "fa_icon": "fas fa-synagogue"
-                },
-                "save_unaligned": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-save",
-                    "description": "Where possible, save unaligned reads from either STAR, HISAT2 or Salmon to the results directory.",
-                    "help_text": "This may either be in the form of FastQ or BAM files depending on the options available for that particular tool."
-                }
-            }
-        },    
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
@@ -317,14 +167,12 @@
                     "type": "boolean",
                     "description": "Display help text.",
                     "fa_icon": "fas fa-question-circle",
-                    "default": false,
                     "hidden": true
                 },
                 "version": {
                     "type": "boolean",
                     "description": "Display version and exit.",
                     "fa_icon": "fas fa-question-circle",
-                    "default": false,
                     "hidden": true
                 },
                 "publish_dir_mode": {
@@ -348,7 +196,6 @@
                     "type": "boolean",
                     "description": "Send plain-text email instead of HTML.",
                     "fa_icon": "fas fa-remove-format",
-                    "default": false,
                     "hidden": true
                 },
                 "max_multiqc_email_size": {
@@ -363,7 +210,6 @@
                     "type": "boolean",
                     "description": "Do not use coloured log outputs.",
                     "fa_icon": "fas fa-palette",
-                    "default": false,
                     "hidden": true
                 },
                 "hook_url": {
@@ -402,7 +248,6 @@
                     "type": "boolean",
                     "fa_icon": "far fa-eye-slash",
                     "description": "Show all params when using `--help`",
-                    "default": false,
                     "hidden": true,
                     "help_text": "By default, parameters set as _hidden_ in the schema are not shown on the command line when a user runs with `--help`. Specifying this option will tell the pipeline to show all parameters."
                 },
@@ -410,7 +255,6 @@
                     "type": "boolean",
                     "fa_icon": "far fa-check-circle",
                     "description": "Validation of parameters fails when an unrecognised parameter is found.",
-                    "default": false,
                     "hidden": true,
                     "help_text": "By default, when an unrecognised parameter is found, it returns a warinig."
                 },
@@ -418,7 +262,6 @@
                     "type": "boolean",
                     "fa_icon": "far fa-check-circle",
                     "description": "Validation of parameters in lenient more.",
-                    "default": false,
                     "hidden": true,
                     "help_text": "Allows string values that are parseable as numbers or booleans. For further information see [JSONSchema docs](https://github.com/everit-org/json-schema#lenient-mode)."
                 }
