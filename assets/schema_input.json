@@ -10,35 +10,27 @@
             "sample": {
                 "type": "string",
                 "pattern": "^\\S+$",
-                "errorMessage": "Sample name must be provided and cannot contain spaces",
-                "meta": ["id"]
+                "errorMessage": "Sample name must be provided and cannot contain spaces"
             },
-            "fastq": {
+            "fastq_1": {
                 "type": "string",
-                "format": "file-path",
-                "exists": true,
                 "pattern": "^\\S+\\.f(ast)?q\\.gz$",
-                "errorMessage": "FastQ file must be provided, cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
+                "errorMessage": "FastQ file for reads 1 must be provided, cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
             },
-            "library_type": {
-               "type": "string",
-               "pattern": "^\\S+$",
-               "errorMessage": "Sample name must be provided and cannot contain spaces",
-               "meta": ["library_type"]
-              },
-              "replicate": {
-                "type": "integer",
-                "errorMessage": "replicate must be provided and be one of 1, 2, 3",
-                "enum": [1, 2, 3],
-                "meta": ["replicate"]
-              },
-              "single_end": {
-                "type": "boolean",
-                "errorMessage": "single_end must be provided and be either true (for single-end data) or false (for paired-end data)",
-                "meta": ["single_end"]
-              } 
-              
-            },
-            "required": ["sample", "fastq", "library_type", "replicate","single_end"]
-          }
-        }
+            "fastq_2": {
+                "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'",
+                "anyOf": [
+                    {
+                        "type": "string",
+                        "pattern": "^\\S+\\.f(ast)?q\\.gz$"
+                    },
+                    {
+                        "type": "string",
+                        "maxLength": 0
+                    }
+                ]
+            }
+        },
+        "required": ["sample", "fastq_1"]
+    }
+}
