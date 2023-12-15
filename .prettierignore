@@ -2,6 +2,7 @@ email_template.html
 adaptivecard.json
 slackreport.json
 .nextflow*
+.nf-test*
 work/
 data/
 results/

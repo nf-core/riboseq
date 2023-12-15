@@ -53,6 +53,8 @@ jobs:
         tags: ${{ fromJson(needs.changes.outputs.tags) }}
         profile:
           - "docker"
+        exclude:
+          - tags: "custom/dumpsoftwareversions"
 
     steps:
       - name: Check out pipeline code
