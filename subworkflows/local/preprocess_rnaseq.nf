@@ -3,6 +3,7 @@ include { FASTQC                      } from '../../modules/nf-core/fastqc/main'
 include { SORTMERNA                   } from '../../modules/nf-core/sortmerna/main'
 
 include { FASTQ_SUBSAMPLE_FQ_SALMON        } from '../../subworkflows/nf-core/fastq_subsample_fq_salmon'
+include { FASTQ_FASTQC_UMITOOLS_TRIMGALORE } from '../../subworkflows/nf-core/fastq_fastqc_umitools_trimgalore'
 
 workflow PREPROCESS_RNASEQ {
 
@@ -65,55 +66,12 @@ workflow PREPROCESS_RNASEQ {
         ch_versions = ch_versions.mix(SORTMERNA.out.versions.first())
     } 
 
-    // Branch FastQ channels if 'auto' specified to infer strandedness
-    ch_filtered_reads
-        .branch {
-            meta, fastq ->
-                auto_strand : meta.strandedness == 'auto'
-                    return [ meta, fastq ]
-                known_strand: meta.strandedness != 'auto'
-                    return [ meta, fastq ]
-        }
-        .set { ch_strand_fastq }
-
-    //
-    // SUBWORKFLOW: Sub-sample FastQ files and pseudoalign with Salmon to auto-infer strandedness
-    //
-    // Return empty channel if ch_strand_fastq.auto_strand is empty so salmon index isn't created
-    ch_fasta
-        .combine(ch_strand_fastq.auto_strand)
-        .map { it.first() }
-        .first()
-        .set { ch_genome_fasta }
-
-    ch_strand_fastq.auto_strand.view()
-    ch_strand_fastq.known_strand.view()
-
-    FASTQ_SUBSAMPLE_FQ_SALMON (
-        ch_strand_fastq.auto_strand,
-        ch_genome_fasta,
-        ch_transcript_fasta,
-        ch_gtf,
-        ch_salmon_index,       
-        make_salmon_index
-    )
-    ch_versions = ch_versions.mix(FASTQ_SUBSAMPLE_FQ_SALMON.out.versions)
-
-    FASTQ_SUBSAMPLE_FQ_SALMON
-        .out
-        .json_info
-        .join(ch_strand_fastq.auto_strand)
-        .map { meta, json, reads ->
-            return [ meta + [ strandedness: WorkflowRnaseq.getSalmonInferredStrandedness(json) ], reads ]
-        }
-        .mix(ch_strand_fastq.known_strand)
-
     //
     // SUBWORKFLOW: Read QC, extract UMI and trim adapters with TrimGalore!
     //
     if (params.trimmer == 'trimgalore') {
         FASTQ_FASTQC_UMITOOLS_TRIMGALORE (
-            ch_strand_inferred_fastq,
+            ch_filtered_reads,
             params.skip_fastqc || params.skip_qc,
             params.with_umi,
             params.skip_umi_extract,
@@ -134,7 +92,7 @@ workflow PREPROCESS_RNASEQ {
     //
     if (params.trimmer == 'fastp') {
         FASTQ_FASTQC_UMITOOLS_FASTP (
-            ch_strand_inferred_fastq,
+            ch_filtered_reads,
             params.skip_fastqc || params.skip_qc,
             params.with_umi,
             params.skip_umi_extract,
@@ -188,6 +146,51 @@ workflow PREPROCESS_RNASEQ {
         .set { ch_filtered_reads }
         ch_versions = ch_versions.mix(BBMAP_BBSPLIT.out.versions.first())
     }
+    
+    // Branch FastQ channels if 'auto' specified to infer strandedness
+    ch_filtered_reads
+        .branch {
+            meta, fastq ->
+                auto_strand : meta.strandedness == 'auto'
+                    return [ meta, fastq ]
+                known_strand: meta.strandedness != 'auto'
+                    return [ meta, fastq ]
+        }
+        .set { ch_strand_fastq }
+
+    //
+    // SUBWORKFLOW: Sub-sample FastQ files and pseudoalign with Salmon to auto-infer strandedness
+    //
+    // Return empty channel if ch_strand_fastq.auto_strand is empty so salmon index isn't created
+    
+    ch_fasta
+        .combine(ch_strand_fastq.auto_strand)
+        .map { it.first() }
+        .first()
+        .set { ch_genome_fasta }
+
+    ch_strand_fastq.auto_strand.view()
+    ch_strand_fastq.known_strand.view()
+
+    FASTQ_SUBSAMPLE_FQ_SALMON (
+        ch_strand_fastq.auto_strand,
+        ch_genome_fasta,
+        ch_transcript_fasta,
+        ch_gtf,
+        ch_salmon_index,       
+        make_salmon_index
+    )
+    ch_versions = ch_versions.mix(FASTQ_SUBSAMPLE_FQ_SALMON.out.versions)
+
+    FASTQ_SUBSAMPLE_FQ_SALMON
+        .out
+        .json_info
+        .join(ch_strand_fastq.auto_strand)
+        .map { meta, json, reads ->
+            return [ meta + [ strandedness: WorkflowRnaseq.getSalmonInferredStrandedness(json) ], reads ]
+        }
+        .mix(ch_strand_fastq.known_strand)
+        .set { ch_strand_inferred_fastq }
 
     emit:
 
