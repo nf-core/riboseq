@@ -129,7 +129,7 @@ workflow PREPROCESS_RNASEQ {
         .map {
             tsv_data ->
                 def header = ["Sample", "Reads after trimming"]
-                WorkflowRnaseq.multiqcTsvFromList(tsv_data, header)
+                WorkflowRiboseq.multiqcTsvFromList(tsv_data, header)
         }
         .set { ch_fail_trimming_multiqc }
 
@@ -189,7 +189,7 @@ workflow PREPROCESS_RNASEQ {
         .json_info
         .join(ch_strand_fastq.auto_strand)
         .map { meta, json, reads ->
-            return [ meta + [ strandedness: WorkflowRnaseq.getSalmonInferredStrandedness(json) ], reads ]
+            return [ meta + [ strandedness: WorkflowRiboseq.getSalmonInferredStrandedness(json) ], reads ]
         }
         .mix(ch_strand_fastq.known_strand)
         .set { ch_strand_inferred_fastq }
