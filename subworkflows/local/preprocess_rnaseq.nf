@@ -5,6 +5,8 @@ include { SORTMERNA                   } from '../../modules/nf-core/sortmerna/ma
 include { FASTQ_SUBSAMPLE_FQ_SALMON        } from '../../subworkflows/nf-core/fastq_subsample_fq_salmon'
 include { FASTQ_FASTQC_UMITOOLS_TRIMGALORE } from '../../subworkflows/nf-core/fastq_fastqc_umitools_trimgalore'
 
+def pass_trimmed_reads = [:]
+
 workflow PREPROCESS_RNASEQ {
 
     take:
