@@ -1,3 +1,5 @@
+import groovy.json.JsonSlurper
+
 include { CAT_FASTQ } from '../../modules/nf-core/cat/fastq/main' 
 include { FASTQC                      } from '../../modules/nf-core/fastqc/main'
 include { SORTMERNA                   } from '../../modules/nf-core/sortmerna/main'
@@ -6,6 +8,33 @@ include { FASTQ_SUBSAMPLE_FQ_SALMON        } from '../../subworkflows/nf-core/fa
 include { FASTQ_FASTQC_UMITOOLS_TRIMGALORE } from '../../subworkflows/nf-core/fastq_fastqc_umitools_trimgalore'
 
 def pass_trimmed_reads = [:]
+
+public static String getSalmonInferredStrandedness(json_file) {
+    def lib_type = new JsonSlurper().parseText(json_file.text).get('library_types')[0]
+    def strandedness = 'reverse'
+    if (lib_type) {
+        if (lib_type in ['U', 'IU']) {
+            strandedness = 'unstranded'
+        } else if (lib_type in ['SF', 'ISF']) {
+            strandedness = 'forward'
+        } else if (lib_type in ['SR', 'ISR']) {
+            strandedness = 'reverse'
+        }
+    }
+    return strandedness
+}
+
+//      
+// Create MultiQC tsv custom content from a list of values
+//
+public static String multiqcTsvFromList(tsv_data, header) {
+    def tsv_string = "" 
+    if (tsv_data.size() > 0) {
+        tsv_string += "${header.join('\t')}\n"
+        tsv_string += tsv_data.join('\n')
+    }       
+    return tsv_string
+}  
 
 workflow PREPROCESS_RNASEQ {
 
@@ -18,15 +47,14 @@ workflow PREPROCESS_RNASEQ {
     ch_bbsplit_index
     make_salmon_index
     ch_ribo_db
+    trimmer
 
     main:
 
     ch_versions = Channel.empty()
     ch_filtered_reads      = Channel.empty()
-    ch_fastqc_raw_multiqc  = Channel.empty()
-    ch_fastqc_trim_multiqc = Channel.empty()
-    ch_trim_log_multiqc    = Channel.empty()
     ch_trim_read_count     = Channel.empty()
+    ch_multiqc_files       = Channel.empty()
 
     ch_fastq_in
         .branch {
@@ -47,13 +75,12 @@ workflow PREPROCESS_RNASEQ {
     .reads
     .mix(ch_fastq.single)
     .set { ch_filtered_reads }
-    
+
     ch_versions = ch_versions.mix(CAT_FASTQ.out.versions.first().ifEmpty(null))
 
     //
     // MODULE: Remove ribosomal RNA reads
     //
-    ch_sortmerna_multiqc = Channel.empty()
     if (params.remove_ribo_rna) {
         ch_sortmerna_fastas = Channel.from(ch_ribo_db.readLines()).map { row -> file(row, checkIfExists: true) }.collect()
 
@@ -64,14 +91,15 @@ workflow PREPROCESS_RNASEQ {
         .reads
         .set { ch_filtered_reads }
 
-        ch_sortmerna_multiqc = SORTMERNA.out.log
+        ch_multiqc_files = ch_multiqc_files.mix(SORTMERNA.out.log.map{it[1]})
+
         ch_versions = ch_versions.mix(SORTMERNA.out.versions.first())
     } 
 
     //
     // SUBWORKFLOW: Read QC, extract UMI and trim adapters with TrimGalore!
     //
-    if (params.trimmer == 'trimgalore') {
+    if (trimmer == 'trimgalore') {
         FASTQ_FASTQC_UMITOOLS_TRIMGALORE (
             ch_filtered_reads,
             params.skip_fastqc || params.skip_qc,
@@ -82,17 +110,20 @@ workflow PREPROCESS_RNASEQ {
             params.min_trimmed_reads
         )
         ch_filtered_reads      = FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.reads
-        ch_fastqc_raw_multiqc  = FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.fastqc_zip
-        ch_fastqc_trim_multiqc = FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.trim_zip
-        ch_trim_log_multiqc    = FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.trim_log
         ch_trim_read_count     = FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.trim_read_count
+        
         ch_versions = ch_versions.mix(FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.versions)
+        ch_multiqc_files = FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.fastqc_zip
+            .mix(FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.trim_zip) 
+            .mix(FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.trim_log)
+            .map{it[1]}
+            .mix(ch_multiqc_files) 
     }
 
     //
     // SUBWORKFLOW: Read QC, extract UMI and trim adapters with fastp
     //
-    if (params.trimmer == 'fastp') {
+    if (trimmer == 'fastp') {
         FASTQ_FASTQC_UMITOOLS_FASTP (
             ch_filtered_reads,
             params.skip_fastqc || params.skip_qc,
@@ -106,16 +137,20 @@ workflow PREPROCESS_RNASEQ {
             params.min_trimmed_reads
         )
         ch_filtered_reads      = FASTQ_FASTQC_UMITOOLS_FASTP.out.reads
-        ch_fastqc_raw_multiqc  = FASTQ_FASTQC_UMITOOLS_FASTP.out.fastqc_raw_zip
-        ch_fastqc_trim_multiqc = FASTQ_FASTQC_UMITOOLS_FASTP.out.fastqc_trim_zip
-        ch_trim_log_multiqc    = FASTQ_FASTQC_UMITOOLS_FASTP.out.trim_json
         ch_trim_read_count     = FASTQ_FASTQC_UMITOOLS_FASTP.out.trim_read_count
         ch_versions = ch_versions.mix(FASTQ_FASTQC_UMITOOLS_FASTP.out.versions)
+        
+        ch_multiqc_files = FASTQ_FASTQC_UMITOOLS_FASTP.out.fastqc_zip
+            .mix(FASTQ_FASTQC_UMITOOLS_FASTP.out.trim_zip) 
+            .mix(FASTQ_FASTQC_UMITOOLS_FASTP.out.trim_log)
+            .map{it[1]}
+            .mix(ch_multiqc_files) 
     }
-
+    
     //
     // Get list of samples that failed trimming threshold for MultiQC report
     //
+
     ch_trim_read_count
         .map {
             meta, num_reads ->
@@ -129,9 +164,14 @@ workflow PREPROCESS_RNASEQ {
         .map {
             tsv_data ->
                 def header = ["Sample", "Reads after trimming"]
-                WorkflowRiboseq.multiqcTsvFromList(tsv_data, header)
+                multiqcTsvFromList(tsv_data, header)
         }
         .set { ch_fail_trimming_multiqc }
+        
+    ch_multiqc_files = ch_multiqc_files
+        .mix( 
+            ch_fail_trimming_multiqc.collectFile(name: 'fail_trimmed_samples_mqc.tsv').ifEmpty([])
+         )
 
     //
     // MODULE: Remove genome contaminant reads
@@ -171,9 +211,6 @@ workflow PREPROCESS_RNASEQ {
         .first()
         .set { ch_genome_fasta }
 
-    ch_strand_fastq.auto_strand.view()
-    ch_strand_fastq.known_strand.view()
-
     FASTQ_SUBSAMPLE_FQ_SALMON (
         ch_strand_fastq.auto_strand,
         ch_genome_fasta,
@@ -189,13 +226,17 @@ workflow PREPROCESS_RNASEQ {
         .json_info
         .join(ch_strand_fastq.auto_strand)
         .map { meta, json, reads ->
-            return [ meta + [ strandedness: WorkflowRiboseq.getSalmonInferredStrandedness(json) ], reads ]
+            return [ meta + [ strandedness: getSalmonInferredStrandedness(json) ], reads ]
         }
         .mix(ch_strand_fastq.known_strand)
         .set { ch_strand_inferred_fastq }
 
     emit:
 
-    versions = ch_versions                     // channel: [ versions.yml ]
+    reads           = ch_strand_inferred_fastq
+    trim_read_count = ch_trim_read_count
+    
+    multiqc_files   = ch_multiqc_files
+    versions        = ch_versions                     // channel: [ versions.yml ]
 }
 
