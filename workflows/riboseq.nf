@@ -188,20 +188,25 @@ workflow RIBOSEQ {
         }
         .set { ch_fastq }
 
-    //
-    // SUBWORKFLOW: preprocess using same methodology as RNA-seq
-    //
-
     PREPROCESS_RNASEQ (
         ch_fastq,
         PREPARE_GENOME.out.fasta,
         PREPARE_GENOME.out.transcript_fasta,
         PREPARE_GENOME.out.gtf,
         PREPARE_GENOME.out.salmon_index,
-        PREPARE_GENOME.out.bbsplit_index,
         !params.salmon_index && !('salmon' in prepareToolIndices),
+        params.skip_bbsplit,
+        PREPARE_GENOME.out.bbsplit_index,
+        params.skip_fastqc || params.skip_qc,        
+        params.skip_trimming,
+        params.trimmer,
+        params.min_trimmed_reads,
+        params.save_trimmed,
+        params.remove_ribo_rna,
         ch_ribo_db,
-        params.trimmer
+        params.with_umi,
+        params.skip_umi_extract,
+        params.umi_discard_read
     )
     ch_multiqc_files = ch_multiqc_files.mix(PREPROCESS_RNASEQ.out.multiqc_files)
     ch_versions      = ch_versions.mix(PREPROCESS_RNASEQ.out.versions)

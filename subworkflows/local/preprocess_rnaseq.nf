@@ -1,11 +1,12 @@
 import groovy.json.JsonSlurper
 
 include { CAT_FASTQ } from '../../modules/nf-core/cat/fastq/main' 
-include { FASTQC                      } from '../../modules/nf-core/fastqc/main'
-include { SORTMERNA                   } from '../../modules/nf-core/sortmerna/main'
+include { FASTQC    } from '../../modules/nf-core/fastqc/main'
+include { SORTMERNA } from '../../modules/nf-core/sortmerna/main'
 
 include { FASTQ_SUBSAMPLE_FQ_SALMON        } from '../../subworkflows/nf-core/fastq_subsample_fq_salmon'
 include { FASTQ_FASTQC_UMITOOLS_TRIMGALORE } from '../../subworkflows/nf-core/fastq_fastqc_umitools_trimgalore'
+include { FASTQ_FASTQC_UMITOOLS_FASTP      } from '../../subworkflows/nf-core/fastq_fastqc_umitools_fastp'
 
 def pass_trimmed_reads = [:]
 
@@ -39,15 +40,24 @@ public static String multiqcTsvFromList(tsv_data, header) {
 workflow PREPROCESS_RNASEQ {
 
     take:
-    ch_fastq_in // channel: [ val(meta), [ fastq ] ]
-    ch_fasta
-    ch_transcript_fasta
-    ch_gtf
-    ch_salmon_index    
-    ch_bbsplit_index
-    make_salmon_index
-    ch_ribo_db
-    trimmer
+    ch_reads            // channel: [ val(meta), [ reads ] ]
+    ch_fasta            // channel: /path/to/genome.fasta  
+    ch_transcript_fasta // channel: /path/to/transcript.fasta
+    ch_gtf              // channel: /path/to/genome.gtf
+    make_salmon_index   // boolean: Whether to create salmon index before running salmon quant
+    ch_salmon_index     // channel: /path/to/salmon/index/ (optional)
+    skip_bbsplit        // boolean: Skip BBSplit for removal of non-reference genome reads.
+    ch_bbsplit_index    // channel: /path/to/bbsplit/index/ (optional)
+    skip_fastqc         // boolean: true/false
+    skip_trimming       // boolean: true/false
+    trimmer             // string: 'fastp' or 'trimgalore'
+    min_trimmed_reads   // integer: > 0
+    save_trimmed        // boolean: true/false
+    remove_ribo_rna     // boolean: true/false: whether to run sortmerna to remove rrnas
+    ch_ribo_db          // Text file containing paths to fasta files (one per line) that will be used to create the database for SortMeRNA. (optional)
+    with_umi            // boolean: true/false: Enable UMI-based read deduplication.
+    skip_umi_extract    // boolean: true/false
+    umi_discard_read    // integer: 0, 1 or 2
 
     main:
 
@@ -56,7 +66,7 @@ workflow PREPROCESS_RNASEQ {
     ch_trim_read_count     = Channel.empty()
     ch_multiqc_files       = Channel.empty()
 
-    ch_fastq_in
+    ch_reads
         .branch {
             meta, fastqs ->
                 single  : fastqs.size() == 1
@@ -81,7 +91,7 @@ workflow PREPROCESS_RNASEQ {
     //
     // MODULE: Remove ribosomal RNA reads
     //
-    if (params.remove_ribo_rna) {
+    if (remove_ribo_rna) {
         ch_sortmerna_fastas = Channel.from(ch_ribo_db.readLines()).map { row -> file(row, checkIfExists: true) }.collect()
 
         SORTMERNA (
@@ -102,12 +112,12 @@ workflow PREPROCESS_RNASEQ {
     if (trimmer == 'trimgalore') {
         FASTQ_FASTQC_UMITOOLS_TRIMGALORE (
             ch_filtered_reads,
-            params.skip_fastqc || params.skip_qc,
-            params.with_umi,
-            params.skip_umi_extract,
-            params.skip_trimming,
-            params.umi_discard_read,
-            params.min_trimmed_reads
+            skip_fastqc,
+            with_umi,
+            skip_umi_extract,
+            skip_trimming,
+            umi_discard_read,
+            min_trimmed_reads
         )
         ch_filtered_reads      = FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.reads
         ch_trim_read_count     = FASTQ_FASTQC_UMITOOLS_TRIMGALORE.out.trim_read_count
@@ -126,15 +136,15 @@ workflow PREPROCESS_RNASEQ {
     if (trimmer == 'fastp') {
         FASTQ_FASTQC_UMITOOLS_FASTP (
             ch_filtered_reads,
-            params.skip_fastqc || params.skip_qc,
-            params.with_umi,
-            params.skip_umi_extract,
-            params.umi_discard_read,
-            params.skip_trimming,
+            skip_fastqc,
+            with_umi,
+            skip_umi_extract,
+            umi_discard_read,
+            skip_trimming,
             [],
-            params.save_trimmed,
-            params.save_trimmed,
-            params.min_trimmed_reads
+            save_trimmed,
+            save_trimmed,
+            min_trimmed_reads
         )
         ch_filtered_reads      = FASTQ_FASTQC_UMITOOLS_FASTP.out.reads
         ch_trim_read_count     = FASTQ_FASTQC_UMITOOLS_FASTP.out.trim_read_count
@@ -155,7 +165,7 @@ workflow PREPROCESS_RNASEQ {
         .map {
             meta, num_reads ->
                 pass_trimmed_reads[meta.id] = true
-                if (num_reads <= params.min_trimmed_reads.toFloat()) {
+                if (num_reads <= min_trimmed_reads.toFloat()) {
                     pass_trimmed_reads[meta.id] = false
                     return [ "$meta.id\t$num_reads" ]
                 }
@@ -176,7 +186,7 @@ workflow PREPROCESS_RNASEQ {
     //
     // MODULE: Remove genome contaminant reads
     //
-    if (!params.skip_bbsplit) {
+    if (!skip_bbsplit) {
         BBMAP_BBSPLIT (
             ch_filtered_reads,
             ch_bbsplit_index,
