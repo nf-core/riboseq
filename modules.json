@@ -121,7 +121,7 @@
                 "nf-core": {
                     "fastq_subsample_fq_salmon": {
                         "branch": "master",
-                        "git_sha": "c5ef823ea08007ee393baa7a172913d1ad1de457",
+                        "git_sha": "bdfd7bc8d2e5a93531e14bd94c4128d9a72a2435",
                         "installed_by": ["subworkflows"]
                     }
                 }
