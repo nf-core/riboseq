@@ -92,7 +92,7 @@
                     },
                     "sortmerna": {
                         "branch": "master",
-                        "git_sha": "a20b6b1e9114a08007608528e4a2b0fbbb8a9ca2",
+                        "git_sha": "ce558e30784469b88a16923ca96d81899d240b42",
                         "installed_by": ["modules"]
                     },
                     "star/genomegenerate": {
