@@ -27,7 +27,7 @@
                     },
                     "cutadapt": {
                         "branch": "master",
-                        "git_sha": "07881e42938b4f0070e864b45d424b01745bc3a4",
+                        "git_sha": "003920c7f9a8ae19b69a97171922880220bedf56",
                         "installed_by": ["modules"]
                     },
                     "fastp": {
@@ -87,17 +87,17 @@
                     },
                     "salmon/quant": {
                         "branch": "master",
-                        "git_sha": "ce801ced94947b2ff01002b4120eef2f79489b34",
+                        "git_sha": "003920c7f9a8ae19b69a97171922880220bedf56",
                         "installed_by": ["fastq_subsample_fq_salmon"]
                     },
                     "sortmerna": {
                         "branch": "master",
-                        "git_sha": "ce558e30784469b88a16923ca96d81899d240b42",
+                        "git_sha": "003920c7f9a8ae19b69a97171922880220bedf56",
                         "installed_by": ["preprocess_rnaseq"]
                     },
                     "star/genomegenerate": {
                         "branch": "master",
-                        "git_sha": "d87a6e2156c2099c09280fa70776eaf0a824817a",
+                        "git_sha": "003920c7f9a8ae19b69a97171922880220bedf56",
                         "installed_by": ["modules"]
                     },
                     "trimgalore": {
@@ -131,7 +131,7 @@
                     },
                     "fastq_subsample_fq_salmon": {
                         "branch": "master",
-                        "git_sha": "a4bceac1aecee5aa0a5dbc601baf0e2e61013fb2",
+                        "git_sha": "003920c7f9a8ae19b69a97171922880220bedf56",
                         "installed_by": ["preprocess_rnaseq"]
                     },
                     "preprocess_rnaseq": {
