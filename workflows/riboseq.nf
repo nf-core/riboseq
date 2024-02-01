@@ -106,7 +106,7 @@ ch_multiqc_custom_methods_description = params.multiqc_methods_description ? fil
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
 include { PREPARE_GENOME    } from '../subworkflows/local/prepare_genome'
-include { PREPROCESS_RNASEQ } from '../subworkflows/local/preprocess_rnaseq'
+include { PREPROCESS_RNASEQ } from '../subworkflows/nf-core/preprocess_rnaseq'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -194,18 +194,18 @@ workflow RIBOSEQ {
         PREPARE_GENOME.out.transcript_fasta,
         PREPARE_GENOME.out.gtf,
         PREPARE_GENOME.out.salmon_index,
-        !params.salmon_index && !('salmon' in prepareToolIndices),
-        params.skip_bbsplit,
         PREPARE_GENOME.out.bbsplit_index,
+        ch_ribo_db,
+        params.skip_bbsplit,
         params.skip_fastqc || params.skip_qc,        
         params.skip_trimming,
+        params.skip_umi_extract,
+        !params.salmon_index && !('salmon' in prepareToolIndices),
         params.trimmer,
         params.min_trimmed_reads,
         params.save_trimmed,
         params.remove_ribo_rna,
-        ch_ribo_db,
         params.with_umi,
-        params.skip_umi_extract,
         params.umi_discard_read
     )
     ch_multiqc_files = ch_multiqc_files.mix(PREPROCESS_RNASEQ.out.multiqc_files)
