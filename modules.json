@@ -95,6 +95,11 @@
                         "git_sha": "003920c7f9a8ae19b69a97171922880220bedf56",
                         "installed_by": ["preprocess_rnaseq"]
                     },
+                    "star/align": {
+                        "branch": "master",
+                        "git_sha": "1e2b7fb7106852388610c0360d234b0829eb980e",
+                        "installed_by": ["modules"]
+                    },
                     "star/genomegenerate": {
                         "branch": "master",
                         "git_sha": "003920c7f9a8ae19b69a97171922880220bedf56",
