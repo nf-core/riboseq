@@ -67,15 +67,15 @@ if (!params.skip_alignment) { prepareToolIndices << params.aligner }
 if (!params.skip_pseudo_alignment && params.pseudo_aligner) { prepareToolIndices << params.pseudo_aligner }
 
 // Determine whether to filter the GTF or not
-def filterGtf = 
+def filterGtf =
     ((
         // Condition 1: Alignment is required and aligner is set
         !params.skip_alignment && params.aligner
-    ) || 
+    ) ||
     (
         // Condition 2: Pseudoalignment is required and pseudoaligner is set
         !params.skip_pseudo_alignment && params.pseudo_aligner
-    ) || 
+    ) ||
     (
         // Condition 3: Transcript FASTA file is not provided
         !params.transcript_fasta
@@ -133,7 +133,7 @@ workflow RIBOSEQ {
 
     ch_versions      = Channel.empty()
     ch_multiqc_files = Channel.empty()
-    
+
     //
     // SUBWORKFLOW: Uncompress and prepare reference genome files
     //
@@ -197,7 +197,7 @@ workflow RIBOSEQ {
         PREPARE_GENOME.out.bbsplit_index,
         ch_ribo_db,
         params.skip_bbsplit,
-        params.skip_fastqc || params.skip_qc,        
+        params.skip_fastqc || params.skip_qc,
         params.skip_trimming,
         params.skip_umi_extract,
         !params.salmon_index && !('salmon' in prepareToolIndices),
