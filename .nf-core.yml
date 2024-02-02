@@ -5,4 +5,4 @@ lint:
     - .gitignore
   nextflow_config:
     - config_defaults:
-      - params.ribo_database_manifest
+        - params.ribo_database_manifest
