@@ -105,8 +105,9 @@ ch_multiqc_custom_methods_description = params.multiqc_methods_description ? fil
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { PREPARE_GENOME    } from '../subworkflows/local/prepare_genome'
-include { PREPROCESS_RNASEQ } from '../subworkflows/nf-core/preprocess_rnaseq'
+include { PREPARE_GENOME    }       from '../subworkflows/local/prepare_genome'
+include { PREPROCESS_RNASEQ }       from '../subworkflows/nf-core/preprocess_rnaseq'
+include { BAM_SORT_STATS_SAMTOOLS } from '../subworkflows/nf-core/bam_sort_stats_samtools/main'  
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -117,6 +118,7 @@ include { PREPROCESS_RNASEQ } from '../subworkflows/nf-core/preprocess_rnaseq'
 //
 // MODULE: Installed directly from nf-core/modules
 //
+include { STAR_ALIGN                  } from '../modules/nf-core/star/align'
 include { MULTIQC                     } from '../modules/nf-core/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
@@ -210,6 +212,42 @@ workflow RIBOSEQ {
     )
     ch_multiqc_files = ch_multiqc_files.mix(PREPROCESS_RNASEQ.out.multiqc_files)
     ch_versions      = ch_versions.mix(PREPROCESS_RNASEQ.out.versions)
+
+    //
+    // MODULE: star/align - produce both genomic and transriptomic alignments
+    //
+    PREPROCESS_RNASEQ.out.reads.view()
+
+    STAR_ALIGN ( 
+        PREPROCESS_RNASEQ.out.reads,
+        PREPARE_GENOME.out.star_index.map { [ [:], it ] }, 
+        PREPARE_GENOME.out.gtf.map { [ [:], it ] }, 
+        params.star_ignore_sjdbgtf, 
+        '', 
+        params.seq_center ?: ''
+    )
+ //   ch_orig_bam       = STAR_ALIGN.out.bam
+ //   ch_log_final      = STAR_ALIGN.out.log_final
+ //   ch_log_out        = STAR_ALIGN.out.log_out
+ //   ch_log_progress   = STAR_ALIGN.out.log_progress
+ //   ch_bam_sorted     = STAR_ALIGN.out.bam_sorted
+ //   ch_bam_transcript = STAR_ALIGN.out.bam_transcript
+ //   ch_fastq          = STAR_ALIGN.out.fastq
+ //   ch_tab            = STAR_ALIGN.out.tab
+ //   ch_versions       = ch_versions.mix(STAR_ALIGN.out.versions.first())
+
+    //
+    // Sort, index BAM file and run samtools stats, flagstat and idxstats
+    //
+//    BAM_SORT_STATS_SAMTOOLS ( 
+//        ch_orig_bam, 
+//        PREPARE_GENOME.out.fasta.map { [ [:], it ] } 
+//    )
+//    ch_versions = ch_versions.mix(BAM_SORT_STATS_SAMTOOLS.out.versions)
+
+    //
+    // Compile software versions
+    //
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
