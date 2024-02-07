@@ -226,24 +226,24 @@ workflow RIBOSEQ {
         '', 
         params.seq_center ?: ''
     )
- //   ch_orig_bam       = STAR_ALIGN.out.bam
- //   ch_log_final      = STAR_ALIGN.out.log_final
- //   ch_log_out        = STAR_ALIGN.out.log_out
- //   ch_log_progress   = STAR_ALIGN.out.log_progress
- //   ch_bam_sorted     = STAR_ALIGN.out.bam_sorted
- //   ch_bam_transcript = STAR_ALIGN.out.bam_transcript
- //   ch_fastq          = STAR_ALIGN.out.fastq
- //   ch_tab            = STAR_ALIGN.out.tab
- //   ch_versions       = ch_versions.mix(STAR_ALIGN.out.versions.first())
+    ch_orig_bam       = STAR_ALIGN.out.bam
+    ch_log_final      = STAR_ALIGN.out.log_final
+    ch_log_out        = STAR_ALIGN.out.log_out
+    ch_log_progress   = STAR_ALIGN.out.log_progress
+    ch_bam_sorted     = STAR_ALIGN.out.bam_sorted
+    ch_bam_transcript = STAR_ALIGN.out.bam_transcript
+    ch_fastq          = STAR_ALIGN.out.fastq
+    ch_tab            = STAR_ALIGN.out.tab
+    ch_versions       = ch_versions.mix(STAR_ALIGN.out.versions.first())
 
     //
     // Sort, index BAM file and run samtools stats, flagstat and idxstats
     //
-//    BAM_SORT_STATS_SAMTOOLS ( 
-//        ch_orig_bam, 
-//        PREPARE_GENOME.out.fasta.map { [ [:], it ] } 
-//    )
-//    ch_versions = ch_versions.mix(BAM_SORT_STATS_SAMTOOLS.out.versions)
+    BAM_SORT_STATS_SAMTOOLS ( 
+        ch_orig_bam, 
+        PREPARE_GENOME.out.fasta.map { [ [:], it ] } 
+    )
+    ch_versions = ch_versions.mix(BAM_SORT_STATS_SAMTOOLS.out.versions)
 
     //
     // Compile software versions
