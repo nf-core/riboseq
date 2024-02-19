@@ -234,7 +234,7 @@ workflow RIBOSEQ {
         '',
         params.seq_center ?: '',
         PREPARE_GENOME.out.fasta.map { [ [:], it ] },
-        PREPARE_GENOME.out.transcript_fasta
+        PREPARE_GENOME.out.transcript_fasta.map { [ [:], it ] }
     )
 
     ch_genome_bam              = FASTQ_ALIGN_STAR.out.bam
