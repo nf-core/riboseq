@@ -86,7 +86,7 @@ include { validateInputSamplesheet } from '../../subworkflows/local/utils_nfcore
 */
 
 workflow RIBOSEQ {
-    
+
     take:
     ch_samplesheet      // channel: path(sample_sheet.csv)
     ch_versions         // channel: [ path(versions.yml) ]
@@ -103,7 +103,7 @@ workflow RIBOSEQ {
     ch_kallisto_index   // channel: [ meta, path(kallisto/index/) ]
     ch_bbsplit_index    // channel: path(bbsplit/index/)
     ch_splicesites      // channel: path(genome.splicesites.txt)
-    
+
     main:
 
     ch_multiqc_files = Channel.empty()
@@ -278,7 +278,7 @@ workflow RIBOSEQ {
         )
         ch_multiqc_report = MULTIQC.out.report.toList()
     } else {
-        ch_multiqc_report = Channel.empty() 
+        ch_multiqc_report = Channel.empty()
     }
 
     emit:
