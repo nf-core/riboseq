@@ -1,52 +1,8 @@
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    GENOME PARAMETER VALUES
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-params.fasta            = WorkflowMain.getGenomeAttribute(params, 'fasta')
-params.transcript_fasta = WorkflowMain.getGenomeAttribute(params, 'transcript_fasta')
-params.additional_fasta = WorkflowMain.getGenomeAttribute(params, 'additional_fasta')
-params.gtf              = WorkflowMain.getGenomeAttribute(params, 'gtf')
-params.gff              = WorkflowMain.getGenomeAttribute(params, 'gff')
-params.gene_bed         = WorkflowMain.getGenomeAttribute(params, 'bed12')
-params.bbsplit_index    = WorkflowMain.getGenomeAttribute(params, 'bbsplit')
-params.star_index       = WorkflowMain.getGenomeAttribute(params, 'star')
-params.hisat2_index     = WorkflowMain.getGenomeAttribute(params, 'hisat2')
-params.rsem_index       = WorkflowMain.getGenomeAttribute(params, 'rsem')
-params.salmon_index     = WorkflowMain.getGenomeAttribute(params, 'salmon')
-params.kallisto_index   = WorkflowMain.getGenomeAttribute(params, 'kallisto')
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    PRINT PARAMS SUMMARY
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-include { paramsSummaryLog; paramsSummaryMap; fromSamplesheet } from 'plugin/nf-validation'
-
-def logo = NfcoreTemplate.logo(workflow, params.monochrome_logs)
-def citation = '\n' + WorkflowMain.citation(workflow) + '\n'
-def summary_params = paramsSummaryMap(workflow)
-
-// Print parameter summary log to screen
-log.info logo + paramsSummaryLog(workflow) + citation
-
-// Check if an AWS iGenome has been provided to use the appropriate version of STAR
-def is_aws_igenome = false
-if (params.fasta && params.gtf) {
-    if ((file(params.fasta).getName() - '.gz' == 'genome.fa') && (file(params.gtf).getName() - '.gz' == 'genes.gtf')) {
-        is_aws_igenome = true
-    }
-}
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     VALIDATE INPUTS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-
-WorkflowRiboseq.initialise(params, log)
 
 // Check rRNA databases for sortmerna
 if (params.remove_ribo_rna) {
@@ -87,17 +43,6 @@ def filterGtf =
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    CONFIG FILES
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-ch_multiqc_config          = Channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
-ch_multiqc_custom_config   = params.multiqc_config ? Channel.fromPath( params.multiqc_config, checkIfExists: true ) : Channel.empty()
-ch_multiqc_logo            = params.multiqc_logo   ? Channel.fromPath( params.multiqc_logo, checkIfExists: true ) : Channel.empty()
-ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT LOCAL MODULES/SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
@@ -105,10 +50,9 @@ ch_multiqc_custom_methods_description = params.multiqc_methods_description ? fil
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS } from '../subworkflows/nf-core/bam_dedup_stats_samtools_umitools/main'
-include { PREPARE_GENOME                    } from '../subworkflows/local/prepare_genome'
-include { PREPROCESS_RNASEQ                 } from '../subworkflows/nf-core/preprocess_rnaseq'
-include { FASTQ_ALIGN_STAR                  } from '../subworkflows/nf-core/fastq_align_star'
+include { BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS } from '../../subworkflows/nf-core/bam_dedup_stats_samtools_umitools/main'
+include { PREPROCESS_RNASEQ                 } from '../../subworkflows/nf-core/preprocess_rnaseq'
+include { FASTQ_ALIGN_STAR                  } from '../../subworkflows/nf-core/fastq_align_star'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -119,11 +63,21 @@ include { FASTQ_ALIGN_STAR                  } from '../subworkflows/nf-core/fast
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { MULTIQC                                              } from '../modules/nf-core/multiqc/main'
-include { CUSTOM_DUMPSOFTWAREVERSIONS                          } from '../modules/nf-core/custom/dumpsoftwareversions/main'
-include { SAMTOOLS_SORT                                        } from '../modules/nf-core/samtools/sort'
-include { UMITOOLS_PREPAREFORRSEM as UMITOOLS_PREPAREFORSALMON } from '../modules/nf-core/umitools/prepareforrsem'
+include { MULTIQC                                              } from '../../modules/nf-core/multiqc/main'
+include { SAMTOOLS_SORT                                        } from '../../modules/nf-core/samtools/sort'
+include { UMITOOLS_PREPAREFORRSEM as UMITOOLS_PREPAREFORSALMON } from '../../modules/nf-core/umitools/prepareforrsem'
 
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    IMPORT FUNCTIONS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+include { paramsSummaryMap         } from 'plugin/nf-validation'
+include { paramsSummaryMultiqc     } from '../../subworkflows/nf-core/utils_nfcore_pipeline'
+include { softwareVersionsToYAML   } from '../../subworkflows/nf-core/utils_nfcore_pipeline'
+include { methodsDescriptionText   } from '../../subworkflows/local/utils_nfcore_riboseq_pipeline'
+include { validateInputSamplesheet } from '../../subworkflows/local/utils_nfcore_riboseq_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -131,48 +85,28 @@ include { UMITOOLS_PREPAREFORRSEM as UMITOOLS_PREPAREFORSALMON } from '../module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-// Info required for completion email and summary
-def multiqc_report = []
-
 workflow RIBOSEQ {
+    
+    take:
+    ch_samplesheet      // channel: path(sample_sheet.csv)
+    ch_versions         // channel: [ path(versions.yml) ]
+    ch_fasta            // channel: path(genome.fasta)
+    ch_gtf              // channel: path(genome.gtf)
+    ch_fai              // channel: path(genome.fai)
+    ch_chrom_sizes      // channel: path(genome.sizes)
+    ch_gene_bed         // channel: path(gene.bed)
+    ch_transcript_fasta // channel: path(transcript.fasta)
+    ch_star_index       // channel: path(star/index/)
+    ch_rsem_index       // channel: path(rsem/index/)
+    ch_hisat2_index     // channel: path(hisat2/index/)
+    ch_salmon_index     // channel: path(salmon/index/)
+    ch_kallisto_index   // channel: [ meta, path(kallisto/index/) ]
+    ch_bbsplit_index    // channel: path(bbsplit/index/)
+    ch_splicesites      // channel: path(genome.splicesites.txt)
+    
+    main:
 
-    ch_versions      = Channel.empty()
     ch_multiqc_files = Channel.empty()
-
-    //
-    // SUBWORKFLOW: Uncompress and prepare reference genome files
-    //
-    def biotype = params.gencode ? "gene_type" : params.featurecounts_group_type
-    PREPARE_GENOME (
-        params.fasta,
-        params.gtf,
-        params.gff,
-        params.additional_fasta,
-        params.transcript_fasta,
-        params.gene_bed,
-        params.splicesites,
-        params.bbsplit_fasta_list,
-        params.star_index,
-        params.rsem_index,
-        params.salmon_index,
-        params.kallisto_index,
-        params.hisat2_index,
-        params.bbsplit_index,
-        params.gencode,
-        is_aws_igenome,
-        biotype,
-        prepareToolIndices,
-        filterGtf
-    )
-    ch_versions = ch_versions.mix(PREPARE_GENOME.out.versions)
-
-    // Check if contigs in genome fasta file > 512 Mbp
-    if (!params.skip_alignment && !params.bam_csi_index) {
-        PREPARE_GENOME
-            .out
-            .fai
-            .map { WorkflowRiboseq.checkMaxContigSize(it, log) }
-    }
 
     //
     // Create input channel from input file provided through params.input
@@ -189,7 +123,7 @@ workflow RIBOSEQ {
         }
         .groupTuple()
         .map {
-            WorkflowRiboseq.validateInput(it)
+            validateInputSamplesheet(it)
         }
         .set { ch_fastq }
 
@@ -200,11 +134,11 @@ workflow RIBOSEQ {
 
     PREPROCESS_RNASEQ (
         ch_fastq,
-        PREPARE_GENOME.out.fasta,
-        PREPARE_GENOME.out.transcript_fasta,
-        PREPARE_GENOME.out.gtf,
-        PREPARE_GENOME.out.salmon_index,
-        PREPARE_GENOME.out.bbsplit_index,
+        ch_fasta,
+        ch_transcript_fasta,
+        ch_gtf,
+        ch_salmon_index,
+        ch_bbsplit_index,
         ch_ribo_db,
         params.skip_bbsplit,
         params.skip_fastqc || params.skip_qc,
@@ -228,13 +162,13 @@ workflow RIBOSEQ {
 
     FASTQ_ALIGN_STAR(
         PREPROCESS_RNASEQ.out.reads,
-        PREPARE_GENOME.out.star_index.map { [ [:], it ] },
-        PREPARE_GENOME.out.gtf.map { [ [:], it ] },
+        ch_star_index.map { [ [:], it ] },
+        ch_gtf.map { [ [:], it ] },
         params.star_ignore_sjdbgtf,
         '',
         params.seq_center ?: '',
-        PREPARE_GENOME.out.fasta.map { [ [:], it ] },
-        PREPARE_GENOME.out.transcript_fasta.map { [ [:], it ] }
+        ch_fasta.map { [ [:], it ] },
+        ch_transcript_fasta.map { [ [:], it ] }
     )
 
     ch_genome_bam              = FASTQ_ALIGN_STAR.out.bam
@@ -312,29 +246,29 @@ workflow RIBOSEQ {
             .set { ch_transcriptome_bam_for_salmon }
     }
 
-
     //
-    // Compile software versions
+    // Collate and save software versions
     //
+    ch_versions = ch_versions.filter{it != null}
 
-    CUSTOM_DUMPSOFTWAREVERSIONS (
-        ch_versions.unique().collectFile(name: 'collated_versions.yml')
-    )
-    ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml)
+    softwareVersionsToYAML(ch_versions)
+        .collectFile(storeDir: "${params.outdir}/pipeline_info", name: 'nf_core_pipeline_software_mqc_versions.yml', sort: true, newLine: true)
+        .set { ch_collated_versions }
 
     //
     // MODULE: MultiQC
     //
     if (!params.skip_multiqc) {
-        workflow_summary    = WorkflowRiboseq.paramsSummaryMultiqc(workflow, summary_params)
-        ch_workflow_summary = Channel.value(workflow_summary)
-
-        methods_description    = WorkflowRiboseq.methodsDescriptionText(workflow, ch_multiqc_custom_methods_description, params)
-        ch_methods_description = Channel.value(methods_description)
-
-        ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
-        ch_multiqc_files = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml'))
-        ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
+        ch_multiqc_config                     = Channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
+        ch_multiqc_custom_config              = params.multiqc_config ? Channel.fromPath(params.multiqc_config, checkIfExists: true) : Channel.empty()
+        ch_multiqc_logo                       = params.multiqc_logo ? Channel.fromPath(params.multiqc_logo, checkIfExists: true) : Channel.empty()
+        summary_params                        = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
+        ch_workflow_summary                   = Channel.value(paramsSummaryMultiqc(summary_params))
+        ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
+        ch_methods_description                = Channel.value(methodsDescriptionText(ch_multiqc_custom_methods_description))
+        ch_multiqc_files                      = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
+        ch_multiqc_files                      = ch_multiqc_files.mix(ch_collated_versions)
+        ch_multiqc_files                      = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml', sort: false))
 
         MULTIQC (
             ch_multiqc_files.collect(),
@@ -342,33 +276,14 @@ workflow RIBOSEQ {
             ch_multiqc_custom_config.toList(),
             ch_multiqc_logo.toList()
         )
-        multiqc_report = MULTIQC.out.report.toList()
-
+        ch_multiqc_report = MULTIQC.out.report.toList()
+    } else {
+        ch_multiqc_report = Channel.empty() 
     }
-}
 
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    COMPLETION EMAIL AND SUMMARY
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-workflow.onComplete {
-    if (params.email || params.email_on_fail) {
-        NfcoreTemplate.email(workflow, params, summary_params, projectDir, log, multiqc_report)
-    }
-    NfcoreTemplate.dump_parameters(workflow, params)
-    NfcoreTemplate.summary(workflow, params, log)
-    if (params.hook_url) {
-        NfcoreTemplate.IM_notification(workflow, params, summary_params, projectDir, log)
-    }
-}
-
-workflow.onError {
-    if (workflow.errorReport.contains("Process requirement exceeds available memory")) {
-        println("🛑 Default resources exceed availability 🛑 ")
-        println("💡 See here on how to configure pipeline: https://nf-co.re/docs/usage/configuration#tuning-workflow-resources 💡")
-    }
+    emit:
+    multiqc_report = ch_multiqc_report   // channel: /path/to/multiqc_report.html
+    versions       = ch_versions         // channel: [ path(versions.yml) ]
 }
 
 /*

@@ -7,17 +7,17 @@
                 "nf-core": {
                     "bbmap/bbsplit": {
                         "branch": "master",
-                        "git_sha": "3f5420aa22e00bd030a2556dfdffc9e164ec0ec5",
+                        "git_sha": "e2b2b102d1d2e3b553177ca00ad74dc8a0a42c46",
                         "installed_by": ["preprocess_rnaseq"]
                     },
                     "cat/fastq": {
                         "branch": "master",
-                        "git_sha": "02fd5bd7275abad27aad32d5c852e0a9b1b98882",
+                        "git_sha": "0997b47c93c06b49aa7b3fefda87e728312cf2ca",
                         "installed_by": ["preprocess_rnaseq"]
                     },
-                    "custom/dumpsoftwareversions": {
+                    "custom/catadditionalfasta": {
                         "branch": "master",
-                        "git_sha": "8ec825f465b9c17f9d83000022995b4f7de6fe93",
+                        "git_sha": "3ee883a0cd247a1d40bff9f2495041d779bf1079",
                         "installed_by": ["modules"]
                     },
                     "custom/getchromsizes": {
@@ -72,7 +72,7 @@
                     },
                     "multiqc": {
                         "branch": "master",
-                        "git_sha": "9e71d8519dfbfc328c078bba14d4bd4c99e39a94",
+                        "git_sha": "ccacf6f5de6df3bc6d73b665c1fd2933d8bbc290",
                         "installed_by": ["modules"]
                     },
                     "rsem/preparereference": {
@@ -82,12 +82,12 @@
                     },
                     "salmon/index": {
                         "branch": "master",
-                        "git_sha": "ce801ced94947b2ff01002b4120eef2f79489b34",
+                        "git_sha": "ffc101e1b84ef3df2e4e4a966e84b3c513ae5693",
                         "installed_by": ["fastq_subsample_fq_salmon"]
                     },
                     "salmon/quant": {
                         "branch": "master",
-                        "git_sha": "003920c7f9a8ae19b69a97171922880220bedf56",
+                        "git_sha": "ffc101e1b84ef3df2e4e4a966e84b3c513ae5693",
                         "installed_by": ["fastq_subsample_fq_salmon"]
                     },
                     "samtools/flagstat": {
@@ -117,7 +117,7 @@
                     },
                     "sortmerna": {
                         "branch": "master",
-                        "git_sha": "003920c7f9a8ae19b69a97171922880220bedf56",
+                        "git_sha": "ad22467dff16284093e7335d5e77964e9bbc510b",
                         "installed_by": ["preprocess_rnaseq"]
                     },
                     "star/align": {
@@ -132,7 +132,7 @@
                     },
                     "trimgalore": {
                         "branch": "master",
-                        "git_sha": "3f5420aa22e00bd030a2556dfdffc9e164ec0ec5",
+                        "git_sha": "2e6c468e0ad43b23df71d7a7f130d5c0e0aa89e3",
                         "installed_by": ["fastq_fastqc_umitools_trimgalore"]
                     },
                     "umitools/dedup": {
@@ -142,12 +142,12 @@
                     },
                     "umitools/extract": {
                         "branch": "master",
-                        "git_sha": "65ad3e0b9a4099592e1102e92e10455dc661cf53",
+                        "git_sha": "ff7e93715a2acecf3f143ec78c9858deba2984d0",
                         "installed_by": ["fastq_fastqc_umitools_fastp", "fastq_fastqc_umitools_trimgalore"]
                     },
                     "umitools/prepareforrsem": {
                         "branch": "master",
-                        "git_sha": "ff7e93715a2acecf3f143ec78c9858deba2984d0",
+                        "git_sha": "f7304017cdf25dde84b3eb357d5b0c9ea91cfcb2",
                         "installed_by": ["modules"]
                     },
                     "untar": {
@@ -159,26 +159,6 @@
             },
             "subworkflows": {
                 "nf-core": {
-                    "bam_dedup_stats_samtools_umitools": {
-                        "branch": "master",
-                        "git_sha": "f4596fe0bdc096cf53ec4497e83defdb3a94ff62",
-                        "installed_by": ["subworkflows"]
-                    },
-                    "bam_sort_stats_samtools": {
-                        "branch": "master",
-                        "git_sha": "f4596fe0bdc096cf53ec4497e83defdb3a94ff62",
-                        "installed_by": ["fastq_align_star", "subworkflows"]
-                    },
-                    "bam_stats_samtools": {
-                        "branch": "master",
-                        "git_sha": "f4596fe0bdc096cf53ec4497e83defdb3a94ff62",
-                        "installed_by": ["bam_dedup_stats_samtools_umitools", "bam_sort_stats_samtools"]
-                    },
-                    "fastq_align_star": {
-                        "branch": "master",
-                        "git_sha": "4cef5bd781be21ecb80de664d1a8c5eba980f304",
-                        "installed_by": ["subworkflows"]
-                    },
                     "fastq_fastqc_umitools_fastp": {
                         "branch": "master",
                         "git_sha": "003920c7f9a8ae19b69a97171922880220bedf56",
@@ -196,7 +176,22 @@
                     },
                     "preprocess_rnaseq": {
                         "branch": "master",
-                        "git_sha": "66f9961b35856499188a42daf908fdd8273a7c7b",
+                        "git_sha": "ad22467dff16284093e7335d5e77964e9bbc510b",
+                        "installed_by": ["subworkflows"]
+                    },
+                    "utils_nextflow_pipeline": {
+                        "branch": "master",
+                        "git_sha": "cd08c91373cd00a73255081340e4914485846ba1",
+                        "installed_by": ["subworkflows"]
+                    },
+                    "utils_nfcore_pipeline": {
+                        "branch": "master",
+                        "git_sha": "262b17ed2aad591039f914951659177e6c39a8d8",
+                        "installed_by": ["subworkflows"]
+                    },
+                    "utils_nfvalidation_plugin": {
+                        "branch": "master",
+                        "git_sha": "cd08c91373cd00a73255081340e4914485846ba1",
                         "installed_by": ["subworkflows"]
                     }
                 }
