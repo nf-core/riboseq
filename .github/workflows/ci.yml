@@ -1,18 +1,22 @@
-name: riboseq CI
 # This workflow runs the pipeline with the minimal test dataset to check that it completes without any syntax errors
+name: nf-core CI
 on:
   pull_request:
   release:
-    types:
-      - published
+    types: [published]
   merge_group:
     types:
       - checks_requested
     branches:
       - master
+      - dev
 
 env:
   NXF_ANSI_LOG: false
+  NFT_VER: "0.8.4"
+  NFT_WORKDIR: "~"
+  NFT_DIFF: "pdiff"
+  NFT_DIFF_ARGS: "--line-numbers --expand-tabs=2"
 
 concurrency:
   group: "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
@@ -20,41 +24,85 @@ concurrency:
 
 jobs:
   changes:
-    name: Find tags to test
+    name: Check for changes
     runs-on: ubuntu-latest
     outputs:
-      tags: ${{ steps.get_tags.outputs.result }}
+      changes: ${{ steps.changed_files.outputs.any_modified }}
+      tags: ${{ steps.list.outputs.tags }}
     steps:
-      - uses: actions/checkout@v3
-      - name: Combine all tags.yml files
-        id: get_username
-        run: find . -name "tags.yml" -not -path "./.github/*" -exec cat {} + > .github/tags.yml
-      - name: debug
-        run: cat .github/tags.yml
-      - name: Get tags using yq
-        id: get_tags
-        uses: mikefarah/yq@master
+      - uses: actions/setup-python@v4
         with:
-          cmd: yq -e '. | keys | tojson' .github/tags.yml
+          python-version: "3.11"
+          architecture: "x64"
 
-  nf-test:
-    name: nf-test ${{ matrix.tags }} ${{ matrix.profile }} nf-${{ matrix.NXF_VER }}
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - uses: tj-actions/changed-files@v42
+        id: changed_files
+        with:
+          dir_names: "true"
+          output_renamed_files_as_deleted_and_added: "true"
+          # Define list of additional rules for testing paths
+          # Mostly, we define additional 'pipeline' or 'all' tests here
+          files_yaml: |
+            ".":
+              - .github/workflows/**
+              - nf-test.config
+              - nextflow.config
+            tests:
+              - assets/*
+              - bin/*
+              - conf/*
+              - main.nf
+              - nextflow_schema.json
+
+          files_ignore: |
+            .git*
+            .gitpod.yml
+            .prettierignore
+            .prettierrc.yml
+            **.md
+            **.png
+            modules.json
+            pyproject.toml
+            tower.yml
+
+      - name: debug
+        run: |
+          echo ${{ steps.changed_files.outputs.any_modified }}
+          echo ${{ steps.changed_files.outputs.all_changed_files }}
+          echo ${{ steps.changed_files.outputs.changed_keys }}
+
+      - name: nf-test list tags
+        id: list
+        if: ${{ steps.changed_files.outputs.any_modified }}
+        run: |
+          echo tags=$(python \
+            .github/python/find_changed_files.py \
+            -t pipeline workflow process \
+            -p ${{ steps.changed_files.outputs.all_changed_files }} ${{ steps.changed_files.outputs.changed_keys }} \
+          ) >> $GITHUB_OUTPUT
+
+      - name: debug2
+        run: |
+          echo ${{ steps.list.outputs.tags }}
+
+  test:
+    name: ${{ matrix.tags }} ${{ matrix.profile }} NF-${{ matrix.NXF_VER }}
     needs: [changes]
-    if: needs.changes.outputs.tags != '[]'
+    if: needs.changes.outputs.changes
     runs-on: ubuntu-latest
-    env:
-      TOWER_ACCESS_TOKEN: ${{ secrets.TOWER_ACCESS_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
         NXF_VER:
-          - "23.10.0"
           - "latest-everything"
-        tags: ${{ fromJson(needs.changes.outputs.tags) }}
+          - "23.04"
+        tags: ["${{ fromJson(needs.changes.outputs.tags) }}"]
         profile:
           - "docker"
-        exclude:
-          - tags: "custom/dumpsoftwareversions"
 
     steps:
       - name: Check out pipeline code
@@ -65,6 +113,16 @@ jobs:
         with:
           version: "${{ matrix.NXF_VER }}"
 
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          architecture: "x64"
+
+      - name: Install pdiff to see diff between nf-test snapshots
+        run: |
+          python -m pip install --upgrade pip
+          pip install pdiff
+
       - name: Cache nf-test installation
         id: cache-software
         uses: actions/cache@v3
@@ -72,7 +130,7 @@ jobs:
           path: |
             /usr/local/bin/nf-test
             /home/runner/.nf-test/nf-test.jar
-          key: ${{ runner.os }}-${{ env.NFTEST_VER }}-nftest
+          key: ${{ runner.os }}-${{ env.NFT_VER }}-nftest
 
       - name: Install nf-test
         if: steps.cache-software.outputs.cache-hit != 'true'
@@ -80,12 +138,14 @@ jobs:
           wget -qO- https://code.askimed.com/install/nf-test | bash
           sudo mv nf-test /usr/local/bin/
 
-      - name: Disk space cleanup
-        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
-
       - name: Run nf-test
         run: |
-          nf-test test --tag ${{ matrix.tags }} --profile "test,${{ matrix.profile }}" --junitxml=test.xml --verbose
+          nf-test test --verbose --tag ${{ matrix.tags }} --profile "+${{ matrix.profile }}" --junitxml=test.xml --tap=test.tap
+
+      - uses: pcolby/tap-summary@v1
+        with:
+          path: >-
+            test.tap
 
       - name: Output log on failure
         if: failure()
@@ -101,11 +161,11 @@ jobs:
 
   confirm-pass:
     runs-on: ubuntu-latest
-    needs: [changes, nf-test]
+    needs: [test]
     if: always()
     steps:
       - name: All tests ok
-        if: ${{ success() || !contains(needs.*.result, 'failure') }}
+        if: ${{ !contains(needs.*.result, 'failure') }}
         run: exit 0
       - name: One or more tests failed
         if: ${{ contains(needs.*.result, 'failure') }}
