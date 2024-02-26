@@ -42,6 +42,7 @@ params.star_index       = getGenomeAttribute('star')
 params.hisat2_index     = getGenomeAttribute('hisat2')
 params.rsem_index       = getGenomeAttribute('rsem')
 params.salmon_index     = getGenomeAttribute('salmon')
+params.sortmerna_index  = getGenomeAttribute('sortmerna')
 params.kallisto_index   = getGenomeAttribute('kallisto')
 
 /*
@@ -71,18 +72,21 @@ workflow NFCORE_RIBOSEQ {
         params.gene_bed,
         params.splicesites,
         params.bbsplit_fasta_list,
+        params.sortmerna_fasta_list,
         params.star_index,
         params.rsem_index,
         params.salmon_index,
         params.kallisto_index,
         params.hisat2_index,
         params.bbsplit_index,
+        params.sortmerna_index,
         params.gencode,
         params.featurecounts_group_type,
         params.aligner,
         params.pseudo_aligner,
         params.skip_gtf_filter,
         params.skip_bbsplit,
+        ! params.remove_ribo_rna,
         params.skip_alignment,
         params.skip_pseudo_alignment
     )
@@ -115,6 +119,7 @@ workflow NFCORE_RIBOSEQ {
         PREPARE_GENOME.out.salmon_index,
         PREPARE_GENOME.out.kallisto_index,
         PREPARE_GENOME.out.bbsplit_index,
+        PREPARE_GENOME.out.sortmerna_index,
         PREPARE_GENOME.out.splicesites
     )
     ch_versions = ch_versions.mix(RIBOSEQ.out.versions)

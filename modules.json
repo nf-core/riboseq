@@ -117,7 +117,7 @@
                     },
                     "sortmerna": {
                         "branch": "master",
-                        "git_sha": "ad22467dff16284093e7335d5e77964e9bbc510b",
+                        "git_sha": "df05c8db5195867c0bc7b92c1788115b66f0d17d",
                         "installed_by": ["preprocess_rnaseq"]
                     },
                     "star/align": {
@@ -196,7 +196,7 @@
                     },
                     "preprocess_rnaseq": {
                         "branch": "master",
-                        "git_sha": "53a97948affb07725328a1bba2fec79b331374a6",
+                        "git_sha": "df05c8db5195867c0bc7b92c1788115b66f0d17d",
                         "installed_by": ["subworkflows"]
                     },
                     "utils_nextflow_pipeline": {

@@ -104,6 +104,7 @@ workflow RIBOSEQ {
     ch_salmon_index     // channel: path(salmon/index/)
     ch_kallisto_index   // channel: [ meta, path(kallisto/index/) ]
     ch_bbsplit_index    // channel: path(bbsplit/index/)
+    ch_sortmerna_index  // channel: path(sortmerna/index/)
     ch_splicesites      // channel: path(genome.splicesites.txt)
 
     main:
@@ -140,6 +141,7 @@ workflow RIBOSEQ {
         ch_transcript_fasta,
         ch_gtf,
         ch_salmon_index,
+        ch_sortmerna_index,
         ch_bbsplit_index,
         ch_ribo_db,
         params.skip_bbsplit,
@@ -147,6 +149,7 @@ workflow RIBOSEQ {
         params.skip_trimming,
         params.skip_umi_extract,
         !params.salmon_index && !('salmon' in prepareToolIndices),
+        !params.sortmerna_index && !('sortmerna' in prepareToolIndices),
         params.trimmer,
         params.min_trimmed_reads,
         params.save_trimmed,
