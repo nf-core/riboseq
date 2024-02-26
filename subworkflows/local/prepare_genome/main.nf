@@ -193,6 +193,7 @@ workflow PREPARE_GENOME {
     //
     def prepare_tool_indices = []
     if (!skip_bbsplit) { prepare_tool_indices << 'bbsplit' }
+    if (!skip_sortmerna) { prepare_tool_indices << 'sortmerna' }
     if (!skip_alignment) { prepare_tool_indices << aligner }
     if (!skip_pseudo_alignment && pseudo_aligner) { prepare_tool_indices << pseudo_aligner }
 
@@ -241,14 +242,12 @@ workflow PREPARE_GENOME {
                 .collect()
                 .map{ ['rrna_refs', it] }
 
-            if (make_sortmerna_index) {
-                SORTMERNA_INDEX (
-                    [[],[]],
-                    ch_sortmerna_fastas,
-                    [[],[]]
-                )
-                ch_sortmerna_index = SORTMERNA_INDEX.out.index
-            }
+            SORTMERNA_INDEX (
+                Channel.of([[],[]]),
+                ch_sortmerna_fastas,
+                Channel.of([[],[]])
+            )
+            ch_sortmerna_index = SORTMERNA_INDEX.out.index
             ch_versions = ch_versions.mix(SORTMERNA_INDEX.out.versions)
         }
     }

@@ -72,7 +72,7 @@ workflow NFCORE_RIBOSEQ {
         params.gene_bed,
         params.splicesites,
         params.bbsplit_fasta_list,
-        params.sortmerna_fasta_list,
+        params.ribo_database_manifest,
         params.star_index,
         params.rsem_index,
         params.salmon_index,

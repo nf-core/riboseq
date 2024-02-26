@@ -21,7 +21,7 @@ if (!params.skip_bbsplit && !params.bbsplit_index && params.bbsplit_fasta_list) 
 // Check alignment parameters
 def prepareToolIndices  = []
 if (!params.skip_bbsplit) { prepareToolIndices << 'bbsplit' }
-if (!params.remove_ribo_rna) { prepareToolIndices << 'sortmerna' }
+if (params.remove_ribo_rna) { prepareToolIndices << 'sortmerna' }
 if (!params.skip_alignment) { prepareToolIndices << params.aligner }
 if (!params.skip_pseudo_alignment && params.pseudo_aligner) { prepareToolIndices << params.pseudo_aligner }
 

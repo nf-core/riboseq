@@ -205,7 +205,7 @@ workflow PREPROCESS_RNASEQ {
         SORTMERNA (
             ch_filtered_reads,
             ch_sortmerna_fastas,
-            SORTMERNA_INDEX.out.index
+            ch_sortmerna_index
         )
 
         SORTMERNA.out.reads
