@@ -241,6 +241,7 @@ workflow PREPARE_GENOME {
                 .map { row -> file(row, checkIfExists: true) }
                 .collect()
                 .map{ ['rrna_refs', it] }
+                .first()
 
             SORTMERNA_INDEX (
                 Channel.of([[],[]]),

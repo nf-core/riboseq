@@ -192,6 +192,7 @@ workflow PREPROCESS_RNASEQ {
             .map { row -> file(row, checkIfExists: true) }
             .collect()
             .map{ ['rrna_refs', it] }
+            .first()
 
         if (make_sortmerna_index) {
             SORTMERNA_INDEX (
