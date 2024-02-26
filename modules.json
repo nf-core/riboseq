@@ -195,8 +195,8 @@
                         "installed_by": ["preprocess_rnaseq"]
                     },
                     "preprocess_rnaseq": {
-                        "branch": "master",
-                        "git_sha": "df05c8db5195867c0bc7b92c1788115b66f0d17d",
+                        "branch": "sortmerna_prepro_fixes",
+                        "git_sha": "de25af6e917b7a481fdea698765609f437aca7f4",
                         "installed_by": ["subworkflows"]
                     },
                     "utils_nextflow_pipeline": {

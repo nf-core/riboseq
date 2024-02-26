@@ -192,7 +192,6 @@ workflow PREPROCESS_RNASEQ {
             .map { row -> file(row, checkIfExists: true) }
             .collect()
             .map{ ['rrna_refs', it] }
-            .first()
 
         if (make_sortmerna_index) {
             SORTMERNA_INDEX (
@@ -200,7 +199,7 @@ workflow PREPROCESS_RNASEQ {
                 ch_sortmerna_fastas,
                 [[],[]]
             )
-            ch_sortmerna_index = SORTMERNA_INDEX.out.index
+            ch_sortmerna_index = SORTMERNA_INDEX.out.index.first()
         }
 
         SORTMERNA (
