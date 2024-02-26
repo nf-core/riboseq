@@ -8,6 +8,8 @@
 if (params.remove_ribo_rna) {
     ch_ribo_db = file(params.ribo_database_manifest)
     if (ch_ribo_db.isEmpty()) {exit 1, "File provided with --ribo_database_manifest is empty: ${ch_ribo_db.getName()}!"}
+} else {
+    ch_ribo_db = Channel.empty()
 }
 
 // Check if file with list of fastas is provided when running BBSplit

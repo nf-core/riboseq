@@ -196,7 +196,7 @@
                     },
                     "preprocess_rnaseq": {
                         "branch": "master",
-                        "git_sha": "ad22467dff16284093e7335d5e77964e9bbc510b",
+                        "git_sha": "53a97948affb07725328a1bba2fec79b331374a6",
                         "installed_by": ["subworkflows"]
                     },
                     "utils_nextflow_pipeline": {
