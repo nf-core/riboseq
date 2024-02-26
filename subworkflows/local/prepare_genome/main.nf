@@ -248,7 +248,7 @@ workflow PREPARE_GENOME {
                 ch_sortmerna_fastas,
                 Channel.of([[],[]])
             )
-            ch_sortmerna_index = SORTMERNA_INDEX.out.index
+            ch_sortmerna_index = SORTMERNA_INDEX.out.index.first()
             ch_versions = ch_versions.mix(SORTMERNA_INDEX.out.versions)
         }
     }
