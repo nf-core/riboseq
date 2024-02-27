@@ -223,7 +223,7 @@ workflow PREPARE_GENOME {
             ch_versions      = ch_versions.mix(BBMAP_BBSPLIT.out.versions)
         }
     }
-    
+
     //
     // Uncompress sortmerna index or generate from scratch if required
     //
