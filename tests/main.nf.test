@@ -12,6 +12,7 @@ nextflow_pipeline {
             params {
                 outdir = "results"
                 input = 'https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/samplesheet/samplesheet.csv'
+                ribo_database_manifest = 'https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/testdata/rrna-db.txt'
                 fasta = 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/riboseq_expression/Homo_sapiens.GRCh38.dna.chromosome.20.fa.gz'
                 gtf = 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/riboseq_expression/Homo_sapiens.GRCh38.111_chr20.gtf'
                 min_trimmed_reads = 1000
