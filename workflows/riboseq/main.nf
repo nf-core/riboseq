@@ -69,6 +69,10 @@ include { FASTQ_ALIGN_STAR                  } from '../../subworkflows/nf-core/f
 include { MULTIQC                                              } from '../../modules/nf-core/multiqc/main'
 include { SAMTOOLS_SORT                                        } from '../../modules/nf-core/samtools/sort'
 include { UMITOOLS_PREPAREFORRSEM as UMITOOLS_PREPAREFORSALMON } from '../../modules/nf-core/umitools/prepareforrsem'
+include { RIBOTISH_QUALITY as RIBOTISH_QUALITY_RIBOSEQ         } from '../../modules/nf-core/ribotish/quality'
+include { RIBOTISH_QUALITY as RIBOTISH_QUALITY_TISEQ           } from '../../modules/nf-core/ribotish/quality'
+include { RIBOTISH_PREDICT as RIBOTISH_PREDICT_INDIVIDUAL      } from '../../modules/nf-core/ribotish/predict'
+include { RIBOTISH_PREDICT as RIBOTISH_PREDICT_ALL             } from '../../modules/nf-core/ribotish/predict'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -198,7 +202,7 @@ workflow RIBOSEQ {
         // Deduplicate genome BAM file before downstream analysis
 
         BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_GENOME (
-            ch_genome_bam.join(ch_genome_bai, by: [0]),
+            ch_genome_bam.join(ch_genome_bam_index, by: [0]),
             params.umitools_dedup_stats
         )
         ch_genome_bam       = BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_GENOME.out.bam
@@ -251,6 +255,56 @@ workflow RIBOSEQ {
             .mix(UMITOOLS_PREPAREFORSALMON.out.bam)
             .set { ch_transcriptome_bam_for_salmon }
     }
+
+    //
+    // Take the riboseq samples and route to ribotish
+    //
+
+    ch_genome_bam
+        .branch { meta, bam ->
+             riboseq: meta.sample_type == 'riboseq'
+                 return [ meta, bam ]
+             tiseq: meta.sample_type == 'tiseq'
+                 return [ meta, bam ]
+             rnaseq: meta.sample_type == 'rnaseq'
+                 return [ meta, bam ]
+        }
+        .set{
+            ch_genome_bam_by_type
+        }
+
+    ch_bams_for_ribotish = ch_genome_bam_by_type.riboseq.join(ch_genome_bam_index)
+
+    RIBOTISH_QUALITY_RIBOSEQ(
+        ch_bams_for_ribotish,
+        ch_gtf.map { [ [:], it ] }.first()
+    )
+    ch_versions      = ch_versions.mix(RIBOTISH_QUALITY_RIBOSEQ.out.versions)
+    
+    ribotish_predict_inputs = ch_bams_for_ribotish
+        .join(RIBOTISH_QUALITY_RIBOSEQ.out.offset)
+        .multiMap{ meta, bam, bai, offset -> 
+            bam: [ meta, bam, bai ] 
+            offset: [ meta, offset ]
+        }
+ 
+    RIBOTISH_PREDICT_INDIVIDUAL(
+        ribotish_predict_inputs.bam,
+        [[:],[],[]],
+        ch_fasta.combine(ch_gtf).map{ fasta, gtf -> [ [:], fasta, gtf ] }.first(),
+        [[:],[]],
+        ribotish_predict_inputs.offset,
+        [[:],[]]
+    )
+    
+    RIBOTISH_PREDICT_ALL(
+        ribotish_predict_inputs.bam.map{meta, bam, bai -> [[id:'allsamples'], bam, bai]}.groupTuple(),
+        [[:],[],[]],
+        ch_fasta.combine(ch_gtf).map{ fasta, gtf -> [ [:], fasta, gtf ] },
+        [[:],[]],
+        ribotish_predict_inputs.offset.map{meta, offset -> [[id:'allsamples'], offset]}.groupTuple(),
+        [[:],[]]
+    )
 
     //
     // Collate and save software versions

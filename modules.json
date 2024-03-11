@@ -75,6 +75,16 @@
                         "git_sha": "b7ebe95761cd389603f9cc0e0dc384c0f663815a",
                         "installed_by": ["modules"]
                     },
+                    "ribotish/predict": {
+                        "branch": "master",
+                        "git_sha": "21fbfeef55f6988127868eee1d1737217478f0ca",
+                        "installed_by": ["modules"]
+                    },
+                    "ribotish/quality": {
+                        "branch": "master",
+                        "git_sha": "fac281689037749ea014215a61d431522513077a",
+                        "installed_by": ["modules"]
+                    },
                     "rsem/preparereference": {
                         "branch": "master",
                         "git_sha": "8ec12d844837b0167540c910afe4d3f920cd7114",
@@ -107,7 +117,7 @@
                     },
                     "samtools/sort": {
                         "branch": "master",
-                        "git_sha": "f4596fe0bdc096cf53ec4497e83defdb3a94ff62",
+                        "git_sha": "4352dbdb09ec40db71e9b172b97a01dcf5622c26",
                         "installed_by": ["bam_sort_stats_samtools"]
                     },
                     "samtools/stats": {
@@ -166,7 +176,7 @@
                     },
                     "bam_sort_stats_samtools": {
                         "branch": "master",
-                        "git_sha": "f4596fe0bdc096cf53ec4497e83defdb3a94ff62",
+                        "git_sha": "4352dbdb09ec40db71e9b172b97a01dcf5622c26",
                         "installed_by": ["fastq_align_star"]
                     },
                     "bam_stats_samtools": {
@@ -176,7 +186,7 @@
                     },
                     "fastq_align_star": {
                         "branch": "master",
-                        "git_sha": "4cef5bd781be21ecb80de664d1a8c5eba980f304",
+                        "git_sha": "4352dbdb09ec40db71e9b172b97a01dcf5622c26",
                         "installed_by": ["subworkflows"]
                     },
                     "fastq_fastqc_umitools_fastp": {

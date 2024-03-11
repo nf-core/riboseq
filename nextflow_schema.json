@@ -361,7 +361,7 @@
                     "default": "star_salmon",
                     "description": "Specifies the alignment algorithm to use - available options are 'star_salmon', 'star_rsem' and 'hisat2'.",
                     "fa_icon": "fas fa-map-signs",
-                    "enum": ["star_salmon", "star_rsem", "hisat2"]
+                    "enum": ["star", "star_salmon", "star_rsem", "hisat2"]
                 },
                 "pseudo_aligner": {
                     "type": "string",
@@ -633,6 +633,11 @@
                     "type": "boolean",
                     "fa_icon": "fas fa-fast-forward",
                     "description": "Skip all QC steps except for MultiQC."
+                },
+                "skip_ribotish": {
+                    "type": "boolean",
+                    "description": "Skip Ribo-TISH.",
+                    "fa_icon": "fas fa-fast-forward"
                 }
             }
         },
