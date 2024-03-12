@@ -358,10 +358,10 @@
             "properties": {
                 "aligner": {
                     "type": "string",
-                    "default": "star_salmon",
-                    "description": "Specifies the alignment algorithm to use - available options are 'star_salmon', 'star_rsem' and 'hisat2'.",
+                    "default": "star",
+                    "description": "Specifies the alignment algorithm to use - available options are currently 'star'.",
                     "fa_icon": "fas fa-map-signs",
-                    "enum": ["star", "star_salmon", "star_rsem", "hisat2"]
+                    "enum": ["star"]
                 },
                 "pseudo_aligner": {
                     "type": "string",
