@@ -64,8 +64,7 @@ An [example samplesheet](../assets/samplesheet.csv) has been provided with the p
 
 ## Alignment options
 
-The pipeline currently uses [STAR](https://github.com/alexdobin/STAR) to map the raw FastQ reads to the reference genome and project the alignments onto the transcriptome. STAR is fast but requires a lot of memory to run, typically around 38GB for the Human GRCh37 reference genome. 
-
+The pipeline currently uses [STAR](https://github.com/alexdobin/STAR) to map the raw FastQ reads to the reference genome and project the alignments onto the transcriptome. STAR is fast but requires a lot of memory to run, typically around 38GB for the Human GRCh37 reference genome.
 
 ### Unique Molecular Identifiers (UMI)
 

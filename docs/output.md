@@ -166,7 +166,6 @@ When `--remove_ribo_rna` is specified, the pipeline uses [SortMeRNA](https://git
 
 ![MultiQC - SortMeRNA hit count plot](images/mqc_sortmerna.png)
 
-
 ## Alignment
 
 ### STAR
@@ -224,6 +223,34 @@ The content of the files above is explained in more detail in the [UMI-tools doc
 </details>
 
 After extracting the UMI information from the read sequence (see [UMI-tools extract](#umi-tools-extract)), the second step in the removal of UMI barcodes involves deduplicating the reads based on both mapping and UMI barcode information using the UMI-tools `dedup` command. This will generate a filtered BAM file after the removal of PCR duplicates.
+
+## Riboseq-specific QC
+
+reads distribution around annotated protein coding regions on user provided transcripts
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `riboseq_qc/ribotish/`
+  - `*_qual.txt`: text-format data on read distribution around annotated protein coding regions on user provided transcripts
+  - `*_qual.pdf`: PDF-format representation of read distribution around annotated protein coding regions on user provided transcripts
+  - `*.para.py`: P-site offsets for different reads lengths in python code dict format
+  </details>
+
+## ORF predictions
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `orf_predictions/ribotish/`
+  - `*_pred.txt` thresholded ORF predictions from Ribo-TISH
+  - `*_all.txt` unthresholded ORF predictions from Ribo-TISH
+  - `*_transprofile.py` RPF P-site profile for each transcript from Ribo-TISH
+- `orf_predictions/ribotish_all/`
+  - `allsamples_pred.txt` thresholded ORF predictions from Ribo-TISH ran over all samples at once
+  - `allsamples_all.txt` unthresholded ORF predictions from Ribo-TISH ran over all samples at once
+  - `allsamples_transprofile.py` RPF P-site profile for each transcript from Ribo-TISH ran over all samples at once
+  </details>
 
 ### MultiQC
 

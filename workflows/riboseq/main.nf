@@ -262,12 +262,12 @@ workflow RIBOSEQ {
 
     ch_genome_bam
         .branch { meta, bam ->
-             riboseq: meta.sample_type == 'riboseq'
-                 return [ meta, bam ]
-             tiseq: meta.sample_type == 'tiseq'
-                 return [ meta, bam ]
-             rnaseq: meta.sample_type == 'rnaseq'
-                 return [ meta, bam ]
+            riboseq: meta.sample_type == 'riboseq'
+                return [ meta, bam ]
+            tiseq: meta.sample_type == 'tiseq'
+                return [ meta, bam ]
+            rnaseq: meta.sample_type == 'rnaseq'
+                return [ meta, bam ]
         }
         .set{
             ch_genome_bam_by_type
@@ -280,14 +280,14 @@ workflow RIBOSEQ {
         ch_gtf.map { [ [:], it ] }.first()
     )
     ch_versions      = ch_versions.mix(RIBOTISH_QUALITY_RIBOSEQ.out.versions)
-    
+
     ribotish_predict_inputs = ch_bams_for_ribotish
         .join(RIBOTISH_QUALITY_RIBOSEQ.out.offset)
-        .multiMap{ meta, bam, bai, offset -> 
-            bam: [ meta, bam, bai ] 
+        .multiMap{ meta, bam, bai, offset ->
+            bam: [ meta, bam, bai ]
             offset: [ meta, offset ]
         }
- 
+
     RIBOTISH_PREDICT_INDIVIDUAL(
         ribotish_predict_inputs.bam,
         [[:],[],[]],
@@ -296,7 +296,7 @@ workflow RIBOSEQ {
         ribotish_predict_inputs.offset,
         [[:],[]]
     )
-    
+
     RIBOTISH_PREDICT_ALL(
         ribotish_predict_inputs.bam.map{meta, bam, bai -> [[id:'allsamples'], bam, bai]}.groupTuple(),
         [[:],[],[]],
