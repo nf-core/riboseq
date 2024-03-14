@@ -158,7 +158,6 @@ By default, the input GTF file will be filtered to ensure that sequence names co
 
 The pipeline will by default run the [Ribo-TISH](https://github.com/zhpn1024/ribotish) [quality](https://github.com/zhpn1024/ribotish?tab=readme-ov-file#quality) and [predict](https://github.com/zhpn1024/ribotish?tab=readme-ov-file#predict) commands for QC and ORF prediction, respectively. Additional arguments can be supplied to either command via the `--extra_ribotish_quality_args` and `--extra_ribotish_predict_args` parameters.
 
-
 ## Running the pipeline
 
 The typical command for running the pipeline is as follows:
