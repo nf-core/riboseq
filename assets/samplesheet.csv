@@ -1,3 +1,13 @@
-sample,fastq_1,fastq_2
-SAMPLE_PAIRED_END,/path/to/fastq/files/AEG588A1_S1_L002_R1_001.fastq.gz,/path/to/fastq/files/AEG588A1_S1_L002_R2_001.fastq.gz
-SAMPLE_SINGLE_END,/path/to/fastq/files/AEG588A4_S4_L003_R1_001.fastq.gz,
+"sample","fastq_1","fastq_2","strandedness","type"
+"SRX11780879","https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/testdata/GSE182201/SRX11780879_SRR15480782_chr20_1.fastq.gz","https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/testdata/GSE182201/SRX11780879_SRR15480782_chr20_2.fastq.gz","auto","rnaseq"
+"SRX11780880","https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/testdata/GSE182201/SRX11780880_SRR15480783_chr20_1.fastq.gz","https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/testdata/GSE182201/SRX11780880_SRR15480783_chr20_2.fastq.gz","auto","rnaseq"
+"SRX11780881","https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/testdata/GSE182201/SRX11780881_SRR15480784_chr20_1.fastq.gz","https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/testdata/GSE182201/SRX11780881_SRR15480784_chr20_2.fastq.gz","auto","rnaseq"
+"SRX11780882","https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/testdata/GSE182201/SRX11780882_SRR15480785_chr20_1.fastq.gz","https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/testdata/GSE182201/SRX11780882_SRR15480785_chr20_2.fastq.gz","auto","rnaseq"
+"SRX11780883","https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/testdata/GSE182201/SRX11780883_SRR15480786_chr20_1.fastq.gz","https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/testdata/GSE182201/SRX11780883_SRR15480786_chr20_2.fastq.gz","auto","rnaseq"
+"SRX11780884","https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/testdata/GSE182201/SRX11780884_SRR15480787_chr20_1.fastq.gz","https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/testdata/GSE182201/SRX11780884_SRR15480787_chr20_2.fastq.gz","auto","rnaseq"
+"SRX11780885","https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/testdata/GSE182201/SRX11780885_SRR15480788_chr20_1.fastq.gz","","auto","riboseq"
+"SRX11780886","https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/testdata/GSE182201/SRX11780886_SRR15480789_chr20_1.fastq.gz","","auto","riboseq"
+"SRX11780887","https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/testdata/GSE182201/SRX11780887_SRR15480790_chr20_1.fastq.gz","","auto","riboseq"
+"SRX11780888","https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/testdata/GSE182201/SRX11780888_SRR15480791_chr20_1.fastq.gz","","auto","riboseq"
+"SRX11780889","https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/testdata/GSE182201/SRX11780889_SRR15480792_chr20_1.fastq.gz","","auto","riboseq"
+"SRX11780890","https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/testdata/GSE182201/SRX11780890_SRR15480793_chr20_1.fastq.gz","","auto","riboseq"
