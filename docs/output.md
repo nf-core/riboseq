@@ -22,15 +22,16 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
   - [fastp](#fastp) - Adapter and quality trimming
   - [BBSplit](#bbsplit) - Removal of genome contaminants
   - [SortMeRNA](#sortmerna) - Removal of ribosomal RNA
-  - [Ribo-TISH quality](#ribotish-quality) - Riboseq QC plots generated with the Ribo-TISH 'quality' command
+  - [Ribo-TISH quality](#ribo-tish-quality) - Riboseq QC plots generated with the Ribo-TISH 'quality' command
 - [Alignment and quantification](#alignment-and-quantification)
   - [STAR](#star) - Fast spliced aware genome alignment
 - [Alignment post-processing](#alignment-post-processing)
   - [SAMtools](#samtools) - Sort and index alignments
   - [UMI-tools dedup](#umi-tools-dedup) - UMI-based deduplication
   - [picard MarkDuplicates](#picard-markduplicates) - Duplicate read marking
-- [ORF prediction](#orf-prediction) - Open reading frame (ORF prediction)
-  - [Ribo-TISH](#ribotish-predict) - Riboseq ORF predictions by Ribo-TISH
+- [ORF prediction](#orf-predictions) - Open reading frame (ORF prediction)
+  - [Ribo-TISH](#ribo-tish-predict) - Riboseq ORF predictions by Ribo-TISH
+  - [Ribotricer](#ribotricer-detect-orfs) - Riboseq QC and ORF predictions by Ribotricer
 - [Workflow reporting and genomes](#workflow-reporting-and-genomes)
   - [Reference genome files](#reference-genome-files) - Saving reference genome indices/files
   - [Pipeline information](#pipeline-information) - Report metrics generated during the workflow execution
@@ -226,7 +227,9 @@ After extracting the UMI information from the read sequence (see [UMI-tools extr
 
 ## Riboseq-specific QC
 
-reads distribution around annotated protein coding regions on user provided transcripts
+Read distribution metrics around annotated protein coding regions or based on alignments alone, plus related metrics.
+
+### Ribo-TISH quality
 
 <details markdown="1">
 <summary>Output files</summary>
@@ -237,7 +240,22 @@ reads distribution around annotated protein coding regions on user provided tran
   - `*.para.py`: P-site offsets for different reads lengths in python code dict format
   </details>
 
+### Ribotricer detect-orfs QC outputs
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `riboseq_qc/ribotricer/`
+  - `*_read_length_dist.pdf`: PDF-format read length distribution as quality control
+  - `*_metagene_plots.pdf`: Metagene plots for quality control
+  - `*_protocol.txt`: txt file containing inferred protocol if it was inferred (not supplied as input)
+  - `*_metagene_profiles_5p.tsv`: Metagene profile aligning with the start codon
+  - `*_metagene_profiles_3p.tsv`: Metagene profile aligning with the stop codon
+  </details>
+
 ## ORF predictions
+
+### Ribo-TISH predict
 
 <details markdown="1">
 <summary>Output files</summary>
@@ -250,6 +268,16 @@ reads distribution around annotated protein coding regions on user provided tran
   - `allsamples_pred.txt` thresholded ORF predictions from Ribo-TISH ran over all samples at once
   - `allsamples_all.txt` unthresholded ORF predictions from Ribo-TISH ran over all samples at once
   - `allsamples_transprofile.py` RPF P-site profile for each transcript from Ribo-TISH ran over all samples at once
+  </details>
+
+### Ribotricer detect-orfs
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `orf_predictions/ribotricer/`
+  - `*_translating_ORFs.tsv` TSV with ORFs assessed as translating in the assocciated BAM file
+  - `*_psite_offsets.txt`: If the P-site offsets are not provided, txt file containing the derived relative offsets.
   </details>
 
 ### MultiQC
