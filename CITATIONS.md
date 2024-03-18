@@ -10,6 +10,16 @@
 
 ## Pipeline tools
 
+- [BBMap](https://sourceforge.net/projects/bbmap/)
+
+- [BEDTools](https://pubmed.ncbi.nlm.nih.gov/20110278/)
+
+  > Quinlan AR, Hall IM. BEDTools: a flexible suite of utilities for comparing genomic features. Bioinformatics. 2010 Mar 15;26(6):841-2. doi: 10.1093/bioinformatics/btq033. Epub 2010 Jan 28. PubMed PMID: 20110278; PubMed Central PMCID: PMC2832824.
+
+- [fastp](https://www.ncbi.nlm.nih.gov/pubmed/30423086/)
+
+  > Chen S, Zhou Y, Chen Y, Gu J. fastp: an ultra-fast all-in-one FASTQ preprocessor. Bioinformatics. 2018 Sep 1;34(17):i884-i890. doi: 10.1093/bioinformatics/bty560. PubMed PMID: 30423086; PubMed Central PMCID: PMC6129281.
+
 - [FastQC](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
 
   > Andrews, S. (2010). FastQC: A Quality Control Tool for High Throughput Sequence Data [Online].
@@ -17,6 +27,29 @@
 - [MultiQC](https://pubmed.ncbi.nlm.nih.gov/27312411/)
 
   > Ewels P, Magnusson M, Lundin S, Käller M. MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics. 2016 Oct 1;32(19):3047-8. doi: 10.1093/bioinformatics/btw354. Epub 2016 Jun 16. PubMed PMID: 27312411; PubMed Central PMCID: PMC5039924.
+
+- [Ribo-TISH](https://pubmed.ncbi.nlm.nih.gov/29170441/)
+
+  > Zhang P, He D, Xu Y, Hou J, Pan BF, Wang Y, Liu T, Davis CM, Ehli EA, Tan L, Zhou F, Hu J, Yu Y, Chen X, Nguyen TM, Rosen JM, Hawke DH, Ji Z, Chen Y. Genome-wide identification and differential analysis of translational initiation. Nat Commun. 2017 Nov 23;8(1):1749. doi: 10.1038/s41467-017-01981-8. PMID: 29170441; PMCID: PMC5701008.
+
+- [Ribotricer](https://pubmed.ncbi.nlm.nih.gov/31750902/)
+
+  > Choudhary S, Li W, D Smith A. Accurate detection of short and long active ORFs using Ribo-seq data. Bioinformatics. 2020 Apr 1;36(7):2053-2059. doi: 10.1093/bioinformatics/btz878. PMID: 31750902; PMCID: PMC7141849.
+
+- [SortMeRNA](https://pubmed.ncbi.nlm.nih.gov/23071270/)
+
+  > Kopylova E, Noé L, Touzet H. SortMeRNA: fast and accurate filtering of ribosomal RNAs in metatranscriptomic data Bioinformatics. 2012 Dec 15;28(24):3211-7. doi: 10.1093/bioinformatics/bts611. Epub 2012 Oct 15. PubMed PMID: 23071270.
+
+- [STAR](https://pubmed.ncbi.nlm.nih.gov/23104886/)
+
+  > Dobin A, Davis CA, Schlesinger F, Drenkow J, Zaleski C, Jha S, Batut P, Chaisson M, Gingeras TR. STAR: ultrafast universal RNA-seq aligner Bioinformatics. 2013 Jan 1;29(1):15-21. doi: 10.1093/bioinformatics/bts635. Epub 2012 Oct 25. PubMed PMID: 23104886; PubMed Central PMCID: PMC3530905.
+
+- [Trim Galore!](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/)
+
+- [UMI-tools](https://pubmed.ncbi.nlm.nih.gov/28100584/)
+
+  > Smith T, Heger A, Sudbery I. UMI-tools: modeling sequencing errors in Unique Molecular Identifiers to improve quantification accuracy Genome Res. 2017 Mar;27(3):491-499. doi: 10.1101/gr.209601.116. Epub 2017 Jan 18. PubMed PMID: 28100584; PubMed Central PMCID: PMC5340976.
+
 
 ## Software packaging/containerisation tools
 
