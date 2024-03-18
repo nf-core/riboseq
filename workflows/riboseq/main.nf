@@ -73,6 +73,8 @@ include { RIBOTISH_QUALITY as RIBOTISH_QUALITY_RIBOSEQ         } from '../../mod
 include { RIBOTISH_QUALITY as RIBOTISH_QUALITY_TISEQ           } from '../../modules/nf-core/ribotish/quality'
 include { RIBOTISH_PREDICT as RIBOTISH_PREDICT_INDIVIDUAL      } from '../../modules/nf-core/ribotish/predict'
 include { RIBOTISH_PREDICT as RIBOTISH_PREDICT_ALL             } from '../../modules/nf-core/ribotish/predict'
+include { RIBOTRICER_PREPAREORFS                               } from '../../modules/nf-core/ribotricer/prepareorfs'
+include { RIBOTRICER_DETECTORFS                                } from '../../modules/nf-core/ribotricer/detectorfs'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -273,38 +275,53 @@ workflow RIBOSEQ {
             ch_genome_bam_by_type
         }
 
-    ch_bams_for_ribotish = ch_genome_bam_by_type.riboseq.join(ch_genome_bam_index)
+    ch_bams_for_analysis = ch_genome_bam_by_type.riboseq.join(ch_genome_bam_index)
 
-    RIBOTISH_QUALITY_RIBOSEQ(
-        ch_bams_for_ribotish,
-        ch_gtf.map { [ [:], it ] }.first()
-    )
-    ch_versions      = ch_versions.mix(RIBOTISH_QUALITY_RIBOSEQ.out.versions)
+    if (!params.skip_ribotish){
+        RIBOTISH_QUALITY_RIBOSEQ(
+            ch_bams_for_analysis,
+            ch_gtf.map { [ [:], it ] }.first()
+        )
+        ch_versions      = ch_versions.mix(RIBOTISH_QUALITY_RIBOSEQ.out.versions)
 
-    ribotish_predict_inputs = ch_bams_for_ribotish
-        .join(RIBOTISH_QUALITY_RIBOSEQ.out.offset)
-        .multiMap{ meta, bam, bai, offset ->
-            bam: [ meta, bam, bai ]
-            offset: [ meta, offset ]
-        }
+        ribotish_predict_inputs = ch_bams_for_analysis
+            .join(RIBOTISH_QUALITY_RIBOSEQ.out.offset)
+            .multiMap{ meta, bam, bai, offset ->
+                bam: [ meta, bam, bai ]
+                offset: [ meta, offset ]
+            }
 
-    RIBOTISH_PREDICT_INDIVIDUAL(
-        ribotish_predict_inputs.bam,
-        [[:],[],[]],
-        ch_fasta.combine(ch_gtf).map{ fasta, gtf -> [ [:], fasta, gtf ] }.first(),
-        [[:],[]],
-        ribotish_predict_inputs.offset,
-        [[:],[]]
-    )
+        ch_fasta_gtf = ch_fasta.combine(ch_gtf).map{ fasta, gtf -> [ [:], fasta, gtf ] }.first()
 
-    RIBOTISH_PREDICT_ALL(
-        ribotish_predict_inputs.bam.map{meta, bam, bai -> [[id:'allsamples'], bam, bai]}.groupTuple(),
-        [[:],[],[]],
-        ch_fasta.combine(ch_gtf).map{ fasta, gtf -> [ [:], fasta, gtf ] },
-        [[:],[]],
-        ribotish_predict_inputs.offset.map{meta, offset -> [[id:'allsamples'], offset]}.groupTuple(),
-        [[:],[]]
-    )
+        RIBOTISH_PREDICT_INDIVIDUAL(
+            ribotish_predict_inputs.bam,
+            [[:],[],[]],
+            ch_fasta_gtf,
+            [[:],[]],
+            ribotish_predict_inputs.offset,
+            [[:],[]]
+        )
+
+        RIBOTISH_PREDICT_ALL(
+            ribotish_predict_inputs.bam.map{meta, bam, bai -> [[id:'allsamples'], bam, bai]}.groupTuple(),
+            [[:],[],[]],
+            ch_fasta_gtf,
+            [[:],[]],
+            ribotish_predict_inputs.offset.map{meta, offset -> [[id:'allsamples'], offset]}.groupTuple(),
+            [[:],[]]
+        )
+    }
+
+    if (!params.skip_ribotricer){
+        RIBOTRICER_PREPAREORFS(
+            ch_fasta_gtf
+        )
+        
+        RIBOTRICER_DETECTORFS(
+            ch_bams_for_analysis,
+            RIBOTRICER_PREPAREORFS.out.candidate_orfs
+        )
+    }
 
     //
     // Collate and save software versions

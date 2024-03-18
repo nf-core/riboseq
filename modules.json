@@ -85,6 +85,16 @@
                         "git_sha": "fac281689037749ea014215a61d431522513077a",
                         "installed_by": ["modules"]
                     },
+                    "ribotricer/detectorfs": {
+                        "branch": "master",
+                        "git_sha": "eef39ece87292a7e11d7f52eec165dbb6e5b696a",
+                        "installed_by": ["modules"]
+                    },
+                    "ribotricer/prepareorfs": {
+                        "branch": "master",
+                        "git_sha": "db0c1159f2d90a0e0ee6753f7299b4ec68439c39",
+                        "installed_by": ["modules"]
+                    },
                     "rsem/preparereference": {
                         "branch": "master",
                         "git_sha": "301b088c7e9e00c4c80686411383f07173b54d69",
