@@ -316,7 +316,7 @@ workflow RIBOSEQ {
         RIBOTRICER_PREPAREORFS(
             ch_fasta_gtf
         )
-        
+      
         RIBOTRICER_DETECTORFS(
             ch_bams_for_analysis,
             RIBOTRICER_PREPAREORFS.out.candidate_orfs
