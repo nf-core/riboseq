@@ -471,6 +471,14 @@
                 "extra_ribotish_predict_args": {
                     "type": "string",
                     "description": "Extra arguments to pass to the ribotish predict command in addition to defaults defined by the pipeline."
+                },
+                "extra_ribotricer_prepareorfs_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to the ribotricer prepare-orfs command in addition to defaults defined by the pipeline."
+                },
+                "extra_ribotricer_detectorfs_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to the ribotricer detect-orfs command in addition to defaults defined by the pipeline."
                 }
             }
         },
@@ -657,6 +665,9 @@
                     "type": "boolean",
                     "description": "Skip Ribo-TISH.",
                     "fa_icon": "fas fa-fast-forward"
+                },
+                "skip_ribotricer": {
+                    "type": "boolean"
                 }
             }
         },
@@ -871,9 +882,6 @@
     },
     "allOf": [
         {
-            "$ref": "#/definitions/riboseq_specific_options"
-        },
-        {
             "$ref": "#/definitions/input_output_options"
         },
         {
@@ -890,6 +898,9 @@
         },
         {
             "$ref": "#/definitions/alignment_options"
+        },
+        {
+            "$ref": "#/definitions/riboseq_specific_options"
         },
         {
             "$ref": "#/definitions/optional_outputs"
