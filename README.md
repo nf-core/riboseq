@@ -52,7 +52,7 @@ sample,fastq_1,fastq_2,strandedness,type
 CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz,forward,riboseq
 ```
 
-Each row represents a fastq file (single-end) or a pair of fastq files (paired end). Each row should have a 'type' value of `riboseq`, `tiseq` or `rnaseq`. Future iterations of the workflow will conduct paired analysis of matched riboseq and rnaseq samples to accomplish analysis types such as 'translational efficiency, but in the current version you should set this to `riboseq` or `tiseq` for reglar ribo-seq or TI-seq data respectively. 
+Each row represents a fastq file (single-end) or a pair of fastq files (paired end). Each row should have a 'type' value of `riboseq`, `tiseq` or `rnaseq`. Future iterations of the workflow will conduct paired analysis of matched riboseq and rnaseq samples to accomplish analysis types such as 'translational efficiency, but in the current version you should set this to `riboseq` or `tiseq` for reglar ribo-seq or TI-seq data respectively.
 
 Now, you can run the pipeline using:
 
@@ -79,11 +79,11 @@ For more details about the output files and reports, please refer to the
 
 nf-core/riboseq was originally written by [Jonathan Manning](https://github.com/pinin4fjords) (Bioinformatics Engineer as Seqera) with funding from [Altos labs](https://www.altoslabs.com/) and in discussion with [Felix Krueger](https://github.com/FelixKrueger) and [Christel Krueger](https://github.com/ChristelKrueger). We thank the following people for their input:
 
- - Anne Bresciani (ZS)
- - Mikhail Osipovitch (ZS)
- - Edward Wallace (University of Edinburgh)
- - Jack Tierney (University College Cork)
- 
+- Anne Bresciani (ZS)
+- Mikhail Osipovitch (ZS)
+- Edward Wallace (University of Edinburgh)
+- Jack Tierney (University College Cork)
+
 ## Contributions and Support
 
 If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
