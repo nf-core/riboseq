@@ -75,6 +75,7 @@ include { RIBOTISH_PREDICT as RIBOTISH_PREDICT_INDIVIDUAL      } from '../../mod
 include { RIBOTISH_PREDICT as RIBOTISH_PREDICT_ALL             } from '../../modules/nf-core/ribotish/predict'
 include { RIBOTRICER_PREPAREORFS                               } from '../../modules/nf-core/ribotricer/prepareorfs'
 include { RIBOTRICER_DETECTORFS                                } from '../../modules/nf-core/ribotricer/detectorfs'
+include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -185,8 +186,7 @@ workflow RIBOSEQ {
 
     ch_genome_bam              = FASTQ_ALIGN_STAR.out.bam
     ch_genome_bam_index        = FASTQ_ALIGN_STAR.out.bai
-    ch_transcriptome_bam       = FASTQ_ALIGN_STAR.out.bam_transcript
-    ch_transcriptome_bam_index = FASTQ_ALIGN_STAR.out.bai_transcript
+    ch_transcriptome_bam       = FASTQ_ALIGN_STAR.out.orig_bam_transcript
     ch_versions                = ch_versions.mix(FASTQ_ALIGN_STAR.out.versions)
 
     ch_multiqc_files = ch_multiqc_files
@@ -222,7 +222,6 @@ workflow RIBOSEQ {
             params.umitools_dedup_stats
         )
         ch_transcriptome_bam       = BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_TRANSCRIPTOME.out.bam
-        ch_transcriptome_bam_index = BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_TRANSCRIPTOME.out.bai
 
         ch_multiqc_files = ch_multiqc_files
             .mix(BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_TRANSCRIPTOME.out.stats.collect{it[1]})
@@ -323,6 +322,25 @@ workflow RIBOSEQ {
         )
     }
 
+    //
+    // SUBWORKFLOW: Count reads from BAM alignments using Salmon
+    //
+    QUANTIFY_STAR_SALMON (
+        ch_samplesheet.map { [ [:], it ] },
+        ch_transcriptome_bam,
+        [],
+        ch_transcript_fasta,
+        ch_gtf,
+        params.gtf_group_features,
+        params.gtf_extra_attributes,
+        'salmon',
+        true,
+        params.salmon_quant_libtype ?: '',
+        null,
+        null
+    )
+    ch_versions = ch_versions.mix(QUANTIFY_STAR_SALMON.out.versions)
+    
     //
     // Collate and save software versions
     //
