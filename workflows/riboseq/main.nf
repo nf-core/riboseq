@@ -340,7 +340,7 @@ workflow RIBOSEQ {
         null
     )
     ch_versions = ch_versions.mix(QUANTIFY_STAR_SALMON.out.versions)
-    
+
     //
     // Collate and save software versions
     //
