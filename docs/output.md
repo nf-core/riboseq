@@ -280,6 +280,43 @@ Read distribution metrics around annotated protein coding regions or based on al
   - `*_psite_offsets.txt`: If the P-site offsets are not provided, txt file containing the derived relative offsets.
   </details>
 
+## Quantification
+
+Quantification is done by passing transcriptome-level alignment BAM files to Salmon, producing the following outputs:
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `quantification/`
+  - `tx2gene.tsv`: Tab-delimited file containing gene to transcripts ids mappings.
+- `quantification/salmon/`
+  - salmon.merged.gene_counts.tsv`: Matrix of gene-level raw counts across all samples.
+  - salmon.merged.gene_tpm.tsv`: Matrix of gene-level TPM values across all samples.
+  - salmon.merged.gene.rds`: RDS object that can be loaded in R that contains a [SummarizedExperiment](https://bioconductor.org/packages/release/bioc/html/SummarizedExperiment.html) container with the TPM (`abundance`), estimated counts (`counts`) and transcript length (`length`) in the assays slot for genes.
+  - salmon.merged.gene_counts_scaled.tsv`: Matrix of gene-level library size-scaled counts across all samples.
+  - salmon.merged.gene__scaled.rds`: RDS object that can be loaded in R that contains a [SummarizedExperiment](https://bioconductor.org/packages/release/bioc/html/SummarizedExperiment.html) container with the TPM (`abundance`), estimated library size-scaled counts (`counts`) and transcript length (`length`) in the assays slot for genes.
+  - salmon.merged.gene_counts_length_scaled.tsv`: Matrix of gene-level length-scaled counts across all samples.
+  - salmon.merged.gene_length_scaled.rds`: RDS object that can be loaded in R that contains a [SummarizedExperiment](https://bioconductor.org/packages/release/bioc/html/SummarizedExperiment.html) container with the TPM (`abundance`), estimated length-scaled counts (`counts`) and transcript length (`length`) in the assays slot for genes.
+  - salmon.merged.transcript_counts.tsv`: Matrix of isoform-level raw counts across all samples.
+  - salmon.merged.transcript_tpm.tsv`: Matrix of isoform-level TPM values across all samples.
+  - salmon.merged.transcript.rds`: RDS object that can be loaded in R that contains a [SummarizedExperiment](https://bioconductor.org/packages/release/bioc/html/SummarizedExperiment.html) container with the TPM (`abundance`), estimated isoform-level raw counts (`counts`) and transcript length (`length`) in the assays slot for transcripts.
+  </details>
+
+Raw outputs from Salmon are available for each sample:
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `quantification/salmon/<SAMPLE>/`
+  - `aux_info/`: Auxiliary info e.g. versions and number of mapped reads.
+  - `cmd_info.json`: Information about the Salmon quantification command, version and options.
+  - `lib_format_counts.json`: Number of fragments assigned, unassigned and incompatible.
+  - `libParams/`: Contains the file `flenDist.txt` for the fragment length distribution.
+  - `logs/`: Contains the file `salmon_quant.log` giving a record of Salmon's quantification.
+  - `quant.genes.sf`: Salmon _gene_-level quantification of the sample, including feature length, effective length, TPM, and number of reads.
+  - `quant.sf`: Salmon _transcript_-level quantification of the sample, including feature length, effective length, TPM, and number of reads.
+  </details>
+
 ### MultiQC
 
 <details markdown="1">
