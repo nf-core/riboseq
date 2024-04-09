@@ -31,17 +31,22 @@ CONTROL_REP1,AEG588A1_S1_L004_R1_001.fastq.gz,AEG588A1_S1_L004_R2_001.fastq.gz,a
 
 The pipeline will auto-detect whether a sample is single- or paired-end using the information provided in the samplesheet. The samplesheet can have as many columns as you desire, however, there is a strict requirement for the first 5 columns to match those defined in the table below.
 
-A final samplesheet file consisting of both single- and paired-end data may look something like the one below. This is for 6 samples, where `TREATMENT_REP3` has been sequenced twice.
+A final samplesheet file consisting of both single-end Ribo-seq samples and paired-end RNA-seq data may look something like the one below.
 
 ```csv title="samplesheet.csv"
-sample,fastq_1,fastq_2,strandedness,type
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz,forward,rnaseq
-CONTROL_REP2,AEG588A2_S2_L002_R1_001.fastq.gz,AEG588A2_S2_L002_R2_001.fastq.gz,forward,rnaseq
-CONTROL_REP3,AEG588A3_S3_L002_R1_001.fastq.gz,AEG588A3_S3_L002_R2_001.fastq.gz,forward,rnaseq
-TREATMENT_REP1,AEG588A4_S4_L003_R1_001.fastq.gz,,reverse,riboseq
-TREATMENT_REP2,AEG588A5_S5_L003_R1_001.fastq.gz,,reverse,riboseq
-TREATMENT_REP3,AEG588A6_S6_L003_R1_001.fastq.gz,,reverse,riboseq
-TREATMENT_REP3,AEG588A6_S6_L004_R1_001.fastq.gz,,reverse,riboseq
+sample,fastq_1,fastq_2,strandedness,type,sample_description,pair,treatment
+SRX11780879,SRX11780879_SRR15480782_chr20_1.fastq.gz,SRX11780879_SRR15480782_chr20_2.fastq.gz,auto,rnaseq,PM2_5_0_1,1,control
+SRX11780880,SRX11780880_SRR15480783_chr20_1.fastq.gz,SRX11780880_SRR15480783_chr20_2.fastq.gz,auto,rnaseq,PM2_5_0_2,2,control
+SRX11780881,SRX11780881_SRR15480784_chr20_1.fastq.gz,SRX11780881_SRR15480784_chr20_2.fastq.gz,auto,rnaseq,PM2_5_0_3,3,control
+SRX11780882,SRX11780882_SRR15480785_chr20_1.fastq.gz,SRX11780882_SRR15480785_chr20_2.fastq.gz,auto,rnaseq,PM2_5_400_1,4,treated
+SRX11780883,SRX11780883_SRR15480786_chr20_1.fastq.gz,SRX11780883_SRR15480786_chr20_2.fastq.gz,auto,rnaseq,PM2_5_400_2,5,treated
+SRX11780884,SRX11780884_SRR15480787_chr20_1.fastq.gz,SRX11780884_SRR15480787_chr20_2.fastq.gz,auto,rnaseq,PM2_5_400_3,6,treated
+SRX11780885,SRX11780885_SRR15480788_chr20_1.fastq.gz,,auto,riboseq,Ribo-seq_C01,1,control
+SRX11780886,SRX11780886_SRR15480789_chr20_1.fastq.gz,,auto,riboseq,Ribo-seq_C02,2,control
+SRX11780887,SRX11780887_SRR15480790_chr20_1.fastq.gz,,auto,riboseq,Ribo-seq_C03,3,control
+SRX11780888,SRX11780888_SRR15480791_chr20_1.fastq.gz,,auto,riboseq,Ribo-seq_P4001,4,treated
+SRX11780889,SRX11780889_SRR15480792_chr20_1.fastq.gz,,auto,riboseq,Ribo-seq_P4002,5,treated
+SRX11780890,SRX11780890_SRR15480793_chr20_1.fastq.gz,,auto,riboseq,Ribo-seq_P4003,6,treated
 ```
 
 | Column         | Description                                                                                                                                                                            |
@@ -54,7 +59,7 @@ TREATMENT_REP3,AEG588A6_S6_L004_R1_001.fastq.gz,,reverse,riboseq
 
 An [example samplesheet](../assets/samplesheet.csv) has been provided with the pipeline.
 
-> **NB:** Currently, the pipeline only takes riboseq or TI-seq samples and passes them to Ribo-TISH for prediction. Future iterations of the pipeline will require matched RNA-seq samples for e.g. translational efficiency analysis. Distinguishing these two groups is the purpose of the `type` column.
+When specifying `contrasts` to perform a translational efficiency analysis (see below), the `type` column is necessary to distinguish Ribo-seq and RNA-seq samples. There must further be a column somewhere in the table that separates the treatment groups to be compared (`treatment` in the above example). Optionally sample pairing can be specified via an additional column (`pair` in the example), by default the same ordering will be assumed between RNA-seq and Riboseq samples of the respective groups.
 
 ## Adapter trimming options
 
@@ -157,6 +162,44 @@ By default, the input GTF file will be filtered to ensure that sequence names co
 ## Riboseq-specific options
 
 The pipeline will by default run the [Ribo-TISH](https://github.com/zhpn1024/ribotish) [quality](https://github.com/zhpn1024/ribotish?tab=readme-ov-file#quality) and [predict](https://github.com/zhpn1024/ribotish?tab=readme-ov-file#predict) commands for QC and ORF prediction, respectively. Additional arguments can be supplied to either command via the `--extra_ribotish_quality_args` and `--extra_ribotish_predict_args` parameters.
+
+## Translational efficiency
+
+If you have paired RNA-seq and Riboseq samples, you can use this workflow to initiate a translational efficiency analysis.
+
+Translational efficiency analysis as conducted by [anota2seq](https://bioconductor.org/packages/release/bioc/html/anota2seq.html) involves the integrated analysis of RNA-seq and Ribo-seq data to discern changes in translational efficiency across different experimental conditions. It quantitatively assesses how variations in mRNA abundance and ribosome occupancy lead to alterations in protein synthesis, enabling the identification of genes with post-transcriptional and translational regulation.
+
+anota2seq studies differences between conditions for both RNA-seq and Ribo-seq samples. It also assesses combined results from two measures as they relate to one another:
+
+- Differences in translation (Riboseq abundance values) driven by changes in overall RNA-seq abundance values
+- Differences in translation not occuring as a result of overall RNA levels
+- Changes in total RNA levels that do not lead to increased translation ('buffering'):
+
+This table may help:
+
+| Aspect      | RNAseq    | Riboseq   |
+| ----------- | --------- | --------- |
+| Abundance   | Changed   | Changed   |
+| Translation | Unchanged | Changed   |
+| Buffering   | Changed   | Unchanged |
+
+To carry out this analysis, the pipeline must be supplied with one or more 'contrasts' describing the comparison to be made.
+
+For example the test data for this workflow has a contrasts file like:
+
+```csv
+id,variable,reference,target,batch,pair
+treated_vs_control,treatment,control,treated,,pair
+```
+
+This describes how to compare groups of samples between treament groups, and between RNA-seq and Ribo-seq. In order the columns are:
+
+- `id`: a unique identifier to use for the contrast
+- 'variable`: which vaiable (column) of the sample sheet should be used to separate the treatment groups?
+- `reference`: which value of the variable column should be used to select samples to be used as the reference/ base group?
+- `target`: which value of the variable column should be used to select samples to be used as the target/treated group?
+- `batch`: (optional) specify a variable in the sample sheet that defines sample batches
+- `pair`: (optional) specify a variable in the sample shet that defines sample pairing between RNA-seq and Ribo-seq samples. If not specified, it is assumed that the two types of sample are ordered the same.
 
 ## Running the pipeline
 

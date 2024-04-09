@@ -32,6 +32,8 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 - [ORF prediction](#orf-predictions) - Open reading frame (ORF prediction)
   - [Ribo-TISH](#ribo-tish-predict) - Riboseq ORF predictions by Ribo-TISH
   - [Ribotricer](#ribotricer-detect-orfs) - Riboseq QC and ORF predictions by Ribotricer
+- [Translational efficiency analysis](#translational-efficiency)
+  - [anota2seq](#anota2seq) - Translational efficiency analysis with anota2seq
 - [Workflow reporting and genomes](#workflow-reporting-and-genomes)
   - [Reference genome files](#reference-genome-files) - Saving reference genome indices/files
   - [Pipeline information](#pipeline-information) - Report metrics generated during the workflow execution
@@ -316,6 +318,38 @@ Raw outputs from Salmon are available for each sample:
   - `quant.genes.sf`: Salmon _gene_-level quantification of the sample, including feature length, effective length, TPM, and number of reads.
   - `quant.sf`: Salmon _transcript_-level quantification of the sample, including feature length, effective length, TPM, and number of reads.
   </details>
+
+## Translational efficiency
+
+anota2seq produces the following outputs:
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `translational_efficiency/anota2seq`
+  - `*.total_mRNA.anota2seq.results.tsv`: anota2seq results for the 'total mRNA' analysis, describing differences in RNA levels across conditions for RNA-seq samples. See https://rdrr.io/bioc/anota2seq/man/anota2seqGetOutput.html for description of output columns.
+  - `*.translated_mRNA.anota2seq.results.tsv`: anota2seq results for the 'translated mRNA' analysis, describing differences in RNA levels across conditions for Ribo-seq samples. See https://rdrr.io/bioc/anota2seq/man/anota2seqGetOutput.html for description of output columns.
+  - `*.mRNA_abundance.anota2seq.results.tsv`: anota2seq results for the 'mRNA abunance' analysis, describing changes across conditions consistent between total mRNA and translated RNA (RNA-seq and Riboseq samples). See https://rdrr.io/bioc/anota2seq/man/anota2seqGetOutput.html for description of output columns.
+  - `*.buffering.anota2seq.results.tsv`: anota2seq results for the 'buffering' analysis, describing stable levels of translated RNA (from riboseq samples) across conditions, despite changes in total mRNA. See https://rdrr.io/bioc/anota2seq/man/anota2seqGetOutput.html for description of output columns.
+  - `*.translation.anota2seq.results.tsv`: anota2seq results for the 'translation' analysis, describing differences in translation across conditions, being differences in translated RNA levels not explained by total RNA levels. See https://rdrr.io/bioc/anota2seq/man/anota2seqGetOutput.html for description of output columns.
+  - `*.fold_change.png`: A fold change plot in PNG format, from anota2seq's anota2seqPlotFC() method.
+  - `*.interaction_p_distribution.pdf`: The distribution of p-values and adjusted p-values for the omnibus interaction (both using densities and histograms). The second page of the pdf displays the same plots but for the RVM statistics if RVM is used.
+  - `*.residual_distribution_summary.jpeg`: Summary plot for assessing normal distribution of regression residuals.
+  - `*.residual_vs_fitted.jpeg`: QC plot showing residuals against fitted values.
+  - `*.rvm_fit_for_all_contrasts_group.jpg`: QC plot showing the CDF of variance (theoretical vs empirical), all contrasts.
+  - `*.rvm_fit_for_interactions.jpg`: QC plot showing the CDF of variance (theoretical vs empirical), for interactions.
+  - `*.rvm_fit_for_omnibus_group.jpg`: QC plot showing the CDF of variance (theoretical vs empirical), for omnibus group.
+  - `*.simulated_vs_obt_dfbetas_without_interaction.pdf`: Bar graphs of the frequencies of outlier dfbetas using different dfbetas thresholds.
+  - `.Anota2seqDataSet.rds`: Serialised Anota2seqDataSet object
+  - `*.R_sessionInfo.log`: dump of R SessionInfo
+
+</details>
+
+A key plot is the fold change plot produced by anota2seq:
+
+![anota2seq - fold change plot](images/fc.png)
+
+By plotting fold changes for RNA-seq and Ribo-seq data against one another this shows the relative importance of buffering, translation changes etc in these samples.
 
 ### MultiQC
 
