@@ -361,6 +361,7 @@ workflow RIBOSEQ {
             ch_contrasts,
             ch_samplesheet_matrix
         )
+        ch_versions = ch_versions.mix(QUANTIFY_STAR_SALMON.out.versions)
     }
 
     //
