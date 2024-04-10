@@ -23,6 +23,15 @@
                     "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row. See [usage docs](https://nf-co.re/riboseq/usage#samplesheet-input).",
                     "fa_icon": "fas fa-file-csv"
                 },
+                "contrasts": {
+                    "type": "string",
+                    "description": "A CSV file describing sample contrasts",
+                    "help_text": "This file is used to define groups of samples from 'input' to compare.  It must contain at least the columns 'variable', 'reference' and 'target', and optionally a 'batch' column. 'variable' and 'batch' must be columns in the input sample sheet, 'reference' and 'target' are values in the column indicated by 'variable'.",
+                    "pattern": "^\\S+\\.(csv|tsv|txt)$",
+                    "format": "file-path",
+                    "mimetype": "text/csv",
+                    "fa_icon": "fas fa-adjust"
+                },
                 "outdir": {
                     "type": "string",
                     "format": "directory-path",
@@ -478,6 +487,10 @@
                 "extra_ribotricer_detectorfs_args": {
                     "type": "string",
                     "description": "Extra arguments to pass to the ribotricer detect-orfs command in addition to defaults defined by the pipeline."
+                },
+                "extra_anota2seq_run_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to anota2seq in addition to defaults defined by the pipeline."
                 }
             }
         },

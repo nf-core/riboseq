@@ -5,6 +5,11 @@
         "https://github.com/nf-core/modules.git": {
             "modules": {
                 "nf-core": {
+                    "anota2seq/anota2seqrun": {
+                        "branch": "master",
+                        "git_sha": "916b5fb9713d6f1a02e9a7c565e430ae0d647b9f",
+                        "installed_by": ["modules"]
+                    },
                     "bbmap/bbsplit": {
                         "branch": "master",
                         "git_sha": "ecc2139bc014be1d0117d6c69458d82fbfa3328f",

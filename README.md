@@ -37,6 +37,7 @@ Differences occur in the downstream analysis steps. Currently these specialist s
 1. Check reads distribution around annotated protein coding regions on user provided transcripts, show frame bias and estimate P-site offset for different group of reads ([`Ribo-TISH`](https://github.com/zhpn1024/ribotish))
 2. Predict translating open reading frames and/ or translation initiation sites _de novo_ from alignment data ([`Ribo-TISH`](https://github.com/zhpn1024/ribotish))
 3. Derive candidate ORFs from reference data and detect translating ORFs from that list ([`Ribotricer`](https://github.com/smithlabcode/ribotricer))
+4. (optional) Use a translational efficiency approach to study the dynamics of transcription and translation, with [anota2seq](https://bioconductor.org/packages/release/bioc/html/anota2seq.html). **requires matched RNA-seq and Ribo-seq data**
 
 ## Usage
 
@@ -62,6 +63,26 @@ nextflow run nf-core/riboseq \
    --input samplesheet.csv \
    --outdir <OUTDIR>
 ```
+
+### Including a translational efficiency analysis
+
+![anota2seq - fold change plot](docs/images/fc.png)
+
+In the translational efficiency analysis provided by [anota2seq](https://bioconductor.org/packages/release/bioc/html/anota2seq.html), we use matched pairs of Ribo-seq and RNA-seq data to study the relationship between transcription and translation as they differ between two treatment groups. For example the test data for this workflow has a contrasts file like:
+
+```csv
+id,variable,reference,target,batch,pair
+treated_vs_control,treatment,control,treated,,pair
+```
+
+This describes how to compare groups of samples between treament groups, and between RNA-seq and Ribo-seq. In order the columns are:
+
+- `id`: a unique identifier to use for the contrast
+- 'variable`: which vaiable (column) of the sample sheet should be used to separate the treatment groups?
+- `reference`: which value of the variable column should be used to select samples to be used as the reference/ base group?
+- `target`: which value of the variable column should be used to select samples to be used as the target/treated group?
+- `batch`: (optional) specify a variable in the sample sheet that defines sample batches
+- `pair`: (optional) specify a variable in the sample shet that defines sample pairing between RNA-seq and Ribo-seq samples. If not specified, it is assumed that the two types of sample are ordered the same.
 
 > [!WARNING]
 > Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_;

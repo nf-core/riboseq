@@ -104,8 +104,15 @@ workflow NFCORE_RIBOSEQ {
     // WORKFLOW: Run nf-core/riboseq workflow
     //
     ch_samplesheet = Channel.value(file(params.input, checkIfExists: true))
+    if (params.contrasts){
+        ch_contrasts_file = Channel.value(file(params.contrasts))
+    } else {
+        ch_contrasts_file = []
+    }
+
     RIBOSEQ (
         ch_samplesheet,
+        ch_contrasts_file,
         ch_versions,
         PREPARE_GENOME.out.fasta,
         PREPARE_GENOME.out.gtf,
