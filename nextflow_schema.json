@@ -94,15 +94,6 @@
                     "description": "Path to GFF3 annotation file.",
                     "help_text": "This parameter must be specified if `--genome` or `--gtf` are not specified."
                 },
-                "gene_bed": {
-                    "type": "string",
-                    "format": "file-path",
-                    "exists": true,
-                    "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.bed(\\.gz)?$",
-                    "fa_icon": "fas fa-procedures",
-                    "description": "Path to BED file containing gene intervals. This will be created from the GTF file if not specified."
-                },
                 "transcript_fasta": {
                     "type": "string",
                     "format": "file-path",
@@ -122,14 +113,6 @@
                     "description": "FASTA file to concatenate to genome FASTA file e.g. containing spike-in sequences.",
                     "help_text": "If provided, the sequences in this file will get concatenated to the existing genome FASTA file, a GTF file will be automatically created using the entire sequence as the gene, transcript, and exon features, and any alignment index will get created from the combined FASTA and GTF. It is recommended to save the reference with `--save_reference` to re-use the index for future runs so you do not need to create it again."
                 },
-                "splicesites": {
-                    "type": "string",
-                    "format": "file-path",
-                    "exists": true,
-                    "mimetype": "text/plain",
-                    "fa_icon": "fas fa-hand-scissors",
-                    "description": "Splice sites file required for HISAT2."
-                },
                 "star_index": {
                     "type": "string",
                     "format": "path",
@@ -137,41 +120,12 @@
                     "fa_icon": "fas fa-bezier-curve",
                     "description": "Path to directory or tar.gz archive for pre-built STAR index."
                 },
-                "hisat2_index": {
-                    "type": "string",
-                    "format": "path",
-                    "exists": true,
-                    "fa_icon": "fas fa-bezier-curve",
-                    "description": "Path to directory or tar.gz archive for pre-built HISAT2 index."
-                },
-                "rsem_index": {
-                    "type": "string",
-                    "format": "path",
-                    "exists": true,
-                    "fa_icon": "fas fa-bezier-curve",
-                    "description": "Path to directory or tar.gz archive for pre-built RSEM index."
-                },
                 "salmon_index": {
                     "type": "string",
                     "format": "path",
                     "exists": true,
                     "fa_icon": "fas fa-bezier-curve",
                     "description": "Path to directory or tar.gz archive for pre-built Salmon index."
-                },
-                "kallisto_index": {
-                    "type": "string",
-                    "format": "path",
-                    "exists": true,
-                    "fa_icon": "fas fa-bezier-curve",
-                    "description": "Path to directory or tar.gz archive for pre-built Kallisto index."
-                },
-                "hisat2_build_memory": {
-                    "type": "string",
-                    "default": "200.GB",
-                    "fa_icon": "fas fa-memory",
-                    "pattern": "^\\d+(\\.\\d+)?\\.?\\s*(K|M|G|T)?B$",
-                    "description": "Minimum memory required to use splice sites and exons in the HiSAT2 index build process.",
-                    "help_text": "HiSAT2 requires a huge amount of RAM to build a genome index for larger genomes, if including splice sites and exons e.g. the human genome might typically require 200GB. If you specify less than this threshold for the `HISAT2_BUILD` process then the splice sites and exons will be ignored, meaning that the process will require a lot less memory. If you are working with a small genome, set this parameter to a lower value to reduce the threshold for skipping this check. If using a larger genome, consider supplying more memory to the `HISAT2_BUILD` process."
                 },
                 "gencode": {
                     "type": "boolean",
@@ -191,19 +145,6 @@
                     "default": "gene_id",
                     "description": "Define the attribute type used to group features in the GTF file when running Salmon.",
                     "fa_icon": "fas fa-layer-group"
-                },
-                "featurecounts_group_type": {
-                    "type": "string",
-                    "default": "gene_biotype",
-                    "fa_icon": "fas fa-layer-group",
-                    "description": "The attribute type used to group feature types in the GTF file when generating the biotype plot with featureCounts."
-                },
-                "featurecounts_feature_type": {
-                    "type": "string",
-                    "default": "exon",
-                    "description": "By default, the pipeline assigns reads based on the 'exon' attribute within the GTF file.",
-                    "fa_icon": "fas fa-indent",
-                    "help_text": "The feature type used from the GTF file when generating the biotype plot with featureCounts."
                 },
                 "igenomes_base": {
                     "type": "string",
@@ -421,7 +362,7 @@
                 },
                 "min_mapped_reads": {
                     "type": "number",
-                    "default": 5,
+                    "default": 5.0,
                     "fa_icon": "fas fa-percentage",
                     "description": "Minimum percentage of uniquely mapped reads below which samples are removed from further processing.",
                     "help_text": "Some downstream steps in the pipeline will fail if this threshold is too low."
@@ -430,11 +371,6 @@
                     "type": "string",
                     "description": "Sequencing center information to be added to read group of BAM files.",
                     "fa_icon": "fas fa-synagogue"
-                },
-                "stringtie_ignore_gtf": {
-                    "type": "boolean",
-                    "description": "Perform reference-guided de novo assembly of transcripts using StringTie i.e. dont restrict to those in GTF file.",
-                    "fa_icon": "fas fa-ban"
                 },
                 "extra_star_align_args": {
                     "type": "string",
@@ -547,27 +483,6 @@
                 }
             }
         },
-        "quality_control": {
-            "title": "Quality Control",
-            "type": "object",
-            "description": "Additional quality control options.",
-            "default": "",
-            "properties": {
-                "deseq2_vst": {
-                    "type": "boolean",
-                    "description": "Use vst transformation instead of rlog with DESeq2.",
-                    "help_text": "See [DESeq2 docs](http://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#data-transformations-and-visualization).",
-                    "fa_icon": "fas fa-dolly",
-                    "default": true
-                },
-                "rseqc_modules": {
-                    "type": "string",
-                    "default": "bam_stat,inner_distance,infer_experiment,junction_annotation,junction_saturation,read_distribution,read_duplication",
-                    "fa_icon": "fas fa-chart-pie",
-                    "description": "Specify the RSeQC modules to run."
-                }
-            }
-        },
         "process_skipping_options": {
             "title": "Process skipping options",
             "type": "object",
@@ -607,61 +522,15 @@
                     "fa_icon": "fas fa-fast-forward",
                     "description": "Skip all of the alignment-based processes within the pipeline."
                 },
-                "skip_pseudo_alignment": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-fast-forward",
-                    "description": "Skip all of the pseudoalignment-based processes within the pipeline."
-                },
                 "skip_markduplicates": {
                     "type": "boolean",
                     "fa_icon": "fas fa-fast-forward",
                     "description": "Skip picard MarkDuplicates step."
                 },
-                "skip_bigwig": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-fast-forward",
-                    "description": "Skip bigWig file creation."
-                },
-                "skip_stringtie": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-fast-forward",
-                    "description": "Skip StringTie."
-                },
                 "skip_fastqc": {
                     "type": "boolean",
                     "description": "Skip FastQC.",
                     "fa_icon": "fas fa-fast-forward"
-                },
-                "skip_preseq": {
-                    "type": "boolean",
-                    "description": "Skip Preseq.",
-                    "fa_icon": "fas fa-fast-forward",
-                    "default": true
-                },
-                "skip_dupradar": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-fast-forward",
-                    "description": "Skip dupRadar."
-                },
-                "skip_qualimap": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-fast-forward",
-                    "description": "Skip Qualimap."
-                },
-                "skip_rseqc": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-fast-forward",
-                    "description": "Skip RSeQC."
-                },
-                "skip_biotype_qc": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-fast-forward",
-                    "description": "Skip additional featureCounts process for biotype QC."
-                },
-                "skip_deseq2_qc": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-fast-forward",
-                    "description": "Skip DESeq2 PCA and heatmap plotting."
                 },
                 "skip_multiqc": {
                     "type": "boolean",
@@ -916,9 +785,6 @@
         },
         {
             "$ref": "#/definitions/optional_outputs"
-        },
-        {
-            "$ref": "#/definitions/quality_control"
         },
         {
             "$ref": "#/definitions/process_skipping_options"

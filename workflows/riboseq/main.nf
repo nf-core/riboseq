@@ -23,7 +23,6 @@ def prepareToolIndices  = []
 if (!params.skip_bbsplit) { prepareToolIndices << 'bbsplit' }
 if (params.remove_ribo_rna) { prepareToolIndices << 'sortmerna' }
 if (!params.skip_alignment) { prepareToolIndices << params.aligner }
-if (!params.skip_pseudo_alignment && params.pseudo_aligner) { prepareToolIndices << params.pseudo_aligner }
 
 // Determine whether to filter the GTF or not
 def filterGtf =
@@ -32,15 +31,11 @@ def filterGtf =
         !params.skip_alignment && params.aligner
     ) ||
     (
-        // Condition 2: Pseudoalignment is required and pseudoaligner is set
-        !params.skip_pseudo_alignment && params.pseudo_aligner
-    ) ||
-    (
-        // Condition 3: Transcript FASTA file is not provided
+        // Condition 2: Transcript FASTA file is not provided
         !params.transcript_fasta
     )) &&
     (
-        // Condition 4: --skip_gtf_filter is not provided
+        // Condition 3: --skip_gtf_filter is not provided
         !params.skip_gtf_filter
     )
 
@@ -106,16 +101,11 @@ workflow RIBOSEQ {
     ch_gtf              // channel: path(genome.gtf)
     ch_fai              // channel: path(genome.fai)
     ch_chrom_sizes      // channel: path(genome.sizes)
-    ch_gene_bed         // channel: path(gene.bed)
     ch_transcript_fasta // channel: path(transcript.fasta)
     ch_star_index       // channel: path(star/index/)
-    ch_rsem_index       // channel: path(rsem/index/)
-    ch_hisat2_index     // channel: path(hisat2/index/)
     ch_salmon_index     // channel: path(salmon/index/)
-    ch_kallisto_index   // channel: [ meta, path(kallisto/index/) ]
     ch_bbsplit_index    // channel: path(bbsplit/index/)
     ch_sortmerna_index  // channel: path(sortmerna/index/)
-    ch_splicesites      // channel: path(genome.splicesites.txt)
 
     main:
 

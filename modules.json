@@ -65,16 +65,6 @@
                         "git_sha": "3a5fef109d113b4997c9822198664ca5f2716208",
                         "installed_by": ["modules"]
                     },
-                    "hisat2/build": {
-                        "branch": "master",
-                        "git_sha": "400037f54de4b0c42712ec5a499d9fd9e66250d1",
-                        "installed_by": ["modules"]
-                    },
-                    "hisat2/extractsplicesites": {
-                        "branch": "master",
-                        "git_sha": "400037f54de4b0c42712ec5a499d9fd9e66250d1",
-                        "installed_by": ["modules"]
-                    },
                     "kallisto/index": {
                         "branch": "master",
                         "git_sha": "de5811dd9ca15af1e131806001bcaae909e42021",
