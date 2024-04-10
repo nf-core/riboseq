@@ -75,6 +75,7 @@ include { RIBOTISH_PREDICT as RIBOTISH_PREDICT_INDIVIDUAL      } from '../../mod
 include { RIBOTISH_PREDICT as RIBOTISH_PREDICT_ALL             } from '../../modules/nf-core/ribotish/predict'
 include { RIBOTRICER_PREPAREORFS                               } from '../../modules/nf-core/ribotricer/prepareorfs'
 include { RIBOTRICER_DETECTORFS                                } from '../../modules/nf-core/ribotricer/detectorfs'
+include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../modules/nf-core/anota2seq/anota2seqrun'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
 
 /*
@@ -99,6 +100,7 @@ workflow RIBOSEQ {
 
     take:
     ch_samplesheet      // channel: path(sample_sheet.csv)
+    ch_contrasts_file   // channel: path(contrasts.csv)
     ch_versions         // channel: [ path(versions.yml) ]
     ch_fasta            // channel: path(genome.fasta)
     ch_gtf              // channel: path(genome.gtf)
@@ -340,6 +342,27 @@ workflow RIBOSEQ {
         null
     )
     ch_versions = ch_versions.mix(QUANTIFY_STAR_SALMON.out.versions)
+
+    //
+    // Do a translational efficiency analysis where contrasts are supplied
+    //
+
+    if (ch_contrasts_file){
+
+        ch_contrasts = ch_contrasts_file
+            .splitCsv ( header:true, sep:',' )
+            .map{[it, it.variable, it.reference, it.target]}
+
+        ch_samplesheet_matrix = QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled
+            .combine(ch_samplesheet)
+            .map{[it[0], it[2], it[1]]}
+
+        ANOTA2SEQ_ANOTA2SEQRUN(
+            ch_contrasts,
+            ch_samplesheet_matrix
+        )
+        ch_versions = ch_versions.mix(QUANTIFY_STAR_SALMON.out.versions)
+    }
 
     //
     // Collate and save software versions

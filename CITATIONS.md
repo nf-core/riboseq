@@ -10,6 +10,10 @@
 
 ## Pipeline tools
 
+- [anota2seq](https://bioconductor.org/packages/release/bioc/html/anota2seq.html)
+
+  > Oertlin C, Lorent J, Murie C, Furic L, Topisirovic I, Larsson O. Generally applicable transcriptome-wide analysis of translation using anota2seq. Nucleic Acids Res. 2019 Jul 9;47(12):e70. doi: 10.1093/nar/gkz223. PMID: 30926999; PMCID: PMC6614820.
+
 - [BBMap](https://sourceforge.net/projects/bbmap/)
 
 - [BEDTools](https://pubmed.ncbi.nlm.nih.gov/20110278/)
