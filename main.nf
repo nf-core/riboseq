@@ -41,8 +41,6 @@ params.star_index       = getGenomeAttribute('star')
 params.salmon_index     = getGenomeAttribute('salmon')
 params.sortmerna_index  = getGenomeAttribute('sortmerna')
 
-println(params.transcript_fasta)
-
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     NAMED WORKFLOWS FOR PIPELINE
