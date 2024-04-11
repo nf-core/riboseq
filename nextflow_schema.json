@@ -524,7 +524,9 @@
                     "fa_icon": "fas fa-fast-forward"
                 },
                 "skip_ribotricer": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "description": "Skip Riboricer.",
+                    "fa_icon": "fas fa-fast-forward"
                 }
             }
         },
