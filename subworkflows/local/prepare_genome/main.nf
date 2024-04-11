@@ -12,10 +12,7 @@ include { GUNZIP as GUNZIP_ADDITIONAL_FASTA } from '../../../modules/nf-core/gun
 include { UNTAR as UNTAR_BBSPLIT_INDEX      } from '../../../modules/nf-core/untar'
 include { UNTAR as UNTAR_SORTMERNA_INDEX    } from '../../../modules/nf-core/untar'
 include { UNTAR as UNTAR_STAR_INDEX         } from '../../../modules/nf-core/untar'
-include { UNTAR as UNTAR_RSEM_INDEX         } from '../../../modules/nf-core/untar'
-include { UNTAR as UNTAR_HISAT2_INDEX       } from '../../../modules/nf-core/untar'
 include { UNTAR as UNTAR_SALMON_INDEX       } from '../../../modules/nf-core/untar'
-include { UNTAR as UNTAR_KALLISTO_INDEX     } from '../../../modules/nf-core/untar'
 
 include { CUSTOM_CATADDITIONALFASTA         } from '../../../modules/nf-core/custom/catadditionalfasta'
 include { CUSTOM_GETCHROMSIZES              } from '../../../modules/nf-core/custom/getchromsizes'
@@ -23,10 +20,7 @@ include { GFFREAD                           } from '../../../modules/nf-core/gff
 include { BBMAP_BBSPLIT                     } from '../../../modules/nf-core/bbmap/bbsplit'
 include { SORTMERNA as SORTMERNA_INDEX      } from '../../../modules/nf-core/sortmerna'
 include { STAR_GENOMEGENERATE               } from '../../../modules/nf-core/star/genomegenerate'
-include { HISAT2_EXTRACTSPLICESITES         } from '../../../modules/nf-core/hisat2/extractsplicesites'
-include { HISAT2_BUILD                      } from '../../../modules/nf-core/hisat2/build'
 include { SALMON_INDEX                      } from '../../../modules/nf-core/salmon/index'
-include { KALLISTO_INDEX                    } from '../../../modules/nf-core/kallisto/index'
 include { RSEM_PREPAREREFERENCE as RSEM_PREPAREREFERENCE_GENOME } from '../../../modules/nf-core/rsem/preparereference'
 include { RSEM_PREPAREREFERENCE as MAKE_TRANSCRIPTS_FASTA       } from '../../../modules/nf-core/rsem/preparereference'
 
@@ -42,26 +36,19 @@ workflow PREPARE_GENOME {
     gff                      //      file: /path/to/genome.gff
     additional_fasta         //      file: /path/to/additional.fasta
     transcript_fasta         //      file: /path/to/transcript.fasta
-    gene_bed                 //      file: /path/to/gene.bed
-    splicesites              //      file: /path/to/splicesites.txt
     bbsplit_fasta_list       //      file: /path/to/bbsplit_fasta_list.txt
     sortmerna_fasta_list     //      file: /path/to/sortmerna_fasta_list.txt
     star_index               // directory: /path/to/star/index/
-    rsem_index               // directory: /path/to/rsem/index/
     salmon_index             // directory: /path/to/salmon/index/
-    kallisto_index           // directory: /path/to/kallisto/index/
-    hisat2_index             // directory: /path/to/hisat2/index/
     bbsplit_index            // directory: /path/to/rsem/index/
     sortmerna_index          // directory: /path/to/sortmerna/index/
     gencode                  //   boolean: whether the genome is from GENCODE
-    featurecounts_group_type //    string: The attribute type used to group feature types in the GTF file when generating the biotype plot with featureCounts
     aligner                  //    string: Specifies the alignment algorithm to use - available options are 'star_salmon', 'star_rsem' and 'hisat2'
     pseudo_aligner           //    string: Specifies the pseudo aligner to use - available options are 'salmon'. Runs in addition to '--aligner'
     skip_gtf_filter          //   boolean: Skip filtering of GTF for valid scaffolds and/ or transcript IDs
     skip_bbsplit             //   boolean: Skip BBSplit for removal of non-reference genome reads
     skip_sortmerna           //   boolean: Skip sortmerna for removal of non-reference genome reads
     skip_alignment           //   boolean: Skip all of the alignment-based processes within the pipeline
-    skip_pseudo_alignment    //   boolean: Skip all of the pseudoalignment-based processes within the pipeline
 
     main:
     ch_versions = Channel.empty()
@@ -105,11 +92,7 @@ workflow PREPARE_GENOME {
                 !skip_alignment && aligner
             ) ||
             (
-                // Condition 2: Pseudoalignment is required and pseudoaligner is set
-                !skip_pseudo_alignment && pseudo_aligner
-            ) ||
-            (
-                // Condition 3: Transcript FASTA file is not provided
+                // Condition 2: Transcript FASTA file is not provided
                 !transcript_fasta
             )) &&
             (
@@ -126,7 +109,7 @@ workflow PREPARE_GENOME {
     //
     // Uncompress additional fasta file and concatenate with reference fasta and gtf files
     //
-    def biotype = gencode ? "gene_type" : featurecounts_group_type
+    def biotype = gencode ? "gene_type" : "gene_biotype"
     if (additional_fasta) {
         if (additional_fasta.endsWith('.gz')) {
             ch_add_fasta = GUNZIP_ADDITIONAL_FASTA ( [ [:], additional_fasta ] ).gunzip.map { it[1] }
@@ -143,21 +126,6 @@ workflow PREPARE_GENOME {
         ch_fasta    = CUSTOM_CATADDITIONALFASTA.out.fasta.map{it[1]}.first()
         ch_gtf      = CUSTOM_CATADDITIONALFASTA.out.gtf.map{it[1]}.first()
         ch_versions = ch_versions.mix(CUSTOM_CATADDITIONALFASTA.out.versions)
-    }
-
-    //
-    // Uncompress gene BED annotation file or create from GTF if required
-    //
-    if (gene_bed) {
-        if (gene_bed.endsWith('.gz')) {
-            ch_gene_bed = GUNZIP_GENE_BED ( [ [:], gene_bed ] ).gunzip.map { it[1] }
-            ch_versions = ch_versions.mix(GUNZIP_GENE_BED.out.versions)
-        } else {
-            ch_gene_bed = Channel.value(file(gene_bed))
-        }
-    } else {
-        ch_gene_bed = GTF2BED ( ch_gtf ).bed
-        ch_versions = ch_versions.mix(GTF2BED.out.versions)
     }
 
     //
@@ -195,7 +163,6 @@ workflow PREPARE_GENOME {
     if (!skip_bbsplit) { prepare_tool_indices << 'bbsplit' }
     if (!skip_sortmerna) { prepare_tool_indices << 'sortmerna' }
     if (!skip_alignment) { prepare_tool_indices << aligner }
-    if (!skip_pseudo_alignment && pseudo_aligner) { prepare_tool_indices << pseudo_aligner }
 
     //
     // Uncompress BBSplit index or generate from scratch if required
@@ -283,49 +250,6 @@ workflow PREPARE_GENOME {
     }
 
     //
-    // Uncompress RSEM index or generate from scratch if required
-    //
-    ch_rsem_index = Channel.empty()
-    if ('star_rsem' in prepare_tool_indices) {
-        if (rsem_index) {
-            if (rsem_index.endsWith('.tar.gz')) {
-                ch_rsem_index = UNTAR_RSEM_INDEX ( [ [:], rsem_index ] ).untar.map { it[1] }
-                ch_versions   = ch_versions.mix(UNTAR_RSEM_INDEX.out.versions)
-            } else {
-                ch_rsem_index = Channel.value(file(rsem_index))
-            }
-        } else {
-            ch_rsem_index = RSEM_PREPAREREFERENCE_GENOME ( ch_fasta, ch_gtf ).index
-            ch_versions   = ch_versions.mix(RSEM_PREPAREREFERENCE_GENOME.out.versions)
-        }
-    }
-
-    //
-    // Uncompress HISAT2 index or generate from scratch if required
-    //
-    ch_splicesites  = Channel.empty()
-    ch_hisat2_index = Channel.empty()
-    if ('hisat2' in prepare_tool_indices) {
-        if (!splicesites) {
-            ch_splicesites = HISAT2_EXTRACTSPLICESITES ( ch_gtf.map { [ [:], it ] } ).txt.map { it[1] }
-            ch_versions    = ch_versions.mix(HISAT2_EXTRACTSPLICESITES.out.versions)
-        } else {
-            ch_splicesites = Channel.value(file(splicesites))
-        }
-        if (hisat2_index) {
-            if (hisat2_index.endsWith('.tar.gz')) {
-                ch_hisat2_index = UNTAR_HISAT2_INDEX ( [ [:], hisat2_index ] ).untar.map { it[1] }
-                ch_versions     = ch_versions.mix(UNTAR_HISAT2_INDEX.out.versions)
-            } else {
-                ch_hisat2_index = Channel.value(file(hisat2_index))
-            }
-        } else {
-            ch_hisat2_index = HISAT2_BUILD ( ch_fasta.map { [ [:], it ] }, ch_gtf.map { [ [:], it ] }, ch_splicesites.map { [ [:], it ] } ).index.map { it[1] }
-            ch_versions     = ch_versions.mix(HISAT2_BUILD.out.versions)
-        }
-    }
-
-    //
     // Uncompress Salmon index or generate from scratch if required
     //
     ch_salmon_index = Channel.empty()
@@ -343,38 +267,15 @@ workflow PREPARE_GENOME {
         }
     }
 
-    //
-    // Uncompress Kallisto index or generate from scratch if required
-    //
-    ch_kallisto_index = Channel.empty()
-    if (kallisto_index) {
-        if (kallisto_index.endsWith('.tar.gz')) {
-            ch_kallisto_index = UNTAR_KALLISTO_INDEX ( [ [:], kallisto_index ] ).untar
-            ch_versions     = ch_versions.mix(UNTAR_KALLISTO_INDEX.out.versions)
-        } else {
-            ch_kallisto_index = Channel.value([[:], file(kallisto_index)])
-        }
-    } else {
-        if ('kallisto' in prepare_tool_indices) {
-            ch_kallisto_index = KALLISTO_INDEX ( ch_transcript_fasta.map{[ [:], it]} ).index
-            ch_versions     = ch_versions.mix(KALLISTO_INDEX.out.versions)
-        }
-    }
-
     emit:
     fasta            = ch_fasta                  // channel: path(genome.fasta)
     gtf              = ch_gtf                    // channel: path(genome.gtf)
     fai              = ch_fai                    // channel: path(genome.fai)
-    gene_bed         = ch_gene_bed               // channel: path(gene.bed)
     transcript_fasta = ch_transcript_fasta       // channel: path(transcript.fasta)
     chrom_sizes      = ch_chrom_sizes            // channel: path(genome.sizes)
-    splicesites      = ch_splicesites            // channel: path(genome.splicesites.txt)
     bbsplit_index    = ch_bbsplit_index          // channel: path(bbsplit/index/)
     sortmerna_index  = ch_sortmerna_index        // channel: path(sortmerna/index/)
     star_index       = ch_star_index             // channel: path(star/index/)
-    rsem_index       = ch_rsem_index             // channel: path(rsem/index/)
-    hisat2_index     = ch_hisat2_index           // channel: path(hisat2/index/)
     salmon_index     = ch_salmon_index           // channel: path(salmon/index/)
-    kallisto_index   = ch_kallisto_index         // channel: [ meta, path(kallisto/index/) ]
     versions         = ch_versions.ifEmpty(null) // channel: [ versions.yml ]
 }
