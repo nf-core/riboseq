@@ -130,8 +130,7 @@
                 "gencode": {
                     "type": "boolean",
                     "fa_icon": "fas fa-code-branch",
-                    "description": "Specify if your GTF annotation is in GENCODE format.",
-                    "help_text": "If your GTF file is in GENCODE format and you would like to run Salmon i.e. `--pseudo_aligner salmon`, you will need to provide this parameter in order to build the Salmon index appropriately."
+                    "description": "Specify if your GTF annotation is in GENCODE format."
                 },
                 "gtf_extra_attributes": {
                     "type": "string",
@@ -313,12 +312,6 @@
                     "fa_icon": "fas fa-map-signs",
                     "enum": ["star"]
                 },
-                "pseudo_aligner": {
-                    "type": "string",
-                    "description": "Specifies the pseudo aligner to use - available options are 'salmon'. Runs in addition to '--aligner'.",
-                    "fa_icon": "fas fa-hamburger",
-                    "enum": ["salmon", "kallisto"]
-                },
                 "pseudo_aligner_kmer_size": {
                     "type": "integer",
                     "default": 31,
@@ -381,23 +374,6 @@
                     "type": "string",
                     "description": "Extra arguments to pass to Salmon quant command in addition to defaults defined by the pipeline.",
                     "fa_icon": "fas fa-plus"
-                },
-                "extra_kallisto_quant_args": {
-                    "type": "string",
-                    "description": "Extra arguments to pass to Kallisto quant command in addition to defaults defined by the pipeline.",
-                    "fa_icon": "fas fa-plus"
-                },
-                "kallisto_quant_fraglen": {
-                    "type": "integer",
-                    "description": "In single-end mode Kallisto requires an estimated fragment length. Specify a default value for that here. TODO: use existing RSeQC results to do this dynamically.",
-                    "default": 200,
-                    "fa_icon": "fas fa-ruler-horizontal"
-                },
-                "kallisto_quant_fraglen_sd": {
-                    "type": "integer",
-                    "description": "In single-end mode, Kallisto requires an estimated standard error for fragment length. Specify a default value for that here. TODO: use existing RSeQC results to do this dynamically.",
-                    "default": 200,
-                    "fa_icon": "fas fa-sort-amount-up-alt"
                 }
             }
         },
