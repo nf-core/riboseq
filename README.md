@@ -101,9 +101,10 @@ For more details about the output files and reports, please refer to the
 nf-core/riboseq was originally written by [Jonathan Manning](https://github.com/pinin4fjords) (Bioinformatics Engineer as Seqera) with support from [Altos labs](https://www.altoslabs.com/) and in discussion with [Felix Krueger](https://github.com/FelixKrueger) and [Christel Krueger](https://github.com/ChristelKrueger). We thank the following people for their input:
 
 - Anne Bresciani (ZS)
-- Mikhail Osipovitch (ZS)
-- Edward Wallace (University of Edinburgh)
-- Jack Tierney (University College Cork)
+- [Felibe Almeida](https://github.com/fmalmeida) (ZS)
+- [Mikhail Osipovitch](https://github.com/mosi223) (ZS)
+- [Edward Wallace](https://github.com/ewallace) (University of Edinburgh)
+- [Jack Tierney](https://github.com/JackCurragh) (University College Cork)
 
 ## Contributions and Support
 
