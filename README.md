@@ -105,6 +105,7 @@ nf-core/riboseq was originally written by [Jonathan Manning](https://github.com/
 - [Mikhail Osipovitch](https://github.com/mosi223) (ZS)
 - [Edward Wallace](https://github.com/ewallace) (University of Edinburgh)
 - [Jack Tierney](https://github.com/JackCurragh) (University College Cork)
+- [Maxime U Garcia](https://github.com/maxulysse) (Seqera)
 
 ## Contributions and Support
 
