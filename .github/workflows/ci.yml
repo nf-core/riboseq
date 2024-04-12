@@ -1,9 +1,6 @@
 name: nf-core CI
 # This workflow runs the pipeline with the minimal test dataset to check that it completes without any syntax errors
 on:
-  push:
-    branches:
-      - dev
   pull_request:
   release:
     types: [published]
@@ -128,7 +125,7 @@ jobs:
     if: always()
     steps:
       - name: All tests ok
-        if: ${{ !contains(needs.*.result, 'failure') }}
+        if: ${{ success() || !contains(needs.*.result, 'failure') }}
         run: exit 0
       - name: One or more tests failed
         if: ${{ contains(needs.*.result, 'failure') }}
