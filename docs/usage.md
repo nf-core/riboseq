@@ -71,9 +71,9 @@ When specifying `contrasts` to perform a translational efficiency analysis (see 
 
 The pipeline currently uses [STAR](https://github.com/alexdobin/STAR) to map the raw FastQ reads to the reference genome and project the alignments onto the transcriptome. STAR is fast but requires a lot of memory to run, typically around 38GB for the Human GRCh37 reference genome.
 
-### Unique Molecular Identifiers (UMI)
+### Unique Molecular Identifiers (UMIs)
 
-The pipeline supports Unique Molecular Identifiers to increase the accuracy of the quantification. UMIs are short sequences used to uniquely tag each molecule in a sample library and facilitate the accurate identification of read duplicates. They must be added during library preparation and prior to sequencing, therefore require appropriate arrangements with your sequencing provider.
+The pipeline supports UMIs to increase the accuracy of the quantification. UMIs are short sequences used to uniquely tag each molecule in a sample library and facilitate the accurate identification of read duplicates. They must be added during library preparation and prior to sequencing, therefore require appropriate arrangements with your sequencing provider.
 
 To take UMIs into consideration during a workflow run, specify the `--with_umi` parameter. The pipeline currently supports UMIs, which are embedded within a read's sequence and UMIs, whose sequence is given inside the read's name. Please consult your kit's manual and/or contact your sequencing provider regarding the exact specification.
 

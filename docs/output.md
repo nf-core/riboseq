@@ -356,7 +356,7 @@ By plotting fold changes for RNA-seq and Ribo-seq data against one another this 
 <details markdown="1">
 <summary>Output files</summary>
 
-- `multiqc/<ALIGNER>/`
+- `multiqc/`
   - `multiqc_report.html`: a standalone HTML file that can be viewed in your web browser.
   - `multiqc_data/`: directory containing parsed statistics from the different tools used in the pipeline.
 

@@ -19,24 +19,24 @@
 
 ## Introduction
 
-**nf-core/riboseq** is a bioinformatics pipeline for analysis of ribo-seq data. It borrows heavily from nf-core/rnaseq in the preprocessing stages:
+**nf-core/riboseq** is a bioinformatics pipeline for analysis of Ribo-seq data. It borrows heavily from nf-core/rnaseq in the preprocessing stages:
 
 1. Merge re-sequenced FastQ files ([`cat`](http://www.linfo.org/cat.html))
 2. Sub-sample FastQ files and auto-infer strandedness ([`fq`](https://github.com/stjude-rust-labs/fq), [`Salmon`](https://combine-lab.github.io/salmon/))
 3. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
 4. UMI extraction ([`UMI-tools`](https://github.com/CGATOxford/UMI-tools))
-5. Adapter and quality trimming ([`Trim Galore!`](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/))
+5. Adapter and quality trimming ([`Trim Galore!`](https://github.com/FelixKrueger/TrimGalore))
 6. Removal of genome contaminants ([`BBSplit`](http://seqanswers.com/forums/showthread.php?t=41288))
 7. Removal of ribosomal RNA ([`SortMeRNA`](https://github.com/biocore/sortmerna))
-8. Multiple alignment to both genome and transcriptome using [`STAR`](https://github.com/alexdobin/STAR)
+8. Genome alignment of reads, outputting both genome and transcriptome alignments with [`STAR`](https://github.com/alexdobin/STAR)
 9. Sort and index alignments ([`SAMtools`](https://sourceforge.net/projects/samtools/files/samtools/))
 10. UMI-based deduplication ([`UMI-tools`](https://github.com/CGATOxford/UMI-tools))
 
 Differences occur in the downstream analysis steps. Currently these specialist steps are:
 
 1. Check reads distribution around annotated protein coding regions on user provided transcripts, show frame bias and estimate P-site offset for different group of reads ([`Ribo-TISH`](https://github.com/zhpn1024/ribotish))
-2. Predict translating open reading frames and/ or translation initiation sites _de novo_ from alignment data ([`Ribo-TISH`](https://github.com/zhpn1024/ribotish))
-3. Derive candidate ORFs from reference data and detect translating ORFs from that list ([`Ribotricer`](https://github.com/smithlabcode/ribotricer))
+2. (default, optional) Predict translated open reading frames and/ or translation initiation sites _de novo_ from alignment data ([`Ribo-TISH`](https://github.com/zhpn1024/ribotish))
+3. (default, optional) Derive candidate ORFs from reference data and detect translated ORFs from that list ([`Ribotricer`](https://github.com/smithlabcode/ribotricer))
 4. (optional) Use a translational efficiency approach to study the dynamics of transcription and translation, with [anota2seq](https://bioconductor.org/packages/release/bioc/html/anota2seq.html). **requires matched RNA-seq and Ribo-seq data**
 
 ## Usage
@@ -53,7 +53,7 @@ sample,fastq_1,fastq_2,strandedness,type
 CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz,forward,riboseq
 ```
 
-Each row represents a fastq file (single-end) or a pair of fastq files (paired end). Each row should have a 'type' value of `riboseq`, `tiseq` or `rnaseq`. Future iterations of the workflow will conduct paired analysis of matched riboseq and rnaseq samples to accomplish analysis types such as 'translational efficiency, but in the current version you should set this to `riboseq` or `tiseq` for reglar ribo-seq or TI-seq data respectively.
+Each row represents a fastq file (single-end) or a pair of fastq files (paired end). Each row should have a 'type' value of `riboseq`, `tiseq` or `rnaseq`. Future iterations of the workflow will conduct paired analysis of matched riboseq and rnaseq samples to accomplish analysis types such as 'translational efficiency, but in the current version you should set this to `riboseq` or `tiseq` for reglar Ribo-seq or TI-seq data respectively.
 
 Now, you can run the pipeline using:
 
@@ -98,10 +98,10 @@ For more details about the output files and reports, please refer to the
 
 ## Credits
 
-nf-core/riboseq was originally written by [Jonathan Manning](https://github.com/pinin4fjords) (Bioinformatics Engineer as Seqera) with support from [Altos labs](https://www.altoslabs.com/) and in discussion with [Felix Krueger](https://github.com/FelixKrueger) and [Christel Krueger](https://github.com/ChristelKrueger). We thank the following people for their input:
+nf-core/riboseq was originally written by [Jonathan Manning](https://github.com/pinin4fjords) (Bioinformatics Engineer at Seqera) with support from [Altos Labs](https://www.altoslabs.com/) and in discussion with [Felix Krueger](https://github.com/FelixKrueger) and [Christel Krueger](https://github.com/ChristelKrueger). We thank the following people for their input:
 
 - Anne Bresciani (ZS)
-- [Felibe Almeida](https://github.com/fmalmeida) (ZS)
+- [Felipe Almeida](https://github.com/fmalmeida) (ZS)
 - [Mikhail Osipovitch](https://github.com/mosi223) (ZS)
 - [Edward Wallace](https://github.com/ewallace) (University of Edinburgh)
 - [Jack Tierney](https://github.com/JackCurragh) (University College Cork)

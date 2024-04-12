@@ -292,6 +292,7 @@ workflow RIBOSEQ {
             ribotish_predict_inputs.offset,
             [[:],[]]
         )
+        ch_versions = ch_versions.mix(RIBOTISH_PREDICT_INDIVIDUAL.out.versions)
 
         RIBOTISH_PREDICT_ALL(
             ribotish_predict_inputs.bam.map{meta, bam, bai -> [[id:'allsamples'], bam, bai]}.groupTuple(),
@@ -301,17 +302,20 @@ workflow RIBOSEQ {
             ribotish_predict_inputs.offset.map{meta, offset -> [[id:'allsamples'], offset]}.groupTuple(),
             [[:],[]]
         )
+        ch_versions = ch_versions.mix(RIBOTISH_PREDICT_ALL.out.versions)
     }
 
     if (!params.skip_ribotricer){
         RIBOTRICER_PREPAREORFS(
             ch_fasta_gtf
         )
+        ch_versions = ch_versions.mix(RIBOTRICER_PREPAREORFS.out.versions)
 
         RIBOTRICER_DETECTORFS(
             ch_bams_for_analysis,
             RIBOTRICER_PREPAREORFS.out.candidate_orfs
         )
+        ch_versions = ch_versions.mix(RIBOTRICER_DETECTORFS.out.versions)
     }
 
     //
@@ -351,7 +355,7 @@ workflow RIBOSEQ {
             ch_contrasts,
             ch_samplesheet_matrix
         )
-        ch_versions = ch_versions.mix(QUANTIFY_STAR_SALMON.out.versions)
+        ch_versions = ch_versions.mix(ANOTA2SEQ_ANOTA2SEQRUN.out.versions)
     }
 
     //

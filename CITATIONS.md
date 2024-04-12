@@ -48,7 +48,7 @@
 
   > Dobin A, Davis CA, Schlesinger F, Drenkow J, Zaleski C, Jha S, Batut P, Chaisson M, Gingeras TR. STAR: ultrafast universal RNA-seq aligner Bioinformatics. 2013 Jan 1;29(1):15-21. doi: 10.1093/bioinformatics/bts635. Epub 2012 Oct 25. PubMed PMID: 23104886; PubMed Central PMCID: PMC3530905.
 
-- [Trim Galore!](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/)
+- [Trim Galore!](https://github.com/FelixKrueger/TrimGalore)
 
 - [UMI-tools](https://pubmed.ncbi.nlm.nih.gov/28100584/)
 
