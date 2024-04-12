@@ -6,5 +6,7 @@ results/
 testing/
 testing*
 *.pyc
-*.fastq.gz
-assets/samplesheet.csv
+.nf-test.log
+nf-test
+.nf-test*
+test.xml
