@@ -8,7 +8,7 @@
    version="1.1"
    id="svg1"
    inkscape:version="1.3.2 (091e20e, 2023-11-25)"
-   sodipodi:docname="nf_core_riboseq_logo.svg"
+   sodipodi:docname="nf_core-riboseq_logo.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -24,13 +24,13 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="0.70461837"
-     inkscape:cx="78.766042"
-     inkscape:cy="566.26398"
-     inkscape:window-width="1728"
-     inkscape:window-height="973"
-     inkscape:window-x="0"
-     inkscape:window-y="38"
+     inkscape:zoom="0.76698464"
+     inkscape:cx="216.43197"
+     inkscape:cy="691.01775"
+     inkscape:window-width="1920"
+     inkscape:window-height="1027"
+     inkscape:window-x="1728"
+     inkscape:window-y="25"
      inkscape:window-maximized="1"
      inkscape:current-layer="layer1" />
   <defs
@@ -83,28 +83,6 @@
        apply_with_weight="true"
        only_selected="false"
        uniform="false" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient15697"
-       id="linearGradient12"
-       gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(0.04574445,-0.0346747,0.0346747,0.04574445,-790.06888,-394.14297)"
-       x1="-6640"
-       y1="913.56567"
-       x2="-2480.2986"
-       y2="913.56567" />
-    <linearGradient
-       inkscape:collect="always"
-       id="linearGradient15697">
-      <stop
-         style="stop-color:#000000;stop-opacity:1;"
-         offset="0"
-         id="stop15693" />
-      <stop
-         style="stop-color:#25af64;stop-opacity:1;"
-         offset="0.69753736"
-         id="stop15695" />
-    </linearGradient>
     <inkscape:path-effect
        effect="bspline"
        id="path-effect14265-1-4"
@@ -132,22 +110,157 @@
     <linearGradient
        inkscape:collect="always"
        xlink:href="#linearGradient15697"
-       id="linearGradient1"
+       id="linearGradient12"
        gradientUnits="userSpaceOnUse"
        gradientTransform="matrix(0.04574445,-0.0346747,0.0346747,0.04574445,-790.06888,-394.14297)"
        x1="-6640"
        y1="913.56567"
        x2="-2480.2986"
        y2="913.56567" />
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient15697">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop15693" />
+      <stop
+         style="stop-color:#25af64;stop-opacity:1;"
+         offset="0.69753736"
+         id="stop15695" />
+    </linearGradient>
+    <inkscape:path-effect
+       effect="bspline"
+       id="path-effect14265-1-7"
+       is_visible="true"
+       lpeversion="1"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+       only_selected="false"
+       uniform="false" />
+    <inkscape:path-effect
+       effect="bspline"
+       id="path-effect14273-0-0"
+       is_visible="true"
+       lpeversion="1"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+       only_selected="false"
+       uniform="false" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#a-9"
+       id="linearGradient4332"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(6.0253525,4.7074707,-4.7074707,6.0253525,64.62676,54.561776)"
+       x2="1" />
+    <linearGradient
+       id="a-9"
+       x2="1"
+       gradientTransform="matrix(47.34875,36.9925,-36.9925,47.34875,344.325,162.1875)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#0c542a"
+         offset="0"
+         id="stop15-38" />
+      <stop
+         stop-color="#0c542a"
+         offset=".21472"
+         id="stop17-02" />
+      <stop
+         stop-color="#25af64"
+         offset=".57995"
+         id="stop19-4" />
+      <stop
+         stop-color="#25af64"
+         offset=".84663"
+         id="stop21-8" />
+      <stop
+         stop-color="#25af64"
+         offset="1"
+         id="stop23-39" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient15697"
+       id="linearGradient3"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.04574445,-0.0346747,0.0346747,0.04574445,-790.06888,-394.14297)"
+       x1="-6640"
+       y1="913.56567"
+       x2="-2480.2986"
+       y2="913.56567" />
+    <inkscape:path-effect
+       effect="bspline"
+       id="path-effect14265-1-7-2"
+       is_visible="true"
+       lpeversion="1"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+       only_selected="false"
+       uniform="false" />
+    <inkscape:path-effect
+       effect="bspline"
+       id="path-effect14273-0-0-6"
+       is_visible="true"
+       lpeversion="1"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+       only_selected="false"
+       uniform="false" />
+    <linearGradient
+       id="a-9-5"
+       x2="1"
+       gradientTransform="matrix(47.34875,36.9925,-36.9925,47.34875,344.325,162.1875)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         stop-color="#0c542a"
+         offset="0"
+         id="stop15-38-8" />
+      <stop
+         stop-color="#0c542a"
+         offset=".21472"
+         id="stop17-02-1" />
+      <stop
+         stop-color="#25af64"
+         offset=".57995"
+         id="stop19-4-4" />
+      <stop
+         stop-color="#25af64"
+         offset=".84663"
+         id="stop21-8-7" />
+      <stop
+         stop-color="#25af64"
+         offset="1"
+         id="stop23-39-1" />
+    </linearGradient>
   </defs>
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
     <g
-       id="g1"
-       transform="translate(71.567522,-4.5158807)"
+       id="g13"
+       transform="translate(68.089473,98.956077)"
        inkscape:export-filename="nf-core_riboseq_logo_dark.png"
+       inkscape:export-xdpi="95.116432"
+       inkscape:export-ydpi="95.116432" />
+    <g
+       id="g1"
+       transform="translate(70.608487,-8.0461069)"
+       inkscape:export-filename="nf-core-riboseq_logo_dark.png"
        inkscape:export-xdpi="95.116432"
        inkscape:export-ydpi="95.116432">
       <g
@@ -196,13 +309,13 @@
            style="fill:#386e35" />
       </g>
       <text
-         style="font-weight:bold;font-size:33.365px;line-height:0%;font-family:'Maven Pro';display:inline;stroke-width:0.12983"
+         style="font-weight:bold;font-size:33.365px;line-height:0%;font-family:'Maven Pro';display:inline;fill:#000000;stroke-width:0.12983"
          id="text69"
          font-weight="bold"
          font-size="209.87px"
          y="74.547585"
          x="4.1228166"><tspan
-           style="font-weight:bold;font-size:33.3645px;font-family:'Maven Pro';fill:#24af63;stroke-width:0.12983"
+           style="font-weight:bold;font-size:33.3645px;font-family:'Maven Pro';fill:#000000;stroke-width:0.12983"
            id="tspan71"
            font-weight="bold"
            font-size="209.87px"
@@ -215,35 +328,35 @@
          id="g27"
          transform="translate(4.4742689,-1.1242268)">
         <path
-           style="font-variation-settings:normal;vector-effect:none;fill:url(#linearGradient1);fill-opacity:1;stroke:none;stroke-width:1.2475;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000"
+           style="font-variation-settings:normal;vector-effect:none;fill:url(#linearGradient3);fill-opacity:1;stroke:none;stroke-width:1.2475;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000"
            d="m -898.04823,-149.60367 c 26.42935,-2.43249 59.62636,-17.49044 68.2705,-35.80974 8.64413,-18.31929 -7.26822,-39.91047 -30.96745,-54.78651 -23.69924,-14.87604 -55.18634,-23.02887 -87.2105,-23.93025 -32.02416,-0.90138 -64.57962,5.45235 -85.74782,15.56419 -21.1682,10.11183 -30.9404,23.97743 -32.2196,41.39006 -1.2792,17.41263 5.9292,38.36282 18.3463,48.02262 12.4171,9.6598 30.0386,8.04043 44.8643,4.7562 14.82576,-3.28423 26.85827,-8.2322 42.7125,-5.6029 15.85422,2.6293 35.52241,12.82883 61.95177,10.39633 z"
            id="path14263"
-           inkscape:path-effect="#path-effect14265-1-4"
+           inkscape:path-effect="#path-effect14265-1-7"
            inkscape:original-d="m -904.81918,-136.97672 c 33.2052,-15.04864 66.4022,-30.10661 99.5912,-45.17393 -15.9048,-21.58265 -31.8172,-43.17379 -47.7379,-64.7747 -31.4803,-8.14381 -62.9674,-16.29664 -94.4633,-24.459 -32.5486,6.36333 -65.10402,12.71706 -97.66822,19.06157 -9.7646,13.8755 -19.5368,27.7411 -29.3172,41.59764 7.2167,20.96035 14.4251,41.91052 21.6254,62.85175 17.6304,-1.6101 35.2519,-3.22948 52.86572,-4.85823 12.0412,-4.93887 24.0737,-9.88687 36.0985,-14.84431 19.6771,10.20928 39.3453,20.4088 59.0058,30.59921 z"
            transform="matrix(0.159638,0,0,0.15858962,123.36575,125.94722)" />
         <path
            style="font-variation-settings:normal;vector-effect:none;fill:url(#linearGradient12);fill-opacity:1;stroke:none;stroke-width:1.2475;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000"
            d="m -843.1361,-142.64141 c -11.50145,-2.31009 -23.53432,2.63805 -38.25243,4.47217 -14.71811,1.83412 -32.12601,0.55219 -46.52549,-1.9655 -14.39948,-2.51769 -25.79108,-6.27363 -40.40732,-5.89353 -14.61625,0.38009 -32.45136,4.90076 -47.06286,5.28545 -14.6115,0.38469 -26.003,-3.37122 -36.3766,-1.21924 -10.3737,2.15197 -19.7185,10.21495 -17.6676,22.03892 2.0509,11.82398 15.4892,27.398772 51.5429,32.965926 36.05367,5.567154 94.72087,1.136325 128.51309,-2.209754 33.79222,-3.346078 42.70982,-5.606421 51.8387,-10.767588 9.12887,-5.161164 18.47377,-13.224154 17.66853,-22.031194 -0.80523,-8.80703 -11.76947,-18.36556 -23.27092,-20.67566 z"
            id="path14271"
-           inkscape:path-effect="#path-effect14273-0-3"
+           inkscape:path-effect="#path-effect14273-0-0"
            inkscape:original-d="m -842.60838,-149.89812 c -12.0247,4.95748 -24.0576,9.90556 -36.0984,14.84434 -17.4005,-1.27264 -34.8084,-2.55458 -52.2247,-3.84587 -11.384,-3.74676 -22.7756,-7.5027 -34.1755,-11.26805 -17.8279,4.53022 -35.66302,9.05091 -53.50672,13.56234 -11.384,-3.74674 -22.7755,-7.50268 -34.1755,-11.26803 -9.3372,8.07264 -18.6821,16.13561 -28.0352,24.1894 13.4469,15.58483 26.8851,31.159669 40.3157,46.725489 58.67762,-4.42167 117.34482,-8.8525 176.00522,-13.29276 8.926,-2.2511 17.8436,-4.51145 26.7534,-6.78118 9.3533,-8.053939 18.6982,-16.116929 28.0352,-24.189399 -10.9567,-9.5496 -21.9209,-19.10818 -32.8935,-28.67628 z"
            transform="matrix(0.159638,0,0,0.15858962,123.36575,125.94722)" />
       </g>
       <text
-         style="font-weight:bold;font-size:33.365px;line-height:0%;font-family:'Maven Pro';display:inline;fill:#1a1a1a;stroke-width:0.12983"
+         style="font-weight:bold;font-size:33.365px;line-height:0%;font-family:'Maven Pro';display:inline;fill:#000000;stroke-width:0.12983"
          id="text26"
          font-weight="bold"
          font-size="209.87px"
          y="106.77541"
          x="0.97045135"><tspan
-           style="font-weight:bold;font-size:33.3645px;font-family:'Maven Pro';fill:#1a1a1a;stroke-width:0.12983"
+           style="font-weight:bold;font-size:33.3645px;font-family:'Maven Pro';fill:#000000;stroke-width:0.12983"
            id="tspan26"
            font-weight="bold"
            font-size="209.87px"
            y="106.77541"
            x="0.97045135"
            class="st0 st1 st2">riboseq<tspan
-   style="fill:#1a1a1a;stroke-width:0.12983"
+   style="fill:#000000;stroke-width:0.12983"
    id="tspan25" /></tspan></text>
       <text
          style="font-weight:bold;font-size:33.3333px;line-height:0%;font-family:'Maven Pro';display:inline;stroke-width:0.129707"
@@ -262,11 +375,10 @@
    style="fill:#000000;stroke-width:0.129707"
    id="tspan57-2" /></tspan></text>
     </g>
-    <g
-       id="g13"
-       transform="translate(68.089473,98.956077)"
-       inkscape:export-filename="nf-core_riboseq_logo_dark.png"
-       inkscape:export-xdpi="95.116432"
-       inkscape:export-ydpi="95.116432" />
+    <path
+       d="m 65.375972,54.54905 -3.41997,3.433333 h 9.703173 V 54.54905 Z"
+       id="path4330"
+       style="fill:url(#linearGradient4332);stroke-width:0.129707"
+       inkscape:connector-curvature="0" />
   </g>
 </svg>
