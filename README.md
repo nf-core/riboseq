@@ -1,7 +1,7 @@
 <h1>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/nf-core-riboseq_logo_light.png">
-    <img alt="nf-core/riboseq" src="docs/images/nf-core-riboseq_logo_dark.png">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/nf-core-riboseq_logo_dark.png">
+    <img alt="nf-core/riboseq" src="docs/images/nf-core-riboseq_logo_light.png">
   </picture>
 </h1>
 
