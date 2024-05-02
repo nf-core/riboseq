@@ -224,7 +224,8 @@ workflow RIBOSEQ {
         // sort and a specific umittools command
 
         SAMTOOLS_SORT (
-            BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_TRANSCRIPTOME.out.bam
+            BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_TRANSCRIPTOME.out.bam,
+            [[:],[]]
         )
 
         // Only run prepare_for_rsem.py on paired-end BAM files
