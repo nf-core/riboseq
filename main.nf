@@ -73,7 +73,6 @@ workflow NFCORE_RIBOSEQ {
         params.sortmerna_index,
         params.gencode,
         params.aligner,
-        params.pseudo_aligner,
         params.skip_gtf_filter,
         params.skip_bbsplit,
         ! params.remove_ribo_rna,
