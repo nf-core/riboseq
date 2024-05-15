@@ -17,11 +17,13 @@ nextflow.enable.dsl = 2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { RIBOSEQ  } from './workflows/riboseq'
+include { RIBOSEQ                 } from './workflows/riboseq'
+include { PREPARE_GENOME          } from './subworkflows/local/prepare_genome'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_riboseq_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_riboseq_pipeline'
 
 include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_riboseq_pipeline'
+include { checkMaxContigSize      } from './subworkflows/local/utils_nfcore_riboseq_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -29,10 +31,15 @@ include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_ribo
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-// TODO nf-core: Remove this line if you don't need a FASTA file
-//   This is an example of how to use getGenomeAttribute() to fetch parameters
-//   from igenomes.config using `--genome`
-params.fasta = getGenomeAttribute('fasta')
+params.fasta            = getGenomeAttribute('fasta')
+params.transcript_fasta = getGenomeAttribute('transcript_fasta')
+params.additional_fasta = getGenomeAttribute('additional_fasta')
+params.gtf              = getGenomeAttribute('gtf')
+params.gff              = getGenomeAttribute('gff')
+params.bbsplit_index    = getGenomeAttribute('bbsplit')
+params.star_index       = getGenomeAttribute('star')
+params.salmon_index     = getGenomeAttribute('salmon')
+params.sortmerna_index  = getGenomeAttribute('sortmerna')
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -45,20 +52,73 @@ params.fasta = getGenomeAttribute('fasta')
 //
 workflow NFCORE_RIBOSEQ {
 
-    take:
-    samplesheet // channel: samplesheet read in from --input
-
     main:
 
+    ch_versions = Channel.empty()
+
     //
-    // WORKFLOW: Run pipeline
+    // SUBWORKFLOW: Prepare reference genome files
     //
-    RIBOSEQ (
-        samplesheet
+    PREPARE_GENOME (
+        params.fasta,
+        params.gtf,
+        params.gff,
+        params.additional_fasta,
+        params.transcript_fasta,
+        params.bbsplit_fasta_list,
+        params.ribo_database_manifest,
+        params.star_index,
+        params.salmon_index,
+        params.bbsplit_index,
+        params.sortmerna_index,
+        params.gencode,
+        params.aligner,
+        params.pseudo_aligner,
+        params.skip_gtf_filter,
+        params.skip_bbsplit,
+        ! params.remove_ribo_rna,
+        params.skip_alignment
     )
+    ch_versions = ch_versions.mix(PREPARE_GENOME.out.versions)
+
+    // Check if contigs in genome fasta file > 512 Mbp
+    if (!params.skip_alignment && !params.bam_csi_index) {
+        PREPARE_GENOME
+            .out
+            .fai
+            .map { checkMaxContigSize(it) }
+    }
+
+    //
+    // WORKFLOW: Run nf-core/riboseq workflow
+    //
+    ch_samplesheet = Channel.value(file(params.input, checkIfExists: true))
+    if (params.contrasts){
+        ch_contrasts_file = Channel.value(file(params.contrasts))
+    } else {
+        ch_contrasts_file = []
+    }
+
+    RIBOSEQ (
+        ch_samplesheet,
+        ch_contrasts_file,
+        ch_versions,
+        PREPARE_GENOME.out.fasta,
+        PREPARE_GENOME.out.gtf,
+        PREPARE_GENOME.out.fai,
+        PREPARE_GENOME.out.chrom_sizes,
+        PREPARE_GENOME.out.transcript_fasta,
+        PREPARE_GENOME.out.star_index,
+        PREPARE_GENOME.out.salmon_index,
+        PREPARE_GENOME.out.bbsplit_index,
+        PREPARE_GENOME.out.sortmerna_index,
+    )
+    ch_versions = ch_versions.mix(RIBOSEQ.out.versions)
 
     emit:
     multiqc_report = RIBOSEQ.out.multiqc_report // channel: /path/to/multiqc_report.html
+    versions       = ch_versions                // channel: [version1, version2, ...]
+
 
 }
 /*
@@ -87,9 +147,7 @@ workflow {
     //
     // WORKFLOW: Run main workflow
     //
-    NFCORE_RIBOSEQ (
-        PIPELINE_INITIALISATION.out.samplesheet
-    )
+    NFCORE_RIBOSEQ ()
 
     //
     // SUBWORKFLOW: Run completion tasks

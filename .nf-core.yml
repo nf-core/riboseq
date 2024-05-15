@@ -1,2 +1,12 @@
 repository_type: pipeline
 nf_core_version: "2.14.1"
+lint:
+  actions_ci: False
+  files_unchanged:
+    - .gitignore
+    - assets/nf-core-riboseq_logo_light.png
+    - docs/images/nf-core-riboseq_logo_dark.png
+    - docs/images/nf-core-riboseq_logo_light.png
+  nextflow_config:
+    - config_defaults:
+        - params.ribo_database_manifest
