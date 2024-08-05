@@ -49,8 +49,11 @@ def filterGtf =
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
 include { BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS } from '../../subworkflows/nf-core/bam_dedup_stats_samtools_umitools/main'
+include { BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS as BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_GENOME        } from '../../subworkflows/nf-core/bam_dedup_stats_samtools_umitools/main'
+include { BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS as BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_TRANSCRIPTOME } from '../../subworkflows/nf-core/bam_dedup_stats_samtools_umitools/main'
 include { PREPROCESS_RNASEQ                 } from '../../subworkflows/nf-core/preprocess_rnaseq'
 include { FASTQ_ALIGN_STAR                  } from '../../subworkflows/nf-core/fastq_align_star'
+include { BAM_SORT_STATS_SAMTOOLS           } from '../../subworkflows/nf-core/bam_sort_stats_samtools'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -178,7 +181,8 @@ workflow RIBOSEQ {
 
     ch_genome_bam              = FASTQ_ALIGN_STAR.out.bam
     ch_genome_bam_index        = FASTQ_ALIGN_STAR.out.bai
-    ch_transcriptome_bam       = FASTQ_ALIGN_STAR.out.orig_bam_transcript
+    ch_transcriptome_bam       = FASTQ_ALIGN_STAR.out.bam_transcript
+    ch_transcriptome_bai       = FASTQ_ALIGN_STAR.out.bai_transcript
     ch_versions                = ch_versions.mix(FASTQ_ALIGN_STAR.out.versions)
 
     ch_multiqc_files = ch_multiqc_files
@@ -207,13 +211,21 @@ workflow RIBOSEQ {
             .mix(BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_GENOME.out.flagstat.collect{it[1]})
             .mix(BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_GENOME.out.idxstats.collect{it[1]})
 
-        // Deduplicate transcriptome BAM file before downstream analysis
 
+       	BAM_SORT_STATS_SAMTOOLS (
+            ch_transcriptome_bam,
+            ch_fasta.map { [ [:], it ] }
+        )
+        ch_transcriptome_bam = BAM_SORT_STATS_SAMTOOLS.out.bam
+        ch_transcriptome_bai = BAM_SORT_STATS_SAMTOOLS.out.bai
+
+        // Deduplicate transcriptome BAM file before read counting with Salmon
         BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_TRANSCRIPTOME (
             ch_transcriptome_bam.join(ch_transcriptome_bai, by: [0]),
             params.umitools_dedup_stats
         )
-        ch_transcriptome_bam       = BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_TRANSCRIPTOME.out.bam
+        ch_transcriptome_bam = BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_TRANSCRIPTOME.out.bam
+        ch_transcriptome_bai = BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_TRANSCRIPTOME.out.bai
 
         ch_multiqc_files = ch_multiqc_files
             .mix(BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_TRANSCRIPTOME.out.stats.collect{it[1]})
