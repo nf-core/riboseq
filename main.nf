@@ -9,8 +9,6 @@
 ----------------------------------------------------------------------------------------
 */
 
-nextflow.enable.dsl = 2
-
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT FUNCTIONS / MODULES / SUBWORKFLOWS / WORKFLOWS
@@ -21,7 +19,6 @@ include { RIBOSEQ                 } from './workflows/riboseq'
 include { PREPARE_GENOME          } from './subworkflows/local/prepare_genome'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_riboseq_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_riboseq_pipeline'
-
 include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_riboseq_pipeline'
 include { checkMaxContigSize      } from './subworkflows/local/utils_nfcore_riboseq_pipeline'
 
@@ -129,13 +126,11 @@ workflow NFCORE_RIBOSEQ {
 workflow {
 
     main:
-
     //
     // SUBWORKFLOW: Run initialisation tasks
     //
     PIPELINE_INITIALISATION (
         params.version,
-        params.help,
         params.validate_params,
         params.monochrome_logs,
         args,
