@@ -10,7 +10,7 @@
             "sample": {
                 "type": "string",
                 "pattern": "^\\S+$",
-                "errorMessage": "Sample name must be provided and cannot contain spaces",
+                "errorMessage": "Sample ID must be provided and must be a string that cannot contain spaces",
                 "meta": ["id"]
             },
             "fastq_1": {
@@ -25,14 +25,7 @@
                 "type": "string",
                 "format": "file-path",
                 "exists": true,
-                "anyOf": [
-                    {
-                        "pattern": "^\\S+\\.f(ast)?q\\.gz$"
-                    },
-                    {
-                        "maxLength": 0
-                    }
-                ]
+                "pattern": "^\\S+\\.f(ast)?q\\.gz$"
             },
             "strandedness": {
                 "type": "string",

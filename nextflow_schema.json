@@ -17,8 +17,7 @@
                     "format": "file-path",
                     "exists": true,
                     "schema": "assets/schema_input.json",
-                    "mimetype": "text/csv",
-                    "pattern": "^\\S+\\.csv$",
+                    "pattern": "^\\S+\\.(csv|tsv|json|yaml|yml)$"
                     "description": "Path to comma-separated file containing information about the samples in the experiment.",
                     "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row. See [usage docs](https://nf-co.re/riboseq/usage#samplesheet-input).",
                     "fa_icon": "fas fa-file-csv"
@@ -27,9 +26,8 @@
                     "type": "string",
                     "description": "A CSV file describing sample contrasts",
                     "help_text": "This file is used to define groups of samples from 'input' to compare.  It must contain at least the columns 'variable', 'reference' and 'target', and optionally a 'batch' column. 'variable' and 'batch' must be columns in the input sample sheet, 'reference' and 'target' are values in the column indicated by 'variable'.",
-                    "pattern": "^\\S+\\.(csv|tsv|txt)$",
+                    "pattern": "^\\S+\\.(csv|tsv|json|yaml|yml|txt)$"
                     "format": "file-path",
-                    "mimetype": "text/csv",
                     "fa_icon": "fas fa-adjust"
                 },
                 "outdir": {
