@@ -26,7 +26,7 @@
                     "type": "string",
                     "description": "A CSV file describing sample contrasts",
                     "help_text": "This file is used to define groups of samples from 'input' to compare.  It must contain at least the columns 'variable', 'reference' and 'target', and optionally a 'batch' column. 'variable' and 'batch' must be columns in the input sample sheet, 'reference' and 'target' are values in the column indicated by 'variable'.",
-                    "pattern": "^\\S+\\.(csv|tsv|json|yaml|yml|txt)$",
+                    "pattern": "^\\S+\\.(csv|tsv|txt)$",
                     "format": "file-path",
                     "fa_icon": "fas fa-adjust"
                 },
