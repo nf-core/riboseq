@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#103](https://github.com/nf-core/riboseq/pull/103) - Updated the JSON schema to make input validation stricter([@andreirie](https://github.com/andreirie))
 - [#104](https://github.com/nf-core/riboseq/pull/104) - Updated SortMeRNA params to lower memory usage by not looking for best alignment [@jackcurragh](https://github.com/jackcurragh)
 
+
 ### `Fixed`
 
 ### `Dependencies`
