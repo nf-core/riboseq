@@ -70,6 +70,7 @@ workflow RIBOSEQ {
     ch_bbsplit_index    // channel: path(bbsplit/index/)
     ch_rrna_fastas      // channel: path(fasta)
     ch_sortmerna_index  // channel: path(sortmerna/index/)
+    ch_bowtie2_index    // channel: path(bowtie2/index/) for rRNA removal
 
     main:
 
@@ -79,8 +80,8 @@ workflow RIBOSEQ {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
 
-    // Check rRNA databases for sortmerna
-    if (params.remove_ribo_rna) {
+    // Check rRNA databases for sortmerna/bowtie2 (ribodetector doesn't need a database)
+    if (params.remove_ribo_rna && params.ribo_removal_tool != 'ribodetector') {
         ch_ribo_db = file(params.ribo_database_manifest)
         if (ch_ribo_db.isEmpty()) {exit 1, "File provided with --ribo_database_manifest is empty: ${ch_ribo_db.getName()}!"}
     } else {
@@ -99,7 +100,21 @@ workflow RIBOSEQ {
     if (params.remove_ribo_rna) { prepareToolIndices << 'sortmerna' }
     if (!params.skip_alignment) { prepareToolIndices << params.aligner }
 
-    // Initialise MultiQC files channel
+    // Determine whether to filter the GTF or not
+    def filterGtf =
+        ((
+            // Condition 1: Alignment is required and aligner is set
+            !params.skip_alignment && params.aligner
+        ) ||
+        (
+            // Condition 2: Transcript FASTA file is not provided
+            !params.transcript_fasta
+        )) &&
+        (
+            // Condition 3: --skip_gtf_filter is not provided
+            !params.skip_gtf_filter
+        )
+
     ch_multiqc_files = Channel.empty()
 
     //
@@ -130,31 +145,38 @@ workflow RIBOSEQ {
     // samples, and if we haven't already made one elsewhere
     salmon_index_available = params.salmon_index || (!params.skip_pseudo_alignment && params.pseudo_aligner == 'salmon')
 
+    // Determine if we need to build rRNA removal indexes
+    def make_sortmerna_index = !params.sortmerna_index && params.remove_ribo_rna && params.ribo_removal_tool == 'sortmerna'
+    def make_bowtie2_index   = params.remove_ribo_rna && params.ribo_removal_tool == 'bowtie2'
+
     FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS (
-        ch_fastq,
-        ch_fasta,
-        ch_transcript_fasta,
-        ch_gtf,
-        ch_salmon_index,
-        ch_sortmerna_index,
-        ch_bbsplit_index,
-        ch_rrna_fastas,
-        params.skip_bbsplit,
-        params.skip_fastqc || params.skip_qc,
-        params.skip_trimming,
-        params.skip_umi_extract,
-        !salmon_index_available,
-        !params.sortmerna_index && params.remove_ribo_rna,
-        params.trimmer,
-        params.min_trimmed_reads,
-        params.save_trimmed,
-        params.remove_ribo_rna,
-        params.with_umi,
-        params.umi_discard_read,
-        params.stranded_threshold,
-        params.unstranded_threshold,
-        params.skip_linting,
-        params.fastp_merge
+        ch_fastq,                                   // ch_reads
+        ch_fasta,                                   // ch_fasta
+        ch_transcript_fasta,                        // ch_transcript_fasta
+        ch_gtf,                                     // ch_gtf
+        ch_salmon_index,                            // ch_salmon_index
+        ch_sortmerna_index,                         // ch_sortmerna_index
+        ch_bowtie2_index,                           // ch_bowtie2_index
+        ch_bbsplit_index,                           // ch_bbsplit_index
+        ch_rrna_fastas,                             // ch_rrna_fastas
+        params.skip_bbsplit,                        // skip_bbsplit
+        params.skip_fastqc || params.skip_qc,       // skip_fastqc
+        params.skip_trimming,                       // skip_trimming
+        params.skip_umi_extract,                    // skip_umi_extract
+        params.skip_linting,                        // skip_linting
+        !salmon_index_available,                    // make_salmon_index
+        make_sortmerna_index,                       // make_sortmerna_index
+        make_bowtie2_index,                         // make_bowtie2_index
+        params.trimmer,                             // trimmer
+        params.min_trimmed_reads,                   // min_trimmed_reads
+        params.save_trimmed,                        // save_trimmed
+        false,                                      // fastp_merge
+        params.remove_ribo_rna,                     // remove_ribo_rna
+        params.ribo_removal_tool,                   // ribo_removal_tool
+        params.with_umi,                            // with_umi
+        params.umi_discard_read,                    // umi_discard_read
+        params.stranded_threshold,                  // stranded_threshold
+        params.unstranded_threshold                 // unstranded_threshold
     )
 
     ch_multiqc_files = ch_multiqc_files.mix(FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS.out.multiqc_files)
@@ -179,6 +201,7 @@ workflow RIBOSEQ {
     ch_genome_bam              = FASTQ_ALIGN_STAR.out.bam
     ch_genome_bam_index        = FASTQ_ALIGN_STAR.out.bai
     ch_transcriptome_bam       = FASTQ_ALIGN_STAR.out.orig_bam_transcript
+    ch_transcriptome_bai       = FASTQ_ALIGN_STAR.out.bai_transcript
     ch_versions                = ch_versions.mix(FASTQ_ALIGN_STAR.out.versions)
 
     ch_multiqc_files = ch_multiqc_files
