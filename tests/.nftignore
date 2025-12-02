@@ -36,6 +36,8 @@ quantification/salmon/*/quant.sf
 quantification/salmon/salmon.merged.gene.SummarizedExperiment.rds
 quantification/salmon/salmon.merged.gene.length_scaled.SummarizedExperiment.rds
 quantification/salmon/salmon.merged.gene.scaled.SummarizedExperiment.rds
+quantification/salmon/*.rds
+quantification/salmon/**/*.rds
 quantification/salmon/salmon.merged.gene_counts.tsv
 quantification/salmon/salmon.merged.gene_counts_length_scaled.tsv
 quantification/salmon/salmon.merged.gene_counts_scaled.tsv

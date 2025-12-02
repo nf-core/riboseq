@@ -1,16 +1,18 @@
 nextflow_pipeline {
 
-    name "Test pipeline"
+    name "Test pipeline with ribodetector rRNA removal"
     script "../main.nf"
     tag "pipeline"
     tag "pipeline_riboseq"
+    tag "ribo_removal_ribodetector"
 
 
-    test("-profile test") {
+    test("-profile test --ribo_removal_tool ribodetector") {
 
         when {
             params {
                 outdir = "$outputDir"
+                ribo_removal_tool = 'ribodetector'
             }
         }
 
