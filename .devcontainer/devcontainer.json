@@ -10,11 +10,5 @@
         "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
     },
 
-    "onCreateCommand": "./.devcontainer/setup.sh",
-
-    "hostRequirements": {
-        "cpus": 4,
-        "memory": "16gb",
-        "storage": "32gb"
-    }
+    "onCreateCommand": "./.devcontainer/setup.sh"
 }
