@@ -127,7 +127,10 @@ Ribosomal RNA (rRNA) removal is enabled by default (`--remove_ribo_rna`). The pi
 nextflow run nf-core/riboseq --ribo_removal_tool sortmerna ...
 ```
 
-By default, [rRNA databases](https://github.com/biocore/sortmerna/tree/master/data/rRNA_databases) defined in the SortMeRNA GitHub repo are used. You can see an example in the pipeline GitHub repository in `assets/rrna-db-defaults.txt` which is used by default via the `--ribo_database_manifest` parameter. Please note that commercial/non-academic entities require [`licensing for SILVA`](https://www.arb-silva.de/silva-license-information) for these default databases.
+By default, [rRNA databases](https://github.com/biocore/sortmerna/tree/master/data/rRNA_databases) defined in the SortMeRNA GitHub repo are used. You can see an example in the pipeline GitHub repository in `assets/rrna-db-defaults.txt` which is used by default via the `--ribo_database_manifest` parameter.
+
+> [!NOTE]
+> The default databases are based on SILVA 119, which requires [licensing for commercial use](https://www.arb-silva.de/silva-license-information). SILVA 138+ uses CC-BY 4.0 licensing that freely permits commercial use with attribution. If you have licensing concerns, consider using Bowtie2 with custom rRNA reference sequences via `--ribo_removal_tool bowtie2`.
 
 ### Bowtie2
 
