@@ -94,7 +94,7 @@
                     "bioconductor-tximeta": "1.20.1"
                 },
                 "Workflow": {
-                    "nf-core/riboseq": "v1.2.0"
+                    "nf-core/riboseq": "v1.3.0dev"
                 }
             },
             [
@@ -1295,8 +1295,8 @@
         ],
         "meta": {
             "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
+            "nextflow": "25.10.2"
         },
-        "timestamp": "2025-11-19T20:47:02.137504918"
+        "timestamp": "2025-12-04T12:31:30.777017688"
     }
 }
