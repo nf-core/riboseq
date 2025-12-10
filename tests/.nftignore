@@ -23,7 +23,6 @@ pipeline_info/*.{html,json,txt,yml}
 preprocessing/fastqc/*_fastqc.{html,zip}
 preprocessing/fq_lint/**/*.fq_lint.txt
 preprocessing/sortmerna/*.sortmerna.log
-samtools/*.unmapped.bam
 preprocessing/trimgalore/*.fastq.gz_trimming_report.txt
 preprocessing/trimgalore/fastqc/*_fastqc.{html,zip}
 preprocessing/umitools/*.umi_extract.log

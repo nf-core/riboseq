@@ -63,12 +63,6 @@
                 "SAMTOOLS_STATS": {
                     "samtools": 1.21
                 },
-                "SEQKIT_REPLACE": {
-                    "seqkit": "2.9.0"
-                },
-                "SEQKIT_REPLACE_U2T": {
-                    "seqkit": "2.9.0"
-                },
                 "SE_GENE_UNIFIED": {
                     "bioconductor-summarizedexperiment": "1.32.0"
                 },
@@ -1055,9 +1049,6 @@
                 "ribowaltz/ribowaltz_qc/SRX11780890.length_distribution.pdf",
                 "ribowaltz/ribowaltz_qc/SRX11780890.metaprofile_psite.pdf",
                 "ribowaltz/ribowaltz_qc/SRX11780890.psite_region.pdf",
-                "seqkit",
-                "seqkit/rfam-5.8s-database-id98_dna_converted.fasta",
-                "seqkit/rfam-5.8s-database-id98_prefixed.fasta",
                 "translational_efficiency",
                 "translational_efficiency/anota2seq",
                 "translational_efficiency/anota2seq/treated_vs_control.Anota2seqDataSet.rds",
@@ -1303,8 +1294,6 @@
                 "SRX11780890.codon_coverage_rpf.tsv.gz:md5,fc28b1c4b672c3f94111a27392a0fa9c",
                 "SRX11780890.psite.tsv.gz:md5,163ab7bbceea7f1e55361552b295e56c",
                 "SRX11780890.psite_offset.tsv.gz:md5,b42eac3c4b9e4c9b0af3be1aeb87907b",
-                "rfam-5.8s-database-id98_dna_converted.fasta:md5,990436ac4aa6cacf24cd5d1c1365f28a",
-                "rfam-5.8s-database-id98_prefixed.fasta:md5,3d4c00fbea3b50aa6d0769410e38cd2f",
                 "treated_vs_control.R_sessionInfo.log:md5,3623a50b4668bfebf502bf7080800996"
             ]
         ],
