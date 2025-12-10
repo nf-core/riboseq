@@ -100,21 +100,6 @@ workflow RIBOSEQ {
     if (params.remove_ribo_rna) { prepareToolIndices << 'sortmerna' }
     if (!params.skip_alignment) { prepareToolIndices << params.aligner }
 
-    // Determine whether to filter the GTF or not
-    def filterGtf =
-        ((
-            // Condition 1: Alignment is required and aligner is set
-            !params.skip_alignment && params.aligner
-        ) ||
-        (
-            // Condition 2: Transcript FASTA file is not provided
-            !params.transcript_fasta
-        )) &&
-        (
-            // Condition 3: --skip_gtf_filter is not provided
-            !params.skip_gtf_filter
-        )
-
     ch_multiqc_files = Channel.empty()
 
     //
