@@ -115,6 +115,47 @@ When specifying `contrasts` to perform a translational efficiency analysis (see 
 
 > **NB:** TrimGalore! will only run using multiple cores if you are able to use more than > 5 and > 6 CPUs for single- and paired-end data, respectively. The total cores available to TrimGalore! will also be capped at 4 (7 and 8 CPUs in total for single- and paired-end data, respectively) because there is no longer a run-time benefit. See [release notes](https://github.com/FelixKrueger/TrimGalore/blob/master/Changelog.md#version-060-release-on-1-mar-2019) and [discussion whilst adding this logic to the nf-core/atacseq pipeline](https://github.com/nf-core/atacseq/pull/65).
 
+## rRNA removal options
+
+Ribosomal RNA (rRNA) removal is enabled by default (`--remove_ribo_rna`). The pipeline supports three different tools for rRNA removal, selectable via the `--ribo_removal_tool` parameter.
+
+> [!TIP]
+> For tools that use a reference database (SortMeRNA and Bowtie2), although rRNA is the primary target, the reference database can include additional abundant contaminant sequences commonly removed in ribosome profiling workflows, such as tRNAs or other non-coding RNAs. Simply add the paths to your custom FASTA files in the manifest file.
+
+### SortMeRNA (default)
+
+[SortMeRNA](https://github.com/biocore/sortmerna) uses k-mer matching against rRNA databases to identify and filter rRNA reads. This is the default option and requires an rRNA database manifest file.
+
+```bash
+nextflow run nf-core/riboseq --ribo_removal_tool sortmerna ...
+```
+
+By default, [rRNA databases](https://github.com/biocore/sortmerna/tree/master/data/rRNA_databases) defined in the SortMeRNA GitHub repo are used. You can see an example in the pipeline GitHub repository in `assets/rrna-db-defaults.txt` which is used by default via the `--ribo_database_manifest` parameter.
+
+> [!NOTE]
+> The default databases are based on SILVA 119, which requires [licensing for commercial use](https://www.arb-silva.de/silva-license-information). SILVA 138+ uses CC-BY 4.0 licensing that freely permits commercial use with attribution. If you have licensing concerns, consider using Bowtie2 with custom rRNA reference sequences via `--ribo_removal_tool bowtie2`.
+
+### Bowtie2
+
+[Bowtie2](https://github.com/BenLangmead/bowtie2) performs alignment-based filtering against rRNA reference sequences. Reads that align to the rRNA references are filtered out, and unaligned reads are kept for downstream analysis. This option also requires an rRNA database manifest file specified via `--ribo_database_manifest`.
+
+```bash
+nextflow run nf-core/riboseq --ribo_removal_tool bowtie2 ...
+```
+
+### RiboDetector
+
+> [!WARNING]
+> RiboDetector has known issues with ONNX multiprocessing that can cause hangs in containerized environments (Docker, Singularity). This makes it unreliable for production use in Nextflow pipelines. We recommend using SortMeRNA or Bowtie2 for rRNA removal until these issues are resolved upstream. See [hzi-bifo/RiboDetector#61](https://github.com/hzi-bifo/RiboDetector/pull/61) for details.
+
+[RiboDetector](https://github.com/hzi-bifo/RiboDetector) uses machine learning to identify rRNA reads without requiring a reference database. This makes it particularly useful when working with organisms that lack well-characterized rRNA sequences, or when you want to avoid database licensing requirements.
+
+```bash
+nextflow run nf-core/riboseq --ribo_removal_tool ribodetector ...
+```
+
+RiboDetector automatically determines read length from your data and uses its pre-trained neural network model to classify reads.
+
 ## Alignment options
 
 The pipeline currently uses [STAR](https://github.com/alexdobin/STAR) to map the raw FastQ reads to the reference genome and project the alignments onto the transcriptome. STAR is fast but requires a lot of memory to run, typically around 38GB for the Human GRCh37 reference genome.

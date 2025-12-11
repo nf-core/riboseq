@@ -40,6 +40,7 @@
                 "meta": ["sample_type"]
             }
         },
-        "required": ["sample", "fastq_1", "strandedness", "type"]
+        "required": ["sample", "fastq_1", "strandedness", "type"],
+        "additionalProperties": true
     }
 }

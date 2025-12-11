@@ -47,6 +47,7 @@ workflow PREPARE_GENOME {
     skip_gtf_filter          //   boolean: Skip filtering of GTF for valid scaffolds and/ or transcript IDs
     skip_bbsplit             //   boolean: Skip BBSplit for removal of non-reference genome reads
     skip_sortmerna           //   boolean: Skip sortmerna for removal of non-reference genome reads
+    ribo_removal_tool        //    string: Tool for rRNA removal ('sortmerna', 'bowtie2', or 'ribodetector')
     skip_alignment           //   boolean: Skip all of the alignment-based processes within the pipeline
 
     main:
@@ -191,17 +192,20 @@ workflow PREPARE_GENOME {
     }
 
     //
-    // Uncompress sortmerna index or generate from scratch if required
-    //
-    //
-    // Uncompress sortmerna index or generate from scratch if required
+    // Prepare rRNA fastas for rRNA removal (sortmerna, bowtie2, or ribodetector)
     //
     ch_sortmerna_index = Channel.empty()
     ch_rrna_fastas = Channel.empty()
 
-    if ('sortmerna' in prepare_tool_indices) {
+    // Populate ch_rrna_fastas when sortmerna or bowtie2 is selected (ribodetector uses its own model)
+    if (ribo_removal_tool in ['sortmerna', 'bowtie2']) {
         ribo_db = file(sortmerna_fasta_list)
+        ch_rrna_fastas = Channel.from(ribo_db.readLines())
+            .map { row -> file(row, checkIfExists: true) }
+    }
 
+    // Only build sortmerna index when sortmerna is selected as the rRNA removal tool
+    if ('sortmerna' in prepare_tool_indices) {
         if (sortmerna_index) {
             if (sortmerna_index.endsWith('.tar.gz')) {
                 ch_sortmerna_index = UNTAR_SORTMERNA_INDEX ( [ [:], sortmerna_index ] ).untar.map { it[1] }
@@ -210,9 +214,6 @@ workflow PREPARE_GENOME {
                 ch_sortmerna_index = Channel.value(file(sortmerna_index))
             }
         } else {
-            ch_rrna_fastas = Channel.from(ribo_db.readLines())
-                .map { row -> file(row, checkIfExists: true) }
-
             SORTMERNA_INDEX (
                 Channel.of([ [],[] ]),
                 ch_rrna_fastas.collect().map { [ 'rrna_refs', it ] },

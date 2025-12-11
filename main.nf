@@ -72,7 +72,8 @@ workflow NFCORE_RIBOSEQ {
         params.aligner,
         params.skip_gtf_filter,
         params.skip_bbsplit,
-        ! params.remove_ribo_rna,
+        ! (params.remove_ribo_rna && params.ribo_removal_tool == 'sortmerna'),
+        params.remove_ribo_rna ? params.ribo_removal_tool : null,
         params.skip_alignment
     )
     ch_versions = ch_versions.mix(PREPARE_GENOME.out.versions)
@@ -95,6 +96,9 @@ workflow NFCORE_RIBOSEQ {
         ch_contrasts_file = []
     }
 
+    // Bowtie2 index for rRNA removal is built on-the-fly within the subworkflow
+    ch_bowtie2_index = Channel.empty()
+
     RIBOSEQ (
         ch_samplesheet,
         ch_contrasts_file,
@@ -109,6 +113,7 @@ workflow NFCORE_RIBOSEQ {
         PREPARE_GENOME.out.bbsplit_index,
         PREPARE_GENOME.out.rrna_fastas,
         PREPARE_GENOME.out.sortmerna_index,
+        ch_bowtie2_index
     )
     ch_versions = ch_versions.mix(RIBOSEQ.out.versions)
 

@@ -188,6 +188,12 @@
                     "default": 10000,
                     "fa_icon": "fas fa-hand-paper",
                     "description": "Minimum number of trimmed reads below which samples are removed from further processing. Some downstream steps in the pipeline will fail if this threshold is too low."
+                },
+                "fastp_merge": {
+                    "type": "boolean",
+                    "default": false,
+                    "fa_icon": "fas fa-compress-alt",
+                    "description": "For paired-end data processed with fastp, merge overlapping read pairs into a single read."
                 }
             }
         },
@@ -231,9 +237,17 @@
                 "remove_ribo_rna": {
                     "type": "boolean",
                     "fa_icon": "fas fa-trash-alt",
-                    "description": "Enable the removal of reads derived from ribosomal RNA using SortMeRNA.",
-                    "help_text": "Any patterns found in the sequences defined by the '--ribo_database_manifest' parameter will be used.",
+                    "description": "Enable the removal of reads derived from ribosomal RNA.",
+                    "help_text": "Any patterns found in the sequences defined by the '--ribo_database_manifest' parameter will be used. The tool used can be selected with '--ribo_removal_tool'.",
                     "default": true
+                },
+                "ribo_removal_tool": {
+                    "type": "string",
+                    "default": "sortmerna",
+                    "fa_icon": "fas fa-trash-alt",
+                    "description": "Specifies which tool to use for ribosomal RNA removal.",
+                    "help_text": "Available options are 'sortmerna', 'bowtie2', and 'ribodetector'. SortMeRNA uses k-mer matching against rRNA databases. Bowtie2 aligns reads against rRNA references and filters aligned reads. RiboDetector uses machine learning to identify rRNA reads without requiring a reference database.",
+                    "enum": ["sortmerna", "bowtie2", "ribodetector"]
                 },
                 "ribo_database_manifest": {
                     "type": "string",
@@ -242,8 +256,8 @@
                     "mimetype": "text/plain",
                     "default": "${projectDir}/assets/rrna-db-defaults.txt",
                     "fa_icon": "fas fa-database",
-                    "description": "Text file containing paths to fasta files (one per line) that will be used to create the database for SortMeRNA.",
-                    "help_text": "By default, [rRNA databases](https://github.com/biocore/sortmerna/tree/master/data/rRNA_databases) defined in the SortMeRNA GitHub repo are used. You can see an example in the pipeline Github repository in `assets/rrna-default-dbs.txt`.\nPlease note that commercial/non-academic entities require [`licensing for SILVA`](https://www.arb-silva.de/silva-license-information) for these default databases."
+                    "description": "Text file containing paths to fasta files (one per line) that will be used to create the database for rRNA removal.",
+                    "help_text": "By default, [rRNA databases](https://github.com/biocore/sortmerna/tree/master/data/rRNA_databases) defined in the SortMeRNA GitHub repo are used. You can see an example in the pipeline Github repository in `assets/rrna-default-dbs.txt`. This is used by SortMeRNA and Bowtie2 (RiboDetector does not require a reference database).\nPlease note that commercial/non-academic entities require [`licensing for SILVA`](https://www.arb-silva.de/silva-license-information) for these default databases."
                 }
             },
             "fa_icon": "fas fa-trash-alt"
@@ -322,6 +336,18 @@
                     "description": "Specifies the alignment algorithm to use - available options are currently 'star'.",
                     "fa_icon": "fas fa-map-signs",
                     "enum": ["star"]
+                },
+                "pseudo_aligner": {
+                    "type": "string",
+                    "description": "Specifies the pseudo aligner to use - available options are 'salmon' or 'kallisto'. Runs in addition to the main aligner.",
+                    "fa_icon": "fas fa-fish",
+                    "enum": ["salmon", "kallisto"]
+                },
+                "skip_pseudo_alignment": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Skip pseudo alignment and quantification.",
+                    "fa_icon": "fas fa-forward"
                 },
                 "pseudo_aligner_kmer_size": {
                     "type": "integer",
@@ -775,10 +801,5 @@
         {
             "$ref": "#/$defs/generic_options"
         }
-    ],
-    "properties": {
-        "fastp_merge": {
-            "type": "boolean"
-        }
-    }
+    ]
 }
