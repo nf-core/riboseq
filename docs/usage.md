@@ -117,7 +117,10 @@ When specifying `contrasts` to perform a translational efficiency analysis (see 
 
 ## rRNA removal options
 
-Ribosomal RNA (rRNA) removal is enabled by default (`--remove_ribo_rna`). The pipeline supports three different tools for rRNA removal, selectable via the `--ribo_removal_tool` parameter:
+Ribosomal RNA (rRNA) removal is enabled by default (`--remove_ribo_rna`). The pipeline supports three different tools for rRNA removal, selectable via the `--ribo_removal_tool` parameter.
+
+> [!TIP]
+> For tools that use a reference database (SortMeRNA and Bowtie2), although rRNA is the primary target, the reference database can include additional abundant contaminant sequences commonly removed in ribosome profiling workflows, such as tRNAs or other non-coding RNAs. Simply add the paths to your custom FASTA files in the manifest file.
 
 ### SortMeRNA (default)
 
