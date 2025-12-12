@@ -10,6 +10,19 @@ report_section_order:
 
 export_plots: true
 
+# Group paired-end reads together in the general stats table
+table_sample_merge:
+  "Read 1":
+    - "_1"
+    - "_R1"
+    - type: regex
+      pattern: "[_.-][rR]?1$"
+  "Read 2":
+    - "_2"
+    - "_R2"
+    - type: regex
+      pattern: "[_.-][rR]?2$"
+
 # Run only these modules
 run_modules:
   - custom_content
