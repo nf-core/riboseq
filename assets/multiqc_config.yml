@@ -10,6 +10,19 @@ report_section_order:
 
 export_plots: true
 
+# Group paired-end reads together in the general stats table
+table_sample_merge:
+  "Read 1":
+    - "_1"
+    - "_R1"
+    - type: regex
+      pattern: "[_.-][rR]?1$"
+  "Read 2":
+    - "_2"
+    - "_R2"
+    - type: regex
+      pattern: "[_.-][rR]?2$"
+
 # Run only these modules
 run_modules:
   - custom_content
@@ -27,6 +40,7 @@ run_modules:
   - preseq
   - rseqc
   - qualimap
+  - ribotish
 
 # Order of modules
 top_modules:
@@ -55,6 +69,9 @@ module_order:
       info: "This section of the report shows FastQC results after adapter trimming."
       path_filters:
         - "*_trimmed_fastqc.zip"
+  - star
+  - samtools
+  - ribotish
 
 # Don't show % Dups in the General Stats table (we have this from Picard)
 table_columns_visible:
@@ -66,6 +83,7 @@ extra_fn_clean_exts:
   - "_val"
   - ".markdup"
   - "_primary"
+  - ".genome"
 
 # Customise the module search patterns to speed up execution time
 #  - Skip module sub-tools that we are not interested in
@@ -145,6 +163,9 @@ sp:
     skip: true
   picard/wgs_metrics:
     skip: true
+
+  ribotish/qual:
+    fn: "*_qual.txt"
 
 # See https://github.com/ewels/MultiQC_TestData/blob/master/data/custom_content/with_config/table_headerconfig/multiqc_config.yaml
 custom_data:
