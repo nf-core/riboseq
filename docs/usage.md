@@ -261,26 +261,26 @@ Both methods analyze differences between conditions for RNA-seq and Ribo-seq sam
 **anota2seq** studies differences between conditions for both RNA-seq and Ribo-seq samples. It also assesses combined results from two measures as they relate to one another:
 
 - **mRNA abundance**: Changes in total RNA levels that lead to corresponding changes in translation
-- **Translation**: Differences in translation not occurring as a result of overall RNA levels  
+- **Translation**: Differences in translation not occurring as a result of overall RNA levels
 - **Buffering**: Changes in total RNA levels that do not lead to increased translation
 
 **deltaTE** classifies genes based on statistical significance patterns:
 
 - **mRNA_abundance**: RNA changes forwarded to translation without net translational efficiency changes
-- **Translation**: Pure translational regulation - ribosome changes without mRNA changes  
+- **Translation**: Pure translational regulation - ribosome changes without mRNA changes
 - **Buffering**: Translation dampens RNA changes (opposite directional effects)
 - **Intensified**: Translation amplifies RNA changes (same direction, deltaTE-specific)
 
 This table summarizes the conceptual framework:
 
-| Category        | RNA-seq   | Ribo-seq  | Translational Efficiency |
-| --------------- | --------- | --------- | ------------------------ |
-| mRNA abundance  | Changed   | Changed   | Unchanged                |
-| Translation     | Unchanged | Changed   | Changed                  |
-| Buffering       | Changed   | Stable/Opposite | Changed            |
-| Intensified*    | Changed   | Amplified | Changed                  |
+| Category       | RNA-seq   | Ribo-seq        | Translational Efficiency |
+| -------------- | --------- | --------------- | ------------------------ |
+| mRNA abundance | Changed   | Changed         | Unchanged                |
+| Translation    | Unchanged | Changed         | Changed                  |
+| Buffering      | Changed   | Stable/Opposite | Changed                  |
+| Intensified\*  | Changed   | Amplified       | Changed                  |
 
-*Intensified is specific to the deltaTE method.
+\*Intensified is specific to the deltaTE method.
 
 ### Method selection
 

@@ -42,7 +42,7 @@ suppressPackageStartupMessages({
 # Define anota2seq color scheme for consistency
 get_anota2seq_colors <- function() {
     cols <- c(RColorBrewer::brewer.pal(8,"Reds")[c(4,8)],
-              RColorBrewer::brewer.pal(8,"Blues")[c(4,8)], 
+              RColorBrewer::brewer.pal(8,"Blues")[c(4,8)],
               RColorBrewer::brewer.pal(8,"Greens")[c(4,8)])
     names(cols) <- c("translation up","translation down","buffering down","buffering up","mRNA abundance up","mRNA abundance down")
     return(cols)

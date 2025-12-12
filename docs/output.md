@@ -477,7 +477,8 @@ Both methods produce fold change plots that visualize the relationship between R
 
 The anota2seq fold change plot shows total mRNA log2FC on the X-axis and translated mRNA log2FC on the Y-axis, with genes colored by their regulatory classification. The solid diagonal line represents equal changes in both data types.
 
-*In the test dataset:* The plot reveals 623 genes with significant translational regulation across several categories:
+_In the test dataset:_ The plot reveals 623 genes with significant translational regulation across several categories:
+
 - **Translation down (357) / up (225)**: Genes showing pure translational regulation without corresponding RNA changes, appearing as vertical deviations from the diagonal
 - **mRNA abundance down (16) / up (25)**: Genes with coordinated RNA and Ribo-seq changes, appearing along the diagonal
 - **Buffered (mRNA down) (0) / (mRNA up) (0)**: Genes where translation dampens RNA changes (none detected in this dataset)
@@ -490,7 +491,8 @@ The predominance of translation-regulated genes (582 of 623) indicates that tran
 
 The deltaTE method produces a similar visualization showing total mRNA log2FC (RNA-seq) on the X-axis and translated mRNA log2FC (Ribo-seq) on the Y-axis, with genes colored by their classification. The diagonal dashed line represents equal changes in both data types.
 
-*In the test dataset:* The plot reveals 1,694 DTEGs across several categories:
+_In the test dataset:_ The plot reveals 1,694 DTEGs across several categories:
+
 - **Translation down (895) / up (710)**: Genes showing translational regulation without corresponding RNA changes, appearing as vertical deviations from the diagonal along the y-axis
 - **mRNA abundance down (4) / up (30)**: Genes with coordinated RNA and Ribo-seq changes, appearing along the diagonal
 - **Buffering down (14) / up (16)**: Genes where translation dampens RNA changes, appearing below the diagonal
@@ -512,7 +514,7 @@ anota2seq produces several QC plots for assessing model fit and statistical assu
 
 This plot summarizes the distribution of regression residuals across quantiles of the standard normal distribution. It helps assess whether the residuals follow the expected normal distribution, which is an assumption of the linear model.
 
-*In the test dataset:* The obtained outlier rate (1.588%) is close to the expected 1%, indicating the model assumptions are reasonably well met.
+_In the test dataset:_ The obtained outlier rate (1.588%) is close to the expected 1%, indicating the model assumptions are reasonably well met.
 
 **Residuals vs fitted values:**
 
@@ -520,7 +522,7 @@ This plot summarizes the distribution of regression residuals across quantiles o
 
 This classic diagnostic plot shows residuals plotted against fitted values. Ideally, residuals should be randomly scattered around zero with constant variance (homoscedasticity).
 
-*In the test dataset:* The residuals show a characteristic funnel shape with greater spread at lower fitted values, which is typical for count-based expression data. This heteroscedasticity is expected and accounted for by the RVM approach.
+_In the test dataset:_ The residuals show a characteristic funnel shape with greater spread at lower fitted values, which is typical for count-based expression data. This heteroscedasticity is expected and accounted for by the RVM approach.
 
 **RVM fit for interactions:**
 
@@ -528,9 +530,10 @@ This classic diagnostic plot shows residuals plotted against fitted values. Idea
 
 The Random Variance Model (RVM) fit plot shows how well the empirical variance distribution matches the theoretical F-distribution. The left panel shows a Q-Q plot of empirical vs theoretical quantiles, and the right panel shows the cumulative distribution functions with a Kolmogorov-Smirnov test p-value.
 
-*In the test dataset:* The KS p-value of 4.24e-09 indicates significant deviation from the theoretical distribution, suggesting the variance structure in this dataset differs from standard assumptions. This is not uncommon in real experimental data and the RVM approach helps account for such deviations.
+_In the test dataset:_ The KS p-value of 4.24e-09 indicates significant deviation from the theoretical distribution, suggesting the variance structure in this dataset differs from standard assumptions. This is not uncommon in real experimental data and the RVM approach helps account for such deviations.
 
 #### deltaTE visualizations
+
 The deltaTE method produces diagnostic plots for quality control and interpretation:
 
 - **Fold change plot**: The main visualization showing RNA-seq vs Ribo-seq log2 fold changes, with genes colored by their deltaTE classification (mRNA_abundance, translation, buffering, intensified). This provides direct visual comparison with anota2seq's equivalent plot.
@@ -546,7 +549,7 @@ The deltaTE method produces diagnostic plots for quality control and interpretat
 
 PCA plots help assess sample clustering and identify potential batch effects or outliers. In well-designed experiments, samples should cluster primarily by treatment condition rather than technical factors.
 
-*In the test dataset:* Both PCA plots show clear separation between control (coral) and treated (teal) samples along PC1, which captures 57% of variance for Ribo-seq and 39% for RNA-seq. This indicates that the treatment effect is the dominant source of variation in both data types. The treated samples cluster together on the right side of PC1 in both plots, while control samples are distributed on the left, with one control sample (SRX11780879 in RNA-seq, SRX11780886 in Ribo-seq) showing some separation from other controls along PC2.
+_In the test dataset:_ Both PCA plots show clear separation between control (coral) and treated (teal) samples along PC1, which captures 57% of variance for Ribo-seq and 39% for RNA-seq. This indicates that the treatment effect is the dominant source of variation in both data types. The treated samples cluster together on the right side of PC1 in both plots, while control samples are distributed on the left, with one control sample (SRX11780879 in RNA-seq, SRX11780886 in Ribo-seq) showing some separation from other controls along PC2.
 
 **Expression heatmap:**
 
@@ -554,7 +557,7 @@ PCA plots help assess sample clustering and identify potential batch effects or 
 
 This clustered heatmap shows the expression patterns of the top 50 differentially translated genes (DTEGs) across all samples, with rows representing genes and columns representing samples. The color scale indicates normalized expression levels (Z-scores). Samples are annotated by condition (control/treated) and sequencing type (rnaseq/riboseq).
 
-*In the test dataset:* The heatmap reveals distinct expression patterns between control and treated samples. Samples cluster hierarchically first by condition (control vs treated), with Ribo-seq control samples on the far left showing predominantly high expression (red), and treated samples showing lower expression (blue/purple) for most genes. The top 50 DTEGs show strong coordinated downregulation in treated samples compared to controls, particularly evident in the Ribo-seq data, reflecting the predominance of translation-down regulation in this dataset.
+_In the test dataset:_ The heatmap reveals distinct expression patterns between control and treated samples. Samples cluster hierarchically first by condition (control vs treated), with Ribo-seq control samples on the far left showing predominantly high expression (red), and treated samples showing lower expression (blue/purple) for most genes. The top 50 DTEGs show strong coordinated downregulation in treated samples compared to controls, particularly evident in the Ribo-seq data, reflecting the predominance of translation-down regulation in this dataset.
 
 #### Interpreting deltaTE diagnostic plots
 
@@ -563,11 +566,12 @@ This clustered heatmap shows the expression patterns of the top 50 differentiall
 ![deltaTE - interaction p-value distribution](images/deltate/treatment_vs_control.interaction_p_distribution.png)
 
 This histogram shows the distribution of adjusted p-values from the interaction term in the DESeq2 model, which tests for differences in translational efficiency between conditions. For well-powered experiments with genuine translational regulation:
+
 - You should see a mixture of p-values with enrichment near 0 (significant genes) and relatively uniform distribution across higher p-values
 - A completely uniform distribution suggests no translational regulation effects
 - Heavy skewing toward 1.0 may indicate underpowered analysis or technical issues
 
-*In the test dataset:* The distribution shows strong enrichment of small adjusted p-values (large peak near 0), indicating widespread translational regulation in this experimental system. The dashed red line marks the significance threshold (α = 0.05). The analysis identified 1,694 differentially translated genes (DTEGs), with translational regulation being the dominant mode of gene expression control.
+_In the test dataset:_ The distribution shows strong enrichment of small adjusted p-values (large peak near 0), indicating widespread translational regulation in this experimental system. The dashed red line marks the significance threshold (α = 0.05). The analysis identified 1,694 differentially translated genes (DTEGs), with translational regulation being the dominant mode of gene expression control.
 
 The deltaTE approach focuses on the key fold change visualization that directly shows the relationship between RNA and ribosome changes, making it easy to interpret translational regulation patterns. The **intensified** category (genes where translation amplifies RNA changes in the same direction) is unique to deltaTE and provides additional biological insights not available in anota2seq.
 
