@@ -32,6 +32,7 @@ include { RIBOTISH_PREDICT as RIBOTISH_PREDICT_ALL             } from '../../mod
 include { RIBOTRICER_PREPAREORFS                               } from '../../modules/nf-core/ribotricer/prepareorfs'
 include { RIBOTRICER_DETECTORFS                                } from '../../modules/nf-core/ribotricer/detectorfs'
 include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../modules/nf-core/anota2seq/anota2seqrun'
+include { DESEQ2_DELTATE                                       } from '../../modules/local/deseq2/deltate'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
 include { RIBOWALTZ                                            } from '../../modules/nf-core/ribowaltz/main'
 
@@ -350,11 +351,21 @@ workflow RIBOSEQ {
             .map{[it[0], it[2], it[1]]}
             .first()
 
-        ANOTA2SEQ_ANOTA2SEQRUN(
-            ch_contrasts,
-            ch_samplesheet_matrix
-        )
-        ch_versions = ch_versions.mix(ANOTA2SEQ_ANOTA2SEQRUN.out.versions)
+        if (params.translational_efficiency_method == 'anota2seq') {
+            ANOTA2SEQ_ANOTA2SEQRUN(
+                ch_contrasts,
+                ch_samplesheet_matrix
+            )
+            ch_versions = ch_versions.mix(ANOTA2SEQ_ANOTA2SEQRUN.out.versions)
+        }
+
+        if (params.translational_efficiency_method == 'deltate') {
+            DESEQ2_DELTATE(
+                ch_contrasts,
+                ch_samplesheet_matrix
+            )
+            ch_versions = ch_versions.mix(DESEQ2_DELTATE.out.versions)
+        }
     }
 
     //
