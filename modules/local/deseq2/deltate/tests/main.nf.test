@@ -1,0 +1,93 @@
+nextflow_process {
+
+    name "Test Process DESEQ2_DELTATE"
+    script "../main.nf"
+    process "DESEQ2_DELTATE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "deseq2"
+    tag "deseq2/deltate"
+
+    test("human - tsv") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'treatment_vs_control' ],
+                    'treatment',
+                    'control',
+                    'treatment'
+                ]
+                input[1] = [
+                    [ id:'test' ],
+                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/samplesheet.csv", checkIfExists: true),
+                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/salmon.merged.gene_counts_length_scaled.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.translation[0][1]).exists() },
+                { assert path(process.out.translated_mrna[0][1]).exists() },
+                { assert path(process.out.total_mrna[0][1]).exists() },
+                { assert path(process.out.dtegs[0][1]).exists() },
+                { assert path(process.out.mrna_abundance[0][1]).exists() },
+                { assert path(process.out.buffering[0][1]).exists() },
+                { assert path(process.out.translation_genes[0][1]).exists() },
+                { assert path(process.out.intensified[0][1]).exists() },
+                { assert path(process.out.fold_change_plot[0][1]).exists() },
+                { assert path(process.out.rdata[0][1]).exists() },
+                { assert path(process.out.session_info[0][1]).getText().contains('DESeq2') },
+                { assert snapshot(
+                    process.out.versions,
+                    file(process.out.translation[0][1]).name,
+                    file(process.out.translated_mrna[0][1]).name,
+                    file(process.out.total_mrna[0][1]).name,
+                    file(process.out.dtegs[0][1]).name,
+                    file(process.out.mrna_abundance[0][1]).name,
+                    file(process.out.translation_genes[0][1]).name,
+                    file(process.out.intensified[0][1]).name,
+                    file(process.out.buffering[0][1]).name,
+                    file(process.out.fold_change_plot[0][1]).name,
+                    file(process.out.rdata[0][1]).name
+                ).match() }
+            )
+        }
+    }
+
+    test("human - tsv - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'treatment_vs_control' ],
+                    'treatment',
+                    'control',
+                    'treatment'
+                ]
+                input[1] = [
+                    [ id:'test' ],
+                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/samplesheet.csv", checkIfExists: true),
+                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/salmon.merged.gene_counts_length_scaled.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+}

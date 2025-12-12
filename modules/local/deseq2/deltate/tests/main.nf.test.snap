@@ -1,0 +1,299 @@
+{
+    "human - tsv": {
+        "content": [
+            [
+                "versions.yml:md5,638df019e877240aa60f1b79467314b3"
+            ],
+            "treatment_vs_control.translation.deltate.results.tsv",
+            "treatment_vs_control.translated_mRNA.deltate.results.tsv",
+            "treatment_vs_control.total_mRNA.deltate.results.tsv",
+            "treatment_vs_control.dtegs.deltate.genes.tsv",
+            "treatment_vs_control.mRNA_abundance.deltate.genes.tsv",
+            "treatment_vs_control.translation.deltate.genes.tsv",
+            "treatment_vs_control.intensified.deltate.genes.tsv",
+            "treatment_vs_control.buffering.deltate.genes.tsv",
+            "treatment_vs_control.fold_change.png",
+            "treatment_vs_control.DESeqDataSet.rds"
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.2"
+        },
+        "timestamp": "2025-12-05T11:19:54.724008255"
+    },
+    "human - tsv - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.translation.deltate.results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.translated_mRNA.deltate.results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "10": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.residual_distribution_summary.png:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "11": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.residual_vs_fitted.png:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "12": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.effect_size_comparison.png:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "13": [
+                    
+                ],
+                "14": [
+                    
+                ],
+                "15": [
+                    
+                ],
+                "16": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.DESeqDataSet.rds:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "17": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.R_sessionInfo.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "18": [
+                    "versions.yml:md5,b0d4631389ec57a553a6c6c8087deaf5"
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.total_mRNA.deltate.results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.dtegs.deltate.genes.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "4": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.mRNA_abundance.deltate.genes.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "5": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.translation.deltate.genes.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "6": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.intensified.deltate.genes.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "7": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.buffering.deltate.genes.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "8": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.fold_change.png:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "9": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.interaction_p_distribution.png:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "buffering": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.buffering.deltate.genes.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "dtegs": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.dtegs.deltate.genes.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "effect_size_comparison_plot": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.effect_size_comparison.png:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "fold_change_plot": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.fold_change.png:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "heatmap": [
+                    
+                ],
+                "intensified": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.intensified.deltate.genes.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "interaction_p_distribution_plot": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.interaction_p_distribution.png:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "mrna_abundance": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.mRNA_abundance.deltate.genes.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "pca_ribo": [
+                    
+                ],
+                "pca_rna": [
+                    
+                ],
+                "rdata": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.DESeqDataSet.rds:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "residual_distribution_summary_plot": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.residual_distribution_summary.png:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "residual_vs_fitted_plot": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.residual_vs_fitted.png:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "session_info": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.R_sessionInfo.log:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "total_mrna": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.total_mRNA.deltate.results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "translated_mrna": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.translated_mRNA.deltate.results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "translation": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.translation.deltate.results.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "translation_genes": [
+                    [
+                        {
+                            "id": "treatment_vs_control"
+                        },
+                        "treatment_vs_control.translation.deltate.genes.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,b0d4631389ec57a553a6c6c8087deaf5"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.2"
+        },
+        "timestamp": "2025-12-05T14:27:24.264899754"
+    }
+}
