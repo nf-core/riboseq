@@ -244,21 +244,55 @@ The pipeline will by default run [riboWaltz](https://github.com/LabTranslational
 
 If you have paired RNA-seq and Riboseq samples, you can use this workflow to initiate a translational efficiency analysis.
 
+The pipeline supports two methods for translational efficiency analysis:
+
+### anota2seq (default)
+
 Translational efficiency analysis as conducted by [anota2seq](https://bioconductor.org/packages/release/bioc/html/anota2seq.html) involves the integrated analysis of RNA-seq and Ribo-seq data to discern changes in translational efficiency across different experimental conditions. It quantitatively assesses how variations in mRNA abundance and ribosome occupancy lead to alterations in protein synthesis, enabling the identification of genes with post-transcriptional and translational regulation.
 
-anota2seq studies differences between conditions for both RNA-seq and Ribo-seq samples. It also assesses combined results from two measures as they relate to one another:
+### deltaTE
 
-- Differences in translation (Riboseq abundance values) driven by changes in overall RNA-seq abundance values
-- Differences in translation not occuring as a result of overall RNA levels
-- Changes in total RNA levels that do not lead to increased translation ('buffering'):
+Alternatively, you can use the deltaTE method by specifying `--translational_efficiency_method deltate`. The deltaTE method, based on [Chothani et al. (2019)](https://currentprotocols.onlinelibrary.wiley.com/doi/10.1002/cpmb.108), uses DESeq2 with an interaction model to detect differentially translated genes (DTEGs). It integrates Ribo-seq and RNA-seq data to identify genes with significant changes in translational efficiency, classifying them into biological categories based on their regulatory patterns.
 
-This table may help:
+Both methods analyze differences between conditions for RNA-seq and Ribo-seq samples, but use different statistical frameworks to identify translational regulation.
 
-| Aspect      | RNAseq    | Riboseq   |
-| ----------- | --------- | --------- |
-| Abundance   | Changed   | Changed   |
-| Translation | Unchanged | Changed   |
-| Buffering   | Changed   | Unchanged |
+### Method comparison
+
+**anota2seq** studies differences between conditions for both RNA-seq and Ribo-seq samples. It also assesses combined results from two measures as they relate to one another:
+
+- **mRNA abundance**: Changes in total RNA levels that lead to corresponding changes in translation
+- **Translation**: Differences in translation not occurring as a result of overall RNA levels  
+- **Buffering**: Changes in total RNA levels that do not lead to increased translation
+
+**deltaTE** classifies genes based on statistical significance patterns:
+
+- **mRNA_abundance**: RNA changes forwarded to translation without net translational efficiency changes
+- **Translation**: Pure translational regulation - ribosome changes without mRNA changes  
+- **Buffering**: Translation dampens RNA changes (opposite directional effects)
+- **Intensified**: Translation amplifies RNA changes (same direction, deltaTE-specific)
+
+This table summarizes the conceptual framework:
+
+| Category        | RNA-seq   | Ribo-seq  | Translational Efficiency |
+| --------------- | --------- | --------- | ------------------------ |
+| mRNA abundance  | Changed   | Changed   | Unchanged                |
+| Translation     | Unchanged | Changed   | Changed                  |
+| Buffering       | Changed   | Stable/Opposite | Changed            |
+| Intensified*    | Changed   | Amplified | Changed                  |
+
+*Intensified is specific to the deltaTE method.
+
+### Method selection
+
+By default, the pipeline uses anota2seq for translational efficiency analysis. To use the deltaTE method instead, specify:
+
+```bash
+--translational_efficiency_method deltate
+```
+
+Both methods require the same input format and contrasts specification, but produce different output files and use different statistical approaches.
+
+### Contrasts specification
 
 To carry out this analysis, the pipeline must be supplied with one or more 'contrasts' describing the comparison to be made.
 
