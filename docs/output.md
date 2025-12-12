@@ -295,6 +295,12 @@ Read distribution metrics around annotated protein coding regions or based on al
   - `*.para.py`: P-site offsets for different reads lengths in python code dict format
   </details>
 
+[Ribo-TISH](https://github.com/zhpn1024/ribotish) quality control analyzes the distribution of ribosome-protected fragment (RPF) reads around annotated coding sequences. Key metrics include read length distribution and reading frame periodicity, which are essential for assessing ribosome profiling data quality.
+
+![MultiQC - Ribo-TISH read length distribution](images/mqc_ribotish_read_length.png)
+
+![MultiQC - Ribo-TISH frame proportions](images/mqc_ribotish_frame_proportions.png)
+
 ### Ribotricer detect-orfs QC outputs
 
 <details markdown="1">

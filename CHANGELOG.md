@@ -5,12 +5,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v1.3.0dev
 
+### `Added`
+
+- [#125](https://github.com/nf-core/riboseq/pull/125) - Add rRNA removal tool selection with support for SortMeRNA (default), Bowtie2, and RiboDetector ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#131](https://github.com/nf-core/riboseq/pull/131) - Add ribotish quality output routing to MultiQC ([@pinin4fjords](https://github.com/pinin4fjords))
+
+### `Changed`
+
+- [#129](https://github.com/nf-core/riboseq/pull/129) - Bump pipeline version to 1.3.0dev ([@iraiosub](https://github.com/iraiosub))
+
+### `Parameters`
+
+| Old parameter | New parameter         |
+| ------------- | --------------------- |
+|               | `--ribo_removal_tool` |
+
+### `Dependencies`
+
+| Dependency | Old version | New version |
+| ---------- | ----------- | ----------- |
+| `MultiQC`  | 1.32        | 1.33        |
+
 ## v1.2.0 - 2025-12-03
 
 ### `Added`
 
 - [#113](https://github.com/nf-core/riboseq/pull/113) - Add P-site identification with riboWaltz ([@iraiosub](https://github.com/iraiosub), reviewed by [@JackCurragh](https://github.com/JackCurragh))
-- [#125](https://github.com/nf-core/riboseq/pull/125) - Add rRNA removal tool selection with support for SortMeRNA (default), Bowtie2, and RiboDetector ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Parameters`
 
@@ -19,7 +39,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 |               | `--skip_ribowaltz`       |
 |               | `--extra_ribowaltz_args` |
 |               | `--fastp_merge`          |
-|               | `--ribo_removal_tool`    |
 
 ### `Changed`
 

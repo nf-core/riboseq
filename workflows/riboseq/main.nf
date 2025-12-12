@@ -246,6 +246,7 @@ workflow RIBOSEQ {
             ch_gtf.map { [ [:], it ] }.first()
         )
         ch_versions      = ch_versions.mix(RIBOTISH_QUALITY_RIBOSEQ.out.versions)
+        ch_multiqc_files = ch_multiqc_files.mix(RIBOTISH_QUALITY_RIBOSEQ.out.distribution.collect{it[1]})
 
         ribotish_predict_inputs = ch_bams_for_analysis
             .join(RIBOTISH_QUALITY_RIBOSEQ.out.offset)
