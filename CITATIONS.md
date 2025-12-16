@@ -40,6 +40,10 @@
 
   > Choudhary S, Li W, D Smith A. Accurate detection of short and long active ORFs using Ribo-seq data. Bioinformatics. 2020 Apr 1;36(7):2053-2059. doi: 10.1093/bioinformatics/btz878. PMID: 31750902; PMCID: PMC7141849.
 
+- [RiboCode](https://pubmed.ncbi.nlm.nih.gov/29538776/)
+
+  > Zhengtao Xiao, Rongyao Huang, Xudong Xing, Yuling Chen, Haiteng Deng, Xuerui Yang. De novo annotation and characterization of the translatome with ribosome profiling data Nucleic Acids Res. 2018 Jun 1;46(10):e61. doi: 10.1093/nar/gky179. PMID: 29538776 PMCID: PMC6007384 
+
 - [riboWaltz](https://pubmed.ncbi.nlm.nih.gov/30102689/)
 
   > Lauria F, Tebaldi T, Bernabò P, Groen EJN, Gillingwater TH, Viero G. riboWaltz: Optimization of ribosome P-site positioning in ribosome profiling data. PLoS Comput Biol. 2018 Aug 13;14(8):e1006169. doi: 10.1371/journal.pcbi.1006169. PMID: 30102689; PMCID: PMC6112680.
