@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### `Added`
 
 - [#125](https://github.com/nf-core/riboseq/pull/125) - Add rRNA removal tool selection with support for SortMeRNA (default), Bowtie2, and RiboDetector ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#128](https://github.com/nf-core/riboseq/pull/128) - Add DESeq2-based deltaTE analysis as an alternative to anota2seq for translational efficiency analysis ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#131](https://github.com/nf-core/riboseq/pull/131) - Add ribotish quality output routing to MultiQC ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Changed`
@@ -16,9 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Parameters`
 
-| Old parameter | New parameter         |
-| ------------- | --------------------- |
-|               | `--ribo_removal_tool` |
+| Old parameter | New parameter                       |
+| ------------- | ----------------------------------- |
+|               | `--ribo_removal_tool`               |
+|               | `--translational_efficiency_method` |
+|               | `--extra_deltate_args`              |
+|               | `--te_lfc_threshold`                |
+|               | `--rna_lfc_threshold`               |
+|               | `--ribo_lfc_threshold`              |
 
 ### `Dependencies`
 
