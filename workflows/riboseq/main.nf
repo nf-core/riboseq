@@ -31,6 +31,10 @@ include { RIBOTISH_PREDICT as RIBOTISH_PREDICT_INDIVIDUAL      } from '../../mod
 include { RIBOTISH_PREDICT as RIBOTISH_PREDICT_ALL             } from '../../modules/nf-core/ribotish/predict'
 include { RIBOTRICER_PREPAREORFS                               } from '../../modules/nf-core/ribotricer/prepareorfs'
 include { RIBOTRICER_DETECTORFS                                } from '../../modules/nf-core/ribotricer/detectorfs'
+include { RIBOCODE_GTFUPDATE                                   } from '../../modules/nf-core/ribocode/gtfupdate'
+include { RIBOCODE_PREPARE                                     } from '../../modules/nf-core/ribocode/prepare'
+include { RIBOCODE_METAPLOTS                                   } from '../../modules/nf-core/ribocode/metaplots'
+include { RIBOCODE_RIBOCODE                                    } from '../../modules/nf-core/ribocode/ribocode'
 include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../modules/nf-core/anota2seq/anota2seqrun'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
 include { RIBOWALTZ                                            } from '../../modules/nf-core/ribowaltz/main'
@@ -287,6 +291,36 @@ workflow RIBOSEQ {
             RIBOTRICER_PREPAREORFS.out.candidate_orfs
         )
         ch_versions = ch_versions.mix(RIBOTRICER_DETECTORFS.out.versions)
+    }
+
+    if (!params.skip_ribocode){
+        // Step 1: Update GTF annotation
+        RIBOCODE_GTFUPDATE(
+            ch_gtf.map { [ [:], it ] }.first()
+        )
+        ch_versions = ch_versions.mix(RIBOCODE_GTFUPDATE.out.versions)
+
+        // Step 2: Prepare annotation files
+        RIBOCODE_PREPARE(
+            ch_fasta.map { [ [:], it ] }.first(),
+            RIBOCODE_GTFUPDATE.out.gtf
+        )
+        ch_versions = ch_versions.mix(RIBOCODE_PREPARE.out.versions)
+
+        // Step 3: Generate metaplots and config for each sample
+        RIBOCODE_METAPLOTS(
+            ch_bams_for_analysis,
+            RIBOCODE_PREPARE.out.annotation
+        )
+        ch_versions = ch_versions.mix(RIBOCODE_METAPLOTS.out.versions)
+
+        // Step 4: Run RiboCode ORF detection
+        RIBOCODE_RIBOCODE(
+            ch_bams_for_analysis,
+            RIBOCODE_PREPARE.out.annotation,
+            RIBOCODE_METAPLOTS.out.config
+        )
+        ch_versions = ch_versions.mix(RIBOCODE_RIBOCODE.out.versions)
     }
 
 
