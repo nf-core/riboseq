@@ -457,7 +457,7 @@
                 },
                 "extra_anota2seq_run_args": {
                     "type": "string",
-                    "description": "Extra arguments to pass to anota2seq in addition to defaults defined by the pipeline."
+                    "description": "Extra arguments to pass to anota2seq in addition to defaults defined by the pipeline. Available options include: --gene_id_col (column name for gene IDs in count table, default: 'gene_id'), --exclude_samples_col and --exclude_samples_values (exclude samples by column value, semicolon-separated). Note: --samples_pairing_col and --samples_batch_col are automatically set from the 'pair' and 'batch' columns in the contrast file if present."
                 }
             }
         },

@@ -269,14 +269,17 @@ id,variable,reference,target,batch,pair
 treated_vs_control,treatment,control,treated,,pair
 ```
 
-This describes how to compare groups of samples between treament groups, and between RNA-seq and Ribo-seq. In order the columns are:
+This describes how to compare groups of samples between treatment groups, and between RNA-seq and Ribo-seq. In order the columns are:
 
 - `id`: a unique identifier to use for the contrast
-- 'variable`: which vaiable (column) of the sample sheet should be used to separate the treatment groups?
-- `reference`: which value of the variable column should be used to select samples to be used as the reference/ base group?
+- `variable`: which variable (column) of the sample sheet should be used to separate the treatment groups?
+- `reference`: which value of the variable column should be used to select samples to be used as the reference/base group?
 - `target`: which value of the variable column should be used to select samples to be used as the target/treated group?
-- `batch`: (optional) specify a variable in the sample sheet that defines sample batches
-- `pair`: (optional) specify a variable in the sample shet that defines sample pairing between RNA-seq and Ribo-seq samples. If not specified, it is assumed that the two types of sample are ordered the same.
+- `batch`: (optional) specify a variable in the sample sheet that defines sample batches for batch effect correction in anota2seq
+- `pair`: (optional) specify a variable in the sample sheet that defines sample pairing between RNA-seq and Ribo-seq samples. If not specified, it is assumed that the two types of sample are ordered the same.
+
+> [!NOTE]
+> The analysis automatically subsets the count data to only the samples involved in each contrast. Additional anota2seq options can be passed via `--extra_anota2seq_run_args` (see parameter documentation for details).
 
 ## Running the pipeline
 
