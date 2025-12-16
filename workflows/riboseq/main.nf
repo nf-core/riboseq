@@ -301,7 +301,6 @@ workflow RIBOSEQ {
                     return [ meta, bam ]
             }
             .riboseq
-            .join(ch_transcriptome_bai)
 
         // Step 1: Update GTF annotation
         RIBOCODE_GTFUPDATE(
