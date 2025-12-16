@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#125](https://github.com/nf-core/riboseq/pull/125) - Add rRNA removal tool selection with support for SortMeRNA (default), Bowtie2, and RiboDetector ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#131](https://github.com/nf-core/riboseq/pull/131) - Add ribotish quality output routing to MultiQC ([@pinin4fjords](https://github.com/pinin4fjords))
+- Add RiboCode ORF detection with P-site analysis and metaplots ([@JackCurragh](https://github.com/JackCurragh))
 
 ### `Changed`
 
@@ -16,9 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Parameters`
 
-| Old parameter | New parameter         |
-| ------------- | --------------------- |
-|               | `--ribo_removal_tool` |
+| Old parameter | New parameter                      |
+| ------------- | ---------------------------------- |
+|               | `--ribo_removal_tool`              |
+|               | `--skip_ribocode`                  |
+|               | `--extra_ribocode_gtfupdate_args`  |
+|               | `--extra_ribocode_prepare_args`    |
+|               | `--extra_ribocode_metaplots_args`  |
+|               | `--extra_ribocode_ribocode_args`   |
 
 ### `Dependencies`
 
