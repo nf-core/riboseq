@@ -487,6 +487,18 @@
                     "default": 0,
                     "description": "Minimum absolute log2 fold change for translated mRNA (Ribo-seq) to be considered significant. Set to 0 to disable. Maps to anota2seq selDeltaP / deltaTE lfc_threshold_ribo.",
                     "fa_icon": "fas fa-ruler-vertical"
+                },
+                "equalise_read_lengths": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Trim RNA-seq reads to match Ribo-seq read lengths before quantification. This addresses potential biases when comparing the two modalities due to different read lengths.",
+                    "fa_icon": "fas fa-ruler-horizontal"
+                },
+                "equalise_read_lengths_target": {
+                    "type": "integer",
+                    "minimum": 15,
+                    "description": "Target read length for RNA-seq trimming. If not specified, the average Ribo-seq read length will be derived from paired samples using seqkit stats. This parameter is required if RNA-seq samples have no paired Ribo-seq sample.",
+                    "fa_icon": "fas fa-ruler"
                 }
             }
         },
