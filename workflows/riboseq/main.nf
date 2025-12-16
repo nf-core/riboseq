@@ -298,21 +298,18 @@ workflow RIBOSEQ {
         RIBOCODE_GTFUPDATE(
             ch_gtf.map { [ [:], it ] }.first()
         )
-        ch_versions = ch_versions.mix(RIBOCODE_GTFUPDATE.out.versions)
 
         // Step 2: Prepare annotation files
         RIBOCODE_PREPARE(
             ch_fasta.map { [ [:], it ] }.first(),
             RIBOCODE_GTFUPDATE.out.gtf
         )
-        ch_versions = ch_versions.mix(RIBOCODE_PREPARE.out.versions)
 
         // Step 3: Generate metaplots and config for each sample
         RIBOCODE_METAPLOTS(
             ch_bams_for_analysis,
             RIBOCODE_PREPARE.out.annotation
         )
-        ch_versions = ch_versions.mix(RIBOCODE_METAPLOTS.out.versions)
 
         // Step 4: Run RiboCode ORF detection
         RIBOCODE_RIBOCODE(
@@ -320,7 +317,6 @@ workflow RIBOSEQ {
             RIBOCODE_PREPARE.out.annotation,
             RIBOCODE_METAPLOTS.out.config
         )
-        ch_versions = ch_versions.mix(RIBOCODE_RIBOCODE.out.versions)
     }
 
 
