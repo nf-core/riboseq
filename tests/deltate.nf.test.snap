@@ -1083,11 +1083,15 @@
                 "translational_efficiency/deltate/treated_vs_control.dtegs.deltate.genes.tsv",
                 "translational_efficiency/deltate/treated_vs_control.fold_change.png",
                 "translational_efficiency/deltate/treated_vs_control.heatmap.png",
+                "translational_efficiency/deltate/treated_vs_control.heatmap_annotations.tsv",
+                "translational_efficiency/deltate/treated_vs_control.heatmap_zscores.tsv",
                 "translational_efficiency/deltate/treated_vs_control.intensified.deltate.genes.tsv",
                 "translational_efficiency/deltate/treated_vs_control.interaction_p_distribution.png",
                 "translational_efficiency/deltate/treated_vs_control.mRNA_abundance.deltate.genes.tsv",
                 "translational_efficiency/deltate/treated_vs_control.pca_ribo.png",
+                "translational_efficiency/deltate/treated_vs_control.pca_ribo.tsv",
                 "translational_efficiency/deltate/treated_vs_control.pca_rna.png",
+                "translational_efficiency/deltate/treated_vs_control.pca_rna.tsv",
                 "translational_efficiency/deltate/treated_vs_control.total_mRNA.deltate.results.tsv",
                 "translational_efficiency/deltate/treated_vs_control.translated_mRNA.deltate.results.tsv",
                 "translational_efficiency/deltate/treated_vs_control.translation.deltate.genes.tsv",
@@ -1340,6 +1344,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.2"
         },
-        "timestamp": "2025-12-12T18:19:31.217867551"
+        "timestamp": "2025-12-16T09:48:45.930947621"
     }
 }

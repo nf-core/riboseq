@@ -135,18 +135,18 @@ plot_fold_change <- function(results_df, prefix, target_level, reference_level,
 
     # Add effect size threshold lines (solid, like anota2seq)
     # TE threshold: parallel diagonal lines at y = x ± threshold
-    if (lfc_threshold_te > 0) {
+    if (!is.null(lfc_threshold_te) && lfc_threshold_te > 0) {
         p <- p +
             geom_abline(slope = 1, intercept = lfc_threshold_te, linetype = "solid", linewidth = 0.8) +
             geom_abline(slope = 1, intercept = -lfc_threshold_te, linetype = "solid", linewidth = 0.8)
     }
     # RNA threshold: vertical lines at ± threshold
-    if (lfc_threshold_rna > 0) {
+    if (!is.null(lfc_threshold_rna) && lfc_threshold_rna > 0) {
         p <- p +
             geom_vline(xintercept = c(-lfc_threshold_rna, lfc_threshold_rna), linetype = "solid", linewidth = 0.8)
     }
     # Ribo threshold: horizontal lines at ± threshold
-    if (lfc_threshold_ribo > 0) {
+    if (!is.null(lfc_threshold_ribo) && lfc_threshold_ribo > 0) {
         p <- p +
             geom_hline(yintercept = c(-lfc_threshold_ribo, lfc_threshold_ribo), linetype = "solid", linewidth = 0.8)
     }
@@ -175,10 +175,19 @@ plot_interaction_pval_distribution <- function(results_df, prefix, alpha) {
 
 # PCA plots
 # Output: 800x800 pixels (square plot)
+# Also exports underlying PCA data as TSV
 plot_pca <- function(dds, title, filename, contrast_variable) {
     vsd <- safe_vst(dds, blind = TRUE)
     pca_data <- plotPCA(vsd, intgroup = contrast_variable, returnData = TRUE)
     pct_var <- round(100 * attr(pca_data, "percentVar"))
+
+    # Export underlying PCA data
+    pca_export <- pca_data |>
+        mutate(
+            PC1_variance_pct = pct_var[1],
+            PC2_variance_pct = pct_var[2]
+        )
+    export_plot_data(pca_export, sub("\\\\.png\$", ".tsv", filename))
 
     p <- ggplot(pca_data, aes(x = PC1, y = PC2, color = .data[[contrast_variable]])) +
         geom_point(size = 4) +
@@ -196,6 +205,7 @@ plot_pca <- function(dds, title, filename, contrast_variable) {
 
 # Heatmap plot
 # Output: 1000x1200 pixels (larger to accommodate gene names and annotations)
+# Also exports underlying heatmap data (Z-scores and sample annotations) as TSV
 plot_heatmap <- function(dds_combined, gene_lists, res_delta_te, sample_sheet, n_top_genes, contrast_variable, seq_type_col, prefix) {
     if (length(gene_lists\$dtegs) < 2) return(invisible(NULL))
 
@@ -207,6 +217,14 @@ plot_heatmap <- function(dds_combined, gene_lists, res_delta_te, sample_sheet, n
     if (length(top_genes) < 2) return(invisible(NULL))
 
     mat_scaled <- t(scale(t(assay(vsd_combined)[top_genes, ])))
+
+    # Export underlying heatmap data
+    export_plot_data(mat_scaled, paste0(prefix, ".heatmap_zscores.tsv"), id_col = "gene_id")
+    sample_annotations <- sample_sheet |>
+        rownames_to_column("sample") |>
+        select(sample, all_of(c(contrast_variable, seq_type_col)))
+    export_plot_data(sample_annotations, paste0(prefix, ".heatmap_annotations.tsv"))
+
     ha <- HeatmapAnnotation(
         Condition = sample_sheet[[contrast_variable]],
         SeqType = sample_sheet[[seq_type_col]]
@@ -236,6 +254,17 @@ safe_vst <- function(dds, blind = TRUE) {
             } else stop(e)
         }
     )
+}
+
+# Export plot underlying data as TSV
+export_plot_data <- function(data, filename, id_col = NULL) {
+    if (is.matrix(data)) {
+        data <- as.data.frame(data)
+    }
+    if (!is.null(id_col)) {
+        data <- rownames_to_column(data, id_col)
+    }
+    write_tsv(data, filename)
 }
 
 is_valid_string <- function(x) !is.null(x) && nzchar(trimws(x))

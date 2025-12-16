@@ -41,6 +41,10 @@ nextflow_process {
                 { assert path(process.out.translation_genes[0][1]).exists() },
                 { assert path(process.out.intensified[0][1]).exists() },
                 { assert path(process.out.fold_change_plot[0][1]).exists() },
+                { assert path(process.out.pca_ribo[0][1]).exists() },
+                { assert path(process.out.pca_ribo[0][2]).exists() },
+                { assert path(process.out.pca_rna[0][1]).exists() },
+                { assert path(process.out.pca_rna[0][2]).exists() },
                 { assert path(process.out.rdata[0][1]).exists() },
                 { assert path(process.out.session_info[0][1]).getText().contains('DESeq2') },
                 { assert snapshot(
@@ -54,6 +58,10 @@ nextflow_process {
                     file(process.out.intensified[0][1]).name,
                     file(process.out.buffering[0][1]).name,
                     file(process.out.fold_change_plot[0][1]).name,
+                    file(process.out.pca_ribo[0][1]).name,
+                    file(process.out.pca_ribo[0][2]).name,
+                    file(process.out.pca_rna[0][1]).name,
+                    file(process.out.pca_rna[0][2]).name,
                     file(process.out.rdata[0][1]).name
                 ).match() }
             )

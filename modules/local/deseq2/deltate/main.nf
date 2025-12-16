@@ -26,9 +26,9 @@ process DESEQ2_DELTATE {
     tuple val(meta), path("*.residual_vs_fitted.png")           , emit: residual_vs_fitted_plot, optional: true
     tuple val(meta), path("*.effect_size_rna_vs_ribo.png")      , emit: effect_size_rna_vs_ribo_plot, optional: true
     tuple val(meta), path("*.effect_size_volcano.png")          , emit: effect_size_volcano_plot, optional: true
-    tuple val(meta), path("*.pca_ribo.png")                     , emit: pca_ribo         , optional: true
-    tuple val(meta), path("*.pca_rna.png")                      , emit: pca_rna          , optional: true
-    tuple val(meta), path("*.heatmap.png")                      , emit: heatmap          , optional: true
+    tuple val(meta), path("*.pca_ribo.png"), path("*.pca_ribo.tsv")                                          , emit: pca_ribo , optional: true
+    tuple val(meta), path("*.pca_rna.png"), path("*.pca_rna.tsv")                                            , emit: pca_rna  , optional: true
+    tuple val(meta), path("*.heatmap.png"), path("*.heatmap_zscores.tsv"), path("*.heatmap_annotations.tsv") , emit: heatmap  , optional: true
     tuple val(meta), path("*.DESeqDataSet.rds")                 , emit: rdata
     tuple val(meta), path("*.R_sessionInfo.log")                , emit: session_info
     path "versions.yml"                                         , emit: versions
@@ -56,6 +56,13 @@ process DESEQ2_DELTATE {
     touch ${prefix}.residual_vs_fitted.png
     touch ${prefix}.effect_size_rna_vs_ribo.png
     touch ${prefix}.effect_size_volcano.png
+    touch ${prefix}.pca_ribo.png
+    touch ${prefix}.pca_ribo.tsv
+    touch ${prefix}.pca_rna.png
+    touch ${prefix}.pca_rna.tsv
+    touch ${prefix}.heatmap.png
+    touch ${prefix}.heatmap_zscores.tsv
+    touch ${prefix}.heatmap_annotations.tsv
     touch ${prefix}.DESeqDataSet.rds
     touch ${prefix}.R_sessionInfo.log
 

@@ -13,13 +13,17 @@
             "treatment_vs_control.intensified.deltate.genes.tsv",
             "treatment_vs_control.buffering.deltate.genes.tsv",
             "treatment_vs_control.fold_change.png",
+            "treatment_vs_control.pca_ribo.png",
+            "treatment_vs_control.pca_ribo.tsv",
+            "treatment_vs_control.pca_rna.png",
+            "treatment_vs_control.pca_rna.tsv",
             "treatment_vs_control.DESeqDataSet.rds"
         ],
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.2"
         },
-        "timestamp": "2025-12-05T11:19:54.724008255"
+        "timestamp": "2025-12-16T09:34:46.046053116"
     },
     "human - tsv - stub": {
         "content": [
