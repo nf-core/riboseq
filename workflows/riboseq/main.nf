@@ -294,6 +294,15 @@ workflow RIBOSEQ {
     }
 
     if (!params.skip_ribocode){
+        // RiboCode requires transcriptome BAMs
+        ch_transcriptome_bams_for_ribocode = ch_transcriptome_bam
+            .branch { meta, bam ->
+                riboseq: meta.sample_type == 'riboseq'
+                    return [ meta, bam ]
+            }
+            .riboseq
+            .join(ch_transcriptome_bai)
+
         // Step 1: Update GTF annotation
         RIBOCODE_GTFUPDATE(
             ch_gtf.map { [ [:], it ] }.first()
@@ -307,13 +316,13 @@ workflow RIBOSEQ {
 
         // Step 3: Generate metaplots and config for each sample
         RIBOCODE_METAPLOTS(
-            ch_bams_for_analysis,
+            ch_transcriptome_bams_for_ribocode,
             RIBOCODE_PREPARE.out.annotation
         )
 
         // Step 4: Run RiboCode ORF detection
         RIBOCODE_RIBOCODE(
-            ch_bams_for_analysis,
+            ch_transcriptome_bams_for_ribocode,
             RIBOCODE_PREPARE.out.annotation,
             RIBOCODE_METAPLOTS.out.config
         )
