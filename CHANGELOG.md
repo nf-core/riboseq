@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Fixed`
 
-- [#133](https://github.com/nf-core/riboseq/pull/133) - Fix anota2seq improvements: add `gene_id_col` default, fix `extra_anota2seq_run_args` parameter typo, improve documentation ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#133](https://github.com/nf-core/riboseq/pull/133) - Improve anota2seq documentation: fix typos in contrast file docs, document available `extra_anota2seq_run_args` options ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Changed`
 
