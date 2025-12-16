@@ -320,10 +320,21 @@ workflow RIBOSEQ {
         )
 
         // Step 4: Run RiboCode ORF detection
+        // Join BAMs with their corresponding config files by meta
+        ch_ribocode_inputs = ch_transcriptome_bams_for_ribocode
+            .join(RIBOCODE_METAPLOTS.out.config)
+            .map { meta, bam, config ->
+                tuple(
+                    tuple(meta, bam),
+                    RIBOCODE_PREPARE.out.annotation,
+                    tuple(meta, config)
+                )
+            }
+
         RIBOCODE_RIBOCODE(
-            ch_transcriptome_bams_for_ribocode,
+            ch_ribocode_inputs.map { it[0] },
             RIBOCODE_PREPARE.out.annotation,
-            RIBOCODE_METAPLOTS.out.config
+            ch_ribocode_inputs.map { it[2] }
         )
     }
 
