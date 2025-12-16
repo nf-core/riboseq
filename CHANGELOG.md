@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#128](https://github.com/nf-core/riboseq/pull/128) - Add DESeq2-based deltaTE analysis as an alternative to anota2seq for translational efficiency analysis ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#131](https://github.com/nf-core/riboseq/pull/131) - Add ribotish quality output routing to MultiQC ([@pinin4fjords](https://github.com/pinin4fjords))
 
+### `Fixed`
+
+- [#133](https://github.com/nf-core/riboseq/pull/133) - Improve anota2seq documentation: fix typos in contrast file docs, document available `extra_anota2seq_run_args` options ([@pinin4fjords](https://github.com/pinin4fjords))
+
 ### `Changed`
 
 - [#129](https://github.com/nf-core/riboseq/pull/129) - Bump pipeline version to 1.3.0dev ([@iraiosub](https://github.com/iraiosub))
