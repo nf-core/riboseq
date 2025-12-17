@@ -185,6 +185,8 @@ Consider enabling `--equalise_read_lengths` if:
 - Your analysis protocol requires matched read lengths for methodological consistency
 - You are replicating methods from publications that use this approach
 
+> **Alternative approach**: Instead of trimming, you can use `--te_quantification_method pseudo` which runs Salmon pseudo-alignment for both modalities using the same k-mer index. This puts Ribo-seq and RNA-seq on equal footing without discarding sequence information. See [Quantification method](#quantification-method) for details.
+
 ### Trade-offs
 
 When using read length equalisation, be aware that:
@@ -347,6 +349,38 @@ By default, the pipeline uses anota2seq for translational efficiency analysis. T
 ```
 
 Both methods require the same input format and contrasts specification, but produce different output files and use different statistical approaches.
+
+### Quantification method
+
+The pipeline offers two methods for quantifying gene expression for TE analysis, controlled by the `--te_quantification_method` parameter:
+
+#### Alignment-based (default)
+
+```bash
+--te_quantification_method alignment
+```
+
+This is the default method. Reads are aligned with STAR, and Salmon quantifies from the transcriptome BAM in alignment-based mode. This approach leverages full alignment information and is suitable for most analyses.
+
+#### Pseudo-alignment
+
+```bash
+--te_quantification_method pseudo --pseudo_aligner_kmer_size 23
+```
+
+Uses Salmon pseudo-alignment directly from reads for both Ribo-seq and RNA-seq samples. This approach:
+
+- Puts both modalities on **equal footing** (same k-mer index, same quantification algorithm)
+- Avoids mappability bias from different read lengths without requiring trimming
+- Should use a lower k-mer size (e.g., 21-25) for short Ribo-seq reads (~30nt) via `--pseudo_aligner_kmer_size`
+
+Consider this option when:
+
+- Your Ribo-seq reads are very short (<30nt) and may suffer mappability issues with alignment
+- You want to avoid the information loss from read length equalisation trimming
+- You prefer k-mer-based quantification for methodological consistency between modalities
+
+> **Note**: The pseudo-alignment pathway runs **in addition to** the standard STAR alignment, which is still needed for position-dependent analyses (P-sites, ribosome periodicity, ORF detection). The pseudo-alignment counts are only used for TE analysis.
 
 ### Contrasts specification
 

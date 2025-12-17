@@ -499,6 +499,14 @@
                     "minimum": 15,
                     "description": "Target read length for RNA-seq trimming. If not specified, the average Ribo-seq read length will be derived from paired samples using seqkit stats. This parameter is required if RNA-seq samples have no paired Ribo-seq sample.",
                     "fa_icon": "fas fa-ruler"
+                },
+                "te_quantification_method": {
+                    "type": "string",
+                    "default": "alignment",
+                    "enum": ["alignment", "pseudo"],
+                    "description": "Quantification method for translational efficiency analysis: 'alignment' (STAR → Salmon) or 'pseudo' (Salmon pseudo-alignment).",
+                    "help_text": "Choose 'alignment' for STAR alignment followed by Salmon in alignment-based mode (default). Choose 'pseudo' for direct Salmon pseudo-alignment, which puts Ribo-seq and RNA-seq on equal footing by using the same k-mer index for both modalities. The pseudo method avoids mappability bias from different read lengths without requiring trimming. When using 'pseudo', set --pseudo_aligner_kmer_size to a lower value (e.g., 21-25) for short Ribo-seq reads.",
+                    "fa_icon": "fas fa-calculator"
                 }
             }
         },
