@@ -1,0 +1,117 @@
+{
+    "paired_samples - riboseq_rnaseq": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "ribo_sample",
+                        "single_end": true,
+                        "sample_type": "riboseq",
+                        "pair": "1"
+                    },
+                    [
+                        "/ngi-igenomes/testdata/nf-core/modules/genomics/homo_sapiens/illumina/fastq/test_rnaseq_1.fastq.gz"
+                    ]
+                ],
+                [
+                    {
+                        "id": "rna_sample",
+                        "single_end": true,
+                        "sample_type": "rnaseq",
+                        "pair": "1",
+                        "resolved_trim_length": 142
+                    },
+                    "rna_sample_equalised.142bp_5prime.fq.gz:md5,c5ebf056e39ff8f3d68761f0032c364a"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "ribo_sample",
+                        "single_end": true,
+                        "sample_type": "riboseq",
+                        "pair": "1"
+                    },
+                    "ribo_sample.tsv:md5,de0d5702c739ba4c187f45d58322e74b"
+                ]
+            ],
+            [
+                "versions.yml:md5,20c7d57d82a7041ac8e6ccdb26bf6c24",
+                "versions.yml:md5,8af6ce2d679672899b7aa165f48b8a2c"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.2"
+        },
+        "timestamp": "2025-12-16T18:01:01.054654255"
+    },
+    "per_sample_trim_length": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "rna_sample_custom_length",
+                        "single_end": true,
+                        "sample_type": "rnaseq",
+                        "trim_length": 25,
+                        "resolved_trim_length": 25
+                    },
+                    "rna_sample_custom_length_equalised.25bp_5prime.fq.gz:md5,98fe43468c9d94ca54009ea80d252f55"
+                ]
+            ],
+            [
+                "versions.yml:md5,8af6ce2d679672899b7aa165f48b8a2c"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.2"
+        },
+        "timestamp": "2025-12-16T18:01:23.039068354"
+    },
+    "global_target_length": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "rna_sample_no_pair",
+                        "single_end": true,
+                        "sample_type": "rnaseq",
+                        "resolved_trim_length": 30
+                    },
+                    "rna_sample_no_pair_equalised.30bp_5prime.fq.gz:md5,549d8d12873f3f691339c8eaf50423cd"
+                ]
+            ],
+            [
+                "versions.yml:md5,8af6ce2d679672899b7aa165f48b8a2c"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.2"
+        },
+        "timestamp": "2025-12-16T18:01:12.115623378"
+    },
+    "passthrough_other_types": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "tiseq_sample",
+                        "single_end": true,
+                        "sample_type": "tiseq"
+                    },
+                    [
+                        "/ngi-igenomes/testdata/nf-core/modules/genomics/homo_sapiens/illumina/fastq/test_rnaseq_1.fastq.gz"
+                    ]
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "25.10.0"
+        },
+        "timestamp": "2025-12-16T13:42:48.762251"
+    }
+}
