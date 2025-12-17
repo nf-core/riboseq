@@ -38,7 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 |               | `--extra_plastid_psite_args`             |
 |               | `--extra_plastid_make_wiggle_args`       |
 
-
 ### `Dependencies`
 
 | Dependency | Old version | New version |
