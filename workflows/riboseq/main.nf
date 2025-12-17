@@ -368,6 +368,7 @@ workflow RIBOSEQ {
         null
     )
     ch_versions = ch_versions.mix(QUANTIFY_STAR_SALMON.out.versions)
+    ch_multiqc_files = ch_multiqc_files.mix(QUANTIFY_STAR_SALMON.out.multiqc.collect{it[1]}.ifEmpty([]))
 
     //
     // SUBWORKFLOW: Pseudo-alignment quantification for TE analysis (when enabled)
@@ -396,6 +397,7 @@ workflow RIBOSEQ {
             null
         )
         ch_versions = ch_versions.mix(QUANTIFY_PSEUDO_TE.out.versions)
+        ch_multiqc_files = ch_multiqc_files.mix(QUANTIFY_PSEUDO_TE.out.multiqc.collect{it[1]}.ifEmpty([]))
         ch_te_counts = QUANTIFY_PSEUDO_TE.out.counts_gene_length_scaled
     }
 
