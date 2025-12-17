@@ -175,13 +175,15 @@ If none of these sources provide a trim length for an RNA-seq sample, the pipeli
 
 ### When to use
 
-By default, the pipeline does **not** equalise read lengths. Modern quantification tools like Salmon account for read length differences through effective length normalisation.
+By default, the pipeline does **not** equalise read lengths. The pipeline uses STAR for alignment followed by Salmon in alignment-based mode, which applies effective length normalisation at quantification.
+
+However, for translational efficiency (TE) analysis, read length differences can introduce bias. TE is calculated as the ratio of Ribo-seq to RNA-seq abundance - a statistical interaction, not just a comparison. When 30nt Ribo-seq reads and 150nt RNA-seq reads map to different "effective transcriptomes" (due to mappability differences), the ratio itself becomes skewed. Regions may appear translationally silent simply because short Ribo-seq reads couldn't map uniquely there.
 
 Consider enabling `--equalise_read_lengths` if:
 
+- You are performing TE analysis (deltaTE, anota2seq, Xtail, Riborex) and want matched mappability between modalities
 - Your analysis protocol requires matched read lengths for methodological consistency
 - You are replicating methods from publications that use this approach
-- Your downstream analysis specifically benefits from uniform read lengths
 
 ### Trade-offs
 
