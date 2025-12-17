@@ -85,13 +85,9 @@ module_order:
   - salmon:
       name: "Salmon (alignment-based)"
       info: "Salmon quantification from STAR transcriptome alignments."
-      path_filters:
-        - "*.star_salmon/*"
   - salmon:
       name: "Salmon (TE pseudo-alignment)"
       info: "Salmon pseudo-alignment quantification for translational efficiency analysis. Uses a lower k-mer index optimised for short Ribo-seq reads."
-      path_filters:
-        - "*.te_pseudo/*"
   - ribotish
 
 # Don't show % Dups in the General Stats table (we have this from Picard)
