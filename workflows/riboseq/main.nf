@@ -35,6 +35,9 @@ include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../mod
 include { DESEQ2_DELTATE                                       } from '../../modules/local/deseq2/deltate'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
 include { RIBOWALTZ                                            } from '../../modules/nf-core/ribowaltz/main'
+include { PLASTID_METAGENE_GENERATE                            } from '../../modules/nf-core/plastid/metagene_generate/main'
+include { PLASTID_PSITE                                        } from '../../modules/nf-core/plastid/psite/main'
+include { PLASTID_MAKE_WIGGLE                                  } from '../../modules/nf-core/plastid/make_wiggle/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -314,6 +317,51 @@ workflow RIBOSEQ {
             ch_fasta.map { [ [:], it ] })
 
         ch_versions = ch_versions.mix(RIBOWALTZ.out.versions)
+    }
+
+    //
+    // Get P-sites with plastid
+    //
+
+    // Keep only riboseq genome BAMs for plastid
+    ch_genome_bam
+        .branch { meta, bam ->
+            riboseq: meta.sample_type == 'riboseq'
+                return [ meta, bam ]
+            tiseq: meta.sample_type == 'tiseq'
+                return [ meta, bam ]
+            rnaseq: meta.sample_type == 'rnaseq'
+                return [ meta, bam ]
+        }
+        .set { ch_genome_bam_by_type }
+    ch_genome_bam_index
+        .branch { meta, bam ->
+            riboseq: meta.sample_type == 'riboseq'
+                return [ meta, bam ]
+            tiseq: meta.sample_type == 'tiseq'
+                return [ meta, bam ]
+            rnaseq: meta.sample_type == 'rnaseq'
+                return [ meta, bam ]
+        }
+        .set { ch_genome_bam_index_by_type }
+
+    if (!params.skip_plastid) {
+
+        PLASTID_METAGENE_GENERATE(ch_gtf.map { [ [:], it ] })
+        ch_versions = ch_versions.mix(PLASTID_METAGENE_GENERATE.out.versions)
+
+        PLASTID_PSITE(
+            ch_genome_bam_by_type.riboseq.join(ch_genome_bam_index_by_type.riboseq, by: [0]),
+            PLASTID_METAGENE_GENERATE.out.rois_txt
+        )
+        ch_versions = ch_versions.mix(PLASTID_PSITE.out.versions)
+
+        PLASTID_MAKE_WIGGLE(
+            ch_genome_bam_by_type.riboseq.join(ch_genome_bam_index_by_type.riboseq, by: [0]).join(PLASTID_PSITE.out.p_offsets, by: [0]),
+            "fiveprime_variable"
+        )
+        ch_versions = ch_versions.mix(PLASTID_MAKE_WIGGLE.out.versions)
+
     }
 
     //

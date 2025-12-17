@@ -95,6 +95,21 @@
                         "git_sha": "9656d955b700a8707c4a67821ab056f8c1095675",
                         "installed_by": ["modules"]
                     },
+                    "plastid/make_wiggle": {
+                        "branch": "master",
+                        "git_sha": "8d66ebdfc2e09f449c03dcb3a08a9ee13f0412d3",
+                        "installed_by": ["modules"]
+                    },
+                    "plastid/metagene_generate": {
+                        "branch": "master",
+                        "git_sha": "8d66ebdfc2e09f449c03dcb3a08a9ee13f0412d3",
+                        "installed_by": ["modules"]
+                    },
+                    "plastid/psite": {
+                        "branch": "master",
+                        "git_sha": "8d66ebdfc2e09f449c03dcb3a08a9ee13f0412d3",
+                        "installed_by": ["modules"]
+                    },
                     "ribodetector": {
                         "branch": "master",
                         "git_sha": "61ce58ac3e4e4627d9c1cdc958ee6bfa742a0a75",

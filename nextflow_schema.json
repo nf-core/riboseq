@@ -487,7 +487,36 @@
                     "default": 0,
                     "description": "Minimum absolute log2 fold change for translated mRNA (Ribo-seq) to be considered significant. Set to 0 to disable. Maps to anota2seq selDeltaP / deltaTE lfc_threshold_ribo.",
                     "fa_icon": "fas fa-ruler-vertical"
-                }
+                },
+                "extra_plastid_metagene_generate_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to plastid/metagene_generate command in addition to defaults defined by the pipeline."
+                },
+                "extra_plastid_psite_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to plastid/psite command in addition to defaults defined by the pipeline."
+                },
+                "extra_plastid_make_wiggle_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to plastid/make_wiggle command in addition to defaults defined by the pipeline."
+                },
+                "plastid_min_length": {
+                    "type": "integer",
+                    "default": 15,
+                    "fa_icon": "fas fa-ruler-horizontal",
+                    "description": "Plastid only considers reads of at least the given length."
+                },
+                "plastid_max_length": {
+                    "type": "integer",
+                    "default": 50,
+                    "fa_icon": "fas fa-ruler-horizontal",
+                    "description": "Plastid only considers reads of at most the given length."
+                },
+                "plastid_default_psite_offset": {
+                    "type": "integer",
+                    "default": 12,
+                    "description": "Default p-site offset to use for read lengths where the offset cannot be determined automatically from the data."
+                 }
             }
         },
         "optional_outputs": {
@@ -620,6 +649,11 @@
                 "skip_ribowaltz": {
                     "type": "boolean",
                     "description": "Skip riboWaltz.",
+                    "fa_icon": "fas fa-fast-forward"
+                },
+                "skip_plastid": {
+                    "type": "boolean",
+                    "description": "Skip plastid.",
                     "fa_icon": "fas fa-fast-forward"
                 }
             }

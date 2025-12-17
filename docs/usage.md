@@ -240,6 +240,8 @@ The pipeline will by default run the [Ribo-TISH](https://github.com/zhpn1024/rib
 
 The pipeline will by default run [riboWaltz](https://github.com/LabTranslationalArchitectomics/riboWaltz) for P-site identification and diagnostics, unless disabled with `--skip_ribowaltz`. Additional arguments can be supplied via `--extra_ribowaltz_args` parameters. An example is: `--extra_ribowaltz_args "--length_range 27:31 --periodicity_threshold 40 --extremity 5end --start_nts 45 --stop_nts 24"`. If not provided, defaults used in the [nf-core module](https://github.com/nf-core/modules/blob/master/modules/nf-core/ribowaltz/templates/ribowaltz.r) are used.
 
+In addition, the pipeline runs [plastid](https://plastid.readthedocs.io/en/latest/index.html) to identify P-sites and create bedGraph tracks, unless disabled with `--skip_plastid`.
+
 ## Translational efficiency
 
 If you have paired RNA-seq and Riboseq samples, you can use this workflow to initiate a translational efficiency analysis.

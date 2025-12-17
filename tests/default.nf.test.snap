@@ -27,6 +27,15 @@
                     "rsem": "1.3.1",
                     "star": "2.7.10a"
                 },
+                "PLASTID_MAKE_WIGGLE": {
+                    "plastid": "0.6.1"
+                },
+                "PLASTID_METAGENE_GENERATE": {
+                    "plastid": "0.6.1"
+                },
+                "PLASTID_PSITE": {
+                    "plastid": "0.6.1"
+                },
                 "RIBOTISH_PREDICT_ALL": {
                     "ribotish": "0.2.7"
                 },
@@ -522,6 +531,39 @@
                 "orf_predictions/ribotish_all/allsamples_transprofile.py",
                 "pipeline_info",
                 "pipeline_info/nf_core_riboseq_software_mqc_versions.yml",
+                "plastid",
+                "plastid/Homo_sapiens.GRCh38.dna.chromosome.20.filtered_rois.bed",
+                "plastid/Homo_sapiens.GRCh38.dna.chromosome.20.filtered_rois.txt",
+                "plastid/SRX11780885_fw.bedgraph",
+                "plastid/SRX11780885_metagene_profiles.txt",
+                "plastid/SRX11780885_p_offsets.png",
+                "plastid/SRX11780885_p_offsets.txt",
+                "plastid/SRX11780885_rc.bedgraph",
+                "plastid/SRX11780886_fw.bedgraph",
+                "plastid/SRX11780886_metagene_profiles.txt",
+                "plastid/SRX11780886_p_offsets.png",
+                "plastid/SRX11780886_p_offsets.txt",
+                "plastid/SRX11780886_rc.bedgraph",
+                "plastid/SRX11780887_fw.bedgraph",
+                "plastid/SRX11780887_metagene_profiles.txt",
+                "plastid/SRX11780887_p_offsets.png",
+                "plastid/SRX11780887_p_offsets.txt",
+                "plastid/SRX11780887_rc.bedgraph",
+                "plastid/SRX11780888_fw.bedgraph",
+                "plastid/SRX11780888_metagene_profiles.txt",
+                "plastid/SRX11780888_p_offsets.png",
+                "plastid/SRX11780888_p_offsets.txt",
+                "plastid/SRX11780888_rc.bedgraph",
+                "plastid/SRX11780889_fw.bedgraph",
+                "plastid/SRX11780889_metagene_profiles.txt",
+                "plastid/SRX11780889_p_offsets.png",
+                "plastid/SRX11780889_p_offsets.txt",
+                "plastid/SRX11780889_rc.bedgraph",
+                "plastid/SRX11780890_fw.bedgraph",
+                "plastid/SRX11780890_metagene_profiles.txt",
+                "plastid/SRX11780890_p_offsets.png",
+                "plastid/SRX11780890_p_offsets.txt",
+                "plastid/SRX11780890_rc.bedgraph",
                 "preprocessing",
                 "preprocessing/fastqc",
                 "preprocessing/fastqc/SRX11780879_raw_1_fastqc.html",
@@ -1318,6 +1360,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.2"
         },
-        "timestamp": "2025-12-12T18:09:37.017438328"
+        "timestamp": "2025-12-16T20:06:41.684190402"
     }
 }
