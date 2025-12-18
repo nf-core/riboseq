@@ -319,45 +319,19 @@ workflow RIBOSEQ {
         ch_versions = ch_versions.mix(RIBOWALTZ.out.versions)
     }
 
-    //
-    // Get P-sites with plastid
-    //
-
-    // Keep only riboseq genome BAMs for plastid
-    ch_genome_bam
-        .branch { meta, bam ->
-            riboseq: meta.sample_type == 'riboseq'
-                return [ meta, bam ]
-            tiseq: meta.sample_type == 'tiseq'
-                return [ meta, bam ]
-            rnaseq: meta.sample_type == 'rnaseq'
-                return [ meta, bam ]
-        }
-        .set { ch_genome_bam_by_type }
-    ch_genome_bam_index
-        .branch { meta, bam ->
-            riboseq: meta.sample_type == 'riboseq'
-                return [ meta, bam ]
-            tiseq: meta.sample_type == 'tiseq'
-                return [ meta, bam ]
-            rnaseq: meta.sample_type == 'rnaseq'
-                return [ meta, bam ]
-        }
-        .set { ch_genome_bam_index_by_type }
-
     if (!params.skip_plastid) {
 
         PLASTID_METAGENE_GENERATE(ch_gtf.map { [ [:], it ] })
         ch_versions = ch_versions.mix(PLASTID_METAGENE_GENERATE.out.versions)
 
         PLASTID_PSITE(
-            ch_genome_bam_by_type.riboseq.join(ch_genome_bam_index_by_type.riboseq, by: [0]),
+            ch_bams_for_analysis,
             PLASTID_METAGENE_GENERATE.out.rois_txt
         )
         ch_versions = ch_versions.mix(PLASTID_PSITE.out.versions)
 
         PLASTID_MAKE_WIGGLE(
-            ch_genome_bam_by_type.riboseq.join(ch_genome_bam_index_by_type.riboseq, by: [0]).join(PLASTID_PSITE.out.p_offsets, by: [0]),
+            ch_bams_for_analysis.join(PLASTID_PSITE.out.p_offsets, by: [0]),
             "fiveprime_variable"
         )
         ch_versions = ch_versions.mix(PLASTID_MAKE_WIGGLE.out.versions)
