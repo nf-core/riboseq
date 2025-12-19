@@ -49,6 +49,14 @@ quantification/salmon/salmon.merged.transcript.SummarizedExperiment.rds
 quantification/salmon/salmon.merged.transcript_counts.tsv
 quantification/salmon/salmon.merged.transcript_lengths.tsv
 quantification/salmon/salmon.merged.transcript_tpm.tsv
+quantification/salmon_te_pseudo/*/aux_info/fld.gz
+quantification/salmon_te_pseudo/*/aux_info/meta_info.json
+quantification/salmon_te_pseudo/*/libParams/flenDist.txt
+quantification/salmon_te_pseudo/*/logs/salmon_quant.log
+quantification/salmon_te_pseudo/*/quant.genes.sf
+quantification/salmon_te_pseudo/*/quant.sf
+quantification/salmon_te_pseudo/**/*.rds
+quantification/salmon_te_pseudo/salmon.merged.te_pseudo.*.tsv
 riboseq_qc/ribotish/*_qual.pdf
 ribowaltz/**/*.pdf
 translational_efficiency/anota2seq/*.{buffering,total_mRNA,translated_mRNA,translation}.anota2seq.results.tsv
