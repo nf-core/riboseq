@@ -48,7 +48,6 @@ top_modules:
   - "fail_trimmed_samples"
   - "fail_mapped_samples"
   - "fail_strand_check"
-  - "ribowaltz"
   - "star_rsem_deseq2_pca"
   - "star_rsem_deseq2_clustering"
   - "star_salmon_deseq2_pca"
@@ -56,6 +55,7 @@ top_modules:
   - "salmon_deseq2_pca"
   - "salmon_deseq2_clustering"
   - "biotype_counts"
+  - "ribowaltz"
   - "dupradar"
 
 module_order:
@@ -83,6 +83,7 @@ module_order:
         - "*_trimmed_fastqc.zip"
   - star
   - samtools
+  - ribowaltz
   - ribotish
 
 # Don't show % Dups in the General Stats table (we have this from Picard)
