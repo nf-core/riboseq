@@ -52,6 +52,8 @@ top_modules:
   - "fail_trimmed_samples"
   - "fail_mapped_samples"
   - "fail_strand_check"
+  - "ribowaltz_psite_regions"
+  - "ribowaltz_frames"
   - "star_rsem_deseq2_pca"
   - "star_rsem_deseq2_clustering"
   - "star_salmon_deseq2_pca"
@@ -237,4 +239,13 @@ custom_data:
       table_title: "Samples failed strandedness check"
       namespace: "Samples failed strandedness check"
       format: "{:.2f}"
+  ribowaltz_psite_regions:
+    section_name: "riboWaltz: P-site Region Distribution"
+    description: "Distribution of P-sites across transcript regions analyzed by <a href='https://github.com/LabTranslationalArchitectomics/riboWaltz'>riboWaltz</a>. Good Ribo-seq data shows strong CDS enrichment (>70%)."
+    plot_type: "bargraph"
+    pconfig:
+      id: "ribowaltz_psite_regions_plot"
+      title: "riboWaltz: P-site Region Distribution"
+      ylab: "% of P-sites"
+      cpswitch: false
 disable_version_detection: true
