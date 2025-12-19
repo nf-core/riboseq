@@ -47,8 +47,8 @@ quantification/salmon/salmon.merged.transcript_counts.tsv
 quantification/salmon/salmon.merged.transcript_lengths.tsv
 quantification/salmon/salmon.merged.transcript_tpm.tsv
 riboseq_qc/ribotish/*_qual.pdf
-ribowaltz/**/*.pdf
-plastid/*
+psites/ribowaltz/**/*.pdf
+psites/plastid/*/*
 translational_efficiency/anota2seq/*.{buffering,total_mRNA,translated_mRNA,translation}.anota2seq.results.tsv
 translational_efficiency/*/*.{jpeg,jpg,png,pdf,rds,tsv}
 translational_efficiency/deltate/*.{translation,translated_mRNA,total_mRNA}.deltate.results.tsv
