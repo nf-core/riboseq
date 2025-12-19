@@ -55,6 +55,7 @@ quantification/salmon_te_pseudo/*/libParams/flenDist.txt
 quantification/salmon_te_pseudo/*/logs/salmon_quant.log
 quantification/salmon_te_pseudo/*/quant.genes.sf
 quantification/salmon_te_pseudo/*/quant.sf
+quantification/salmon_te_pseudo/*.rds
 quantification/salmon_te_pseudo/**/*.rds
 quantification/salmon_te_pseudo/salmon.merged.te_pseudo.*.tsv
 riboseq_qc/ribotish/*_qual.pdf
