@@ -8,8 +8,30 @@ report_section_order:
     order: 5002
   fail_strand_check-module:
     order: 5001
+  # Preprocessing and pre-alignment QC
+  fastqc_raw:
+    order: 4004
+  cutadapt:
+    order: 4003
+  fastp:
+    order: 4003
+  fastqc_trimmed:
+    order: 4002
+  sortmerna:
+    order: 4001
+  # Alignment
+  star:
+    order: 3001
+  hisat2:
+    order: 3001
   # Post-alignment QC
   samtools:
+    order: 3000
+  picard:
+    order: 3000
+  rseqc:
+    order: 3000
+  qualimap:
     order: 3000
   # Ribo-seq specific QC
   ribowaltz:
