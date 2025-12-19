@@ -36,7 +36,6 @@ include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../mod
 include { DESEQ2_DELTATE                                       } from '../../modules/local/deseq2/deltate'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
 include { RIBOWALTZ                                            } from '../../modules/nf-core/ribowaltz/main'
-include { RIBOWALTZ_MQC                                        } from '../../modules/local/ribowaltz_mqc/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -346,30 +345,6 @@ workflow RIBOSEQ {
             ch_fasta.map { [ [:], it ] })
 
         ch_versions = ch_versions.mix(RIBOWALTZ.out.versions)
-
-        //
-        // Prepare ribowaltz QC data for MultiQC custom content
-        //
-        ch_ribowaltz_psite_region = RIBOWALTZ.out.ribowaltz_qc_data
-            .map { meta, files -> files }
-            .flatten()
-            .filter { it.name.endsWith('.psite_region.tsv') }
-            .collect()
-
-        ch_ribowaltz_frames = RIBOWALTZ.out.ribowaltz_qc_data
-            .map { meta, files -> files }
-            .flatten()
-            .filter { it.name.endsWith('.frames.tsv') && !it.name.contains('stratified') }
-            .collect()
-
-        RIBOWALTZ_MQC(
-            ch_ribowaltz_psite_region,
-            ch_ribowaltz_frames
-        )
-
-        ch_multiqc_files = ch_multiqc_files
-            .mix(RIBOWALTZ_MQC.out.psite_regions_mqc.ifEmpty([]))
-            .mix(RIBOWALTZ_MQC.out.frames_mqc.ifEmpty([]))
     }
 
     //
