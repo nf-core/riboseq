@@ -96,6 +96,7 @@ run_modules:
 
 module_order:
   - fastqc:
+      anchor: "fastqc_raw"
       name: "FastQC (raw)"
       info: "This section of the report shows FastQC results before adapter trimming."
       path_filters:
@@ -113,6 +114,7 @@ module_order:
       path_filters:
         - "*.riboseq_readlength_stats.tsv"
   - fastqc:
+      anchor: "fastqc_trimmed"
       name: "FastQC (trimmed)"
       info: "This section of the report shows FastQC results after adapter trimming."
       path_filters:
