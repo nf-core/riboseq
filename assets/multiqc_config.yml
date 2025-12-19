@@ -48,6 +48,7 @@ top_modules:
   - "fail_trimmed_samples"
   - "fail_mapped_samples"
   - "fail_strand_check"
+  - "ribowaltz"
   - "star_rsem_deseq2_pca"
   - "star_rsem_deseq2_clustering"
   - "star_salmon_deseq2_pca"

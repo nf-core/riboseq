@@ -35,7 +35,7 @@ include { RIBOTRICER_DETECTORFS                                } from '../../mod
 include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../modules/nf-core/anota2seq/anota2seqrun'
 include { DESEQ2_DELTATE                                       } from '../../modules/local/deseq2/deltate'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
-include { RIBOWALTZ                                            } from '../../modules/nf-core/ribowaltz/main'
+include { RIBOWALTZ_QC                                         } from '../../subworkflows/local/ribowaltz_qc/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -338,13 +338,17 @@ workflow RIBOSEQ {
         }
         .set { ch_transcriptome_bam_by_type }
 
+    //
+    // SUBWORKFLOW: Run riboWaltz P-site analysis and prepare MultiQC outputs
+    //
     if (!params.skip_ribowaltz) {
-        RIBOWALTZ(
+        RIBOWALTZ_QC(
             ch_transcriptome_bam_by_type.riboseq,
             ch_gtf.map { [ [:], it ] },
-            ch_fasta.map { [ [:], it ] })
-
-        ch_versions = ch_versions.mix(RIBOWALTZ.out.versions)
+            ch_fasta.map { [ [:], it ] }
+        )
+        ch_versions = ch_versions.mix(RIBOWALTZ_QC.out.versions)
+        ch_multiqc_files = ch_multiqc_files.mix(RIBOWALTZ_QC.out.multiqc_files)
     }
 
     //

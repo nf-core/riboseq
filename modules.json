@@ -122,7 +122,7 @@
                     },
                     "ribowaltz": {
                         "branch": "master",
-                        "git_sha": "5111d7a79aa8071bf2758cf64d6f5688879cc2be",
+                        "git_sha": "b59f74e059a49fce82f19fbf684e2876da85ee39",
                         "installed_by": ["modules"]
                     },
                     "rsem/preparereference": {
