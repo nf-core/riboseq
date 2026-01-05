@@ -81,10 +81,14 @@ run_modules:
   - cutadapt
   - fastp
   - seqkit
+  - bbmap
   - sortmerna
+  - bowtie2
   - star
   - hisat2
   - rsem
+  - umitools
+  - umicollapse
   - salmon
   - kallisto
   - samtools
@@ -119,9 +123,16 @@ module_order:
       info: "This section of the report shows FastQC results after adapter trimming."
       path_filters:
         - "*_trimmed_fastqc.zip"
+  - bbmap
+  - bowtie2:
+      anchor: "bowtie2_rrna"
+      name: "Bowtie2 (rRNA removal)"
+      info: "Bowtie2 alignment statistics for rRNA removal. Reads were aligned against an rRNA reference to filter out ribosomal RNA contamination."
   - star
   - samtools
   - ribowaltz
+  - umitools
+  - umicollapse
   - ribotish
 
 # Don't show % Dups in the General Stats table (we have this from Picard)
@@ -150,6 +161,20 @@ sp:
 
   sortmerna:
     fn: "*.sortmerna.log"
+
+  bbmap/bbsplit:
+    fn: "*.stats.txt"
+
+  bowtie2:
+    fn: "*.bowtie2.log"
+
+  umitools/extract:
+    fn: "*.umi_extract.log"
+  umitools/dedup:
+    fn: "*.umi_dedup*.log"
+
+  umicollapse:
+    fn: "*_UMICollapse.log"
 
   hisat2:
     fn: "*.hisat2.summary.log"
@@ -220,6 +245,9 @@ sp:
 
   seqkit/stats:
     fn: "*_stats.tsv"
+
+fn_ignore_files:
+  - "*umi_dedup.transcriptome.sorted.log"
 
 # See https://github.com/ewels/MultiQC_TestData/blob/master/data/custom_content/with_config/table_headerconfig/multiqc_config.yaml
 custom_data:
