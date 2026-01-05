@@ -28,31 +28,23 @@ workflow RIBOWALTZ_QC {
     //
     // Prepare ribowaltz QC data for MultiQC custom content
     //
-    ch_ribowaltz_psite_region = RIBOWALTZ.out.ribowaltz_qc_data
+    RIBOWALTZ.out.ribowaltz_qc_data
         .map { meta, files -> files }
         .flatten()
-        .filter { it.name.endsWith('.psite_region.tsv') }
-        .collect()
-
-    ch_ribowaltz_frames = RIBOWALTZ.out.ribowaltz_qc_data
-        .map { meta, files -> files }
-        .flatten()
-        .filter { it.name.endsWith('.frames.tsv') && !it.name.contains('stratified') }
-        .collect()
-
-    ch_ribowaltz_metaprofile = RIBOWALTZ.out.ribowaltz_qc_data
-        .map { meta, files -> files }
-        .flatten()
-        .filter { it.name.endsWith('.metaprofile_psite.tsv') }
-        .collect()
+        .branch { file ->
+            psite_region: file.name.endsWith('.psite_region.tsv')
+            frames: file.name.endsWith('.frames.tsv') && !file.name.contains('stratified')
+            metaprofile: file.name.endsWith('.metaprofile_psite.tsv')
+        }
+        .set { ch_ribowaltz_qc }
 
     //
     // MODULE: Transform riboWaltz outputs to MultiQC custom content format
     //
     RIBOWALTZ_MQC(
-        ch_ribowaltz_psite_region,
-        ch_ribowaltz_frames,
-        ch_ribowaltz_metaprofile
+        ch_ribowaltz_qc.psite_region.collect(),
+        ch_ribowaltz_qc.frames.collect(),
+        ch_ribowaltz_qc.metaprofile.collect()
     )
 
     ch_multiqc_files = ch_multiqc_files
