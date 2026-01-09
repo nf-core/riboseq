@@ -339,7 +339,6 @@
                 "multiqc/star/multiqc_report_data/multiqc_general_stats.txt",
                 "multiqc/star/multiqc_report_data/multiqc_ribotish.txt",
                 "multiqc/star/multiqc_report_data/multiqc_salmon.txt",
-                "multiqc/star/multiqc_report_data/multiqc_salmon_salmon-1.txt",
                 "multiqc/star/multiqc_report_data/multiqc_samtools_flagstat.txt",
                 "multiqc/star/multiqc_report_data/multiqc_samtools_idxstats.txt",
                 "multiqc/star/multiqc_report_data/multiqc_samtools_stats.txt",
@@ -1327,6 +1326,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.2"
         },
-        "timestamp": "2025-12-19T11:27:42.147987018"
+        "timestamp": "2026-01-09T16:40:18.929992209"
     }
 }
