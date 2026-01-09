@@ -13,7 +13,6 @@ nextflow_pipeline {
             params {
                 outdir = "$outputDir"
                 te_quantification_method = 'pseudo'
-                pseudo_aligner_kmer_size = 23
                 ribo_removal_tool = 'bowtie2'
             }
         }

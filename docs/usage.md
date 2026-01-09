@@ -365,14 +365,14 @@ This is the default method. Reads are aligned with STAR, and Salmon quantifies f
 #### Pseudo-alignment
 
 ```bash
---te_quantification_method pseudo --pseudo_aligner_kmer_size 23
+--te_quantification_method pseudo
 ```
 
 Uses Salmon pseudo-alignment directly from reads for both Ribo-seq and RNA-seq samples. This approach:
 
 - Puts both modalities on **equal footing** (same k-mer index, same quantification algorithm)
 - Avoids mappability bias from different read lengths without requiring trimming
-- Should use a lower k-mer size (e.g., 21-25) for short Ribo-seq reads (~30nt) via `--pseudo_aligner_kmer_size`
+- Uses a k-mer size of 23 by default, optimized for short Ribo-seq reads (~30nt). Adjust with `--pseudo_aligner_kmer_size` if needed.
 
 Consider this option when:
 
