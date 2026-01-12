@@ -38,6 +38,18 @@
                 "errorMessage": "Sample type must be provided and be one of 'riboseq', 'rnaseq' or 'tiseq'",
                 "enum": ["riboseq", "rnaseq", "tiseq"],
                 "meta": ["sample_type"]
+            },
+            "trim_length": {
+                "anyOf": [
+                    { "type": "integer", "minimum": 15 },
+                    { "type": "string", "pattern": "^[0-9]+$" }
+                ],
+                "errorMessage": "Trim length must be a positive integer of at least 15",
+                "meta": ["trim_length"]
+            },
+            "pair": {
+                "anyOf": [{ "type": "string" }, { "type": "integer" }],
+                "meta": ["pair"]
             }
         },
         "required": ["sample", "fastq_1", "strandedness", "type"],

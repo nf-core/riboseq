@@ -10,6 +10,7 @@
 include { BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS as BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_GENOME        } from '../../subworkflows/nf-core/bam_dedup_stats_samtools_umitools/main'
 include { BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS as BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_TRANSCRIPTOME } from '../../subworkflows/nf-core/bam_dedup_stats_samtools_umitools/main'
 include { FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS                                                 } from '../../subworkflows/nf-core/fastq_qc_trim_filter_setstrandedness/main'
+include { FASTQ_EQUALISE_READ_LENGTHS                                                          } from '../../subworkflows/local/fastq_equalise_read_lengths'
 include { BAM_DEDUP_UMI      } from '../../subworkflows/nf-core/bam_dedup_umi'
 include { FASTQ_ALIGN_STAR   } from '../../subworkflows/nf-core/fastq_align_star'
 
@@ -172,12 +173,42 @@ workflow RIBOSEQ {
     ch_versions      = ch_versions.mix(FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS.out.versions)
 
     //
+    // SUBWORKFLOW: Equalise RNA-seq read lengths to match Ribo-seq read lengths
+    //
+
+    // Normalize samplesheet-derived meta fields (convert empty lists to null)
+    // Only modify fields that exist in the meta
+    ch_reads_preprocessed = FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS.out.reads
+        .map { meta, reads ->
+            def updates = [:]
+            if (meta.containsKey('trim_length')) {
+                updates.trim_length = meta.trim_length instanceof List ? (meta.trim_length ? meta.trim_length[0] : null) : meta.trim_length
+            }
+            if (meta.containsKey('pair')) {
+                updates.pair = meta.pair instanceof List ? (meta.pair ? meta.pair[0] : null) : meta.pair
+            }
+            return [ meta + updates, reads ]
+        }
+
+    ch_reads_for_alignment = ch_reads_preprocessed
+
+    if (params.equalise_read_lengths) {
+        FASTQ_EQUALISE_READ_LENGTHS(
+            ch_reads_preprocessed,
+            params.equalise_read_lengths_target
+        )
+        ch_reads_for_alignment = FASTQ_EQUALISE_READ_LENGTHS.out.reads
+        ch_versions = ch_versions.mix(FASTQ_EQUALISE_READ_LENGTHS.out.versions)
+        ch_multiqc_files = ch_multiqc_files.mix(FASTQ_EQUALISE_READ_LENGTHS.out.riboseq_stats.collect{it[1]})
+    }
+
+    //
     // SUBWORKFLOW: align with STAR, produce both genomic and transcriptomic
     // alignments and run BAM_SORT_STATS_SAMTOOLS for each
     //
 
     FASTQ_ALIGN_STAR(
-        FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS.out.reads,
+        ch_reads_for_alignment,
         ch_star_index.map { [ [:], it ] },
         ch_gtf.map { [ [:], it ] },
         params.star_ignore_sjdbgtf,

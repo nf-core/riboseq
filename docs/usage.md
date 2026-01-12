@@ -104,6 +104,7 @@ SRX11780890,SRX11780890_SRR15480793_chr20_1.fastq.gz,,auto,riboseq,Ribo-seq_P400
 | `fastq_2`      | Full path to FastQ file for Illumina short reads 2. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
 | `strandedness` | Sample strand-specificity. Must be one of `unstranded`, `forward`, `reverse` or `auto`.                                                                                                |
 | `type`         | Type of sample. Must be one of `riboseq`, `rnaseq` or `tiseq`                                                                                                                          |
+| `trim_length`  | (Optional) Target read length for read length equalisation. See [Read length equalisation](#read-length-equalisation).                                                                 |
 
 An [example samplesheet](../assets/samplesheet.csv) has been provided with the pipeline.
 
@@ -155,6 +156,61 @@ nextflow run nf-core/riboseq --ribo_removal_tool ribodetector ...
 ```
 
 RiboDetector automatically determines read length from your data and uses its pre-trained neural network model to classify reads.
+
+## Read length equalisation
+
+When comparing RNA-seq and Ribo-seq data for translational efficiency analysis, the read lengths differ substantially: RNA-seq reads are typically 75-150bp while Ribo-seq ribosome-protected fragments are 26-34bp. The pipeline provides an optional read length equalisation feature that trims RNA-seq reads to match Ribo-seq lengths before quantification. This can be enabled with the `--equalise_read_lengths` parameter.
+
+### How it works
+
+1. **Target length determination**: For each RNA-seq sample, the target trim length is determined by (in priority order):
+   - Per-sample `trim_length` column in the samplesheet
+   - Global `--equalise_read_lengths_target` parameter
+   - Average length derived from the paired Ribo-seq sample (via `seqkit stats`)
+2. **Ribo-seq read length measurement**: `seqkit stats` is only run on Ribo-seq samples that have paired RNA-seq samples needing length derivation (i.e., when neither a per-sample `trim_length` nor global target is specified)
+3. **Trimming**: RNA-seq reads are hard-trimmed from the 5' end using TrimGalore's `--hardtrim5` option
+4. **Paired-end handling**: For paired-end RNA-seq, only R1 is retained (preserving 5' position information)
+
+If none of these sources provide a trim length for an RNA-seq sample, the pipeline will exit with an error.
+
+### When to use
+
+By default, the pipeline does **not** equalise read lengths. The pipeline uses STAR for alignment followed by Salmon in alignment-based mode, which applies effective length normalisation at quantification.
+
+However, for translational efficiency (TE) analysis, read length differences can introduce bias. TE is calculated as the ratio of Ribo-seq to RNA-seq abundance - a statistical interaction, not just a comparison. When 30nt Ribo-seq reads and 150nt RNA-seq reads map to different "effective transcriptomes" (due to mappability differences), the ratio itself becomes skewed. Regions may appear translationally silent simply because short Ribo-seq reads couldn't map uniquely there.
+
+Consider enabling `--equalise_read_lengths` if:
+
+- You are performing TE analysis (deltaTE, anota2seq, Xtail, Riborex) and want matched mappability between modalities
+- Your analysis protocol requires matched read lengths for methodological consistency
+- You are replicating methods from publications that use this approach
+
+### Trade-offs
+
+When using read length equalisation, be aware that:
+
+- For paired-end RNA-seq, only R1 is retained after trimming
+- Shorter reads may have higher multi-mapping rates
+- Some information from the original RNA-seq reads is discarded
+
+### Example usage
+
+```bash
+nextflow run nf-core/riboseq \
+    --equalise_read_lengths \
+    --input samplesheet.csv \
+    ...
+```
+
+Or with a global target length (useful when you don't have paired samples):
+
+```bash
+nextflow run nf-core/riboseq \
+    --equalise_read_lengths \
+    --equalise_read_lengths_target 28 \
+    --input samplesheet.csv \
+    ...
+```
 
 ## Alignment options
 

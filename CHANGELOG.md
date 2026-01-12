@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#128](https://github.com/nf-core/riboseq/pull/128) - Add DESeq2-based deltaTE analysis as an alternative to anota2seq for translational efficiency analysis ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#131](https://github.com/nf-core/riboseq/pull/131) - Add ribotish quality output routing to MultiQC ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#134](https://github.com/nf-core/riboseq/pull/134) - Add P-site identification using plastid ([@suhrig](https://github.com/suhrig))
+- [#135](https://github.com/nf-core/riboseq/pull/135) - Add optional read length equalisation to trim RNA-seq reads to match Ribo-seq lengths before quantification ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#138](https://github.com/nf-core/riboseq/pull/138) - Add MultiQC configuration for BBSplit, Bowtie2 rRNA removal, UMItools, and UMIcollapse ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Fixed`
 
@@ -30,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 |               | `--te_lfc_threshold`                     |
 |               | `--rna_lfc_threshold`                    |
 |               | `--ribo_lfc_threshold`                   |
+|               | `--equalise_read_lengths`                |
+|               | `--equalise_read_lengths_target`         |
 |               | `--skip_plastid`                         |
 |               | `--plastid_min_length`                   |
 |               | `--plastid_max_length`                   |
