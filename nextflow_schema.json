@@ -353,7 +353,7 @@
                     "type": "integer",
                     "default": 23,
                     "description": "Kmer length passed to Salmon indexing for pseudo-alignment quantification.",
-                    "help_text": "This parameter controls the k-mer size when building the Salmon index. In this pipeline, it primarily affects the TE pseudo-alignment method (--te_quantification_method pseudo). The default of 23 is optimized for short Ribo-seq reads (~30nt). It is also used internally for strandedness detection, where the exact value is less critical.",
+                    "help_text": "This parameter controls the k-mer size when building the Salmon index. In this pipeline, it primarily affects the TE pseudo-alignment method (--te_quantification_method pseudo). The default of 23 is suitable for short Ribo-seq reads. It is also used internally for strandedness detection, where the exact value is less critical.",
                     "fa_icon": "fas fa-ruler-horizontal"
                 },
                 "bam_csi_index": {
@@ -505,7 +505,7 @@
                     "default": "alignment",
                     "enum": ["alignment", "pseudo"],
                     "description": "Quantification method for translational efficiency analysis: 'alignment' (STAR → Salmon) or 'pseudo' (Salmon pseudo-alignment).",
-                    "help_text": "Choose 'alignment' for STAR alignment followed by Salmon in alignment-based mode (default). Choose 'pseudo' for direct Salmon pseudo-alignment, which puts Ribo-seq and RNA-seq on equal footing by using the same k-mer index for both modalities. The pseudo method avoids mappability bias from different read lengths without requiring trimming.",
+                    "help_text": "Choose 'alignment' for STAR alignment followed by Salmon in alignment-based mode (default). Choose 'pseudo' for direct Salmon pseudo-alignment, an experimental alternative that uses the same k-mer index for both modalities and may help reduce length-related quantification biases without requiring read trimming.",
                     "fa_icon": "fas fa-calculator"
                 }
             }

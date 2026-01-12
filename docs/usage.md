@@ -185,7 +185,7 @@ Consider enabling `--equalise_read_lengths` if:
 - Your analysis protocol requires matched read lengths for methodological consistency
 - You are replicating methods from publications that use this approach
 
-> **Alternative approach**: Instead of trimming, you can use `--te_quantification_method pseudo` which runs Salmon pseudo-alignment for both modalities using the same k-mer index. This puts Ribo-seq and RNA-seq on equal footing without discarding sequence information. See [Quantification method](#quantification-method) for details.
+> **Alternative approach**: Instead of trimming, you can use `--te_quantification_method pseudo` which runs Salmon pseudo-alignment for both modalities using the same k-mer index. This may help address length-related quantification biases without discarding sequence information. See [Quantification method](#quantification-method) for details.
 
 ### Trade-offs
 
@@ -368,15 +368,14 @@ This is the default method. Reads are aligned with STAR, and Salmon quantifies f
 --te_quantification_method pseudo
 ```
 
-Uses Salmon pseudo-alignment directly from reads for both Ribo-seq and RNA-seq samples. This approach:
+Uses Salmon pseudo-alignment directly from reads for both Ribo-seq and RNA-seq samples. This is an **experimental alternative** that:
 
-- Puts both modalities on **equal footing** (same k-mer index, same quantification algorithm)
-- Avoids mappability bias from different read lengths without requiring trimming
-- Uses a k-mer size of 23 by default, optimized for short Ribo-seq reads (~30nt). Adjust with `--pseudo_aligner_kmer_size` if needed.
+- Applies the same k-mer index and quantification algorithm to both modalities
+- May help reduce length-related quantification biases without requiring read trimming
+- Uses a k-mer size of 23 by default, suitable for short Ribo-seq reads. Adjust with `--pseudo_aligner_kmer_size` if needed.
 
 Consider this option when:
 
-- Your Ribo-seq reads are very short (<30nt) and may suffer mappability issues with alignment
 - You want to avoid the information loss from read length equalisation trimming
 - You prefer k-mer-based quantification for methodological consistency between modalities
 
