@@ -16,7 +16,10 @@ multiqc/star/multiqc_report_data/multiqc.parquet
 multiqc/star/multiqc_report_data/multiqc_data.json
 multiqc/star/multiqc_report_data/multiqc_general_stats.txt
 multiqc/star/multiqc_report_data/multiqc_software_versions.txt
+multiqc/star/multiqc_report_data/multiqc_salmon.txt
+multiqc/star/multiqc_report_data/multiqc_salmon_salmon-1.txt
 multiqc/star/multiqc_report_data/multiqc_sources.txt
+multiqc/star/multiqc_report_data/salmon_plot.txt
 multiqc/star/multiqc_report_plots/{svg,pdf,png}/*.{svg,pdf,png}
 pipeline_info/*.{html,json,txt,yml}
 preprocessing/fastqc/*_fastqc.{html,zip}
@@ -46,6 +49,15 @@ quantification/salmon/salmon.merged.transcript.SummarizedExperiment.rds
 quantification/salmon/salmon.merged.transcript_counts.tsv
 quantification/salmon/salmon.merged.transcript_lengths.tsv
 quantification/salmon/salmon.merged.transcript_tpm.tsv
+quantification/salmon_te_pseudo/*/aux_info/fld.gz
+quantification/salmon_te_pseudo/*/aux_info/meta_info.json
+quantification/salmon_te_pseudo/*/libParams/flenDist.txt
+quantification/salmon_te_pseudo/*/logs/salmon_quant.log
+quantification/salmon_te_pseudo/*/quant.genes.sf
+quantification/salmon_te_pseudo/*/quant.sf
+quantification/salmon_te_pseudo/*.rds
+quantification/salmon_te_pseudo/**/*.rds
+quantification/salmon_te_pseudo/salmon.merged.te_pseudo.*.tsv
 riboseq_qc/ribotish/*_qual.pdf
 psites/ribowaltz/**/*.pdf
 psites/plastid/*/*

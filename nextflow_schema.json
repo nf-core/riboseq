@@ -351,9 +351,9 @@
                 },
                 "pseudo_aligner_kmer_size": {
                     "type": "integer",
-                    "default": 31,
-                    "description": "Kmer length passed to indexing step of pseudoaligners",
-                    "help_text": "Failure to set a good kmer size could cause issues with quantification with Kallisto or Salmon. This is mostly an issue for short reads (<50bp), where the default kmer size of 31 is an problem.",
+                    "default": 23,
+                    "description": "Kmer length passed to Salmon indexing for pseudo-alignment quantification.",
+                    "help_text": "This parameter controls the k-mer size when building the Salmon index. In this pipeline, it primarily affects the TE pseudo-alignment method (--te_quantification_method pseudo). The default of 23 is suitable for short Ribo-seq reads. It is also used internally for strandedness detection, where the exact value is less critical.",
                     "fa_icon": "fas fa-ruler-horizontal"
                 },
                 "bam_csi_index": {
@@ -528,6 +528,14 @@
                     "minimum": 15,
                     "description": "Target read length for RNA-seq trimming. If not specified, the average Ribo-seq read length will be derived from paired samples using seqkit stats. This parameter is required if RNA-seq samples have no paired Ribo-seq sample.",
                     "fa_icon": "fas fa-ruler"
+                },
+                "te_quantification_method": {
+                    "type": "string",
+                    "default": "alignment",
+                    "enum": ["alignment", "pseudo"],
+                    "description": "Quantification method for translational efficiency analysis: 'alignment' (STAR → Salmon) or 'pseudo' (Salmon pseudo-alignment).",
+                    "help_text": "Choose 'alignment' for STAR alignment followed by Salmon in alignment-based mode (default). Choose 'pseudo' for direct Salmon pseudo-alignment, an experimental alternative that uses the same k-mer index for both modalities and may help reduce length-related quantification biases without requiring read trimming.",
+                    "fa_icon": "fas fa-calculator"
                 }
             }
         },
