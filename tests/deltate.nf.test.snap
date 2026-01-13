@@ -1,10 +1,7 @@
 {
-    "-profile test --ribo_removal_tool bowtie2": {
+    "-profile test --translational_efficiency_method deltate": {
         "content": [
             {
-                "ANOTA2SEQ_ANOTA2SEQRUN": {
-                    "bioconductor-anota2seq": "1.24.0"
-                },
                 "BOWTIE2_ALIGN": {
                     "bowtie2": "2.5.4",
                     "pigz": 2.8,
@@ -23,6 +20,12 @@
                 },
                 "CUSTOM_TX2GENE": {
                     "python": "3.10.4"
+                },
+                "DESEQ2_DELTATE": {
+                    "bioconductor-deseq2": "1.42.0",
+                    "r-data.table": "1.15.0",
+                    "r-dplyr": "1.1.4",
+                    "r-ggplot2": "3.4.4"
                 },
                 "FQ_LINT": {
                     "fq": "0.12.0 (2024-07-08)"
@@ -1095,21 +1098,26 @@
                 "ribowaltz/ribowaltz_qc/SRX11780890.metaprofile_psite.pdf",
                 "ribowaltz/ribowaltz_qc/SRX11780890.psite_region.pdf",
                 "translational_efficiency",
-                "translational_efficiency/anota2seq",
-                "translational_efficiency/anota2seq/treated_vs_control.Anota2seqDataSet.rds",
-                "translational_efficiency/anota2seq/treated_vs_control.R_sessionInfo.log",
-                "translational_efficiency/anota2seq/treated_vs_control.buffering.anota2seq.results.tsv",
-                "translational_efficiency/anota2seq/treated_vs_control.fold_change.png",
-                "translational_efficiency/anota2seq/treated_vs_control.interaction_p_distribution.pdf",
-                "translational_efficiency/anota2seq/treated_vs_control.residual_distribution_summary.jpeg",
-                "translational_efficiency/anota2seq/treated_vs_control.residual_vs_fitted.jpeg",
-                "translational_efficiency/anota2seq/treated_vs_control.rvm_fit_for_all_contrasts_group.jpg",
-                "translational_efficiency/anota2seq/treated_vs_control.rvm_fit_for_interactions.jpg",
-                "translational_efficiency/anota2seq/treated_vs_control.rvm_fit_for_omnibus_group.jpg",
-                "translational_efficiency/anota2seq/treated_vs_control.simulated_vs_obt_dfbetas_without_interaction.pdf",
-                "translational_efficiency/anota2seq/treated_vs_control.total_mRNA.anota2seq.results.tsv",
-                "translational_efficiency/anota2seq/treated_vs_control.translated_mRNA.anota2seq.results.tsv",
-                "translational_efficiency/anota2seq/treated_vs_control.translation.anota2seq.results.tsv"
+                "translational_efficiency/deltate",
+                "translational_efficiency/deltate/treated_vs_control.DESeqDataSet.rds",
+                "translational_efficiency/deltate/treated_vs_control.R_sessionInfo.log",
+                "translational_efficiency/deltate/treated_vs_control.buffering.deltate.genes.tsv",
+                "translational_efficiency/deltate/treated_vs_control.dtegs.deltate.genes.tsv",
+                "translational_efficiency/deltate/treated_vs_control.fold_change.png",
+                "translational_efficiency/deltate/treated_vs_control.heatmap.png",
+                "translational_efficiency/deltate/treated_vs_control.heatmap_annotations.tsv",
+                "translational_efficiency/deltate/treated_vs_control.heatmap_zscores.tsv",
+                "translational_efficiency/deltate/treated_vs_control.intensified.deltate.genes.tsv",
+                "translational_efficiency/deltate/treated_vs_control.interaction_p_distribution.png",
+                "translational_efficiency/deltate/treated_vs_control.mRNA_abundance.deltate.genes.tsv",
+                "translational_efficiency/deltate/treated_vs_control.pca_ribo.png",
+                "translational_efficiency/deltate/treated_vs_control.pca_ribo.tsv",
+                "translational_efficiency/deltate/treated_vs_control.pca_rna.png",
+                "translational_efficiency/deltate/treated_vs_control.pca_rna.tsv",
+                "translational_efficiency/deltate/treated_vs_control.total_mRNA.deltate.results.tsv",
+                "translational_efficiency/deltate/treated_vs_control.translated_mRNA.deltate.results.tsv",
+                "translational_efficiency/deltate/treated_vs_control.translation.deltate.genes.tsv",
+                "translational_efficiency/deltate/treated_vs_control.translation.deltate.results.tsv"
             ],
             [
                 "SRX11780879.SJ.out.tab:md5,5ecdd17b4e5cb1717d027aacd6d43b34",
@@ -1355,13 +1363,13 @@
                 "SRX11780890.codon_coverage_rpf.tsv.gz:md5,fc28b1c4b672c3f94111a27392a0fa9c",
                 "SRX11780890.psite.tsv.gz:md5,ad3e7a4abdba33a47bfe369cd7f2a725",
                 "SRX11780890.psite_offset.tsv.gz:md5,4c640cbe8c24465fa1758951af308534",
-                "treated_vs_control.R_sessionInfo.log:md5,3623a50b4668bfebf502bf7080800996"
+                "treated_vs_control.R_sessionInfo.log:md5,9388c2a7f77dfde471cd9b67687070e4"
             ]
         ],
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.2"
         },
-        "timestamp": "2026-01-09T17:38:04.81764085"
+        "timestamp": "2026-01-09T16:18:41.538092342"
     }
 }

@@ -74,7 +74,8 @@ workflow NFCORE_RIBOSEQ {
         params.skip_bbsplit,
         ! (params.remove_ribo_rna && params.ribo_removal_tool == 'sortmerna'),
         params.remove_ribo_rna ? params.ribo_removal_tool : null,
-        params.skip_alignment
+        params.skip_alignment,
+        params.te_quantification_method == 'pseudo' && params.contrasts
     )
     ch_versions = ch_versions.mix(PREPARE_GENOME.out.versions)
 
@@ -110,6 +111,7 @@ workflow NFCORE_RIBOSEQ {
         PREPARE_GENOME.out.transcript_fasta,
         PREPARE_GENOME.out.star_index,
         PREPARE_GENOME.out.salmon_index,
+        PREPARE_GENOME.out.salmon_index_te,
         PREPARE_GENOME.out.bbsplit_index,
         PREPARE_GENOME.out.rrna_fastas,
         PREPARE_GENOME.out.sortmerna_index,

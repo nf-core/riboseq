@@ -21,6 +21,7 @@ include { BBMAP_BBSPLIT                     } from '../../../modules/nf-core/bbm
 include { SORTMERNA as SORTMERNA_INDEX      } from '../../../modules/nf-core/sortmerna'
 include { STAR_GENOMEGENERATE               } from '../../../modules/nf-core/star/genomegenerate'
 include { SALMON_INDEX                      } from '../../../modules/nf-core/salmon/index'
+include { SALMON_INDEX as SALMON_INDEX_TE   } from '../../../modules/nf-core/salmon/index'
 include { RSEM_PREPAREREFERENCE as RSEM_PREPAREREFERENCE_GENOME } from '../../../modules/nf-core/rsem/preparereference'
 include { RSEM_PREPAREREFERENCE as MAKE_TRANSCRIPTS_FASTA       } from '../../../modules/nf-core/rsem/preparereference'
 
@@ -49,6 +50,7 @@ workflow PREPARE_GENOME {
     skip_sortmerna           //   boolean: Skip sortmerna for removal of non-reference genome reads
     ribo_removal_tool        //    string: Tool for rRNA removal ('sortmerna', 'bowtie2', or 'ribodetector')
     skip_alignment           //   boolean: Skip all of the alignment-based processes within the pipeline
+    build_te_pseudo_index    //   boolean: Build Salmon index for TE pseudo-alignment
 
     main:
     ch_versions = Channel.empty()
@@ -272,6 +274,15 @@ workflow PREPARE_GENOME {
         }
     }
 
+    //
+    // Build Salmon index for TE pseudo-alignment (with lower k-mer size for short reads)
+    //
+    ch_salmon_index_te = Channel.empty()
+    if (build_te_pseudo_index) {
+        ch_salmon_index_te = SALMON_INDEX_TE ( ch_fasta, ch_transcript_fasta ).index
+        ch_versions        = ch_versions.mix(SALMON_INDEX_TE.out.versions)
+    }
+
     emit:
     fasta            = ch_fasta                  // channel: path(genome.fasta)
     gtf              = ch_gtf                    // channel: path(genome.gtf)
@@ -283,5 +294,6 @@ workflow PREPARE_GENOME {
     sortmerna_index  = ch_sortmerna_index        // channel: path(sortmerna/index/)
     star_index       = ch_star_index             // channel: path(star/index/)
     salmon_index     = ch_salmon_index           // channel: path(salmon/index/)
+    salmon_index_te  = ch_salmon_index_te        // channel: path(salmon_te/index/) - for TE pseudo-alignment
     versions         = ch_versions.ifEmpty(null) // channel: [ versions.yml ]
 }

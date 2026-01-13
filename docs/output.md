@@ -435,6 +435,10 @@ Raw outputs from Salmon are available for each sample:
 
 ## Translational efficiency
 
+The pipeline supports two methods for translational efficiency analysis: anota2seq (default) and deltaTE. The method used depends on the `--translational_efficiency_method` parameter.
+
+### anota2seq outputs
+
 anota2seq produces the following outputs:
 
 <details markdown="1">
@@ -443,8 +447,8 @@ anota2seq produces the following outputs:
 - `translational_efficiency/anota2seq`
   - `*.total_mRNA.anota2seq.results.tsv`: anota2seq results for the 'total mRNA' analysis, describing differences in RNA levels across conditions for RNA-seq samples. See https://rdrr.io/bioc/anota2seq/man/anota2seqGetOutput.html for description of output columns.
   - `*.translated_mRNA.anota2seq.results.tsv`: anota2seq results for the 'translated mRNA' analysis, describing differences in RNA levels across conditions for Ribo-seq samples. See https://rdrr.io/bioc/anota2seq/man/anota2seqGetOutput.html for description of output columns.
-  - `*.mRNA_abundance.anota2seq.results.tsv`: anota2seq results for the 'mRNA abunance' analysis, describing changes across conditions consistent between total mRNA and translated RNA (RNA-seq and Riboseq samples). See https://rdrr.io/bioc/anota2seq/man/anota2seqGetOutput.html for description of output columns.
-  - `*.buffering.anota2seq.results.tsv`: anota2seq results for the 'buffering' analysis, describing stable levels of translated RNA (from riboseq samples) across conditions, despite changes in total mRNA. See https://rdrr.io/bioc/anota2seq/man/anota2seqGetOutput.html for description of output columns.
+  - `*.mRNA_abundance.anota2seq.results.tsv`: anota2seq results for the 'mRNA abundance' analysis, describing changes across conditions consistent between total mRNA and translated RNA (RNA-seq and Ribo-seq samples). See https://rdrr.io/bioc/anota2seq/man/anota2seqGetOutput.html for description of output columns.
+  - `*.buffering.anota2seq.results.tsv`: anota2seq results for the 'buffering' analysis, describing stable levels of translated RNA (from Ribo-seq samples) across conditions, despite changes in total mRNA. See https://rdrr.io/bioc/anota2seq/man/anota2seqGetOutput.html for description of output columns.
   - `*.translation.anota2seq.results.tsv`: anota2seq results for the 'translation' analysis, describing differences in translation across conditions, being differences in translated RNA levels not explained by total RNA levels. See https://rdrr.io/bioc/anota2seq/man/anota2seqGetOutput.html for description of output columns.
   - `*.fold_change.png`: A fold change plot in PNG format, from anota2seq's anota2seqPlotFC() method.
   - `*.interaction_p_distribution.pdf`: The distribution of p-values and adjusted p-values for the omnibus interaction (both using densities and histograms). The second page of the pdf displays the same plots but for the RVM statistics if RVM is used.
@@ -454,16 +458,144 @@ anota2seq produces the following outputs:
   - `*.rvm_fit_for_interactions.jpg`: QC plot showing the CDF of variance (theoretical vs empirical), for interactions.
   - `*.rvm_fit_for_omnibus_group.jpg`: QC plot showing the CDF of variance (theoretical vs empirical), for omnibus group.
   - `*.simulated_vs_obt_dfbetas_without_interaction.pdf`: Bar graphs of the frequencies of outlier dfbetas using different dfbetas thresholds.
-  - `.Anota2seqDataSet.rds`: Serialised Anota2seqDataSet object
+  - `*.Anota2seqDataSet.rds`: Serialised Anota2seqDataSet object.
   - `*.R_sessionInfo.log`: dump of R SessionInfo
 
 </details>
 
-A key plot is the fold change plot produced by anota2seq:
+### deltaTE outputs
+
+When using `--translational_efficiency_method deltate`, the pipeline produces the following outputs:
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `translational_efficiency/deltate`
+  - `*.total_mRNA.deltate.results.tsv`: DESeq2 results for RNA-seq analysis, describing differences in total mRNA levels across conditions.
+  - `*.translated_mRNA.deltate.results.tsv`: DESeq2 results for Ribo-seq analysis, describing differences in ribosome-protected RNA levels across conditions.
+  - `*.translation.deltate.results.tsv`: DESeq2 results for the interaction term, describing changes in translational efficiency across conditions.
+  - `*.dtegs.deltate.genes.tsv`: Gene list of all differentially translated genes (DTEGs) with significant changes in translational efficiency.
+  - `*.mRNA_abundance.deltate.genes.tsv`: Gene list of genes showing coordinated changes between RNA-seq and Ribo-seq without net translational efficiency changes (equivalent to anota2seq mRNA abundance).
+  - `*.translation.deltate.genes.tsv`: Gene list of genes with pure translational regulation - Ribo-seq changes without RNA-seq changes (equivalent to anota2seq translation category).
+  - `*.buffering.deltate.genes.tsv`: Gene list of genes with buffering effects where translation dampens RNA changes (equivalent to anota2seq buffering).
+  - `*.intensified.deltate.genes.tsv`: Gene list of genes where translation amplifies RNA changes in the same direction (deltaTE-specific category).
+  - `*.fold_change.png`: Scatter plot showing RNA-seq vs Ribo-seq log2 fold changes, colored by gene classification (harmonized with anota2seq visualization).
+  - `*.interaction_p_distribution.png`: Histogram of interaction term adjusted p-values for assessing translational regulation significance patterns.
+  - `*.pca_ribo.png`: PCA plot for Ribo-seq samples.
+  - `*.pca_rna.png`: PCA plot for RNA-seq samples.
+  - `*.heatmap.png`: Heatmap of top differentially translated genes (DTEGs).
+  - `*.DESeqDataSet.rds`: Serialised DESeqDataSet object containing analysis results.
+  - `*.R_sessionInfo.log`: R session information for reproducibility.
+
+</details>
+
+### Fold change plots
+
+Both methods produce fold change plots that visualize the relationship between RNA-seq and Ribo-seq changes. The examples below were generated using the `test_full` profile on the same dataset, allowing direct comparison between methods.
+
+**anota2seq fold change plot:**
 
 ![anota2seq - fold change plot](images/fc.png)
 
-By plotting fold changes for RNA-seq and Ribo-seq data against one another this shows the relative importance of buffering, translation changes etc in these samples.
+The anota2seq fold change plot shows total mRNA log2FC on the X-axis and translated mRNA log2FC on the Y-axis, with genes colored by their regulatory classification. The solid diagonal line represents equal changes in both data types.
+
+_In the test dataset:_ The plot reveals 623 genes with significant translational regulation across several categories:
+
+- **Translation down (357) / up (225)**: Genes showing pure translational regulation without corresponding RNA changes, appearing as vertical deviations from the diagonal
+- **mRNA abundance down (16) / up (25)**: Genes with coordinated RNA and Ribo-seq changes, appearing along the diagonal
+- **Buffered (mRNA down) (0) / (mRNA up) (0)**: Genes where translation dampens RNA changes (none detected in this dataset)
+
+The predominance of translation-regulated genes (582 of 623) indicates that translational control is the dominant regulatory mechanism in this experimental system.
+
+**deltaTE scatter plot:**
+
+![deltaTE - fold change plot](images/deltate/treatment_vs_control.fold_change.png)
+
+The deltaTE method produces a similar visualization showing total mRNA log2FC (RNA-seq) on the X-axis and translated mRNA log2FC (Ribo-seq) on the Y-axis, with genes colored by their classification. The diagonal dashed line represents equal changes in both data types.
+
+_In the test dataset:_ The plot reveals 1,694 DTEGs across several categories:
+
+- **Translation down (895) / up (710)**: Genes showing translational regulation without corresponding RNA changes, appearing as vertical deviations from the diagonal along the y-axis
+- **mRNA abundance down (4) / up (30)**: Genes with coordinated RNA and Ribo-seq changes, appearing along the diagonal
+- **Buffering down (14) / up (16)**: Genes where translation dampens RNA changes, appearing below the diagonal
+- **Intensified (25)**: Genes where translation amplifies RNA changes, appearing above the diagonal
+
+The striking vertical distribution of points (translation category) demonstrates that translational regulation is the dominant mode of gene expression control in this experimental system, with most changes occurring in Ribo-seq independently of RNA-seq.
+
+### Diagnostic plots
+
+Both methods provide diagnostic plots for quality control and model assessment:
+
+#### anota2seq diagnostic plots
+
+anota2seq produces several QC plots for assessing model fit and statistical assumptions.
+
+**Residual distribution summary:**
+
+![anota2seq - residual distribution summary](images/anota2seq/treated_vs_control.residual_distribution_summary.jpeg)
+
+This plot summarizes the distribution of regression residuals across quantiles of the standard normal distribution. It helps assess whether the residuals follow the expected normal distribution, which is an assumption of the linear model.
+
+_In the test dataset:_ The obtained outlier rate (1.588%) is close to the expected 1%, indicating the model assumptions are reasonably well met.
+
+**Residuals vs fitted values:**
+
+![anota2seq - residuals vs fitted](images/anota2seq/treated_vs_control.residual_vs_fitted.jpeg)
+
+This classic diagnostic plot shows residuals plotted against fitted values. Ideally, residuals should be randomly scattered around zero with constant variance (homoscedasticity).
+
+_In the test dataset:_ The residuals show a characteristic funnel shape with greater spread at lower fitted values, which is typical for count-based expression data. This heteroscedasticity is expected and accounted for by the RVM approach.
+
+**RVM fit for interactions:**
+
+![anota2seq - RVM fit for interactions](images/anota2seq/treated_vs_control.rvm_fit_for_interactions.jpg)
+
+The Random Variance Model (RVM) fit plot shows how well the empirical variance distribution matches the theoretical F-distribution. The left panel shows a Q-Q plot of empirical vs theoretical quantiles, and the right panel shows the cumulative distribution functions with a Kolmogorov-Smirnov test p-value.
+
+_In the test dataset:_ The KS p-value of 4.24e-09 indicates significant deviation from the theoretical distribution, suggesting the variance structure in this dataset differs from standard assumptions. This is not uncommon in real experimental data and the RVM approach helps account for such deviations.
+
+#### deltaTE visualizations
+
+The deltaTE method produces diagnostic plots for quality control and interpretation:
+
+- **Fold change plot**: The main visualization showing RNA-seq vs Ribo-seq log2 fold changes, with genes colored by their deltaTE classification (mRNA_abundance, translation, buffering, intensified). This provides direct visual comparison with anota2seq's equivalent plot.
+- **Interaction p-value distribution**: Histogram showing the distribution of adjusted p-values from the DESeq2 interaction term analysis.
+- **PCA plots**: Principal component analysis plots for both Ribo-seq and RNA-seq samples to assess sample relationships and identify potential batch effects.
+- **Heatmap**: Clustered heatmap of the most significantly regulated genes, showing expression patterns across samples.
+
+**PCA plots:**
+
+![deltaTE - Ribo-seq PCA](images/deltate/treatment_vs_control.pca_ribo.png)
+
+![deltaTE - RNA-seq PCA](images/deltate/treatment_vs_control.pca_rna.png)
+
+PCA plots help assess sample clustering and identify potential batch effects or outliers. In well-designed experiments, samples should cluster primarily by treatment condition rather than technical factors.
+
+_In the test dataset:_ Both PCA plots show clear separation between control (coral) and treated (teal) samples along PC1, which captures 57% of variance for Ribo-seq and 39% for RNA-seq. This indicates that the treatment effect is the dominant source of variation in both data types. The treated samples cluster together on the right side of PC1 in both plots, while control samples are distributed on the left, with one control sample (SRX11780879 in RNA-seq, SRX11780886 in Ribo-seq) showing some separation from other controls along PC2.
+
+**Expression heatmap:**
+
+![deltaTE - Expression heatmap](images/deltate/treatment_vs_control.heatmap.png)
+
+This clustered heatmap shows the expression patterns of the top 50 differentially translated genes (DTEGs) across all samples, with rows representing genes and columns representing samples. The color scale indicates normalized expression levels (Z-scores). Samples are annotated by condition (control/treated) and sequencing type (rnaseq/riboseq).
+
+_In the test dataset:_ The heatmap reveals distinct expression patterns between control and treated samples. Samples cluster hierarchically first by condition (control vs treated), with Ribo-seq control samples on the far left showing predominantly high expression (red), and treated samples showing lower expression (blue/purple) for most genes. The top 50 DTEGs show strong coordinated downregulation in treated samples compared to controls, particularly evident in the Ribo-seq data, reflecting the predominance of translation-down regulation in this dataset.
+
+#### Interpreting deltaTE diagnostic plots
+
+**Interaction p-value distribution:**
+
+![deltaTE - interaction p-value distribution](images/deltate/treatment_vs_control.interaction_p_distribution.png)
+
+This histogram shows the distribution of adjusted p-values from the interaction term in the DESeq2 model, which tests for differences in translational efficiency between conditions. For well-powered experiments with genuine translational regulation:
+
+- You should see a mixture of p-values with enrichment near 0 (significant genes) and relatively uniform distribution across higher p-values
+- A completely uniform distribution suggests no translational regulation effects
+- Heavy skewing toward 1.0 may indicate underpowered analysis or technical issues
+
+_In the test dataset:_ The distribution shows strong enrichment of small adjusted p-values (large peak near 0), indicating widespread translational regulation in this experimental system. The dashed red line marks the significance threshold (α = 0.05). The analysis identified 1,694 differentially translated genes (DTEGs), with translational regulation being the dominant mode of gene expression control.
+
+The deltaTE approach focuses on the key fold change visualization that directly shows the relationship between RNA and ribosome changes, making it easy to interpret translational regulation patterns. The **intensified** category (genes where translation amplifies RNA changes in the same direction) is unique to deltaTE and provides additional biological insights not available in anota2seq.
 
 ### MultiQC
 

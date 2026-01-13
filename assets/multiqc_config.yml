@@ -29,10 +29,15 @@ run_modules:
   - fastqc
   - cutadapt
   - fastp
+  - seqkit
+  - bbmap
   - sortmerna
+  - bowtie2
   - star
   - hisat2
   - rsem
+  - umitools
+  - umicollapse
   - salmon
   - kallisto
   - samtools
@@ -54,7 +59,6 @@ top_modules:
   - "salmon_deseq2_pca"
   - "salmon_deseq2_clustering"
   - "biotype_counts"
-  - "dupradar"
 
 module_order:
   - fastqc:
@@ -64,13 +68,33 @@ module_order:
         - "*_raw_fastqc.zip"
   - cutadapt
   - fastp
+  - seqkit:
+      name: "SeqKit Stats (rRNA removal)"
+      info: "Read length statistics used by RiboDetector for rRNA removal."
+      path_filters:
+        - "*.rrna_removal_stats.tsv"
+  - seqkit:
+      name: "SeqKit Stats (Ribo-seq read lengths)"
+      info: "Read length statistics for Ribo-seq samples used to determine trim length for RNA-seq read equalisation."
+      path_filters:
+        - "*.riboseq_readlength_stats.tsv"
   - fastqc:
       name: "FastQC (trimmed)"
       info: "This section of the report shows FastQC results after adapter trimming."
       path_filters:
         - "*_trimmed_fastqc.zip"
+  - bbmap
+  - bowtie2:
+      anchor: "bowtie2_rrna"
+      name: "Bowtie2 (rRNA removal)"
+      info: "Bowtie2 alignment statistics for rRNA removal. Reads were aligned against an rRNA reference to filter out ribosomal RNA contamination."
   - star
   - samtools
+  - salmon:
+      name: "Salmon"
+      info: "Salmon transcript quantification."
+  - umitools
+  - umicollapse
   - ribotish
 
 # Don't show % Dups in the General Stats table (we have this from Picard)
@@ -99,6 +123,20 @@ sp:
 
   sortmerna:
     fn: "*.sortmerna.log"
+
+  bbmap/bbsplit:
+    fn: "*.stats.txt"
+
+  bowtie2:
+    fn: "*.bowtie2.log"
+
+  umitools/extract:
+    fn: "*.umi_extract.log"
+  umitools/dedup:
+    fn: "*.umi_dedup*.log"
+
+  umicollapse:
+    fn: "*_UMICollapse.log"
 
   hisat2:
     fn: "*.hisat2.summary.log"
@@ -166,6 +204,12 @@ sp:
 
   ribotish/qual:
     fn: "*_qual.txt"
+
+  seqkit/stats:
+    fn: "*_stats.tsv"
+
+fn_ignore_files:
+  - "*umi_dedup.transcriptome.sorted.log"
 
 # See https://github.com/ewels/MultiQC_TestData/blob/master/data/custom_content/with_config/table_headerconfig/multiqc_config.yaml
 custom_data:

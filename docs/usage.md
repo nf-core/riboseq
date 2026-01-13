@@ -104,6 +104,7 @@ SRX11780890,SRX11780890_SRR15480793_chr20_1.fastq.gz,,auto,riboseq,Ribo-seq_P400
 | `fastq_2`      | Full path to FastQ file for Illumina short reads 2. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
 | `strandedness` | Sample strand-specificity. Must be one of `unstranded`, `forward`, `reverse` or `auto`.                                                                                                |
 | `type`         | Type of sample. Must be one of `riboseq`, `rnaseq` or `tiseq`                                                                                                                          |
+| `trim_length`  | (Optional) Target read length for read length equalisation. See [Read length equalisation](#read-length-equalisation).                                                                 |
 
 An [example samplesheet](../assets/samplesheet.csv) has been provided with the pipeline.
 
@@ -155,6 +156,63 @@ nextflow run nf-core/riboseq --ribo_removal_tool ribodetector ...
 ```
 
 RiboDetector automatically determines read length from your data and uses its pre-trained neural network model to classify reads.
+
+## Read length equalisation
+
+When comparing RNA-seq and Ribo-seq data for translational efficiency analysis, the read lengths differ substantially: RNA-seq reads are typically 75-150bp while Ribo-seq ribosome-protected fragments are 26-34bp. The pipeline provides an optional read length equalisation feature that trims RNA-seq reads to match Ribo-seq lengths before quantification. This can be enabled with the `--equalise_read_lengths` parameter.
+
+### How it works
+
+1. **Target length determination**: For each RNA-seq sample, the target trim length is determined by (in priority order):
+   - Per-sample `trim_length` column in the samplesheet
+   - Global `--equalise_read_lengths_target` parameter
+   - Average length derived from the paired Ribo-seq sample (via `seqkit stats`)
+2. **Ribo-seq read length measurement**: `seqkit stats` is only run on Ribo-seq samples that have paired RNA-seq samples needing length derivation (i.e., when neither a per-sample `trim_length` nor global target is specified)
+3. **Trimming**: RNA-seq reads are hard-trimmed from the 5' end using TrimGalore's `--hardtrim5` option
+4. **Paired-end handling**: For paired-end RNA-seq, only R1 is retained (preserving 5' position information)
+
+If none of these sources provide a trim length for an RNA-seq sample, the pipeline will exit with an error.
+
+### When to use
+
+By default, the pipeline does **not** equalise read lengths. The pipeline uses STAR for alignment followed by Salmon in alignment-based mode, which applies effective length normalisation at quantification.
+
+However, for translational efficiency (TE) analysis, read length differences can introduce bias. TE is calculated as the ratio of Ribo-seq to RNA-seq abundance - a statistical interaction, not just a comparison. When 30nt Ribo-seq reads and 150nt RNA-seq reads map to different "effective transcriptomes" (due to mappability differences), the ratio itself becomes skewed. Regions may appear translationally silent simply because short Ribo-seq reads couldn't map uniquely there.
+
+Consider enabling `--equalise_read_lengths` if:
+
+- You are performing TE analysis (deltaTE, anota2seq, Xtail, Riborex) and want matched mappability between modalities
+- Your analysis protocol requires matched read lengths for methodological consistency
+- You are replicating methods from publications that use this approach
+
+> **Alternative approach**: Instead of trimming, you can use `--te_quantification_method pseudo` which runs Salmon pseudo-alignment for both modalities using the same k-mer index. This may help address length-related quantification biases without discarding sequence information. See [Quantification method](#quantification-method) for details.
+
+### Trade-offs
+
+When using read length equalisation, be aware that:
+
+- For paired-end RNA-seq, only R1 is retained after trimming
+- Shorter reads may have higher multi-mapping rates
+- Some information from the original RNA-seq reads is discarded
+
+### Example usage
+
+```bash
+nextflow run nf-core/riboseq \
+    --equalise_read_lengths \
+    --input samplesheet.csv \
+    ...
+```
+
+Or with a global target length (useful when you don't have paired samples):
+
+```bash
+nextflow run nf-core/riboseq \
+    --equalise_read_lengths \
+    --equalise_read_lengths_target 28 \
+    --input samplesheet.csv \
+    ...
+```
 
 ## Alignment options
 
@@ -244,21 +302,86 @@ The pipeline will by default run [riboWaltz](https://github.com/LabTranslational
 
 If you have paired RNA-seq and Riboseq samples, you can use this workflow to initiate a translational efficiency analysis.
 
+The pipeline supports two methods for translational efficiency analysis:
+
+### anota2seq (default)
+
 Translational efficiency analysis as conducted by [anota2seq](https://bioconductor.org/packages/release/bioc/html/anota2seq.html) involves the integrated analysis of RNA-seq and Ribo-seq data to discern changes in translational efficiency across different experimental conditions. It quantitatively assesses how variations in mRNA abundance and ribosome occupancy lead to alterations in protein synthesis, enabling the identification of genes with post-transcriptional and translational regulation.
 
-anota2seq studies differences between conditions for both RNA-seq and Ribo-seq samples. It also assesses combined results from two measures as they relate to one another:
+### deltaTE
 
-- Differences in translation (Riboseq abundance values) driven by changes in overall RNA-seq abundance values
-- Differences in translation not occuring as a result of overall RNA levels
-- Changes in total RNA levels that do not lead to increased translation ('buffering'):
+Alternatively, you can use the deltaTE method by specifying `--translational_efficiency_method deltate`. The deltaTE method, based on [Chothani et al. (2019)](https://currentprotocols.onlinelibrary.wiley.com/doi/10.1002/cpmb.108), uses DESeq2 with an interaction model to detect differentially translated genes (DTEGs). It integrates Ribo-seq and RNA-seq data to identify genes with significant changes in translational efficiency, classifying them into biological categories based on their regulatory patterns.
 
-This table may help:
+Both methods analyze differences between conditions for RNA-seq and Ribo-seq samples, but use different statistical frameworks to identify translational regulation.
 
-| Aspect      | RNAseq    | Riboseq   |
-| ----------- | --------- | --------- |
-| Abundance   | Changed   | Changed   |
-| Translation | Unchanged | Changed   |
-| Buffering   | Changed   | Unchanged |
+### Method comparison
+
+**anota2seq** studies differences between conditions for both RNA-seq and Ribo-seq samples. It also assesses combined results from two measures as they relate to one another:
+
+- **mRNA abundance**: Changes in total RNA levels that lead to corresponding changes in translation
+- **Translation**: Differences in translation not occurring as a result of overall RNA levels
+- **Buffering**: Changes in total RNA levels that do not lead to increased translation
+
+**deltaTE** classifies genes based on statistical significance patterns:
+
+- **mRNA_abundance**: RNA changes forwarded to translation without net translational efficiency changes
+- **Translation**: Pure translational regulation - ribosome changes without mRNA changes
+- **Buffering**: Translation dampens RNA changes (opposite directional effects)
+- **Intensified**: Translation amplifies RNA changes (same direction, deltaTE-specific)
+
+This table summarizes the conceptual framework:
+
+| Category       | RNA-seq   | Ribo-seq        | Translational Efficiency |
+| -------------- | --------- | --------------- | ------------------------ |
+| mRNA abundance | Changed   | Changed         | Unchanged                |
+| Translation    | Unchanged | Changed         | Changed                  |
+| Buffering      | Changed   | Stable/Opposite | Changed                  |
+| Intensified\*  | Changed   | Amplified       | Changed                  |
+
+\*Intensified is specific to the deltaTE method.
+
+### Method selection
+
+By default, the pipeline uses anota2seq for translational efficiency analysis. To use the deltaTE method instead, specify:
+
+```bash
+--translational_efficiency_method deltate
+```
+
+Both methods require the same input format and contrasts specification, but produce different output files and use different statistical approaches.
+
+### Quantification method
+
+The pipeline offers two methods for quantifying gene expression for TE analysis, controlled by the `--te_quantification_method` parameter:
+
+#### Alignment-based (default)
+
+```bash
+--te_quantification_method alignment
+```
+
+This is the default method. Reads are aligned with STAR, and Salmon quantifies from the transcriptome BAM in alignment-based mode. This approach leverages full alignment information and is suitable for most analyses.
+
+#### Pseudo-alignment
+
+```bash
+--te_quantification_method pseudo
+```
+
+Uses Salmon pseudo-alignment directly from reads for both Ribo-seq and RNA-seq samples. This is an **experimental alternative** that:
+
+- Applies the same k-mer index and quantification algorithm to both modalities
+- May help reduce length-related quantification biases without requiring read trimming
+- Uses a k-mer size of 23 by default, suitable for short Ribo-seq reads. Adjust with `--pseudo_aligner_kmer_size` if needed.
+
+Consider this option when:
+
+- You want to avoid the information loss from read length equalisation trimming
+- You prefer k-mer-based quantification for methodological consistency between modalities
+
+> **Note**: The pseudo-alignment pathway runs **in addition to** the standard STAR alignment, which is still needed for position-dependent analyses (P-sites, ribosome periodicity, ORF detection). The pseudo-alignment counts are only used for TE analysis.
+
+### Contrasts specification
 
 To carry out this analysis, the pipeline must be supplied with one or more 'contrasts' describing the comparison to be made.
 
@@ -269,14 +392,17 @@ id,variable,reference,target,batch,pair
 treated_vs_control,treatment,control,treated,,pair
 ```
 
-This describes how to compare groups of samples between treament groups, and between RNA-seq and Ribo-seq. In order the columns are:
+This describes how to compare groups of samples between treatment groups, and between RNA-seq and Ribo-seq. In order the columns are:
 
 - `id`: a unique identifier to use for the contrast
-- 'variable`: which vaiable (column) of the sample sheet should be used to separate the treatment groups?
-- `reference`: which value of the variable column should be used to select samples to be used as the reference/ base group?
+- `variable`: which variable (column) of the sample sheet should be used to separate the treatment groups?
+- `reference`: which value of the variable column should be used to select samples to be used as the reference/base group?
 - `target`: which value of the variable column should be used to select samples to be used as the target/treated group?
-- `batch`: (optional) specify a variable in the sample sheet that defines sample batches
-- `pair`: (optional) specify a variable in the sample shet that defines sample pairing between RNA-seq and Ribo-seq samples. If not specified, it is assumed that the two types of sample are ordered the same.
+- `batch`: (optional) specify a variable in the sample sheet that defines sample batches for batch effect correction in anota2seq
+- `pair`: (optional) specify a variable in the sample sheet that defines sample pairing between RNA-seq and Ribo-seq samples. If not specified, it is assumed that the two types of sample are ordered the same.
+
+> [!NOTE]
+> The analysis automatically subsets the count data to only the samples involved in each contrast. Additional anota2seq options can be passed via `--extra_anota2seq_run_args` (see parameter documentation for details).
 
 ## Running the pipeline
 
