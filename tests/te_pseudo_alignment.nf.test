@@ -1,0 +1,38 @@
+nextflow_pipeline {
+
+    name "Test pipeline with TE pseudo-alignment"
+    script "../main.nf"
+    tag "pipeline"
+    tag "pipeline_riboseq"
+    tag "te_pseudo"
+
+
+    test("-profile test --te_quantification_method pseudo") {
+
+        when {
+            params {
+                outdir = "$outputDir"
+                te_quantification_method = 'pseudo'
+                ribo_removal_tool = 'bowtie2'
+            }
+        }
+
+        then {
+            // stable_name: All files + folders in ${params.outdir}/ with a stable name
+            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
+            // stable_path: All files in ${params.outdir}/ with stable content
+            def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
+            assertAll(
+                { assert workflow.success},
+                { assert snapshot(
+                    // pipeline versions.yml file for multiqc from which Nextflow version is removed because we test pipelines on multiple Nextflow versions
+                    removeNextflowVersion("$outputDir/pipeline_info/nf_core_riboseq_software_mqc_versions.yml"),
+                    // All stable path name, with a relative path
+                    stable_name,
+                    // All files with stable contents
+                    stable_path
+                ).match() }
+            )
+        }
+    }
+}

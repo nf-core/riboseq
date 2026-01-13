@@ -90,6 +90,9 @@ module_order:
       info: "Bowtie2 alignment statistics for rRNA removal. Reads were aligned against an rRNA reference to filter out ribosomal RNA contamination."
   - star
   - samtools
+  - salmon:
+      name: "Salmon"
+      info: "Salmon transcript quantification."
   - umitools
   - umicollapse
   - ribotish
