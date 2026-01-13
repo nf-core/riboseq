@@ -1268,7 +1268,7 @@
                 "fastqc_sequence_duplication_levels_plot.txt:md5,77d6e3d36b8c93f25e2d4cdbadd018d3",
                 "fastqc_sequence_length_distribution_plot.txt:md5,d3f33f3eda7927b061fc3cdec99e8f4e",
                 "multiqc_bowtie2_bowtie2_rrna.txt:md5,3370acc7d4ccbfb2c7535f2c962449ed",
-                "multiqc_citations.txt:md5,b855e8ba279b140e3a252c5c29156b91",
+                "multiqc_citations.txt:md5,96f75160a177c9f907fc9b5365ffe449",
                 "multiqc_cutadapt.txt:md5,e6031ab468a23c95b6989a6ce9e081f5",
                 "multiqc_fastqc.txt:md5,435f987c78b50ab1dfe18640246f580b",
                 "multiqc_fastqc_fastqc-1.txt:md5,c8ce8940114de9321e6de124b6cb4c18",
