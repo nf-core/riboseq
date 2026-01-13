@@ -42,7 +42,7 @@
 
 - [RiboCode](https://pubmed.ncbi.nlm.nih.gov/29538776/)
 
-  > Zhengtao Xiao, Rongyao Huang, Xudong Xing, Yuling Chen, Haiteng Deng, Xuerui Yang. De novo annotation and characterization of the translatome with ribosome profiling data Nucleic Acids Res. 2018 Jun 1;46(10):e61. doi: 10.1093/nar/gky179. PMID: 29538776 PMCID: PMC6007384 
+  > Zhengtao Xiao, Rongyao Huang, Xudong Xing, Yuling Chen, Haiteng Deng, Xuerui Yang. De novo annotation and characterization of the translatome with ribosome profiling data Nucleic Acids Res. 2018 Jun 1;46(10):e61. doi: 10.1093/nar/gky179. PMID: 29538776 PMCID: PMC6007384
 
 - [riboWaltz](https://pubmed.ncbi.nlm.nih.gov/30102689/)
 
