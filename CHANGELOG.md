@@ -24,15 +24,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Parameters`
 
-| Old parameter | New parameter                      |
-| ------------- | ---------------------------------- |
-|               | `--ribo_removal_tool`              |
-|               | `--skip_ribocode`                  |
-|               | `--extra_ribocode_gtfupdate_args`  |
-|               | `--extra_ribocode_prepare_args`    |
-|               | `--extra_ribocode_metaplots_args`  |
-|               | `--extra_ribocode_ribocode_args`   |
+| Old parameter | New parameter                       |
+| ------------- | ----------------------------------- |
 |               | `--ribo_removal_tool`               |
+|               | `--skip_ribocode`                   |
+|               | `--extra_ribocode_gtfupdate_args`   |
+|               | `--extra_ribocode_prepare_args`     |
+|               | `--extra_ribocode_metaplots_args`   |
+|               | `--extra_ribocode_ribocode_args`    |
 |               | `--translational_efficiency_method` |
 |               | `--extra_deltate_args`              |
 |               | `--te_lfc_threshold`                |
