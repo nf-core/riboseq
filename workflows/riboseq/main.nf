@@ -35,6 +35,7 @@ include { RIBOTRICER_DETECTORFS                                } from '../../mod
 include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../modules/nf-core/anota2seq/anota2seqrun'
 include { DESEQ2_DELTATE                                       } from '../../modules/local/deseq2/deltate'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
+include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_PSEUDO_TE      } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
 include { RIBOWALTZ                                            } from '../../modules/nf-core/ribowaltz/main'
 
 /*
@@ -69,6 +70,7 @@ workflow RIBOSEQ {
     ch_transcript_fasta // channel: path(transcript.fasta)
     ch_star_index       // channel: path(star/index/)
     ch_salmon_index     // channel: path(salmon/index/)
+    ch_salmon_index_te  // channel: path(salmon_te/index/) - for TE pseudo-alignment
     ch_bbsplit_index    // channel: path(bbsplit/index/)
     ch_rrna_fastas      // channel: path(fasta)
     ch_sortmerna_index  // channel: path(sortmerna/index/)
@@ -366,6 +368,38 @@ workflow RIBOSEQ {
         null
     )
     ch_versions = ch_versions.mix(QUANTIFY_STAR_SALMON.out.versions)
+    ch_multiqc_files = ch_multiqc_files.mix(QUANTIFY_STAR_SALMON.out.multiqc.collect{it[1]}.ifEmpty([]))
+
+    //
+    // SUBWORKFLOW: Pseudo-alignment quantification for TE analysis (when enabled)
+    // Uses direct Salmon pseudo-alignment with a lower k-mer index optimized for short Ribo-seq reads
+    //
+
+    ch_te_counts = QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled  // Default: use alignment-based counts
+
+    if (params.te_quantification_method == 'pseudo' && ch_contrasts_file) {
+        // Filter reads to only riboseq and rnaseq for TE pseudo-alignment
+        ch_reads_for_te = ch_reads_for_alignment
+            .filter { meta, reads -> meta.sample_type in ['riboseq', 'rnaseq'] }
+
+        QUANTIFY_PSEUDO_TE (
+            ch_samplesheet.map { [ [:], it ] },
+            ch_reads_for_te,
+            ch_salmon_index_te,
+            ch_transcript_fasta,
+            ch_gtf,
+            params.gtf_group_features,
+            params.gtf_extra_attributes,
+            'salmon',
+            false,  // alignment_mode = false (pseudo-alignment from reads)
+            params.salmon_quant_libtype ?: '',
+            null,
+            null
+        )
+        ch_versions = ch_versions.mix(QUANTIFY_PSEUDO_TE.out.versions)
+        ch_multiqc_files = ch_multiqc_files.mix(QUANTIFY_PSEUDO_TE.out.multiqc.collect{it[1]}.ifEmpty([]))
+        ch_te_counts = QUANTIFY_PSEUDO_TE.out.counts_gene_length_scaled
+    }
 
     //
     // Do a translational efficiency analysis where contrasts are supplied
@@ -377,7 +411,7 @@ workflow RIBOSEQ {
             .splitCsv ( header:true, sep:',' )
             .map{[it, it.variable, it.reference, it.target]}
 
-        ch_samplesheet_matrix = QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled
+        ch_samplesheet_matrix = ch_te_counts
             .combine(ch_samplesheet)
             .map{[it[0], it[2], it[1]]}
             .first()
