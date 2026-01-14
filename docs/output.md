@@ -31,9 +31,11 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
   - [Riboseq-specific QC](#riboseq-specific-qc)
     - [Ribo-TISH quality](#ribo-tish-quality)
     - [Ribotricer detect-orfs QC outputs](#ribotricer-detect-orfs-qc-outputs)
+    - [RiboCode metaplots](#ribocode-metaplots)
   - [ORF predictions](#orf-predictions)
     - [Ribo-TISH predict](#ribo-tish-predict)
     - [Ribotricer detect-orfs](#ribotricer-detect-orfs)
+    - [RiboCode](#ribocode)
   - [P-site identification](#p-site-identification)
     - [riboWaltz](#ribowaltz)
     - [plastid](#plastid)
@@ -315,6 +317,16 @@ Read distribution metrics around annotated protein coding regions or based on al
   - `*_metagene_profiles_3p.tsv`: Metagene profile aligning with the stop codon
   </details>
 
+### RiboCode metaplots
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `riboseq_qc/ribocode/`
+  - `*_config.txt`: Configuration file containing P-site offsets for different read lengths
+  - `*.pdf`: Metaplot showing read density around start and stop codons
+  </details>
+
 ## ORF predictions
 
 ### Ribo-TISH predict
@@ -340,6 +352,16 @@ Read distribution metrics around annotated protein coding regions or based on al
 - `orf_predictions/ribotricer/`
   - `*_translating_ORFs.tsv` TSV with ORFs assessed as translating in the assocciated BAM file
   - `*_psite_offsets.txt`: If the P-site offsets are not provided, txt file containing the derived relative offsets
+  </details>
+
+### RiboCode
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `orf_predictions/ribocode/`
+  - `*.txt`: ORF predictions with coordinates, read counts, and translation scores
+  - `*_collapsed.txt`: Collapsed ORF predictions removing redundant isoforms
   </details>
 
 ## P-site identification

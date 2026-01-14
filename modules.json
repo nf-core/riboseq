@@ -110,6 +110,26 @@
                         "git_sha": "8d66ebdfc2e09f449c03dcb3a08a9ee13f0412d3",
                         "installed_by": ["modules"]
                     },
+                    "ribocode/gtfupdate": {
+                        "branch": "master",
+                        "git_sha": "3b13c6d5817ba9611477a7aa37120d9a9e50fff0",
+                        "installed_by": ["modules"]
+                    },
+                    "ribocode/metaplots": {
+                        "branch": "master",
+                        "git_sha": "3b13c6d5817ba9611477a7aa37120d9a9e50fff0",
+                        "installed_by": ["modules"]
+                    },
+                    "ribocode/prepare": {
+                        "branch": "master",
+                        "git_sha": "3b13c6d5817ba9611477a7aa37120d9a9e50fff0",
+                        "installed_by": ["modules"]
+                    },
+                    "ribocode/ribocode": {
+                        "branch": "master",
+                        "git_sha": "3b13c6d5817ba9611477a7aa37120d9a9e50fff0",
+                        "installed_by": ["modules"]
+                    },
                     "ribodetector": {
                         "branch": "master",
                         "git_sha": "61ce58ac3e4e4627d9c1cdc958ee6bfa742a0a75",

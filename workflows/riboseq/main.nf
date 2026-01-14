@@ -32,6 +32,10 @@ include { RIBOTISH_PREDICT as RIBOTISH_PREDICT_INDIVIDUAL      } from '../../mod
 include { RIBOTISH_PREDICT as RIBOTISH_PREDICT_ALL             } from '../../modules/nf-core/ribotish/predict'
 include { RIBOTRICER_PREPAREORFS                               } from '../../modules/nf-core/ribotricer/prepareorfs'
 include { RIBOTRICER_DETECTORFS                                } from '../../modules/nf-core/ribotricer/detectorfs'
+include { RIBOCODE_GTFUPDATE                                   } from '../../modules/nf-core/ribocode/gtfupdate'
+include { RIBOCODE_PREPARE                                     } from '../../modules/nf-core/ribocode/prepare'
+include { RIBOCODE_METAPLOTS                                   } from '../../modules/nf-core/ribocode/metaplots'
+include { RIBOCODE_RIBOCODE                                    } from '../../modules/nf-core/ribocode/ribocode'
 include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../modules/nf-core/anota2seq/anota2seqrun'
 include { DESEQ2_DELTATE                                       } from '../../modules/local/deseq2/deltate'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
@@ -324,6 +328,44 @@ workflow RIBOSEQ {
             RIBOTRICER_PREPAREORFS.out.candidate_orfs
         )
         ch_versions = ch_versions.mix(RIBOTRICER_DETECTORFS.out.versions)
+    }
+
+    if (!params.skip_ribocode){
+        // RiboCode requires transcriptome BAMs
+        ch_transcriptome_bams_for_ribocode = ch_transcriptome_bam
+            .branch { meta, bam ->
+                riboseq: meta.sample_type == 'riboseq'
+                    return [ meta, bam ]
+            }
+            .riboseq
+
+        // Step 1: Update GTF annotation
+        RIBOCODE_GTFUPDATE(
+            ch_gtf.map { [ [:], it ] }.first()
+        )
+
+        // Step 2: Prepare annotation files
+        RIBOCODE_PREPARE(
+            ch_fasta.map { [ [:], it ] }.first(),
+            RIBOCODE_GTFUPDATE.out.gtf
+        )
+
+        // Step 3: Generate metaplots and config for each sample
+        RIBOCODE_METAPLOTS(
+            ch_transcriptome_bams_for_ribocode,
+            RIBOCODE_PREPARE.out.annotation
+        )
+
+        // Step 4: Run RiboCode ORF detection
+        // Join BAMs with their corresponding config files by meta
+        ch_ribocode_inputs = ch_transcriptome_bams_for_ribocode
+            .join(RIBOCODE_METAPLOTS.out.config)
+
+        RIBOCODE_RIBOCODE(
+            ch_ribocode_inputs.map { meta, bam, config -> [ meta, bam ] },
+            RIBOCODE_PREPARE.out.annotation,
+            ch_ribocode_inputs.map { meta, bam, config -> [ meta, config ] }
+        )
     }
 
 

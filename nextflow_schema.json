@@ -451,6 +451,22 @@
                     "type": "string",
                     "description": "Extra arguments to pass to the ribotricer detect-orfs command in addition to defaults defined by the pipeline."
                 },
+                "extra_ribocode_gtfupdate_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to the RiboCode GTFupdate command in addition to defaults defined by the pipeline."
+                },
+                "extra_ribocode_prepare_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to the RiboCode prepare_transcripts command in addition to defaults defined by the pipeline."
+                },
+                "extra_ribocode_metaplots_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to the RiboCode metaplots command in addition to defaults defined by the pipeline."
+                },
+                "extra_ribocode_ribocode_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to the RiboCode command in addition to defaults defined by the pipeline."
+                },
                 "extra_ribowaltz_args": {
                     "type": "string",
                     "description": "Extra arguments to pass to the riboWaltz command in addition to defaults defined by the pipeline."
@@ -664,6 +680,11 @@
                 "skip_ribotricer": {
                     "type": "boolean",
                     "description": "Skip Riboricer.",
+                    "fa_icon": "fas fa-fast-forward"
+                },
+                "skip_ribocode": {
+                    "type": "boolean",
+                    "description": "Skip RiboCode.",
                     "fa_icon": "fas fa-fast-forward"
                 },
                 "skip_ribowaltz": {
