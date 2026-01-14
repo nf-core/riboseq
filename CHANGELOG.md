@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#135](https://github.com/nf-core/riboseq/pull/135) - Add optional read length equalisation to trim RNA-seq reads to match Ribo-seq lengths before quantification ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#136](https://github.com/nf-core/riboseq/pull/136) - Add RiboCode ORF detection with P-site analysis and metaplots ([@JackCurragh](https://github.com/JackCurragh))
 - [#138](https://github.com/nf-core/riboseq/pull/138) - Add MultiQC configuration for BBSplit, Bowtie2 rRNA removal, UMItools, and UMIcollapse ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#140](https://github.com/nf-core/riboseq/pull/140) - Add P-site identification using plastid ([@suhrig](https://github.com/suhrig))
 
 ### `Fixed`
 
@@ -24,27 +25,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Parameters`
 
-| Old parameter | New parameter                       |
-| ------------- | ----------------------------------- |
-|               | `--ribo_removal_tool`               |
-|               | `--skip_ribocode`                   |
-|               | `--extra_ribocode_gtfupdate_args`   |
-|               | `--extra_ribocode_prepare_args`     |
-|               | `--extra_ribocode_metaplots_args`   |
-|               | `--extra_ribocode_ribocode_args`    |
-|               | `--translational_efficiency_method` |
-|               | `--extra_deltate_args`              |
-|               | `--te_lfc_threshold`                |
-|               | `--rna_lfc_threshold`               |
-|               | `--ribo_lfc_threshold`              |
-|               | `--equalise_read_lengths`           |
-|               | `--equalise_read_lengths_target`    |
+| Old parameter | New parameter                            |
+| ------------- | ---------------------------------------- |
+|               | `--ribo_removal_tool`                    |
+|               | `--skip_ribocode`                        |
+|               | `--extra_ribocode_gtfupdate_args`        |
+|               | `--extra_ribocode_prepare_args`          |
+|               | `--extra_ribocode_metaplots_args`        |
+|               | `--extra_ribocode_ribocode_args`         |
+|               | `--translational_efficiency_method`      |
+|               | `--extra_deltate_args`                   |
+|               | `--te_lfc_threshold`                     |
+|               | `--rna_lfc_threshold`                    |
+|               | `--ribo_lfc_threshold`                   |
+|               | `--equalise_read_lengths`                |
+|               | `--equalise_read_lengths_target`         |
+|               | `--skip_plastid`                         |
+|               | `--plastid_min_length`                   |
+|               | `--plastid_max_length`                   |
+|               | `--plastid_default_psite_offset`         |
+|               | `--extra_plastid_metagene_generate_args` |
+|               | `--extra_plastid_psite_args`             |
+|               | `--extra_plastid_make_wiggle_args`       |
 
 ### `Dependencies`
 
 | Dependency | Old version | New version |
 | ---------- | ----------- | ----------- |
 | `MultiQC`  | 1.32        | 1.33        |
+| `plastid`  |             | 0.6.1       |
 
 ## v1.2.0 - 2025-12-03
 

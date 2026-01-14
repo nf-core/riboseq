@@ -38,6 +38,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
     - [RiboCode](#ribocode)
   - [P-site identification](#p-site-identification)
     - [riboWaltz](#ribowaltz)
+    - [plastid](#plastid)
   - [Quantification](#quantification)
   - [Translational efficiency](#translational-efficiency)
     - [MultiQC](#multiqc)
@@ -391,6 +392,19 @@ P-sites are identified by passing transcriptome-level alignment BAM files to rib
   - `*.frames.pdf`: P-site frame distribution per sample
   - `*.frames_stratified.pdf`: P-site frame distribution for each read length per sample
   - `*.codon_usage.pdf`: Codon usage index per sample
+
+  </details>
+
+P-sites are identified by passing genome-level alignment BAM files to plastid, producing the following outputs:
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `plastid/`
+  - `*.filtered_rois.bed` and `*.filtered_rois.txt`: Position of CDS start for each gene in BED or TXT format; used for metagene analysis
+  - `*_metagene_profiles.txt`: Matrix containing the distances of the 5' read ends to the CDS start position for each read length
+  - `*_p_offsets.png`: Graphical illustrations of the metagene profiles
+  - `*_p_offsets.txt`: Selected Optimal p-site offset for each read length
 
   </details>
 

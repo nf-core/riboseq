@@ -41,6 +41,9 @@ include { DESEQ2_DELTATE                                       } from '../../mod
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_PSEUDO_TE      } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
 include { RIBOWALTZ                                            } from '../../modules/nf-core/ribowaltz/main'
+include { PLASTID_METAGENE_GENERATE                            } from '../../modules/nf-core/plastid/metagene_generate/main'
+include { PLASTID_PSITE                                        } from '../../modules/nf-core/plastid/psite/main'
+include { PLASTID_MAKE_WIGGLE                                  } from '../../modules/nf-core/plastid/make_wiggle/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -396,6 +399,25 @@ workflow RIBOSEQ {
             ch_fasta.map { [ [:], it ] })
 
         ch_versions = ch_versions.mix(RIBOWALTZ.out.versions)
+    }
+
+    if (!params.skip_plastid) {
+
+        PLASTID_METAGENE_GENERATE(ch_gtf.map { [ [:], it ] })
+        ch_versions = ch_versions.mix(PLASTID_METAGENE_GENERATE.out.versions)
+
+        PLASTID_PSITE(
+            ch_bams_for_analysis,
+            PLASTID_METAGENE_GENERATE.out.rois_txt
+        )
+        ch_versions = ch_versions.mix(PLASTID_PSITE.out.versions)
+
+        PLASTID_MAKE_WIGGLE(
+            ch_bams_for_analysis.join(PLASTID_PSITE.out.p_offsets, by: [0]),
+            "fiveprime_variable"
+        )
+        ch_versions = ch_versions.mix(PLASTID_MAKE_WIGGLE.out.versions)
+
     }
 
     //
