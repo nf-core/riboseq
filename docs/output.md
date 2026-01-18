@@ -447,6 +447,18 @@ Raw outputs from Salmon are available for each sample:
 
   </details>
 
+When the parameter `--te_quantification_method plastid_psite` is used, the following additional outputs are generated:
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `quantification/inframe_psite/`
+  - `gene_counts_length_scaled.tsv`: Count matrix containing alignment-based RNA-seq expression quantification and Ribo-seq quantification based on in-frame P-sites.
+
+  </details>
+
+
+
 ## Translational efficiency
 
 The pipeline supports two methods for translational efficiency analysis: anota2seq (default) and deltaTE. The method used depends on the `--translational_efficiency_method` parameter.

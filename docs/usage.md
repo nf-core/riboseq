@@ -354,7 +354,7 @@ Both methods require the same input format and contrasts specification, but prod
 
 ### Quantification method
 
-The pipeline offers two methods for quantifying gene expression for TE analysis, controlled by the `--te_quantification_method` parameter:
+The pipeline offers three methods for quantifying gene expression for TE analysis, controlled by the `--te_quantification_method` parameter:
 
 #### Alignment-based (default)
 
@@ -382,6 +382,17 @@ Consider this option when:
 - You prefer k-mer-based quantification for methodological consistency between modalities
 
 > **Note**: The pseudo-alignment pathway runs **in addition to** the standard STAR alignment, which is still needed for position-dependent analyses (P-sites, ribosome periodicity, ORF detection). The pseudo-alignment counts are only used for TE analysis.
+
+#### In-frame P-sites
+
+```bash
+--te_quantification_method plastid_psite
+```
+
+In this mode, the RNA-seq reads are quantified using the default alignment-based quantification and the Ribo-seq reads are counted only when they map to coding regions and only when their P-sites (as determined by Plastid) coincide with the reading frame of the coding regions. This is an **experimental mode** which applies conservative filters to Ribo-seq quantification. Consider this option when:
+
+- You suspect frame-shifted ORF overlaps
+- You want to discard Ribo-seq reads which do not map to annotated ORFs
 
 ### Contrasts specification
 

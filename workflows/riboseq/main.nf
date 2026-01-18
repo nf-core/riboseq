@@ -44,6 +44,7 @@ include { RIBOWALTZ                                            } from '../../mod
 include { PLASTID_METAGENE_GENERATE                            } from '../../modules/nf-core/plastid/metagene_generate/main'
 include { PLASTID_PSITE                                        } from '../../modules/nf-core/plastid/psite/main'
 include { PLASTID_MAKE_WIGGLE                                  } from '../../modules/nf-core/plastid/make_wiggle/main'
+include { QUANTIFY_INFRAME_PSITE                               } from '../../modules/local/quantify_inframe_psite'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -463,6 +464,23 @@ workflow RIBOSEQ {
         ch_versions = ch_versions.mix(QUANTIFY_PSEUDO_TE.out.versions)
         ch_multiqc_files = ch_multiqc_files.mix(QUANTIFY_PSEUDO_TE.out.multiqc.collect{it[1]}.ifEmpty([]))
         ch_te_counts = QUANTIFY_PSEUDO_TE.out.counts_gene_length_scaled
+    }
+
+    if (params.te_quantification_method == 'plastid_psite') {
+        // Collect p-site tracks from plastid
+        ch_merged_tracks = PLASTID_MAKE_WIGGLE.out.tracks
+            .map{ meta, tracks -> [[meta.id, tracks[0], tracks[1]]] }
+            .collect()
+            .map{ sample -> [sample.collect{it[0]}, sample.collect{it[1]}, sample.collect{it[2]}]} // id, forward_bedgraph, reverse_bedgraph
+
+        QUANTIFY_INFRAME_PSITE(
+            ch_merged_tracks,
+            QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled,
+            ch_gtf.map { [ [:], it ] },
+            'gene'
+        )
+        ch_te_counts = QUANTIFY_INFRAME_PSITE.out.counts_length_scaled
+        ch_versions = ch_versions.mix(QUANTIFY_INFRAME_PSITE.out.versions)
     }
 
     //
