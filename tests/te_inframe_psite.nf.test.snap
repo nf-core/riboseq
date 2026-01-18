@@ -1308,7 +1308,7 @@
                 "SRX11780890.codon_coverage_rpf.tsv.gz:md5,fc28b1c4b672c3f94111a27392a0fa9c",
                 "SRX11780890.psite.tsv.gz:md5,163ab7bbceea7f1e55361552b295e56c",
                 "SRX11780890.psite_offset.tsv.gz:md5,b42eac3c4b9e4c9b0af3be1aeb87907b",
-                "gene_counts_length_scaled.tsv:md5,f464113b2507cd9a8c1a33cad00532d3",
+                "gene_counts_length_scaled.tsv:md5,65a5859277a446535f86b416a36c2bcc",
                 "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
@@ -1379,6 +1379,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.2"
         },
-        "timestamp": "2026-01-18T16:17:48.671160943"
+        "timestamp": "2026-01-18T20:15:01.238473863"
     }
 }
