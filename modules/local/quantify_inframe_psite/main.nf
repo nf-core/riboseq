@@ -41,35 +41,35 @@ process QUANTIFY_INFRAME_PSITE {
         }
     ' "$gtf" |
     sort -u > psites.bed
-    
+
     # collate sample IDs and bedgraph files
     echo -e '${ [id, forward_bedgraph, reverse_bedgraph].transpose().collect { it.join('\\t') }.join('\\n') }' |
 
     while IFS=\$'\\t' read SAMPLE FORWARD_BEDGRAPH REVERSE_BEDGRAPH; do
-    
+
         # append strand to bedgraph files and merge forward/reverse bedgraph files into a single stream
         (
             sed 's/\$/\\t0\\t+/' "\$FORWARD_BEDGRAPH"
             sed 's/\$/\\t0\\t-/' "\$REVERSE_BEDGRAPH"
         ) |
-    
+
         # aggregate in-frame p-site counts by gene/transcript
         bedtools intersect -wa -wb -loj -a psites.bed -b /dev/stdin -s |
         awk -F'\\t' -v OFS='\\t' -v SAMPLE="\$SAMPLE" '{ print SAMPLE, \$4, int(\$10) }' |
         bedtools groupby -g 1,2 -c 3 -o mean
-    
+
     done |
-    
+
     # in the count matrix, replace Salmon's Ribo-seq counts with the counts computed above
     awk -F'\\t' -v OFS='\\t' '
-    
+
         # receive the new counts from stdin
         FILENAME == "/dev/stdin" {
             # cache sample names and counts
             samples[\$1]
             count[\$1, \$2] = \$3
         }
-    
+
         # the old count matrix comes after stdin
         FILENAME != "/dev/stdin" {
             if (FNR == 1) {

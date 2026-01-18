@@ -457,8 +457,6 @@ When the parameter `--te_quantification_method plastid_psite` is used, the follo
 
   </details>
 
-
-
 ## Translational efficiency
 
 The pipeline supports two methods for translational efficiency analysis: anota2seq (default) and deltaTE. The method used depends on the `--translational_efficiency_method` parameter.
