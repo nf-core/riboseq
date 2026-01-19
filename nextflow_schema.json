@@ -264,7 +264,7 @@
                     "default": 100,
                     "fa_icon": "fas fa-memory",
                     "description": "Chunk size for RiboDetector to control memory usage.",
-                    "help_text": "Sets the number of reads processed at a time by RiboDetector. Lower values reduce memory consumption. The default of 100 keeps memory usage manageable without affecting throughput. Only used when 'ribo_removal_tool' is set to 'ribodetector'."
+                    "help_text": "Sets the number of read chunks processed at a time by RiboDetector, where each chunk contains 1024 reads. For example, chunk_size=100 means 102,400 reads are loaded into memory at once. Lower values reduce memory consumption. The default of 100 typically results in ~8GB memory usage and keeps memory manageable without affecting throughput. Only used when 'ribo_removal_tool' is set to 'ribodetector'."
                 }
             },
             "fa_icon": "fas fa-trash-alt"
