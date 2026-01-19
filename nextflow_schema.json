@@ -258,6 +258,13 @@
                     "fa_icon": "fas fa-database",
                     "description": "Text file containing paths to fasta files (one per line) that will be used to create the database for rRNA removal.",
                     "help_text": "By default, [rRNA databases](https://github.com/biocore/sortmerna/tree/master/data/rRNA_databases) defined in the SortMeRNA GitHub repo are used. You can see an example in the pipeline Github repository in `assets/rrna-default-dbs.txt`. This is used by SortMeRNA and Bowtie2 (RiboDetector does not require a reference database).\nPlease note that commercial/non-academic entities require [`licensing for SILVA`](https://www.arb-silva.de/silva-license-information) for these default databases."
+                },
+                "ribodetector_chunk_size": {
+                    "type": "integer",
+                    "default": 100,
+                    "fa_icon": "fas fa-memory",
+                    "description": "Chunk size for RiboDetector to control memory usage.",
+                    "help_text": "Sets the number of reads processed at a time by RiboDetector. Lower values reduce memory consumption. The default of 100 keeps memory usage manageable without affecting throughput. Only used when 'ribo_removal_tool' is set to 'ribodetector'."
                 }
             },
             "fa_icon": "fas fa-trash-alt"
