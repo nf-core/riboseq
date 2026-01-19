@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### `Changed`
 
 - [#129](https://github.com/nf-core/riboseq/pull/129) - Bump pipeline version to 1.3.0dev ([@iraiosub](https://github.com/iraiosub))
+- [#143](https://github.com/nf-core/riboseq/pull/143) - Remove hardcoded random seeds from FQ_SUBSAMPLE and STAR_ALIGN ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Parameters`
 
