@@ -15,6 +15,11 @@
                         "git_sha": "6da7216c83d9d885bdeb7aef1bcb9b51a90f370b",
                         "installed_by": ["fastq_qc_trim_filter_setstrandedness"]
                     },
+                    "bedtools/genomecov": {
+                        "branch": "master",
+                        "git_sha": "e753770db613ce014b3c4bc94f6cba443427b726",
+                        "installed_by": ["modules"]
+                    },
                     "bowtie2/align": {
                         "branch": "master",
                         "git_sha": "e753770db613ce014b3c4bc94f6cba443427b726",
@@ -253,6 +258,11 @@
                         "branch": "master",
                         "git_sha": "e753770db613ce014b3c4bc94f6cba443427b726",
                         "installed_by": ["quantify_pseudo_alignment"]
+                    },
+                    "ucsc/bedgraphtobigwig": {
+                        "branch": "master",
+                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "installed_by": ["modules"]
                     },
                     "umicollapse": {
                         "branch": "master",
