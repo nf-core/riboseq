@@ -20,7 +20,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
   - [Preprocessing](#preprocessing)
     - [cat](#cat)
     - [FastQC](#fastqc)
-    - [UMI-tools extract](#umi-tools-extract)
+    - [UMI-tools extract](#umi-dedup)
     - [TrimGalore](#trimgalore)
     - [fastp](#fastp)
     - [BBSplit](#bbsplit)
