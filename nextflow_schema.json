@@ -679,6 +679,11 @@
                     "fa_icon": "fas fa-fast-forward",
                     "description": "Skip all QC steps except for MultiQC."
                 },
+                "skip_coverage_tracks": {
+                    "type": "boolean",
+                    "description": "Skip bigWig coverage track generation.",
+                    "fa_icon": "fas fa-fast-forward"
+                },
                 "skip_ribotish": {
                     "type": "boolean",
                     "description": "Skip Ribo-TISH.",

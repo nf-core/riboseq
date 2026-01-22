@@ -20,7 +20,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
   - [Preprocessing](#preprocessing)
     - [cat](#cat)
     - [FastQC](#fastqc)
-    - [UMI-tools extract](#umi-tools-extract)
+    - [UMI-tools extract](#umi-dedup)
     - [TrimGalore](#trimgalore)
     - [fastp](#fastp)
     - [BBSplit](#bbsplit)
@@ -28,6 +28,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
   - [Alignment](#alignment)
     - [STAR](#star)
   - [UMI-tools deduplication](#umi-tools-deduplication)
+  - [Coverage tracks](#coverage-tracks)
   - [Riboseq-specific QC](#riboseq-specific-qc)
     - [Ribo-TISH quality](#ribo-tish-quality)
     - [Ribotricer detect-orfs QC outputs](#ribotricer-detect-orfs-qc-outputs)
@@ -282,6 +283,15 @@ The content of the files above is explained in more detail in the [UMI-tools doc
 </details>
 
 After extracting the UMI information from the read sequence (see [UMI-tools extract](#umi-tools-extract)), the second step in the removal of UMI barcodes involves deduplicating the reads based on both mapping and UMI barcode information. UMI deduplication can be carried out either with [UMI-tools](https://github.com/CGATOxford/UMI-tools) or [UMICollapse](https://github.com/Daniel-Liu-c0deb0t/UMICollapse), set via the `umi_dedup_tool` parameter. The output BAM files are the same, though UMI-tools has some additional outputs, as described above. Either method will generate a filtered BAM file after the removal of PCR duplicates.
+
+## Coverage tracks
+
+The pipeline produces coverage tracks in bigWig format. In the case of stranded libraries, two tracks are created per sample - one for the coverage of the forward strand and one for the reverse strand. In the case of unstranded libraries, only one track is created.
+
+- `coverage`
+  - `<SAMPLE>.forward.bigWig`: Coverage on the forward strand (only created for stranded libraries)
+  - `<SAMPLE>.reverse.bigWig`: Coverage on the reverse strand (only created for stranded libraries)
+  - `<SAMPLE>.unstranded.bigWig`: Sum of coverage of forward and reverse strand (only created for unstranded libraries)
 
 ## Riboseq-specific QC
 

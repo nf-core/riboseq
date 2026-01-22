@@ -112,6 +112,7 @@ nf-core/riboseq was originally written by [Jonathan Manning](https://github.com/
 - [Jack Tierney](https://github.com/JackCurragh) (University College Cork)
 - [Maxime U Garcia](https://github.com/maxulysse) (Seqera)
 - [Ira A Iosub](https://github.com/iraiosub) (The Francis Crick Institute)
+- [Sebastian Uhrig](https://github.com/suhrig) (Freelance bioinformatician)
 
 ## Contributions and Support
 

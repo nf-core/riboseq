@@ -44,6 +44,9 @@ include { RIBOWALTZ                                            } from '../../mod
 include { PLASTID_METAGENE_GENERATE                            } from '../../modules/nf-core/plastid/metagene_generate/main'
 include { PLASTID_PSITE                                        } from '../../modules/nf-core/plastid/psite/main'
 include { PLASTID_MAKE_WIGGLE                                  } from '../../modules/nf-core/plastid/make_wiggle/main'
+include { SAMTOOLS_VIEW as SAMTOOLS_VIEW_SPLIT_BY_STRAND       } from '../../modules/nf-core/samtools/view'
+include { BEDTOOLS_GENOMECOV                                   } from '../../modules/nf-core/bedtools/genomecov/main'
+include { UCSC_BEDGRAPHTOBIGWIG                                } from '../../modules/nf-core/ucsc/bedgraphtobigwig/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -63,6 +66,15 @@ include { validateInputSamplesheet } from '../../subworkflows/local/utils_nfcore
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+
+// A filter for samtools view which splits alignments by first-of-pair strand,
+// taking into consideration the strandedness of the library. Used by SAMTOOLS_VIEW_SPLIT_BY_STRAND.
+def getStrandFilter(strandedness, strand) {
+    def sameOrientation = (strand == 'forward') == (strandedness == 'forward')
+    sameOrientation
+        ? "-e '((flag.read1 || !flag.paired) && !flag.reverse) || (flag.read2 &&  flag.reverse)'"
+        : "-e '((flag.read1 || !flag.paired) &&  flag.reverse) || (flag.read2 && !flag.reverse)'"
+}
 
 workflow RIBOSEQ {
 
@@ -259,6 +271,52 @@ workflow RIBOSEQ {
 
         ch_multiqc_files = ch_multiqc_files
             .mix(BAM_DEDUP_UMI.out.multiqc_files)
+    }
+
+    //
+    // Generate coverage tracks
+    //
+
+    if (!params.skip_coverage_tracks) {
+
+        // When protocol is stranded, split BAMs by mate1 strand
+        ch_split_by_strand = ch_genome_bam
+            .join(ch_genome_bam_index, by: [0])
+            .filter { meta, bam, bai -> meta.strandedness in ['forward', 'reverse'] }
+        SAMTOOLS_VIEW_SPLIT_BY_STRAND(
+            ch_split_by_strand
+                .flatMap { meta, bam, bai ->
+                    ['forward', 'reverse'].collect { strand ->
+                        [meta + [strand: strand, strand_filter:
+                            getStrandFilter(meta.strandedness, strand)], bam, bai]
+                    }
+                },
+            [[], []],  // No reference fasta
+            [],        // No qname file
+            []         // No index format
+        )
+
+        // Create bedgraph tracks
+        BEDTOOLS_GENOMECOV(
+            SAMTOOLS_VIEW_SPLIT_BY_STRAND.out.bam
+                .map { meta, bam -> [meta, bam, 1] }
+                .mix(ch_genome_bam
+                    .filter { meta, bam -> meta.strandedness == 'unstranded' }
+                    .map { meta, bam -> [meta + [strand: 'unstranded'], bam, 1] }
+                ),
+            ch_fai,
+            'bedgraph',
+            false
+        )
+        ch_versions = ch_versions.mix(BEDTOOLS_GENOMECOV.out.versions)
+
+        // Convert bedgraphs to bigWig
+        UCSC_BEDGRAPHTOBIGWIG(
+            BEDTOOLS_GENOMECOV.out.genomecov,
+            ch_fai
+        )
+        ch_versions = ch_versions.mix(UCSC_BEDGRAPHTOBIGWIG.out.versions)
+
     }
 
     //

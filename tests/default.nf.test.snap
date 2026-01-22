@@ -5,6 +5,9 @@
                 "ANOTA2SEQ_ANOTA2SEQRUN": {
                     "bioconductor-anota2seq": "1.24.0"
                 },
+                "BEDTOOLS_GENOMECOV": {
+                    "bedtools": "2.31.1"
+                },
                 "CUSTOM_GETCHROMSIZES": {
                     "getchromsizes": 1.21
                 },
@@ -101,6 +104,9 @@
                 },
                 "TXIMETA_TXIMPORT": {
                     "bioconductor-tximeta": "1.20.1"
+                },
+                "UCSC_BEDGRAPHTOBIGWIG": {
+                    "ucsc": 469
                 },
                 "Workflow": {
                     "nf-core/riboseq": "v1.3.0dev"
@@ -306,6 +312,25 @@
                 "alignment/star/sorted/samtools_stats/SRX11780890.transcriptome.sorted.bam.idxstats",
                 "alignment/star/sorted/samtools_stats/SRX11780890.transcriptome.sorted.bam.stats",
                 "alignment/star/unmapped",
+                "coverage",
+                "coverage/SRX11780879.unstranded.bigWig",
+                "coverage/SRX11780880.unstranded.bigWig",
+                "coverage/SRX11780881.unstranded.bigWig",
+                "coverage/SRX11780882.unstranded.bigWig",
+                "coverage/SRX11780883.unstranded.bigWig",
+                "coverage/SRX11780884.unstranded.bigWig",
+                "coverage/SRX11780885.forward.bigWig",
+                "coverage/SRX11780885.reverse.bigWig",
+                "coverage/SRX11780886.forward.bigWig",
+                "coverage/SRX11780886.reverse.bigWig",
+                "coverage/SRX11780887.forward.bigWig",
+                "coverage/SRX11780887.reverse.bigWig",
+                "coverage/SRX11780888.forward.bigWig",
+                "coverage/SRX11780888.reverse.bigWig",
+                "coverage/SRX11780889.forward.bigWig",
+                "coverage/SRX11780889.reverse.bigWig",
+                "coverage/SRX11780890.forward.bigWig",
+                "coverage/SRX11780890.reverse.bigWig",
                 "genome",
                 "genome/index",
                 "genome/sortmerna",
@@ -1195,6 +1220,24 @@
                 "SRX11780890.genome.sorted.bam.idxstats:md5,ddf523e4a8f0c5bd1a34f8f689cd4ae6",
                 "SRX11780890.transcriptome.sorted.bam.flagstat:md5,a1ea1f12badc1db07cecb4633c6229e0",
                 "SRX11780890.transcriptome.sorted.bam.idxstats:md5,2153eb76d34dfd9b2be396c919081871",
+                "SRX11780879.unstranded.bigWig:md5,435395dc3facca95716cf37458586d04",
+                "SRX11780880.unstranded.bigWig:md5,13f32001475a204201ced76584d6a955",
+                "SRX11780881.unstranded.bigWig:md5,6e17b06b74229ba2ccf5cecab21826e2",
+                "SRX11780882.unstranded.bigWig:md5,1002522e0949f63efd4acadb5a83830f",
+                "SRX11780883.unstranded.bigWig:md5,9dd05faf5d218a48ff116755bcbc5f22",
+                "SRX11780884.unstranded.bigWig:md5,2bb03fca83e71a11220ec0640d547a23",
+                "SRX11780885.forward.bigWig:md5,151792df103f7ab958ce486f9d75d810",
+                "SRX11780885.reverse.bigWig:md5,d8d62a3530b0dbb8ce3d033aebb4c777",
+                "SRX11780886.forward.bigWig:md5,4c47df3f88a5bdaab4b5f74acaacd94d",
+                "SRX11780886.reverse.bigWig:md5,c9292c0db79cf971389410a1cf8230eb",
+                "SRX11780887.forward.bigWig:md5,1d7e53797ca6436262474a00b8a22d3d",
+                "SRX11780887.reverse.bigWig:md5,42888ba498090ee44c189a8841a4712e",
+                "SRX11780888.forward.bigWig:md5,39af51f3611526d0292cdd492d6b19d9",
+                "SRX11780888.reverse.bigWig:md5,b1017f0a5b28b0f1fd533731fb6af8ca",
+                "SRX11780889.forward.bigWig:md5,5bc7e2f9311b74123153d718248d069b",
+                "SRX11780889.reverse.bigWig:md5,236bda3b53b6a2d3cc937d03ce402e83",
+                "SRX11780890.forward.bigWig:md5,9833a547a9c4b00cc3bb82aa15ebd2a9",
+                "SRX11780890.reverse.bigWig:md5,c37d1a7ccb3a3581d7b29b0f9221b81d",
                 "cutadapt_filtered_reads_plot.txt:md5,ff95c965185e62ff5914a5c60e7a268f",
                 "cutadapt_trimmed_sequences_plot_3_Counts.txt:md5,319e9bb90c170c4b0207d644926bf69a",
                 "cutadapt_trimmed_sequences_plot_3_Obs_Exp.txt:md5,6ed5bbd0961572352d1614cc1f25f29d",
@@ -1370,8 +1413,8 @@
         ],
         "meta": {
             "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
+            "nextflow": "25.10.2"
         },
-        "timestamp": "2026-01-12T11:25:43.71297576"
+        "timestamp": "2026-01-20T12:31:33.016134913"
     }
 }

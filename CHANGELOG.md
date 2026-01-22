@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#138](https://github.com/nf-core/riboseq/pull/138) - Add MultiQC configuration for BBSplit, Bowtie2 rRNA removal, UMItools, and UMIcollapse ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#140](https://github.com/nf-core/riboseq/pull/140) - Add P-site identification using plastid ([@suhrig](https://github.com/suhrig))
 - [#142](https://github.com/nf-core/riboseq/pull/142) - Add `ribodetector_chunk_size` parameter to control RiboDetector memory usage ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#144](https://github.com/nf-core/riboseq/pull/144) - Add bigWig coverage tracks ([@suhrig](https://github.com/suhrig))
 
 ### `Fixed`
 
@@ -48,14 +49,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 |               | `--extra_plastid_metagene_generate_args` |
 |               | `--extra_plastid_psite_args`             |
 |               | `--extra_plastid_make_wiggle_args`       |
+|               | `--skip_coverage_tracks`                 |
 |               | `--ribodetector_chunk_size`              |
 
 ### `Dependencies`
 
-| Dependency | Old version | New version |
-| ---------- | ----------- | ----------- |
-| `MultiQC`  | 1.32        | 1.33        |
-| `plastid`  |             | 0.6.1       |
+| Dependency         | Old version | New version |
+| ------------------ | ----------- | ----------- |
+| `MultiQC`          | 1.32        | 1.33        |
+| `plastid`          |             | 0.6.1       |
+| `bedtools`         |             | 2.31.1      |
+| `bedGraphToBigWig` |             | 469         |
 
 ## v1.2.0 - 2025-12-03
 
