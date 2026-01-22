@@ -67,6 +67,15 @@ include { validateInputSamplesheet } from '../../subworkflows/local/utils_nfcore
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
+// A filter for samtools view which splits alignments by first-of-pair strand,
+// taking into consideration the strandedness of the library. Used by SAMTOOLS_VIEW_SPLIT_BY_STRAND.
+def getStrandFilter(strandedness, strand) {
+    def sameOrientation = (strand == 'forward') == (strandedness == 'forward')
+    sameOrientation
+        ? "-e '((flag.read1 || !flag.paired) && !flag.reverse) || (flag.read2 &&  flag.reverse)'"
+        : "-e '((flag.read1 || !flag.paired) &&  flag.reverse) || (flag.read2 && !flag.reverse)'"
+}
+
 workflow RIBOSEQ {
 
     take:
@@ -276,8 +285,12 @@ workflow RIBOSEQ {
             .filter { meta, bam, bai -> meta.strandedness in ['forward', 'reverse'] }
         SAMTOOLS_VIEW_SPLIT_BY_STRAND(
             ch_split_by_strand
-                .map                        { meta, bam, bai -> [meta + [strand: 'forward'], bam, bai] }
-                .mix(ch_split_by_strand.map { meta, bam, bai -> [meta + [strand: 'reverse'], bam, bai] }),
+                .flatMap { meta, bam, bai ->
+                    ['forward', 'reverse'].collect { strand ->
+                        [meta + [strand: strand, strand_filter:
+                            getStrandFilter(meta.strandedness, strand)], bam, bai]
+                    }
+                },
             [[], []],  // No reference fasta
             [],        // No qname file
             []         // No index format
