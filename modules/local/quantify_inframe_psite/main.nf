@@ -56,7 +56,7 @@ process QUANTIFY_INFRAME_PSITE {
         # aggregate in-frame p-site counts by gene/transcript
         bedtools intersect -wa -wb -loj -a psites.bed -b /dev/stdin -s |
         awk -F'\\t' -v OFS='\\t' -v SAMPLE="\$SAMPLE" '{ print SAMPLE, \$4, int(\$10) }' |
-        bedtools groupby -g 1,2 -c 3 -o mean
+        bedtools groupby -g 1,2 -c 3 -o sum
 
     done |
 
@@ -80,7 +80,7 @@ process QUANTIFY_INFRAME_PSITE {
                 # replace values whenever we find a column of a Ribo-seq sample
                 for (i = 3; i <= NF; i++)
                     if (header[i] in samples)
-                        \$i = count[header[i], \$1] * 1000
+                        \$i = count[header[i], \$1] + 0
             }
             print
         }
