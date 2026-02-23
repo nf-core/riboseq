@@ -261,7 +261,8 @@ workflow RIBOSEQ {
             params.umitools_dedup_stats,
             params.bam_csi_index,
             ch_transcriptome_bam,
-            ch_transcript_fasta.map { [ [:], it ] }
+            ch_transcript_fasta.map { [ [:], it ] },
+            params.umitools_dedup_primary_only
         )
 
         ch_genome_bam        = BAM_DEDUP_UMI.out.bam

@@ -13,13 +13,14 @@ include { SAMTOOLS_SORT            } from '../../../modules/nf-core/samtools/sor
 
 workflow BAM_DEDUP_UMI {
     take:
-    ch_genome_bam         // channel: [ val(meta), path(bam), path(bai) ]
-    ch_fasta              // channel: [ val(meta), path(fasta) ]
-    umi_dedup_tool        // string: 'umicollapse' or 'umitools'
-    umitools_dedup_stats  // boolean: whether to generate UMI-tools dedup stats
-    bam_csi_index         // boolean: whether to generate CSI index
-    ch_transcriptome_bam  // channel: [ val(meta), path(bam) ]
-    ch_transcript_fasta   // channel: [ val(meta), path(fasta) ]
+    ch_genome_bam                // channel: [ val(meta), path(bam), path(bai) ]
+    ch_fasta                     // channel: [ val(meta), path(fasta) ]
+    umi_dedup_tool               // string: 'umicollapse' or 'umitools'
+    umitools_dedup_stats         // boolean: whether to generate UMI-tools dedup stats
+    bam_csi_index                // boolean: whether to generate CSI index
+    ch_transcriptome_bam         // channel: [ val(meta), path(bam) ]
+    ch_transcript_fasta          // channel: [ val(meta), path(fasta) ]
+    umitools_dedup_primary_only  // boolean: whether to filter to primary alignments before dedup
 
     main:
     ch_versions = Channel.empty()
@@ -39,7 +40,8 @@ workflow BAM_DEDUP_UMI {
     } else if (umi_dedup_tool == "umitools") {
         BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_GENOME (
             ch_genome_bam,
-            umitools_dedup_stats
+            umitools_dedup_stats,
+            umitools_dedup_primary_only
         )
         UMI_DEDUP_GENOME = BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_GENOME
         ch_dedup_log = UMI_DEDUP_GENOME.out.deduplog
@@ -70,7 +72,8 @@ workflow BAM_DEDUP_UMI {
     } else if (umi_dedup_tool == "umitools") {
         BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_TRANSCRIPTOME (
             ch_sorted_transcriptome_bam,
-            umitools_dedup_stats
+            umitools_dedup_stats,
+            umitools_dedup_primary_only
         )
         UMI_DEDUP_TRANSCRIPTOME = BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_TRANSCRIPTOME
         ch_dedup_log = ch_dedup_log.mix(UMI_DEDUP_GENOME.out.deduplog)
