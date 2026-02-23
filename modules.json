@@ -217,7 +217,7 @@
                     "samtools/view": {
                         "branch": "master",
                         "git_sha": "0b2435805036a16dcdcf21533632d956b8273ac4",
-                        "installed_by": ["fastq_remove_rrna"]
+                        "installed_by": ["fastq_remove_rrna", "bam_dedup_stats_samtools_umitools"]
                     },
                     "seqkit/replace": {
                         "branch": "master",
