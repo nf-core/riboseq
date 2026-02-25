@@ -24,14 +24,14 @@
                 "CUSTOM_TX2GENE": {
                     "python": "3.10.4"
                 },
-                "FASTQC": {
-                    "fastqc": "0.12.1"
-                },
                 "DESEQ2_DELTATE": {
                     "bioconductor-deseq2": "1.42.0",
                     "r-data.table": "1.15.0",
                     "r-dplyr": "1.1.4",
                     "r-ggplot2": "3.4.4"
+                },
+                "FASTQC": {
+                    "fastqc": "0.12.1"
                 },
                 "FQ_LINT": {
                     "fq": "0.12.0 (2024-07-08)"
