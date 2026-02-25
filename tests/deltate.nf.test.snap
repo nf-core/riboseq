@@ -24,6 +24,9 @@
                 "CUSTOM_TX2GENE": {
                     "python": "3.10.4"
                 },
+                "FASTQC": {
+                    "fastqc": "0.12.1"
+                },
                 "DESEQ2_DELTATE": {
                     "bioconductor-deseq2": "1.42.0",
                     "r-data.table": "1.15.0",
@@ -93,6 +96,12 @@
                 },
                 "SAMTOOLS_STATS": {
                     "samtools": 1.21
+                },
+                "SAMTOOLS_VIEW_BOWTIE2": {
+                    "samtools": "1.22.1"
+                },
+                "SAMTOOLS_VIEW_SPLIT_BY_STRAND": {
+                    "samtools": "1.22.1"
                 },
                 "SEQKIT_REPLACE": {
                     "seqkit": "2.9.0"
