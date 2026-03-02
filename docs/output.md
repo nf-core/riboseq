@@ -337,6 +337,18 @@ Read distribution metrics around annotated protein coding regions or based on al
   - `*.pdf`: Metaplot showing read density around start and stop codons
   </details>
 
+The metaplots step automatically determines which read lengths show 3-nucleotide periodicity and computes P-site offsets for each. These are written to the config file, which is then used by RiboCode for ORF detection.
+
+:::note
+If this step fails with `ERROR: metaplots created config file with no data`, it means none of the read lengths in your data passed the periodicity significance tests. This is a [known issue](https://github.com/xryanglab/RiboCode/issues/62) with RiboCode's default thresholds. You can relax them via:
+
+```bash
+--extra_ribocode_metaplots_args '-pv1 0.05 -pv2 0.05 -f0_percent 0.5'
+```
+
+Check the metaplots PDF output to verify that your data shows reasonable periodicity before relaxing thresholds further. The riboWaltz QC plots (frame distribution and metaprofiles) can also help you assess data quality.
+:::
+
 ## ORF predictions
 
 ### Ribo-TISH predict
@@ -373,6 +385,10 @@ Read distribution metrics around annotated protein coding regions or based on al
   - `*.txt`: ORF predictions with coordinates, read counts, and translation scores
   - `*_collapsed.txt`: Collapsed ORF predictions removing redundant isoforms
   </details>
+
+RiboCode uses the P-site offsets from the metaplots step to identify translated ORFs. If RiboCode fails with `Error, can not determine the P-site locations`, this means the metaplots config file had no valid entries. See the [metaplots troubleshooting note above](#ribocode-metaplots) for how to address this.
+
+If RiboCode is not needed for your analysis, you can skip it entirely with `--skip_ribocode`.
 
 ## P-site identification
 
