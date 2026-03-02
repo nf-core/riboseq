@@ -117,22 +117,22 @@
                     },
                     "ribocode/gtfupdate": {
                         "branch": "master",
-                        "git_sha": "3b13c6d5817ba9611477a7aa37120d9a9e50fff0",
+                        "git_sha": "31d9ec502b58f4fcf026de727ad23e725473c70f",
                         "installed_by": ["modules"]
                     },
                     "ribocode/metaplots": {
                         "branch": "master",
-                        "git_sha": "3b13c6d5817ba9611477a7aa37120d9a9e50fff0",
+                        "git_sha": "31d9ec502b58f4fcf026de727ad23e725473c70f",
                         "installed_by": ["modules"]
                     },
                     "ribocode/prepare": {
                         "branch": "master",
-                        "git_sha": "3b13c6d5817ba9611477a7aa37120d9a9e50fff0",
+                        "git_sha": "31d9ec502b58f4fcf026de727ad23e725473c70f",
                         "installed_by": ["modules"]
                     },
                     "ribocode/ribocode": {
                         "branch": "master",
-                        "git_sha": "3b13c6d5817ba9611477a7aa37120d9a9e50fff0",
+                        "git_sha": "dda3cd4fc64e8b515d7d2920d41346f7618ea693",
                         "installed_by": ["modules"]
                     },
                     "ribodetector": {
