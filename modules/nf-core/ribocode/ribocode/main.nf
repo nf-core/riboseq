@@ -31,7 +31,17 @@ process RIBOCODE_RIBOCODE {
         -a $annotation \\
         -c $config \\
         -o ${prefix} \\
-        $args 2>&1 || test -s ${prefix}.txt
+        $args
+
+    # RiboCode may exit 0 even on failure (e.g. P-site detection errors).
+    # Verify expected output was actually produced.
+    if [ ! -s ${prefix}.txt ]; then
+        echo "ERROR: RiboCode produced no output - check log for details." >&2
+        echo "A common cause is failed P-site detection in metaplots." >&2
+        echo "Try relaxing metaplots thresholds via extra_ribocode_metaplots_args" >&2
+        echo "  e.g. '-pv1 0.05 -pv2 0.05 -f0_percent 0.5'" >&2
+        exit 1
+    fi
     """
 
     stub:
