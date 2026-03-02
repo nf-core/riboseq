@@ -5,6 +5,9 @@
                 "ANOTA2SEQ_ANOTA2SEQRUN": {
                     "bioconductor-anota2seq": "1.24.0"
                 },
+                "BEDTOOLS_GENOMECOV": {
+                    "bedtools": "2.31.1"
+                },
                 "BOWTIE2_ALIGN": {
                     "bowtie2": "2.5.4",
                     "pigz": 2.8,
@@ -23,6 +26,9 @@
                 },
                 "CUSTOM_TX2GENE": {
                     "python": "3.10.4"
+                },
+                "FASTQC": {
+                    "fastqc": "0.12.1"
                 },
                 "FQ_LINT": {
                     "fq": "0.12.0 (2024-07-08)"
@@ -88,6 +94,12 @@
                 "SAMTOOLS_STATS": {
                     "samtools": 1.21
                 },
+                "SAMTOOLS_VIEW_BOWTIE2": {
+                    "samtools": "1.22.1"
+                },
+                "SAMTOOLS_VIEW_SPLIT_BY_STRAND": {
+                    "samtools": "1.22.1"
+                },
                 "SEQKIT_REPLACE": {
                     "seqkit": "2.9.0"
                 },
@@ -117,6 +129,9 @@
                 },
                 "TXIMETA_TXIMPORT": {
                     "bioconductor-tximeta": "1.20.1"
+                },
+                "UCSC_BEDGRAPHTOBIGWIG": {
+                    "ucsc": 469
                 },
                 "Workflow": {
                     "nf-core/riboseq": "v1.3.0dev"
@@ -322,6 +337,25 @@
                 "alignment/star/sorted/samtools_stats/SRX11780890.transcriptome.sorted.bam.idxstats",
                 "alignment/star/sorted/samtools_stats/SRX11780890.transcriptome.sorted.bam.stats",
                 "alignment/star/unmapped",
+                "coverage",
+                "coverage/SRX11780879.unstranded.bigWig",
+                "coverage/SRX11780880.unstranded.bigWig",
+                "coverage/SRX11780881.unstranded.bigWig",
+                "coverage/SRX11780882.unstranded.bigWig",
+                "coverage/SRX11780883.unstranded.bigWig",
+                "coverage/SRX11780884.unstranded.bigWig",
+                "coverage/SRX11780885.forward.bigWig",
+                "coverage/SRX11780885.reverse.bigWig",
+                "coverage/SRX11780886.forward.bigWig",
+                "coverage/SRX11780886.reverse.bigWig",
+                "coverage/SRX11780887.forward.bigWig",
+                "coverage/SRX11780887.reverse.bigWig",
+                "coverage/SRX11780888.forward.bigWig",
+                "coverage/SRX11780888.reverse.bigWig",
+                "coverage/SRX11780889.forward.bigWig",
+                "coverage/SRX11780889.reverse.bigWig",
+                "coverage/SRX11780890.forward.bigWig",
+                "coverage/SRX11780890.reverse.bigWig",
                 "genome",
                 "genome/bowtie2_rrna",
                 "genome/index",
@@ -1218,6 +1252,24 @@
                 "SRX11780890.genome.sorted.bam.idxstats:md5,3a0b29a35c233c8a44da429c0c1c4051",
                 "SRX11780890.transcriptome.sorted.bam.flagstat:md5,87173978a2990cd5da861ad20b0b6982",
                 "SRX11780890.transcriptome.sorted.bam.idxstats:md5,ae7f1daff6764bbc167742d19c99d587",
+                "SRX11780879.unstranded.bigWig:md5,23326c2cc4fe3800887db4ec86bd189a",
+                "SRX11780880.unstranded.bigWig:md5,4d245c5ed0a5065b475d3f1b59fd999d",
+                "SRX11780881.unstranded.bigWig:md5,8a4352ce599ae915045f455bbdc5c4c4",
+                "SRX11780882.unstranded.bigWig:md5,a329eb665c52757b5cfc8435420f873b",
+                "SRX11780883.unstranded.bigWig:md5,5735c191faaf56cbf69c948fbc7da02c",
+                "SRX11780884.unstranded.bigWig:md5,8846c12158f81605fcc45c3bf2be545d",
+                "SRX11780885.forward.bigWig:md5,ca38c864b57b8d0d3edc7928faf31ce8",
+                "SRX11780885.reverse.bigWig:md5,1455b40179287861439fcba6604ee187",
+                "SRX11780886.forward.bigWig:md5,5c1d2f94fb16e15a82fce5cdde491106",
+                "SRX11780886.reverse.bigWig:md5,9d72533fdc9771511f22d4fd458f33e4",
+                "SRX11780887.forward.bigWig:md5,0a9de4df784c1712915db9e4973fa0da",
+                "SRX11780887.reverse.bigWig:md5,026e824f028960951c860df1b80e6313",
+                "SRX11780888.forward.bigWig:md5,39af51f3611526d0292cdd492d6b19d9",
+                "SRX11780888.reverse.bigWig:md5,4dbcd9fb1ec67c20930a93634284175b",
+                "SRX11780889.forward.bigWig:md5,5bc7e2f9311b74123153d718248d069b",
+                "SRX11780889.reverse.bigWig:md5,67d5f74d348932af17f2a5e7d943e89b",
+                "SRX11780890.forward.bigWig:md5,9833a547a9c4b00cc3bb82aa15ebd2a9",
+                "SRX11780890.reverse.bigWig:md5,212f8be71d7cc4d7917dab779c4f7695",
                 "bowtie2_pe_plot.txt:md5,b4dc3c205f64fed5094f56622512451b",
                 "bowtie2_se_plot.txt:md5,1a9cb4b686308088e524ef2b313e2f49",
                 "cutadapt_filtered_reads_plot.txt:md5,ff95c965185e62ff5914a5c60e7a268f",
@@ -1406,8 +1458,8 @@
         ],
         "meta": {
             "nf-test": "0.9.3",
-            "nextflow": "25.10.0"
+            "nextflow": "25.10.2"
         },
-        "timestamp": "2026-01-12T12:13:40.704565835"
+        "timestamp": "2026-01-20T12:53:12.269669641"
     }
 }

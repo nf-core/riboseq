@@ -157,6 +157,18 @@ nextflow run nf-core/riboseq --ribo_removal_tool ribodetector ...
 
 RiboDetector automatically determines read length from your data and uses its pre-trained neural network model to classify reads.
 
+#### Memory management
+
+Without memory controls, RiboDetector can consume very large amounts of RAM with large datasets. The pipeline uses the `--ribodetector_chunk_size` parameter (default: 100) to control memory usage by limiting how many reads are loaded at once. Each chunk unit represents 1024 reads, so the default of 100 loads ~102,400 reads at a time, typically resulting in ~8GB memory usage.
+
+If you encounter memory issues, you can lower this value:
+
+```bash
+nextflow run nf-core/riboseq --ribo_removal_tool ribodetector --ribodetector_chunk_size 50 ...
+```
+
+Conversely, if you have ample memory and want faster processing, you can increase it. Set to `0` or `null` to disable chunking entirely (not recommended for large datasets).
+
 ## Read length equalisation
 
 When comparing RNA-seq and Ribo-seq data for translational efficiency analysis, the read lengths differ substantially: RNA-seq reads are typically 75-150bp while Ribo-seq ribosome-protected fragments are 26-34bp. The pipeline provides an optional read length equalisation feature that trims RNA-seq reads to match Ribo-seq lengths before quantification. This can be enabled with the `--equalise_read_lengths` parameter.
