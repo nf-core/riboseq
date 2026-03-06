@@ -8,20 +8,26 @@
                 "BEDTOOLS_GENOMECOV": {
                     "bedtools": "2.31.1"
                 },
-                "CUSTOM_GETCHROMSIZES": {
-                    "getchromsizes": 1.21
-                },
                 "CUSTOM_TX2GENE": {
                     "python": "3.10.4"
                 },
                 "FASTQC": {
                     "fastqc": "0.12.1"
                 },
+                "FASTQC_FILTERED": {
+                    "fastqc": "0.12.1"
+                },
                 "FQ_LINT": {
-                    "fq": "0.12.0 (2024-07-08)"
+                    "fq": "0.12.0"
+                },
+                "FQ_LINT_AFTER_RIBO_REMOVAL": {
+                    "fq": "0.12.0"
+                },
+                "FQ_LINT_AFTER_TRIMMING": {
+                    "fq": "0.12.0"
                 },
                 "FQ_SUBSAMPLE": {
-                    "fq": "0.12.0 (2024-07-08)"
+                    "fq": "0.12.0"
                 },
                 "GTF_FILTER": {
                     "python": "3.9.5"
@@ -63,20 +69,23 @@
                 "SALMON_QUANT": {
                     "salmon": "1.10.3"
                 },
+                "SAMTOOLS_FAIDX": {
+                    "samtools": "1.22.1"
+                },
                 "SAMTOOLS_FLAGSTAT": {
-                    "samtools": 1.21
+                    "samtools": "1.22.1"
                 },
                 "SAMTOOLS_IDXSTATS": {
-                    "samtools": 1.21
+                    "samtools": "1.22.1"
                 },
                 "SAMTOOLS_INDEX": {
-                    "samtools": 1.21
+                    "samtools": "1.22.1"
                 },
                 "SAMTOOLS_SORT": {
-                    "samtools": 1.21
+                    "samtools": "1.22.1"
                 },
                 "SAMTOOLS_STATS": {
-                    "samtools": 1.21
+                    "samtools": "1.22.1"
                 },
                 "SAMTOOLS_VIEW_SPLIT_BY_STRAND": {
                     "samtools": "1.22.1"
@@ -104,15 +113,13 @@
                     "star": "2.7.11b"
                 },
                 "TRIMGALORE": {
-                    "cutadapt": 4.9,
-                    "pigz": 2.8,
                     "trimgalore": "0.6.10"
                 },
                 "TXIMETA_TXIMPORT": {
                     "bioconductor-tximeta": "1.20.1"
                 },
                 "UCSC_BEDGRAPHTOBIGWIG": {
-                    "ucsc": 469
+                    "ucsc": 482
                 },
                 "Workflow": {
                     "nf-core/riboseq": "v1.3.0dev"
@@ -569,40 +576,76 @@
                 "pipeline_info/nf_core_riboseq_software_mqc_versions.yml",
                 "preprocessing",
                 "preprocessing/fastqc",
+                "preprocessing/fastqc/SRX11780879_1_fastqc.html",
+                "preprocessing/fastqc/SRX11780879_1_fastqc.zip",
+                "preprocessing/fastqc/SRX11780879_2_fastqc.html",
+                "preprocessing/fastqc/SRX11780879_2_fastqc.zip",
                 "preprocessing/fastqc/SRX11780879_raw_1_fastqc.html",
                 "preprocessing/fastqc/SRX11780879_raw_1_fastqc.zip",
                 "preprocessing/fastqc/SRX11780879_raw_2_fastqc.html",
                 "preprocessing/fastqc/SRX11780879_raw_2_fastqc.zip",
+                "preprocessing/fastqc/SRX11780880_1_fastqc.html",
+                "preprocessing/fastqc/SRX11780880_1_fastqc.zip",
+                "preprocessing/fastqc/SRX11780880_2_fastqc.html",
+                "preprocessing/fastqc/SRX11780880_2_fastqc.zip",
                 "preprocessing/fastqc/SRX11780880_raw_1_fastqc.html",
                 "preprocessing/fastqc/SRX11780880_raw_1_fastqc.zip",
                 "preprocessing/fastqc/SRX11780880_raw_2_fastqc.html",
                 "preprocessing/fastqc/SRX11780880_raw_2_fastqc.zip",
+                "preprocessing/fastqc/SRX11780881_1_fastqc.html",
+                "preprocessing/fastqc/SRX11780881_1_fastqc.zip",
+                "preprocessing/fastqc/SRX11780881_2_fastqc.html",
+                "preprocessing/fastqc/SRX11780881_2_fastqc.zip",
                 "preprocessing/fastqc/SRX11780881_raw_1_fastqc.html",
                 "preprocessing/fastqc/SRX11780881_raw_1_fastqc.zip",
                 "preprocessing/fastqc/SRX11780881_raw_2_fastqc.html",
                 "preprocessing/fastqc/SRX11780881_raw_2_fastqc.zip",
+                "preprocessing/fastqc/SRX11780882_1_fastqc.html",
+                "preprocessing/fastqc/SRX11780882_1_fastqc.zip",
+                "preprocessing/fastqc/SRX11780882_2_fastqc.html",
+                "preprocessing/fastqc/SRX11780882_2_fastqc.zip",
                 "preprocessing/fastqc/SRX11780882_raw_1_fastqc.html",
                 "preprocessing/fastqc/SRX11780882_raw_1_fastqc.zip",
                 "preprocessing/fastqc/SRX11780882_raw_2_fastqc.html",
                 "preprocessing/fastqc/SRX11780882_raw_2_fastqc.zip",
+                "preprocessing/fastqc/SRX11780883_1_fastqc.html",
+                "preprocessing/fastqc/SRX11780883_1_fastqc.zip",
+                "preprocessing/fastqc/SRX11780883_2_fastqc.html",
+                "preprocessing/fastqc/SRX11780883_2_fastqc.zip",
                 "preprocessing/fastqc/SRX11780883_raw_1_fastqc.html",
                 "preprocessing/fastqc/SRX11780883_raw_1_fastqc.zip",
                 "preprocessing/fastqc/SRX11780883_raw_2_fastqc.html",
                 "preprocessing/fastqc/SRX11780883_raw_2_fastqc.zip",
+                "preprocessing/fastqc/SRX11780884_1_fastqc.html",
+                "preprocessing/fastqc/SRX11780884_1_fastqc.zip",
+                "preprocessing/fastqc/SRX11780884_2_fastqc.html",
+                "preprocessing/fastqc/SRX11780884_2_fastqc.zip",
                 "preprocessing/fastqc/SRX11780884_raw_1_fastqc.html",
                 "preprocessing/fastqc/SRX11780884_raw_1_fastqc.zip",
                 "preprocessing/fastqc/SRX11780884_raw_2_fastqc.html",
                 "preprocessing/fastqc/SRX11780884_raw_2_fastqc.zip",
+                "preprocessing/fastqc/SRX11780885_fastqc.html",
+                "preprocessing/fastqc/SRX11780885_fastqc.zip",
                 "preprocessing/fastqc/SRX11780885_raw_fastqc.html",
                 "preprocessing/fastqc/SRX11780885_raw_fastqc.zip",
+                "preprocessing/fastqc/SRX11780886_fastqc.html",
+                "preprocessing/fastqc/SRX11780886_fastqc.zip",
                 "preprocessing/fastqc/SRX11780886_raw_fastqc.html",
                 "preprocessing/fastqc/SRX11780886_raw_fastqc.zip",
+                "preprocessing/fastqc/SRX11780887_fastqc.html",
+                "preprocessing/fastqc/SRX11780887_fastqc.zip",
                 "preprocessing/fastqc/SRX11780887_raw_fastqc.html",
                 "preprocessing/fastqc/SRX11780887_raw_fastqc.zip",
+                "preprocessing/fastqc/SRX11780888_fastqc.html",
+                "preprocessing/fastqc/SRX11780888_fastqc.zip",
                 "preprocessing/fastqc/SRX11780888_raw_fastqc.html",
                 "preprocessing/fastqc/SRX11780888_raw_fastqc.zip",
+                "preprocessing/fastqc/SRX11780889_fastqc.html",
+                "preprocessing/fastqc/SRX11780889_fastqc.zip",
                 "preprocessing/fastqc/SRX11780889_raw_fastqc.html",
                 "preprocessing/fastqc/SRX11780889_raw_fastqc.zip",
+                "preprocessing/fastqc/SRX11780890_fastqc.html",
+                "preprocessing/fastqc/SRX11780890_fastqc.zip",
                 "preprocessing/fastqc/SRX11780890_raw_fastqc.html",
                 "preprocessing/fastqc/SRX11780890_raw_fastqc.zip",
                 "preprocessing/fq_lint",
@@ -886,53 +929,101 @@
                 "psites/ribowaltz/offset_plot/SRX11780890/33.pdf",
                 "psites/ribowaltz/ribowaltz_qc",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780885.codon_usage.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780885.codon_usage.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780885.ends_heatmap.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780885.ends_heatmap.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780885.frames.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780885.frames.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780885.frames_stratified.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780885.frames_stratified.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780885.length_bins_for_psite.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780885.length_bins_for_psite.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780885.length_distribution.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780885.length_distribution.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780885.metaprofile_psite.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780885.metaprofile_psite.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780885.psite_region.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780885.psite_region.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780886.codon_usage.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780886.codon_usage.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780886.ends_heatmap.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780886.ends_heatmap.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780886.frames.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780886.frames.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780886.frames_stratified.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780886.frames_stratified.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780886.length_bins_for_psite.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780886.length_bins_for_psite.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780886.length_distribution.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780886.length_distribution.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780886.metaprofile_psite.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780886.metaprofile_psite.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780886.psite_region.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780886.psite_region.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780887.codon_usage.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780887.codon_usage.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780887.ends_heatmap.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780887.ends_heatmap.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780887.frames.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780887.frames.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780887.frames_stratified.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780887.frames_stratified.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780887.length_bins_for_psite.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780887.length_bins_for_psite.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780887.length_distribution.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780887.length_distribution.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780887.metaprofile_psite.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780887.metaprofile_psite.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780887.psite_region.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780887.psite_region.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780888.codon_usage.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780888.codon_usage.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780888.ends_heatmap.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780888.ends_heatmap.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780888.frames.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780888.frames.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780888.frames_stratified.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780888.frames_stratified.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780888.length_bins_for_psite.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780888.length_bins_for_psite.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780888.length_distribution.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780888.length_distribution.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780888.metaprofile_psite.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780888.metaprofile_psite.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780888.psite_region.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780888.psite_region.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780889.codon_usage.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780889.codon_usage.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780889.ends_heatmap.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780889.ends_heatmap.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780889.frames.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780889.frames.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780889.frames_stratified.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780889.frames_stratified.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780889.length_bins_for_psite.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780889.length_bins_for_psite.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780889.length_distribution.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780889.length_distribution.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780889.metaprofile_psite.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780889.metaprofile_psite.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780889.psite_region.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780889.psite_region.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780890.codon_usage.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780890.codon_usage.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780890.ends_heatmap.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780890.ends_heatmap.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780890.frames.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780890.frames.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780890.frames_stratified.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780890.frames_stratified.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780890.length_bins_for_psite.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780890.length_bins_for_psite.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780890.length_distribution.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780890.length_distribution.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780890.metaprofile_psite.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780890.metaprofile_psite.tsv",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780890.psite_region.pdf",
+                "psites/ribowaltz/ribowaltz_qc/SRX11780890.psite_region.tsv",
                 "quantification",
                 "quantification/salmon",
                 "quantification/salmon/SRX11780879",
@@ -1267,13 +1358,13 @@
                 "fastqc_sequence_duplication_levels_plot.txt:md5,77d6e3d36b8c93f25e2d4cdbadd018d3",
                 "fastqc_sequence_length_distribution_plot.txt:md5,d3f33f3eda7927b061fc3cdec99e8f4e",
                 "multiqc_citations.txt:md5,bca07b449cd65bc62453854d9c20dd60",
-                "multiqc_cutadapt.txt:md5,e6031ab468a23c95b6989a6ce9e081f5",
+                "multiqc_cutadapt.txt:md5,75327352fb859708b1324c8bb0e70fab",
                 "multiqc_fastqc.txt:md5,435f987c78b50ab1dfe18640246f580b",
                 "multiqc_fastqc_fastqc-1.txt:md5,c8ce8940114de9321e6de124b6cb4c18",
                 "multiqc_ribotish.txt:md5,21546543970095b3bcc6ab20ac0425e7",
                 "multiqc_samtools_flagstat.txt:md5,14e8d04345d9da81e5cc6cb049f5d396",
                 "multiqc_samtools_idxstats.txt:md5,338c19030305e7c9293511f1d98828f7",
-                "multiqc_samtools_stats.txt:md5,c51940af3e59e1ffac93b89f143f6026",
+                "multiqc_samtools_stats.txt:md5,bd5f60d4f043e54d738867f09d0ce1d2",
                 "multiqc_sortmerna.txt:md5,c8afeeb1affb9ae109ae2a9204c67d1f",
                 "multiqc_star.txt:md5,9bd355c06526d23fa2bb0fcd931d146c",
                 "ribotish_frame_proportions.txt:md5,2e46e5db2f71033a594d87a6e24c1e70",
@@ -1283,7 +1374,7 @@
                 "samtools-idxstats-mapped-reads-plot_Normalised_Counts.txt:md5,8db9ec219d229213fc054c147ea6c48d",
                 "samtools-idxstats-mapped-reads-plot_Observed_over_Expected_Counts.txt:md5,8db9ec219d229213fc054c147ea6c48d",
                 "samtools-idxstats-mapped-reads-plot_Raw_Counts.txt:md5,28c2f8d940cc35ff1ccd7e39b3e6a541",
-                "samtools-stats-dp.txt:md5,200ccfaa8d5aabe26f58c0c432ae22f8",
+                "samtools-stats-dp.txt:md5,94624c46f237303aad44cda6bbae75e2",
                 "samtools_alignment_plot.txt:md5,c9ab0cbfe5135c14bfdb7d95a94c149c",
                 "sortmerna-detailed-plot.txt:md5,d0cc4193a236b22a937bec41d5877aed",
                 "star_alignment_plot.txt:md5,611cda02b21bc9f20421ce4b60da5133",
@@ -1351,6 +1442,54 @@
                 "SRX11780890.codon_coverage_rpf.tsv.gz:md5,fc28b1c4b672c3f94111a27392a0fa9c",
                 "SRX11780890.psite.tsv.gz:md5,163ab7bbceea7f1e55361552b295e56c",
                 "SRX11780890.psite_offset.tsv.gz:md5,b42eac3c4b9e4c9b0af3be1aeb87907b",
+                "SRX11780885.codon_usage.tsv:md5,bdeaa234ddaf8182a2c9b3bbbca5d9d5",
+                "SRX11780885.ends_heatmap.tsv:md5,a0990c2e0384dd4e368985f468ef0b91",
+                "SRX11780885.frames.tsv:md5,c7acd755b371c07910155e926a7598d9",
+                "SRX11780885.frames_stratified.tsv:md5,109234eb9274f0f97174a1d5780689f6",
+                "SRX11780885.length_bins_for_psite.tsv:md5,acffe9ec8ae169747ff00edca341fbed",
+                "SRX11780885.length_distribution.tsv:md5,3b9a5b39c0921175cc148f83f80cc021",
+                "SRX11780885.metaprofile_psite.tsv:md5,7206697e22ab11b7d1e52525ff9aca1b",
+                "SRX11780885.psite_region.tsv:md5,5c1a76d43e8fad87d2568a25c86c309d",
+                "SRX11780886.codon_usage.tsv:md5,4265f4e4a4c3ee8f562271b2933668ca",
+                "SRX11780886.ends_heatmap.tsv:md5,42e62135b174db6fbf2d574ef1412b4f",
+                "SRX11780886.frames.tsv:md5,862ba80df88dddeccf065729b20fb795",
+                "SRX11780886.frames_stratified.tsv:md5,d013ebeadc2f336db10cf8fd3071a704",
+                "SRX11780886.length_bins_for_psite.tsv:md5,37bf7614ba447a9126ade1faed887c54",
+                "SRX11780886.length_distribution.tsv:md5,189af46f3ef51420e9287bc4c5a7a3c7",
+                "SRX11780886.metaprofile_psite.tsv:md5,5d4d5448eb83d922ce14ff4bed4a53a4",
+                "SRX11780886.psite_region.tsv:md5,82e738b90d76a99692763f5c6e22e37d",
+                "SRX11780887.codon_usage.tsv:md5,d7b51ef2d0da1149197bf0b17ab5b911",
+                "SRX11780887.ends_heatmap.tsv:md5,ab85302314a7f76186b667389c984304",
+                "SRX11780887.frames.tsv:md5,add6f8a37e17e97a6278f938a26d002b",
+                "SRX11780887.frames_stratified.tsv:md5,d945bb2adba33ad506a6437c1051b754",
+                "SRX11780887.length_bins_for_psite.tsv:md5,da69569999b3532e0a3b1eb6b3bfb8a4",
+                "SRX11780887.length_distribution.tsv:md5,06e037385e45e601c59d9d2651811154",
+                "SRX11780887.metaprofile_psite.tsv:md5,d56b0ddbaa10e3c6c255744c7777aae1",
+                "SRX11780887.psite_region.tsv:md5,b0ae533d791cb6fce99f907e413078c0",
+                "SRX11780888.codon_usage.tsv:md5,b4296e8cb4903720e17770ac7591831c",
+                "SRX11780888.ends_heatmap.tsv:md5,5347d7a864774bf25defadf276ac4d6b",
+                "SRX11780888.frames.tsv:md5,863d1a0cd5f1838b23d0ce83f5c461a5",
+                "SRX11780888.frames_stratified.tsv:md5,621088df9ed88acd80bb8a22f9910582",
+                "SRX11780888.length_bins_for_psite.tsv:md5,55e239b32b68a229155a572a95594dae",
+                "SRX11780888.length_distribution.tsv:md5,240fbe4c42322625f840478a38f239a7",
+                "SRX11780888.metaprofile_psite.tsv:md5,f877bee6c165119819c7acea9927dfb5",
+                "SRX11780888.psite_region.tsv:md5,efe0278d01f27eb46478f3e5d7a206c3",
+                "SRX11780889.codon_usage.tsv:md5,2bd686f79ded8b794437c03fef543cce",
+                "SRX11780889.ends_heatmap.tsv:md5,3aa3dce1435cedee841da9b3f349379a",
+                "SRX11780889.frames.tsv:md5,3861dd9618ced7c9d768169c4fa763b2",
+                "SRX11780889.frames_stratified.tsv:md5,0bea7b12bc24a52e6586493881a3186a",
+                "SRX11780889.length_bins_for_psite.tsv:md5,2a3f0c15f19e5ec9031e0f8b13dc7d0d",
+                "SRX11780889.length_distribution.tsv:md5,afd2a7c32de7e20247c36c6068e1f4c5",
+                "SRX11780889.metaprofile_psite.tsv:md5,6e5393d4eaf88588acf3ea60aaaac1f4",
+                "SRX11780889.psite_region.tsv:md5,0757fb231a5a9b7422229616f9de34cb",
+                "SRX11780890.codon_usage.tsv:md5,f0fbe20421aed23650aac435c1d53744",
+                "SRX11780890.ends_heatmap.tsv:md5,c7865d3c87af20f18fd2642efbd23de7",
+                "SRX11780890.frames.tsv:md5,aba5248611258d7ba31572a39bdc4511",
+                "SRX11780890.frames_stratified.tsv:md5,902b4a9bc8c719eb76dbab8ccffe72cd",
+                "SRX11780890.length_bins_for_psite.tsv:md5,d847ef721250472267b53a80d4e3951e",
+                "SRX11780890.length_distribution.tsv:md5,0e59ff544796c53e220547b820b0137d",
+                "SRX11780890.metaprofile_psite.tsv:md5,1312f576256da60efdfb532df7e7b1a9",
+                "SRX11780890.psite_region.tsv:md5,1a64e419a09e5c4bc72f078207c591e0",
                 "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
@@ -1399,8 +1538,6 @@
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "cmd_info.json:md5,8d5ca24864151d35a76f3c70cd14210e",
-                "salmon.merged.gene_counts.R_sessionInfo.log:md5,f477425bc8f6d07a9b47d4aaf953f3ce",
-                "salmon.merged.transcript_counts.R_sessionInfo.log:md5,f477425bc8f6d07a9b47d4aaf953f3ce",
                 "tx2gene.tsv:md5,ca8bc3fbff91c83c6545743011e589d7",
                 "SRX11780885.para.py:md5,eafd8adc28a00e3a1cd5d42e3b648cac",
                 "SRX11780885_qual.txt:md5,9aa8806905671583715f423bff141cbd",
@@ -1413,14 +1550,13 @@
                 "SRX11780889.para.py:md5,61738f3e93a6fc2e6f7b6d201f6a59ba",
                 "SRX11780889_qual.txt:md5,4c567c2c47eb52bf81e514a39eb5a695",
                 "SRX11780890.para.py:md5,5f1696c5bf20116fa63363917e131284",
-                "SRX11780890_qual.txt:md5,0f761538ecafb2718bd781c6e1fb7dc1",
-                "treated_vs_control.R_sessionInfo.log:md5,3623a50b4668bfebf502bf7080800996"
+                "SRX11780890_qual.txt:md5,0f761538ecafb2718bd781c6e1fb7dc1"
             ]
         ],
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.10.2"
         },
-        "timestamp": "2026-01-20T12:31:33.016134913"
+        "timestamp": "2026-03-05T12:48:43.866634974"
     }
 }
