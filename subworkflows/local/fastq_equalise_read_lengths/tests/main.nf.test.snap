@@ -34,10 +34,6 @@
                     },
                     "ribo_sample.tsv:md5,de0d5702c739ba4c187f45d58322e74b"
                 ]
-            ],
-            [
-                "versions.yml:md5,20c7d57d82a7041ac8e6ccdb26bf6c24",
-                "versions.yml:md5,8af6ce2d679672899b7aa165f48b8a2c"
             ]
         ],
         "meta": {
@@ -59,9 +55,6 @@
                     },
                     "rna_sample_custom_length_equalised.25bp_5prime.fq.gz:md5,98fe43468c9d94ca54009ea80d252f55"
                 ]
-            ],
-            [
-                "versions.yml:md5,8af6ce2d679672899b7aa165f48b8a2c"
             ]
         ],
         "meta": {
@@ -82,9 +75,6 @@
                     },
                     "rna_sample_no_pair_equalised.30bp_5prime.fq.gz:md5,549d8d12873f3f691339c8eaf50423cd"
                 ]
-            ],
-            [
-                "versions.yml:md5,8af6ce2d679672899b7aa165f48b8a2c"
             ]
         ],
         "meta": {
