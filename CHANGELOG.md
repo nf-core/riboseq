@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#145](https://github.com/nf-core/riboseq/pull/145) - Filter to primary alignments before UMI-tools dedup ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#147](https://github.com/nf-core/riboseq/pull/147) - Fix RiboCode error handling and P-site detection failures ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#148](https://github.com/nf-core/riboseq/pull/148) - Update all nf-core modules/subworkflows to latest versions, migrate to topic-based version reporting, fix publishing paths for new subworkflow nesting ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#xxxx](https://github.com/nf-core/riboseq/pull/xxxx) - Always skip validation of `igenomes_base` and remove `format: directory-path` from schema to prevent S3 access errors ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Changed`
 
