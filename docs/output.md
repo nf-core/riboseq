@@ -388,6 +388,10 @@ Check the metaplots PDF output to verify that your data shows reasonable periodi
 
 RiboCode uses the P-site offsets from the metaplots step to identify translated ORFs. If RiboCode fails with `Error, can not determine the P-site locations`, this means the metaplots config file had no valid entries. See the [metaplots troubleshooting note above](#ribocode-metaplots) for how to address this.
 
+:::warning
+The `-f0_percent`, `-pv1`, and `-pv2` parameters belong to the **metaplots** step, not to RiboCode itself. Pass them via `--extra_ribocode_metaplots_args`, not via RiboCode's own ext.args.
+:::
+
 If RiboCode is not needed for your analysis, you can skip it entirely with `--skip_ribocode`.
 
 ## P-site identification

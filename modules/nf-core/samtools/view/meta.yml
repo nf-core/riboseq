@@ -36,12 +36,19 @@ input:
         type: map
         description: |
           Groovy Map containing reference information
-          e.g. [ id:'test' ]
+          e.g. [ id:'genome' ]
     - fasta:
         type: file
-        description: Reference file the CRAM was created with (optional)
+        description: Fasta reference file
         pattern: "*.{fasta,fa}"
-        ontologies: []
+        ontologies:
+          - edam: http://edamontology.org/format_1929 # FASTA
+    - fai:
+        type: file
+        description: Fasta reference file index
+        pattern: "*.{fai}"
+        ontologies:
+          - edam: http://edamontology.org/format_3326 # Index
   - qname:
       type: file
       description: Optional file with read names to output only select alignments
@@ -147,9 +154,10 @@ output:
       - samtools:
           type: string
           description: Name of the tool
-      - samtools --version | head -1 | sed -e "s/samtools //:
-          type: string
-          description: Version of samtools used
+      - samtools version | sed "1!d;s/.* //":
+          type: eval
+          description: The expression to obtain the version of the tool
+
 topics:
   versions:
     - - ${task.process}:
@@ -158,9 +166,10 @@ topics:
       - samtools:
           type: string
           description: Name of the tool
-      - samtools --version | head -1 | sed -e "s/samtools //:
-          type: string
-          description: Version of samtools used
+      - samtools version | sed "1!d;s/.* //":
+          type: eval
+          description: The expression to obtain the version of the tool
+
 authors:
   - "@drpatelh"
   - "@joseespinosa"
