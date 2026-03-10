@@ -7,8 +7,6 @@
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS as BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_GENOME        } from '../../subworkflows/nf-core/bam_dedup_stats_samtools_umitools/main'
-include { BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS as BAM_DEDUP_STATS_SAMTOOLS_UMITOOLS_TRANSCRIPTOME } from '../../subworkflows/nf-core/bam_dedup_stats_samtools_umitools/main'
 include { FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS                                                 } from '../../subworkflows/nf-core/fastq_qc_trim_filter_setstrandedness/main'
 include { FASTQ_EQUALISE_READ_LENGTHS                                                          } from '../../subworkflows/local/fastq_equalise_read_lengths'
 include { BAM_DEDUP_UMI      } from '../../subworkflows/nf-core/bam_dedup_umi'
@@ -24,7 +22,6 @@ include { FASTQ_ALIGN_STAR   } from '../../subworkflows/nf-core/fastq_align_star
 // MODULE: Installed directly from nf-core/modules
 //
 include { MULTIQC                                              } from '../../modules/nf-core/multiqc/main'
-include { SAMTOOLS_SORT                                        } from '../../modules/nf-core/samtools/sort'
 include { UMITOOLS_PREPAREFORRSEM as UMITOOLS_PREPAREFORSALMON } from '../../modules/nf-core/umitools/prepareforrsem'
 include { RIBOTISH_QUALITY as RIBOTISH_QUALITY_RIBOSEQ         } from '../../modules/nf-core/ribotish/quality'
 include { RIBOTISH_QUALITY as RIBOTISH_QUALITY_TISEQ           } from '../../modules/nf-core/ribotish/quality'
@@ -204,12 +201,12 @@ workflow RIBOSEQ {
         params.ribo_removal_tool,                   // ribo_removal_tool
         params.with_umi,                            // with_umi
         params.umi_discard_read,                    // umi_discard_read
+        false,                                      // save_merged_fastq
         params.stranded_threshold,                  // stranded_threshold
         params.unstranded_threshold                 // unstranded_threshold
     )
 
     ch_multiqc_files = ch_multiqc_files.mix(FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS.out.multiqc_files)
-    ch_versions      = ch_versions.mix(FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS.out.versions)
 
     //
     // SUBWORKFLOW: Equalise RNA-seq read lengths to match Ribo-seq read lengths
@@ -237,7 +234,6 @@ workflow RIBOSEQ {
             params.equalise_read_lengths_target
         )
         ch_reads_for_alignment = FASTQ_EQUALISE_READ_LENGTHS.out.reads
-        ch_versions = ch_versions.mix(FASTQ_EQUALISE_READ_LENGTHS.out.versions)
         ch_multiqc_files = ch_multiqc_files.mix(FASTQ_EQUALISE_READ_LENGTHS.out.riboseq_stats.collect{it[1]})
     }
 
@@ -251,8 +247,6 @@ workflow RIBOSEQ {
         ch_star_index.map { [ [:], it ] },
         ch_gtf.map { [ [:], it ] },
         params.star_ignore_sjdbgtf,
-        '',
-        params.seq_center ?: '',
         ch_fasta.map { [ [:], it ] },
         ch_transcript_fasta.map { [ [:], it ] }
     )
@@ -261,7 +255,6 @@ workflow RIBOSEQ {
     ch_genome_bam_index        = FASTQ_ALIGN_STAR.out.bai
     ch_transcriptome_bam       = FASTQ_ALIGN_STAR.out.orig_bam_transcript
     ch_transcriptome_bai       = FASTQ_ALIGN_STAR.out.bai_transcript
-    ch_versions                = ch_versions.mix(FASTQ_ALIGN_STAR.out.versions)
 
     ch_multiqc_files = ch_multiqc_files
         .mix(FASTQ_ALIGN_STAR.out.stats.collect{it[1]})
@@ -289,7 +282,6 @@ workflow RIBOSEQ {
         ch_genome_bam        = BAM_DEDUP_UMI.out.bam
         ch_transcriptome_bam = BAM_DEDUP_UMI.out.transcriptome_bam
         ch_genome_bam_index  = BAM_DEDUP_UMI.out.bai
-        ch_versions          = ch_versions.mix(BAM_DEDUP_UMI.out.versions)
 
         ch_multiqc_files = ch_multiqc_files
             .mix(BAM_DEDUP_UMI.out.multiqc_files)
@@ -313,9 +305,9 @@ workflow RIBOSEQ {
                             getStrandFilter(meta.strandedness, strand)], bam, bai]
                     }
                 },
-            [[], []],  // No reference fasta
-            [],        // No qname file
-            []         // No index format
+            [[], [], []],  // No reference fasta/fai
+            [],            // No qname file
+            []             // No index format
         )
 
         // Create bedgraph tracks
@@ -330,14 +322,11 @@ workflow RIBOSEQ {
             'bedgraph',
             false
         )
-        ch_versions = ch_versions.mix(BEDTOOLS_GENOMECOV.out.versions)
-
         // Convert bedgraphs to bigWig
         UCSC_BEDGRAPHTOBIGWIG(
             BEDTOOLS_GENOMECOV.out.genomecov,
             ch_fai
         )
-        ch_versions = ch_versions.mix(UCSC_BEDGRAPHTOBIGWIG.out.versions)
 
     }
 
@@ -609,9 +598,6 @@ workflow RIBOSEQ {
     // MODULE: MultiQC
     //
     if (!params.skip_multiqc) {
-        ch_multiqc_config                     = Channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
-        ch_multiqc_custom_config              = params.multiqc_config ? Channel.fromPath(params.multiqc_config, checkIfExists: true) : Channel.empty()
-        ch_multiqc_logo                       = params.multiqc_logo ? Channel.fromPath(params.multiqc_logo, checkIfExists: true) : Channel.empty()
         summary_params                        = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
         ch_workflow_summary                   = Channel.value(paramsSummaryMultiqc(summary_params))
         ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
@@ -636,15 +622,26 @@ workflow RIBOSEQ {
             .flatten()
             .collectFile(name: 'name_replacement.txt', newLine: true)
 
-        MULTIQC (
-            ch_multiqc_files.collect(),
-            ch_multiqc_config.toList(),
-            ch_multiqc_custom_config.toList(),
-            ch_multiqc_logo.toList(),
-            ch_name_replacements,
-            []
+        MULTIQC(
+            ch_multiqc_files.flatten().collect()
+                .combine(ch_name_replacements)
+                .map { args ->
+                    def replace_names = args[-1]
+                    def files = args[0..-2]
+                    def mqc_config = params.multiqc_config
+                        ? file(params.multiqc_config, checkIfExists: true)
+                        : file("${projectDir}/assets/multiqc_config.yml", checkIfExists: true)
+                    [
+                        [id: 'riboseq'],
+                        files,
+                        mqc_config,
+                        params.multiqc_logo ? file(params.multiqc_logo, checkIfExists: true) : [],
+                        replace_names,
+                        [],
+                    ]
+                }
         )
-    ch_multiqc_report = MULTIQC.out.report.toList()
+    ch_multiqc_report = MULTIQC.out.report.map { _meta, report -> [report] }.toList()
     } else {
         ch_multiqc_report = Channel.empty()
     }
