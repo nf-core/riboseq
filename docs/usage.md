@@ -401,16 +401,15 @@ Consider this option when:
 --te_quantification_method plastid_psite
 ```
 
-In this mode, the RNA-seq reads are quantified using the default alignment-based quantification and the Ribo-seq reads are counted only when they map to coding regions and only when their P-sites (as determined by Plastid) coincide with the reading frame of the coding regions. This is an **experimental mode** which applies conservative filters to Ribo-seq quantification. It has applications in the study of microproteins arising from non-canonical ORFs, where an abundance of in-frame P-site counts increases the confidence that a novel ORF call is reliable. It is less common in other applications of Ribo-seq. Consider this option when:
+In this mode, RNA‑seq reads are quantified using the default alignment‑based method. Ribo‑seq reads, however, are counted only if they map to coding regions and their predicted P‑sites (as determined by Plastid) coincide with the annotated reading frame. This **experimental mode** applies conservative filters to Ribo‑seq quantification. Specifically, a Ribo‑seq read is counted only when its inferred P‑site aligns with the reading frame of a coding sequence (CDS) defined in the provided annotation (GTF) file.
 
-- Your use case is in the field of detecting differential translation of non-canonical ORFs 
-- You want to quantify on the level of ORFs rather than transcripts, e.g., in cases where a transcript has multiple ORFs, but you want to focus on specific ones rather than summing up the counts from all ORFs
+Consider using this option when you want to quantify on the level of ORFs rather than transcripts. This is particularly relevant in cases where a transcript has multiple ORFs, but you want to focus on annotated ones rather than summing up the counts from all ORFs of the transcript.
 
 Note that this method comes with potential caveats:
 
-- The methods used to quantify RNA-seq reads and Ribo-seq reads are not the same, giving rise to different technical biases in the counts
+- The methods used to quantify RNA-seq reads and Ribo-seq reads are not the same, giving rise to different technical biases in the counts.
 - The quantification of in-frame P-sites is subject to the periodicity of the Ribo-seq experiment. Before comparing samples against each other, it should be confirmed that the periodicities of the samples are similar.
-- Although this method counts only in-frame P-sites, quantification of overlapping ORFs is still flawed and cannot be fully deconvoluted, since the counts from one ORF can leak into the other ORF unless the periodicity efficiency is perfect (which it usually is not)
+- Although this method counts only in-frame P-sites, quantification of overlapping ORFs is still flawed and cannot be fully deconvoluted, since the counts from one ORF can leak into the other ORF unless the periodicity efficiency is perfect (which it usually is not).
 
 ### Contrasts specification
 
