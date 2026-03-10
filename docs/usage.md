@@ -403,7 +403,7 @@ Consider this option when:
 
 In this mode, the RNA-seq reads are quantified using the default alignment-based quantification and the Ribo-seq reads are counted only when they map to coding regions and only when their P-sites (as determined by Plastid) coincide with the reading frame of the coding regions. This is an **experimental mode** which applies conservative filters to Ribo-seq quantification. It has applications in the study of microproteins arising from non-canonical ORFs, where an abundance of in-frame P-site counts increases the confidence that a novel ORF call is reliable. It is less common in other applications of Ribo-seq. Consider this option when:
 
-- Your use case is in the field of detecting non-canonical ORFs coding for microproteins
+- Your use case is in the field of detecting differential translation of non-canonical ORFs 
 - You want to quantify on the level of ORFs rather than transcripts, e.g., in cases where a transcript has multiple ORFs, but you want to focus on specific ones rather than summing up the counts from all ORFs
 
 Note that this method comes with potential caveats:
