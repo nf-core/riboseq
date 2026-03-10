@@ -483,7 +483,7 @@ When the parameter `--te_quantification_method plastid_psite` is used, the follo
 <summary>Output files</summary>
 
 - `quantification/inframe_psite/`
-  - `gene_counts_length_scaled.tsv`: Count matrix containing alignment-based RNA-seq expression quantification and Ribo-seq quantification based on in-frame P-sites.
+  - `gene_counts.tsv`: Count matrix containing alignment-based RNA-seq expression quantification and Ribo-seq quantification based on in-frame P-sites.
 
   </details>
 

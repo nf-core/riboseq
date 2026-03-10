@@ -547,7 +547,7 @@ workflow RIBOSEQ {
             ch_gtf.map { [ [:], it ] },
             'gene'
         )
-        ch_te_counts = QUANTIFY_INFRAME_PSITE.out.counts_length_scaled
+        ch_te_counts = QUANTIFY_INFRAME_PSITE.out.counts
         ch_versions = ch_versions.mix(QUANTIFY_INFRAME_PSITE.out.versions)
     }
 

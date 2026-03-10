@@ -21,7 +21,7 @@ process QUANTIFY_INFRAME_PSITE {
     val feature
 
     output:
-    tuple val(meta), path("*_counts_length_scaled.tsv"), emit: counts_length_scaled
+    tuple val(meta), path("*_counts.tsv"), emit: counts
     path "versions.yml", emit: versions
 
     script:
@@ -84,7 +84,7 @@ process QUANTIFY_INFRAME_PSITE {
             }
             print
         }
-    ' /dev/stdin ${counts} > "${feature}_counts_length_scaled.tsv"
+    ' /dev/stdin ${counts} > "${feature}_counts.tsv"
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
