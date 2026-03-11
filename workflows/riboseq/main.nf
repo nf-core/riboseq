@@ -41,8 +41,8 @@ include { RIBOWALTZ                                            } from '../../mod
 include { PLASTID_METAGENE_GENERATE                            } from '../../modules/nf-core/plastid/metagene_generate/main'
 include { PLASTID_PSITE                                        } from '../../modules/nf-core/plastid/psite/main'
 include { PLASTID_MAKE_WIGGLE                                  } from '../../modules/nf-core/plastid/make_wiggle/main'
-include { QUANTIFY_INFRAME_PSITE_PLASTID                                 } from '../../modules/local/quantify_inframe_psite_plastid'
-include { REPLACE_RIBOSEQ_COUNTS_IN_MATRIX                       } from '../../modules/local/replace_riboseq_counts_in_matrix'
+include { QUANTIFY_INFRAME_PSITE_PLASTID                       } from '../../modules/local/quantify_inframe_psite_plastid'
+include { GAWK as REPLACE_RIBOSEQ_COUNTS_IN_MATRIX             } from '../../modules/nf-core/gawk'
 include { SAMTOOLS_VIEW as SAMTOOLS_VIEW_SPLIT_BY_STRAND       } from '../../modules/nf-core/samtools/view'
 include { BEDTOOLS_GENOMECOV                                   } from '../../modules/nf-core/bedtools/genomecov/main'
 include { UCSC_BEDGRAPHTOBIGWIG                                } from '../../modules/nf-core/ucsc/bedgraphtobigwig/main'
@@ -548,13 +548,14 @@ workflow RIBOSEQ {
             'gene'
         )
         REPLACE_RIBOSEQ_COUNTS_IN_MATRIX(
-            QUANTIFY_INFRAME_PSITE_PLASTID.out.counts,
-            QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled,
-            'gene'
+            QUANTIFY_INFRAME_PSITE_PLASTID.out.counts
+                .combine(QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled.map{ meta, counts -> counts })
+                .map { meta, psite_counts, salmon_counts -> [meta, [psite_counts, salmon_counts]] },
+            file("${projectDir}/bin/replace_riboseq_counts_in_matrix.awk"),
+            false
         )
-        ch_te_counts = REPLACE_RIBOSEQ_COUNTS_IN_MATRIX.out.counts
+        ch_te_counts = REPLACE_RIBOSEQ_COUNTS_IN_MATRIX.out.output
         ch_versions = ch_versions.mix(QUANTIFY_INFRAME_PSITE_PLASTID.out.versions)
-        ch_versions = ch_versions.mix(REPLACE_RIBOSEQ_COUNTS_IN_MATRIX.out.versions)
     }
 
     //
