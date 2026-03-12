@@ -31,4 +31,3 @@ FILENAME !~ /inframe_psite_counts/ {
     }
     print
 }
-
