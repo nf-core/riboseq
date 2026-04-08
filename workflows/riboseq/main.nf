@@ -535,7 +535,7 @@ workflow RIBOSEQ {
         ch_te_counts = QUANTIFY_PSEUDO_TE.out.counts_gene_length_scaled
     }
 
-    if (params.te_quantification_method == 'plastid_psite') {
+    if (params.te_quantification_method == 'plastid_psite' && !params.skip_plastid) {
         // Run p-site quantification per sample
         ch_psite_tracks = PLASTID_MAKE_WIGGLE.out.tracks
             .map { meta, tracks -> [meta, tracks[0], tracks[1]] }
