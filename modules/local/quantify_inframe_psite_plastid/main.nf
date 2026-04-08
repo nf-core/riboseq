@@ -57,4 +57,15 @@ process QUANTIFY_INFRAME_PSITE_PLASTID {
         awk: \$(awk 2>&1 | head -n1 | cut -f2 -d' ' | cut -f2 -dv)
     END_VERSIONS
     """
+
+    stub:
+    """
+    touch ${meta.id}.${feature}_inframe_psite_counts.tsv
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        bedtools: \$(bedtools --version | cut -f2 -dv)
+        awk: \$(awk 2>&1 | head -n1 | cut -f2 -d' ' | cut -f2 -dv)
+    END_VERSIONS
+    """
 }
