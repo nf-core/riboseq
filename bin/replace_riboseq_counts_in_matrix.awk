@@ -1,24 +1,24 @@
 #!/usr/bin/awk -f
 # Replace Ribo-seq counts in a count matrix with in-frame p-site counts.
 #
-# The input file whose name matches "inframe_psite_counts" contains the new
-# (p-site) counts as three columns:
+# The first input file contains the p-site counts as three columns:
 #   sample \t feature \t count
 #
-# The other input file is the existing count matrix (with a header row).
+# The second input file is the existing count matrix (with a header row).
 # For every sample found in the p-site counts, the corresponding column
 # in the matrix is replaced.
 
 BEGIN { FS = OFS = "\t" }
 
-# P-site counts file
-FILENAME ~ /inframe_psite_counts/ {
+# P-site counts file (first input file)
+NR == FNR {
     samples[$1]
     count[$1, $2] = $3
+    next
 }
 
-# Count matrix
-FILENAME !~ /inframe_psite_counts/ {
+# Count matrix (second input file)
+{
     if (FNR == 1) {
         # The column headers tell us the sample names
         for (i = 3; i <= NF; i++)
