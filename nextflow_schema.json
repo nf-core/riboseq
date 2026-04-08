@@ -563,8 +563,8 @@
                     "type": "string",
                     "default": "alignment",
                     "enum": ["alignment", "pseudo", "plastid_psite"],
-                    "description": "Quantification method for translational efficiency analysis: 'alignment' (STAR → Salmon), 'pseudo' (Salmon pseudo-alignment) or in-frame psites (STAR → Salmon/plastid).",
-                    "help_text": "Choose 'alignment' for STAR alignment followed by Salmon in alignment-based mode (default). Choose 'pseudo' for direct Salmon pseudo-alignment, an experimental alternative that uses the same k-mer index for both modalities and may help reduce length-related quantification biases without requiring read trimming. Choose 'plastid_psite' to quantify only Ribo-seq reads with in-frame p-sites as computed by plastid (experimental); counts are scaled to the number of p-sites in the coding segment.",
+                    "description": "Quantification method for translational efficiency analysis: 'alignment' (STAR → Salmon), 'pseudo' (Salmon pseudo-alignment) or 'plastid_psite' (in-frame p-site counts from plastid).",
+                    "help_text": "Choose 'alignment' for STAR alignment followed by Salmon in alignment-based mode (default). Choose 'pseudo' for direct Salmon pseudo-alignment, an experimental alternative that uses the same k-mer index for both modalities and may help reduce length-related quantification biases without requiring read trimming. Choose 'plastid_psite' to replace Ribo-seq counts with the sum of in-frame p-site counts per gene as determined by plastid (experimental). Only p-sites that fall on in-frame codon positions within CDS segments are counted.",
                     "fa_icon": "fas fa-calculator"
                 }
             }
