@@ -42,6 +42,7 @@ include { PLASTID_METAGENE_GENERATE                            } from '../../mod
 include { PLASTID_PSITE                                        } from '../../modules/nf-core/plastid/psite/main'
 include { PLASTID_MAKE_WIGGLE                                  } from '../../modules/nf-core/plastid/make_wiggle/main'
 include { QUANTIFY_INFRAME_PSITE_PLASTID                       } from '../../modules/local/quantify_inframe_psite_plastid'
+include { GAWK as GTF_TO_INFRAME_PSITES                        } from '../../modules/nf-core/gawk'
 include { GAWK as REPLACE_RIBOSEQ_COUNTS_IN_MATRIX             } from '../../modules/nf-core/gawk'
 include { SAMTOOLS_VIEW as SAMTOOLS_VIEW_SPLIT_BY_STRAND       } from '../../modules/nf-core/samtools/view'
 include { BEDTOOLS_GENOMECOV                                   } from '../../modules/nf-core/bedtools/genomecov/main'
@@ -536,14 +537,22 @@ workflow RIBOSEQ {
     }
 
     if (params.te_quantification_method == 'plastid_psite' && !params.skip_plastid) {
+        // Convert GTF CDS segments to in-frame p-site positions
+        GTF_TO_INFRAME_PSITES(
+            ch_gtf.map { gtf -> [ [id: gtf.baseName, feature: 'gene'], gtf ] },
+            file("${projectDir}/bin/gtf_to_inframe_psites.awk"),
+            false
+        )
+
+        ch_inframe_psites = GTF_TO_INFRAME_PSITES.out.output.first()
+
         // Run p-site quantification per sample
         ch_psite_tracks = PLASTID_MAKE_WIGGLE.out.tracks
             .map { meta, tracks -> [meta, tracks[0], tracks[1]] }
 
         QUANTIFY_INFRAME_PSITE_PLASTID(
             ch_psite_tracks,
-            ch_gtf.map { [ [:], it ] },
-            'gene'
+            ch_inframe_psites
         )
 
         // Merge per-sample p-site counts into a single file
