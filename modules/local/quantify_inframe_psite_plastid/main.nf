@@ -4,7 +4,7 @@
 // in-frame positions of CDS segments in a GTF file.
 
 process QUANTIFY_INFRAME_PSITE_PLASTID {
-    tag "$gtf"
+    tag "$meta.id"
     label 'process_single'
 
     conda "bioconda::bedtools=2.31.1"
@@ -13,8 +13,8 @@ process QUANTIFY_INFRAME_PSITE_PLASTID {
         'biocontainers/bedtools:2.31.1--h13024bc_3' }"
 
     input:
-    tuple val(id), path(forward_bedgraph), path(reverse_bedgraph)
-    tuple val(meta), path(gtf)
+    tuple val(meta), path(forward_bedgraph), path(reverse_bedgraph)
+    tuple val(meta2), path(gtf)
     val feature
 
     output:
@@ -39,23 +39,17 @@ process QUANTIFY_INFRAME_PSITE_PLASTID {
     ' "$gtf" |
     sort -u > psites.bed
 
-    # collate sample IDs and bedgraph files
-    echo -e '${ [id, forward_bedgraph, reverse_bedgraph].transpose().collect { it.join('\\t') }.join('\\n') }' |
+    # append strand to bedgraph files and merge forward/reverse bedgraph files into a single stream
+    (
+        sed 's/\$/\\t0\\t+/' "$forward_bedgraph"
+        sed 's/\$/\\t0\\t-/' "$reverse_bedgraph"
+    ) |
 
-    while IFS=\$'\\t' read SAMPLE FORWARD_BEDGRAPH REVERSE_BEDGRAPH; do
-
-        # append strand to bedgraph files and merge forward/reverse bedgraph files into a single stream
-        (
-            sed 's/\$/\\t0\\t+/' "\$FORWARD_BEDGRAPH"
-            sed 's/\$/\\t0\\t-/' "\$REVERSE_BEDGRAPH"
-        ) |
-
-        # aggregate in-frame p-site counts by gene/transcript
-        bedtools intersect -wa -wb -loj -a psites.bed -b /dev/stdin -s |
-        awk -F'\\t' -v OFS='\\t' -v SAMPLE="\$SAMPLE" '{ print SAMPLE, \$4, int(\$10) }' |
-        bedtools groupby -g 1,2 -c 3 -o sum
-
-    done > "${feature}_inframe_psite_counts.tsv"
+    # aggregate in-frame p-site counts by gene/transcript
+    bedtools intersect -wa -wb -loj -a psites.bed -b /dev/stdin -s |
+    awk -F'\\t' -v OFS='\\t' -v SAMPLE="${meta.id}" '{ print SAMPLE, \$4, int(\$10) }' |
+    bedtools groupby -g 1,2 -c 3 -o sum \
+    > "${meta.id}.${feature}_inframe_psite_counts.tsv"
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

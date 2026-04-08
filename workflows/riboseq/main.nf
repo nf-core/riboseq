@@ -536,19 +536,23 @@ workflow RIBOSEQ {
     }
 
     if (params.te_quantification_method == 'plastid_psite') {
-        // Collect p-site tracks from plastid
-        ch_merged_tracks = PLASTID_MAKE_WIGGLE.out.tracks
-            .map{ meta, tracks -> [[meta.id, tracks[0], tracks[1]]] }
-            .collect()
-            .map{ sample -> [sample.collect{it[0]}, sample.collect{it[1]}, sample.collect{it[2]}]} // id, forward_bedgraph, reverse_bedgraph
+        // Run p-site quantification per sample
+        ch_psite_tracks = PLASTID_MAKE_WIGGLE.out.tracks
+            .map { meta, tracks -> [meta, tracks[0], tracks[1]] }
 
         QUANTIFY_INFRAME_PSITE_PLASTID(
-            ch_merged_tracks,
+            ch_psite_tracks,
             ch_gtf.map { [ [:], it ] },
             'gene'
         )
+
+        // Merge per-sample p-site counts into a single file
+        ch_psite_counts_merged = QUANTIFY_INFRAME_PSITE_PLASTID.out.counts
+            .collectFile(name: 'gene_inframe_psite_counts.tsv') { meta, file -> file }
+            .map { file -> [ [:], file ] }
+
         REPLACE_RIBOSEQ_COUNTS_IN_MATRIX(
-            QUANTIFY_INFRAME_PSITE_PLASTID.out.counts
+            ch_psite_counts_merged
                 .combine(QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled.map{ meta, counts -> counts })
                 .map { meta, psite_counts, salmon_counts -> [meta, [psite_counts, salmon_counts]] },
             file("${projectDir}/bin/replace_riboseq_counts_in_matrix.awk"),
