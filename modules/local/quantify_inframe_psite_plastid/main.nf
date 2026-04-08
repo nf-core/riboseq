@@ -46,8 +46,9 @@ process QUANTIFY_INFRAME_PSITE_PLASTID {
     ) |
 
     # aggregate in-frame p-site counts by gene/transcript
-    bedtools intersect -wa -wb -loj -a psites.bed -b /dev/stdin -s |
+    bedtools intersect -wa -wb -a psites.bed -b /dev/stdin -s |
     awk -F'\\t' -v OFS='\\t' -v SAMPLE="${meta.id}" '{ print SAMPLE, \$4, int(\$10) }' |
+    sort -k1,1 -k2,2 |
     bedtools groupby -g 1,2 -c 3 -o sum \
     > "${meta.id}.${feature}_inframe_psite_counts.tsv"
 
