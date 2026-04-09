@@ -32,6 +32,9 @@
                 "GTF_FILTER": {
                     "python": "3.9.5"
                 },
+                "GTF_TO_INFRAME_PSITES": {
+                    "gawk": "5.3.1"
+                },
                 "GUNZIP_FASTA": {
                     "gunzip": 1.13
                 },
@@ -49,7 +52,6 @@
                     "plastid": "0.6.1"
                 },
                 "QUANTIFY_INFRAME_PSITE_PLASTID": {
-                    "awk": "1.36.1",
                     "bedtools": "2.31.1"
                 },
                 "REPLACE_RIBOSEQ_COUNTS_IN_MATRIX": {
@@ -1566,6 +1568,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.10.2"
         },
-        "timestamp": "2026-03-12T10:48:52.075896244"
+        "timestamp": "2026-04-09T18:40:38.440245584"
     }
 }
