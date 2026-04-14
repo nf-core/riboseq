@@ -6,7 +6,7 @@
                     [
                         "RIBODETECTOR",
                         "ribodetector",
-                        "0.3.2"
+                        "0.3.3"
                     ]
                 ]
             }
@@ -45,7 +45,7 @@
                     [
                         "RIBODETECTOR",
                         "ribodetector",
-                        "0.3.2"
+                        "0.3.3"
                     ]
                 ],
                 "fastq": [
@@ -73,7 +73,7 @@
                     [
                         "RIBODETECTOR",
                         "ribodetector",
-                        "0.3.2"
+                        "0.3.3"
                     ]
                 ]
             }
