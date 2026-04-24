@@ -366,7 +366,7 @@ Both methods require the same input format and contrasts specification, but prod
 
 ### Quantification method
 
-The pipeline offers two methods for quantifying gene expression for TE analysis, controlled by the `--te_quantification_method` parameter:
+The pipeline offers three methods for quantifying gene expression for TE analysis, controlled by the `--te_quantification_method` parameter:
 
 #### Alignment-based (default)
 
@@ -394,6 +394,22 @@ Consider this option when:
 - You prefer k-mer-based quantification for methodological consistency between modalities
 
 > **Note**: The pseudo-alignment pathway runs **in addition to** the standard STAR alignment, which is still needed for position-dependent analyses (P-sites, ribosome periodicity, ORF detection). The pseudo-alignment counts are only used for TE analysis.
+
+#### In-frame P-sites
+
+```bash
+--te_quantification_method plastid_psite
+```
+
+In this mode, RNA‑seq reads are quantified using the default alignment‑based method. Ribo‑seq reads, however, are counted only if they map to coding regions and their predicted P‑sites (as determined by Plastid) coincide with the annotated reading frame. This **experimental mode** applies conservative filters to Ribo‑seq quantification. Specifically, a Ribo‑seq read is counted only when its inferred P‑site aligns with the reading frame of a coding sequence (CDS) defined in the provided annotation (GTF) file.
+
+Consider using this option when you want to quantify on the level of ORFs rather than transcripts. This is particularly relevant in cases where a transcript has multiple ORFs, but you want to focus on annotated ones rather than summing up the counts from all ORFs of the transcript.
+
+Note that this method comes with potential caveats:
+
+- The methods used to quantify RNA-seq reads and Ribo-seq reads are not the same, giving rise to different technical biases in the counts.
+- The quantification of in-frame P-sites is subject to the periodicity of the Ribo-seq experiment. Before comparing samples against each other, it should be confirmed that the periodicities of the samples are similar.
+- Although this method counts only in-frame P-sites, quantification of overlapping ORFs is still flawed and cannot be fully deconvoluted, since the counts from one ORF can leak into the other ORF unless the periodicity efficiency is perfect (which it usually is not).
 
 ### Contrasts specification
 

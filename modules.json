@@ -75,6 +75,11 @@
                         "git_sha": "8c181528b68a7a60e6b1d998e43e602f949e8554",
                         "installed_by": ["fastq_subsample_fq_salmon"]
                     },
+                    "gawk": {
+                        "branch": "master",
+                        "git_sha": "c0da8f3a26835d663873001382a708f75766fec6",
+                        "installed_by": ["modules"]
+                    },
                     "gffread": {
                         "branch": "master",
                         "git_sha": "51f2b493a7ff28b40a9f99faca64245521f2bb24",
