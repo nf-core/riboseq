@@ -303,8 +303,8 @@ workflow RIBOSEQ {
             ch_split_by_strand
                 .flatMap { meta, bam, bai ->
                     ['forward', 'reverse'].collect { strand ->
-                        [meta + [strand: strand, strand_filter:
-                            getStrandFilter(meta.strandedness, strand)], bam, bai]
+                        def strand_filter = getStrandFilter(meta.strandedness, strand)
+                        [meta + [strand: strand, strand_filter: strand_filter], bam, bai]
                     }
                 },
             [[], [], []],  // No reference fasta/fai
