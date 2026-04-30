@@ -75,12 +75,13 @@ workflow PREPARE_GENOME {
                 ch_gtf = Channel.value(file(gtf))
             }
         } else if (gff) {
+            def ch_gff
             if (gff.endsWith('.gz')) {
-                ch_gff      = GUNZIP_GFF ( [ [:], gff ] ).gunzip.map { it[1] }
+                ch_gff = GUNZIP_GFF ( [ [:], gff ] ).gunzip
             } else {
-                ch_gff = Channel.value(file(gff))
+                ch_gff = Channel.value(file(gff)).map { item -> [ [:], item ] }
             }
-            ch_gtf      = GFFREAD ( ch_gff ).gtf
+            ch_gtf = GFFREAD ( ch_gff, [] ).gtf.map { it[1] }
         }
 
         // Determine whether to filter the GTF or not
@@ -116,7 +117,7 @@ workflow PREPARE_GENOME {
         }
 
         CUSTOM_CATADDITIONALFASTA(
-            ch_fasta.combine(ch_gtf).map{fasta, gtf -> [[:], fasta, gtf]},
+            ch_fasta.combine(ch_gtf).map{ fa, gt -> [[:], fa, gt] },
             ch_add_fasta.map{[[:], it]},
             biotype
         )
@@ -172,7 +173,7 @@ workflow PREPARE_GENOME {
             Channel
                 .from(file(bbsplit_fasta_list))
                 .splitCsv() // Read in 2 column csv file: short_name,path_to_fasta
-                .flatMap { id, fasta -> [ [ 'id', id ], [ 'fasta', file(fasta, checkIfExists: true) ] ] } // Flatten entries to be able to groupTuple by a common key
+                .flatMap { id, fa -> [ [ 'id', id ], [ 'fasta', file(fa, checkIfExists: true) ] ] } // Flatten entries to be able to groupTuple by a common key
                 .groupTuple()
                 .map { it -> it[1] } // Get rid of keys and keep grouped values
                 .collect { [ it ] } // Collect entries as a list to pass as "tuple val(short_names), path(path_to_fasta)" to module
