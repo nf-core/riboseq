@@ -9,8 +9,9 @@
 //
 include { FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS                                                 } from '../../subworkflows/nf-core/fastq_qc_trim_filter_setstrandedness/main'
 include { FASTQ_EQUALISE_READ_LENGTHS                                                          } from '../../subworkflows/local/fastq_equalise_read_lengths'
-include { BAM_DEDUP_UMI      } from '../../subworkflows/nf-core/bam_dedup_umi'
-include { FASTQ_ALIGN_STAR   } from '../../subworkflows/nf-core/fastq_align_star'
+include { BAM_DEDUP_UMI       } from '../../subworkflows/nf-core/bam_dedup_umi'
+include { FASTQ_ALIGN_STAR    } from '../../subworkflows/nf-core/fastq_align_star'
+include { BAM_STRINGTIE_MERGE } from '../../subworkflows/nf-core/bam_stringtie_merge'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -290,6 +291,22 @@ workflow RIBOSEQ {
     }
 
     //
+    // SUBWORKFLOW: Reference-guided novel transcript discovery with StringTie.
+    // The merged GTF is fed to genome-BAM-side ORF callers (Ribo-TISH, Ribotricer,
+    // plastid) and to GTF-only steps. Transcriptome-BAM-bound tools (RiboCode,
+    // riboWaltz, alignment-mode Salmon) stay on the reference annotation because
+    // their BAMs were keyed to it at STAR time.
+    //
+    ch_gtf_for_genome_tools = ch_gtf
+    if (!params.skip_stringtie) {
+        BAM_STRINGTIE_MERGE(
+            ch_genome_bam,
+            ch_gtf.map { gtf -> [ [:], gtf ] }
+        )
+        ch_gtf_for_genome_tools = BAM_STRINGTIE_MERGE.out.stringtie_gtf.map { _meta, gtf -> gtf }
+    }
+
+    //
     // Generate coverage tracks
     //
 
@@ -350,12 +367,12 @@ workflow RIBOSEQ {
         }
 
     ch_bams_for_analysis = ch_genome_bam_by_type.riboseq.join(ch_genome_bam_index)
-    ch_fasta_gtf = ch_fasta.combine(ch_gtf).map{ fasta, gtf -> [ [:], fasta, gtf ] }.first()
+    ch_fasta_gtf = ch_fasta.combine(ch_gtf_for_genome_tools).map{ fasta, gtf -> [ [:], fasta, gtf ] }.first()
 
     if (!params.skip_ribotish){
         RIBOTISH_QUALITY_RIBOSEQ(
             ch_bams_for_analysis,
-            ch_gtf.map { [ [:], it ] }.first()
+            ch_gtf_for_genome_tools.map { [ [:], it ] }.first()
         )
         ch_versions      = ch_versions.mix(RIBOTISH_QUALITY_RIBOSEQ.out.versions)
         ch_multiqc_files = ch_multiqc_files.mix(RIBOTISH_QUALITY_RIBOSEQ.out.distribution.collect{it[1]})
@@ -467,7 +484,7 @@ workflow RIBOSEQ {
 
     if (!params.skip_plastid) {
 
-        PLASTID_METAGENE_GENERATE(ch_gtf.map { [ [:], it ] })
+        PLASTID_METAGENE_GENERATE(ch_gtf_for_genome_tools.map { [ [:], it ] })
         ch_versions = ch_versions.mix(PLASTID_METAGENE_GENERATE.out.versions)
 
         PLASTID_PSITE(
@@ -539,7 +556,7 @@ workflow RIBOSEQ {
     if (params.te_quantification_method == 'plastid_psite' && !params.skip_plastid) {
         // Convert GTF CDS segments to in-frame p-site positions
         GTF_TO_INFRAME_PSITES(
-            ch_gtf.map { gtf -> [ [id: gtf.baseName, feature: 'gene'], gtf ] },
+            ch_gtf_for_genome_tools.map { gtf -> [ [id: gtf.baseName, feature: 'gene'], gtf ] },
             file("${projectDir}/bin/gtf_to_inframe_psites.awk"),
             false
         )
