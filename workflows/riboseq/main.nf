@@ -463,6 +463,7 @@ workflow RIBOSEQ {
             ch_fasta.map { [ [:], it ] })
 
         ch_versions = ch_versions.mix(RIBOWALTZ.out.versions)
+        ch_multiqc_files = ch_multiqc_files.mix(RIBOWALTZ.out.ribowaltz_qc_data.collect{it[1]}.ifEmpty([]))
     }
 
     if (!params.skip_plastid) {

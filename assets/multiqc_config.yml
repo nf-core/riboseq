@@ -46,6 +46,7 @@ run_modules:
   - rseqc
   - qualimap
   - ribotish
+  - ribowaltz
 
 # Order of modules
 top_modules:
@@ -96,6 +97,7 @@ module_order:
   - umitools
   - umicollapse
   - ribotish
+  - ribowaltz
 
 # Don't show % Dups in the General Stats table (we have this from Picard)
 table_columns_visible:
@@ -108,6 +110,14 @@ extra_fn_clean_exts:
   - ".markdup"
   - "_primary"
   - ".genome"
+
+# RIBOWALTZ uses ext.prefix = '<id>.ribowaltz' so the riboWaltz MultiQC plugin's
+# default fast filename pre-filter (`*ribowaltz*…`) matches. The in-file 'sample'
+# column inside the QC TSVs inherits that prefix, so strip the suffix back off
+# here to keep general-stats rows merged with the rest of the modules.
+sample_names_replace_regex: True
+sample_names_replace:
+  "^(.+)\\.ribowaltz$": "\\1"
 
 # Customise the module search patterns to speed up execution time
 #  - Skip module sub-tools that we are not interested in

@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#141](https://github.com/nf-core/riboseq/pull/141) - Add in-frame P-site quantification method ([@suhrig](https://github.com/suhrig))
 - [#142](https://github.com/nf-core/riboseq/pull/142) - Add `ribodetector_chunk_size` parameter to control RiboDetector memory usage ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#144](https://github.com/nf-core/riboseq/pull/144) - Add bigWig coverage tracks ([@suhrig](https://github.com/suhrig))
+- [#154](https://github.com/nf-core/riboseq/pull/154) - Add riboWaltz QC plots to the MultiQC report (P-site region distribution, reading-frame distribution, start/stop-codon metaprofiles) via the new MultiQC riboWaltz module ([MultiQC#3465](https://github.com/MultiQC/MultiQC/pull/3465)) ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Fixed`
 
@@ -31,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#129](https://github.com/nf-core/riboseq/pull/129) - Bump pipeline version to 1.3.0dev ([@iraiosub](https://github.com/iraiosub))
 - [#152](https://github.com/nf-core/riboseq/pull/152) - Update ribodetector module to 0.3.3 (nf-core/modules#11131) ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#154](https://github.com/nf-core/riboseq/pull/154) - Update nf-core/multiqc module to 1.34 ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Parameters`
 
