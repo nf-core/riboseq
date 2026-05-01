@@ -295,7 +295,9 @@ The pipeline produces coverage tracks in bigWig format. In the case of stranded 
 
 ## Novel transcript discovery (StringTie)
 
-When `--skip_stringtie false` is set, [StringTie](https://ccb.jhu.edu/software/stringtie/) is run per sample in reference-guided mode against the supplied GTF, and the per-sample assemblies are then merged into a unified annotation. The merged GTF is consumed downstream by the genome-BAM-side ORF callers (Ribo-TISH, Ribotricer), by plastid metagene generation, and by the in-frame p-site quantification step. RiboCode, riboWaltz, and alignment-mode Salmon stay on the reference annotation: their transcriptome BAMs were keyed to the reference at STAR alignment time, so they cannot consume a re-annotation without re-aligning.
+When `--skip_stringtie false` is set, [StringTie](https://ccb.jhu.edu/software/stringtie/) is run per sample in reference-guided mode against the supplied GTF, and the per-sample assemblies are then merged into a unified annotation. The merged GTF is published as a side product for downstream use; **the rest of the pipeline continues to use the reference annotation**.
+
+The merged GTF is not yet wired into the riboseq ORF callers because their nf-core modules accept only a single GTF input and have no slot for a secondary annotation. Ribo-TISH `predict` and Ribotricer can in principle scan novel transcripts for ORFs while classifying against the reference (Ribo-TISH `-a` flag, equivalent for Ribotricer), but doing so cleanly requires an upstream module update first; see the PR/issue tracker for the follow-on.
 
 <details markdown="1">
 <summary>Output files</summary>

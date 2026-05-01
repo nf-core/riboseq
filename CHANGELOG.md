@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#141](https://github.com/nf-core/riboseq/pull/141) - Add in-frame P-site quantification method ([@suhrig](https://github.com/suhrig))
 - [#142](https://github.com/nf-core/riboseq/pull/142) - Add `ribodetector_chunk_size` parameter to control RiboDetector memory usage ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#144](https://github.com/nf-core/riboseq/pull/144) - Add bigWig coverage tracks ([@suhrig](https://github.com/suhrig))
-- [#157](https://github.com/nf-core/riboseq/issues/157) - Add optional StringTie reference-guided novel transcript discovery; merged GTF feeds Ribo-TISH, Ribotricer, plastid, and the in-frame p-site quantification ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#157](https://github.com/nf-core/riboseq/issues/157) - Add optional StringTie reference-guided novel transcript discovery; merged GTF published as a side product (downstream wiring deferred to a follow-on, see PR #158) ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Fixed`
 

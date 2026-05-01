@@ -728,7 +728,7 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Skip StringTie reference-guided transcript assembly and merge.",
-                    "help_text": "When `false`, the pipeline runs StringTie per sample (reference-guided) then merges per-sample GTFs into a unified annotation. The merged GTF is consumed by the genome-BAM-side ORF callers (Ribo-TISH, Ribotricer, plastid) and by the in-frame p-site quantification step. RiboCode, riboWaltz, and alignment-mode Salmon stay on the reference annotation because their transcriptome BAMs are keyed to it.",
+                    "help_text": "When `false`, the pipeline runs StringTie per sample (reference-guided) then merges per-sample GTFs into a unified annotation. The merged GTF is published under `<outdir>/stringtie/stringtie_merge.gtf` as a side product. The downstream ORF callers continue to consume the supplied reference GTF in this version; routing the merged GTF into Ribo-TISH `predict` / Ribotricer is the planned follow-on once their nf-core modules expose a secondary-annotation argument.",
                     "fa_icon": "fas fa-fast-forward"
                 }
             }

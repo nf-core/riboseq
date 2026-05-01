@@ -308,15 +308,14 @@ The pipeline will by default run the [Ribo-TISH](https://github.com/zhpn1024/rib
 
 ## Novel transcript discovery (StringTie)
 
-By default the pipeline relies entirely on the supplied GTF for transcript definitions. For studies of unannotated or non-canonical ORFs (micro-proteins, novel uORFs/dORFs), set `--skip_stringtie false` to enable [StringTie](https://ccb.jhu.edu/software/stringtie/) reference-guided assembly. The pipeline runs StringTie per sample using the input GTF as a guide, then merges per-sample assemblies into a unified annotation with `stringtie --merge`.
+Set `--skip_stringtie false` to enable [StringTie](https://ccb.jhu.edu/software/stringtie/) reference-guided assembly. The pipeline runs StringTie per sample using the input GTF as a guide, then merges per-sample assemblies into a unified annotation with `stringtie --merge`. The merged GTF is published under `<outdir>/stringtie/stringtie_merge.gtf` for users to consume downstream.
 
-When enabled, the merged GTF replaces the reference annotation for the genome-BAM-side ORF callers (Ribo-TISH, Ribotricer), the plastid metagene step, and the in-frame p-site quantification. RiboCode, riboWaltz, and alignment-mode Salmon stay on the reference annotation because their transcriptome BAMs were keyed to it at STAR alignment time.
+In this initial PR the merged GTF is **not yet routed back into the riboseq ORF callers** - the rest of the pipeline still runs against the supplied reference GTF. Wiring Ribo-TISH `predict` and Ribotricer to use the merged GTF for novel-ORF discovery (with the reference GTF as a secondary annotation for classification) is the planned follow-on; it depends on an upstream nf-core/modules update to expose a secondary-annotation argument on those modules.
 
-Trade-offs:
+Knobs:
 
-- Adds one StringTie run per sample plus a merge step. The merge step is fast; per-sample StringTie runtime scales with library depth.
-- The merged GTF can be tightened with `--extra_stringtie_merge_args` (e.g. `'-T 1 -f 0.1'` for stricter TPM and isoform-fraction cutoffs); see the [StringTie manual](https://ccb.jhu.edu/software/stringtie/index.shtml?t=manual) for the full set of merge flags.
-- Per-sample StringTie args can be customised with `--extra_stringtie_args`.
+- `--extra_stringtie_args` - extra args passed to per-sample StringTie.
+- `--extra_stringtie_merge_args` - extra args passed to `stringtie --merge` (e.g. `'-T 1 -f 0.1'` for stricter TPM and isoform-fraction cutoffs); see the [StringTie manual](https://ccb.jhu.edu/software/stringtie/index.shtml?t=manual) for the full set of merge flags.
 
 ## P-site identification
 
