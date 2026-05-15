@@ -482,6 +482,21 @@ Produced only when `--extended_orf_analysis true` is set and at least one ORF ca
 
 The catalogue uses the hybrid GTF (canonical + filtered novel intergenic) as its coordinate-validation reference, matching the GTF that the underlying ORF callers consumed when `--extended_orf_analysis true`.
 
+### Per-ORF P-site quantification
+
+When `--extended_orf_analysis true` is set together with plastid (i.e. `--skip_plastid false`, the default), the cohort catalogue is also used to count in-frame P-sites at ORF resolution. The output is a single matrix with one row per catalogue ORF and one column per Ribo-seq sample.
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `orf_quantification/`
+  - `*.orf_inframe_psites.bed`: cohort-level BED6 of codon-start positions, one row per in-frame nucleotide per ORF. Frame is defined by each ORF's own start codon (the A of ATG = frame 0), not by the GTF `phase` field. Generated once per pipeline run from `orf_catalogue.bed12`.
+  - `orf_psite_counts.tsv`: ORF x sample raw in-frame P-site count matrix. First column `orf_id`; remaining columns are sample ids in lexicographic order. Zero-filled for ORFs absent from a sample. Produced once per pipeline run from the per-sample bedtools-intersect counts.
+
+</details>
+
+This sits alongside the gene-level matrix (`quantification/inframe_psite/gene_counts.tsv`) - the gene-level path still drives translational-efficiency analysis in this release; the ORF matrix is consumed by the per-ORF DTE step tracked separately. Same-frame overlapping ORFs (e.g. nested same-frame uORFs / N-terminally extended isoforms) currently double-count shared codon-start positions; this matches the literature default for the bedtools-intersect counting approach and will be revisited if it becomes empirically significant.
+
 ## P-site identification
 
 ### riboWaltz

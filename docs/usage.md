@@ -409,6 +409,12 @@ The catalogue runs once per pipeline invocation (cohort-level, not per sample) a
 
 See [ORF catalogue (cross-sample)](output.md#orf-catalogue-cross-sample) in the output docs for the full list of published files.
 
+### Per-ORF P-site quantification
+
+When the cohort catalogue is built and plastid is enabled (`--skip_plastid false`, the default), the pipeline also produces a per-ORF in-frame P-site count matrix at `<outdir>/orf_quantification/orf_psite_counts.tsv`. This is an ORF x sample matrix of raw integer counts, complementing the gene-level matrix at `<outdir>/quantification/inframe_psite/gene_counts.tsv`. Frames for catalogue ORFs are defined by each ORF's own start codon (ATG = frame 0), not by the GTF `phase` field, so novel transcripts and non-canonical starts are handled correctly. The matrix is the input for the per-ORF translational-efficiency analysis tracked in #168; gene-level DTE is unchanged by this addition.
+
+When `--skip_plastid true` is set together with `--extended_orf_analysis true`, the catalogue is still built but the per-ORF count matrix is skipped (the plastid wiggle tracks are not available), and a runtime warning is emitted.
+
 ## P-site identification
 
 The pipeline will by default run [riboWaltz](https://github.com/LabTranslationalArchitectomics/riboWaltz) for P-site identification and diagnostics, unless disabled with `--skip_ribowaltz`. Additional arguments can be supplied via `--extra_ribowaltz_args` parameters. An example is: `--extra_ribowaltz_args "--length_range 27:31 --periodicity_threshold 40 --extremity 5end --start_nts 45 --stop_nts 24"`. If not provided, defaults used in the [nf-core module](https://github.com/nf-core/modules/blob/master/modules/nf-core/ribowaltz/templates/ribowaltz.r) are used.
