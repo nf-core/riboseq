@@ -61,7 +61,19 @@ input:
     - gtf:
         type: file
         description: |
-          GTF-format annotation file for reference sequences used in the bam file
+          GTF-format annotation file for reference sequences used in the bam file.
+          Passed via `-g`; this is the discovery target (may be CDS-free, e.g.
+          novel StringTie transcripts).
+        pattern: "*.gtf"
+        ontologies: []
+    - reference_gtf:
+        type: file
+        description: |
+          Optional secondary GTF passed via `-a`. Used as the source of
+          protein-coding CDS annotation for TIS background estimation and
+          TisType classification when the primary `-g` annotation lacks CDS
+          features. Pass `[]` (an empty channel element) when not required;
+          the module stages a sentinel `NO_FILE` and omits `-a` in that case.
         pattern: "*.gtf"
         ontologies: []
   - - meta4:
