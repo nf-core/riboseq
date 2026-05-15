@@ -358,7 +358,20 @@ Supply `--rrna_blacklist path/to/blacklist.bed` to drop novel transcripts overla
 - `--stringtie_class_codes` - comma-separated gffcompare class codes to retain (default `u`).
 - `--rrna_blacklist` - optional BED of rRNA / repeat regions to exclude.
 
-The hybrid GTF is exposed as a workflow channel (`hybrid_gtf` emit) for follow-on wiring into ORF callers; in the current release it is not yet consumed by Ribo-TISH `predict` / Ribotricer (that wiring is the subject of a separate issue).
+The hybrid GTF is exposed as a workflow channel (`hybrid_gtf` emit) and is wired into the genome-BAM ORF callers (Ribo-TISH `predict`, Ribotricer) when `--extended_orf_analysis true` is set; see [Extended ORF discovery](#extended-orf-discovery) below.
+
+## Extended ORF discovery
+
+By default, all ORF callers run against the canonical backbone GTF so the pipeline produces well-characterised annotated-ORF calls. To discover novel ORFs in the novel intergenic transcripts produced by StringTie or supplied via `--novel_gtf`, set `--extended_orf_analysis true`. This routes the hybrid GTF (`<outdir>/stringtie/hybrid_reference.gtf`) into the genome-BAM ORF callers:
+
+- **Ribo-TISH `predict`**: hybrid GTF on `-g` (discovery target); canonical backbone on `-a` (background and ORF classification).
+- **Ribotricer `prepare-orfs`**: hybrid GTF directly (Ribotricer has no secondary-annotation concept; CDS-absent novel transcripts are auto-labelled `novel`).
+
+A novel-transcript source must be configured — `--skip_stringtie false` or `--novel_gtf <path>`. If `--extended_orf_analysis true` is set without one of those, the pipeline warns and falls back to the canonical GTF (the flag is a no-op rather than an error so users can compose flags incrementally).
+
+**RiboCode, riboWaltz and plastid stay on the canonical backbone regardless of `--extended_orf_analysis`.** These tools consume the transcriptome BAM produced by `STAR --quantMode TranscriptomeSAM`, which is keyed to the reference transcriptome FASTA used at alignment time. Novel StringTie transcripts do not exist in that transcriptome FASTA and therefore cannot be counted from the transcriptome BAM. Bringing RiboCode online for novel transcripts requires a second STAR alignment pass against a hybrid transcriptome FASTA; see [nf-core/riboseq#171](https://github.com/nf-core/riboseq/issues/171) for the follow-on issue. riboWaltz is a QC/calibration tool that does not call ORFs; feeding it a hybrid GTF would degrade its CDS-diagnostic plots without any discovery benefit, so it remains canonical-only by design.
+
+The default `--extended_orf_analysis false` keeps the pre-#165 behaviour unchanged.
 
 ## P-site identification
 
