@@ -1,0 +1,35 @@
+nextflow_process {
+
+    name "Test Process ORF_CATALOGUE_MERGE"
+    script "../main.nf"
+    process "ORF_CATALOGUE_MERGE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "orf_catalogue"
+    tag "orf_catalogue_merge"
+
+    test("synthetic data - stub") {
+        options "-stub-run"
+
+        when {
+            process {
+                """
+                def bed1 = file('sample_X.ribotish.normalised.bed12')
+                bed1.text = ""
+                def tsv1 = file('sample_X.ribotish.normalised.tsv')
+                tsv1.text = ""
+
+                input[0] = Channel.of([ [id:'allsamples'], [bed1], [tsv1] ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

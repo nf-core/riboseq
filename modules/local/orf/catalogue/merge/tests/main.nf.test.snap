@@ -1,0 +1,98 @@
+{
+    "synthetic data - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "allsamples"
+                        },
+                        "orf_catalogue.bed12:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "allsamples"
+                        },
+                        "orf_catalogue.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "allsamples"
+                        },
+                        "orf_to_gene.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "allsamples"
+                        },
+                        "orf_catalogue.mqc.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "4": [
+                    [
+                        "ORF_CATALOGUE_MERGE",
+                        "python",
+                        "3.14.2"
+                    ]
+                ],
+                "5": [
+                    [
+                        "ORF_CATALOGUE_MERGE",
+                        "bedtools",
+                        "bash: bedtools: command not found"
+                    ]
+                ],
+                "6": [
+                    [
+                        "ORF_CATALOGUE_MERGE",
+                        "cd-hit",
+                        "bash:"
+                    ]
+                ],
+                "catalogue_bed": [
+                    [
+                        {
+                            "id": "allsamples"
+                        },
+                        "orf_catalogue.bed12:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "catalogue_tsv": [
+                    [
+                        {
+                            "id": "allsamples"
+                        },
+                        "orf_catalogue.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "mqc": [
+                    [
+                        {
+                            "id": "allsamples"
+                        },
+                        "orf_catalogue.mqc.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "orf_to_gene": [
+                    [
+                        {
+                            "id": "allsamples"
+                        },
+                        "orf_to_gene.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-05-15T17:25:10.393346"
+    }
+}
