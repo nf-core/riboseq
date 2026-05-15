@@ -1,0 +1,3 @@
+20	test	transcript	11380000	11420000	.	+	.	gene_id "TEST_NOVEL_GENE_1"; transcript_id "TEST_NOVEL_TRANSCRIPT_1";
+20	test	exon	11380000	11380500	.	+	.	gene_id "TEST_NOVEL_GENE_1"; transcript_id "TEST_NOVEL_TRANSCRIPT_1"; exon_number "1";
+20	test	exon	11419500	11420000	.	+	.	gene_id "TEST_NOVEL_GENE_1"; transcript_id "TEST_NOVEL_TRANSCRIPT_1"; exon_number "2";

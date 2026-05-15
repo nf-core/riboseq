@@ -1,6 +1,7 @@
 .nextflow*
 work/
 data/
+!tests/data/
 results/
 .DS_Store
 testing/
