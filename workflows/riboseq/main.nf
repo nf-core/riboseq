@@ -518,12 +518,14 @@ workflow RIBOSEQ {
     // SUBWORKFLOW: Count reads from BAM alignments using Salmon
     //
 
+    // Salmon transcriptome quantification uses the full GTF: tx2gene must match
+    // the transcript fasta the Salmon index was built against.
     QUANTIFY_STAR_SALMON (
         ch_samplesheet.map { [ [:], it ] },
         ch_transcriptome_bam,
         [],
         ch_transcript_fasta,
-        ch_canonical_gtf,
+        ch_gtf,
         params.gtf_group_features,
         params.gtf_extra_attributes,
         'salmon',
@@ -552,7 +554,7 @@ workflow RIBOSEQ {
             ch_reads_for_te,
             ch_salmon_index_te,
             ch_transcript_fasta,
-            ch_canonical_gtf,
+            ch_gtf,
             params.gtf_group_features,
             params.gtf_extra_attributes,
             'salmon',
