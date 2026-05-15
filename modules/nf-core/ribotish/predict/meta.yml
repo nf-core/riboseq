@@ -72,8 +72,10 @@ input:
           Optional secondary GTF passed via `-a`. Used as the source of
           protein-coding CDS annotation for TIS background estimation and
           TisType classification when the primary `-g` annotation lacks CDS
-          features. Pass `[]` (an empty list) when not required; `-a` is
-          then omitted from the command.
+          features. Staged as `secondary.gtf` so it does not collide with
+          the primary `gtf` input when callers happen to supply the same
+          file. Pass `[]` (an empty list) when not required; `-a` is then
+          omitted from the command.
         pattern: "*.gtf"
         ontologies: []
   - - meta4:

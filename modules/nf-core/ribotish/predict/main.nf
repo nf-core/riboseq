@@ -10,7 +10,7 @@ process RIBOTISH_PREDICT {
     input:
     tuple val(meta), path(bam_ribo), path(bai_ribo)
     tuple val(meta2), path(bam_ti), path(bai_ti)
-    tuple val(meta3), path(fasta), path(gtf), path(reference_gtf)
+    tuple val(meta3), path(fasta), path(gtf), path(reference_gtf, stageAs: 'secondary.gtf')
     tuple val(meta4), path(candidate_orfs)
     tuple val(meta5), path(para_ribo)
     tuple val(meta6), path(para_ti)
