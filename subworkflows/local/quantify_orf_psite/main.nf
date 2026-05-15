@@ -1,0 +1,61 @@
+//
+// ORF-level in-frame P-site quantification (issue #166).
+//
+// Chains:
+//   1. ORF_INFRAME_PSITES: expand the BED12 catalogue into codon-start BED6.
+//   2. QUANTIFY_INFRAME_PSITE_ORF: per-sample bedtools intersect + groupby
+//      against plastid wiggle tracks.
+//   3. ORF_COUNT_MATRIX: assemble per-sample TSVs into one ORF x sample
+//      count matrix, zero-filled for ORFs absent from a sample.
+//
+// Gating is done at the call site in workflows/riboseq/main.nf:
+//   --extended_orf_analysis = true  AND  catalogue exists  AND  plastid is enabled.
+//
+// The matrix is the input for the future DTE step in issue #168. This
+// subworkflow does not run DTE itself.
+
+include { ORF_INFRAME_PSITES         } from '../../../modules/local/orf/inframe_psites'
+include { QUANTIFY_INFRAME_PSITE_ORF } from '../../../modules/local/quantify_inframe_psite_orf'
+include { ORF_COUNT_MATRIX           } from '../../../modules/local/orf/count_matrix'
+
+workflow QUANTIFY_ORF_PSITE {
+
+    take:
+    ch_catalogue_bed   // channel: [ val(meta), path(orf_catalogue.bed12) ]
+    ch_psite_tracks    // channel: [ val(meta), path(forward.bedgraph), path(reverse.bedgraph) ] - riboseq samples only
+    ch_orf_to_gene     // channel: [ val(meta), path(orf_to_gene.tsv) ] - pass-through for the count_matrix consumer
+
+    main:
+
+    ch_versions = Channel.empty()
+
+    // 1. Expand catalogue to codon-start BED6 (cohort-level, runs once).
+    ORF_INFRAME_PSITES ( ch_catalogue_bed )
+    ch_versions = ch_versions.mix(ORF_INFRAME_PSITES.out.versions)
+
+    ch_inframe_psites = ORF_INFRAME_PSITES.out.bed.first()
+
+    // 2. Per-sample P-site counting.
+    QUANTIFY_INFRAME_PSITE_ORF ( ch_psite_tracks, ch_inframe_psites )
+    ch_versions = ch_versions.mix(QUANTIFY_INFRAME_PSITE_ORF.out.versions)
+
+    // 3. Collect all per-sample TSVs into one list, then pair with the
+    //    cohort-level catalogue BED. `ch_catalogue_bed.first()` reduces a
+    //    queue channel to a value channel so the pairing is deterministic
+    //    even when `.collect()` has not yet emitted.
+    ch_tsvs_collected = QUANTIFY_INFRAME_PSITE_ORF.out.counts
+        .map { _meta, tsv -> tsv }
+        .collect()
+
+    ch_matrix_in = ch_tsvs_collected
+        .combine( ch_catalogue_bed.map { _meta, bed -> bed }.first() )
+        .map { tsvs, bed -> [ [ id: 'allsamples' ], tsvs, bed ] }
+
+    ORF_COUNT_MATRIX ( ch_matrix_in )
+    ch_versions = ch_versions.mix(ORF_COUNT_MATRIX.out.versions)
+
+    emit:
+    orf_count_matrix = ORF_COUNT_MATRIX.out.matrix     // [ meta, orf_psite_counts.tsv ]
+    inframe_psites   = ORF_INFRAME_PSITES.out.bed      // [ meta, *.orf_inframe_psites.bed ]
+    versions         = ch_versions
+}
