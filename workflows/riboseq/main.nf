@@ -18,6 +18,7 @@ include { CONCAT_GTF               } from '../../modules/local/concat_gtf'
 include { FILTER_GTF_CLASS_CODE    } from '../../modules/local/filter_gtf_class_code'
 include { RUN_RPBP                 } from '../../subworkflows/local/run_rpbp'
 include { BUILD_ORF_CATALOGUE      } from '../../subworkflows/local/build_orf_catalogue'
+include { QUANTIFY_ORF_PSITE       } from '../../subworkflows/local/quantify_orf_psite'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -459,6 +460,10 @@ workflow RIBOSEQ {
         log.warn "--extended_orf_analysis is enabled but no novel-transcript source is configured (--skip_stringtie is true and --novel_gtf is unset). The flag has no effect; ORF callers will run against the canonical GTF as usual."
     }
 
+    if (extended_orf_active && params.skip_plastid) {
+        log.warn "--extended_orf_analysis is enabled but --skip_plastid is true. ORF-level P-site quantification needs the plastid wiggle tracks and will be skipped; the ORF catalogue will still be built."
+    }
+
     ch_hybrid_transcriptome_bam = Channel.empty()
 
     if (extended_orf_active) {
@@ -772,6 +777,10 @@ workflow RIBOSEQ {
         ch_multiqc_files = ch_multiqc_files.mix(RIBOWALTZ.out.ribowaltz_qc_data.collect{it[1]}.ifEmpty([]))
     }
 
+    // ORF-level count matrix; populated below when extended ORF analysis is
+    // active and plastid is enabled. Consumed by issue #168 (DTE).
+    ch_orf_count_matrix = Channel.empty()
+
     if (!params.skip_plastid) {
 
         PLASTID_METAGENE_GENERATE(ch_canonical_gtf.map { [ [:], it ] })
@@ -788,6 +797,25 @@ workflow RIBOSEQ {
             "fiveprime_variable"
         )
         ch_versions = ch_versions.mix(PLASTID_MAKE_WIGGLE.out.versions)
+
+        //
+        // Per-ORF P-site quantification (issue #166). Runs additively to the
+        // gene-level QUANTIFY_INFRAME_PSITE_PLASTID path. Gated on the same
+        // predicate as BUILD_ORF_CATALOGUE so it only fires when the
+        // catalogue exists.
+        //
+        if (extended_orf_active && enabled_orf_callers) {
+            ch_orf_psite_tracks = PLASTID_MAKE_WIGGLE.out.tracks
+                .map { meta, tracks -> [ meta, tracks[0], tracks[1] ] }
+
+            QUANTIFY_ORF_PSITE (
+                BUILD_ORF_CATALOGUE.out.catalogue_bed,
+                ch_orf_psite_tracks,
+                BUILD_ORF_CATALOGUE.out.orf_to_gene_tsv
+            )
+            ch_versions         = ch_versions.mix(QUANTIFY_ORF_PSITE.out.versions)
+            ch_orf_count_matrix = QUANTIFY_ORF_PSITE.out.orf_count_matrix
+        }
 
     }
 
@@ -976,9 +1004,10 @@ workflow RIBOSEQ {
     }
 
     emit:
-    multiqc_report = ch_multiqc_report   // channel: /path/to/multiqc_report.html
-    versions       = ch_versions         // channel: [ path(versions.yml) ]
-    hybrid_gtf     = ch_hybrid_gtf       // channel: path(hybrid_reference.gtf) - canonical + filtered novel; equals canonical when no novel source is configured
+    multiqc_report   = ch_multiqc_report   // channel: /path/to/multiqc_report.html
+    versions         = ch_versions         // channel: [ path(versions.yml) ]
+    hybrid_gtf       = ch_hybrid_gtf       // channel: path(hybrid_reference.gtf) - canonical + filtered novel; equals canonical when no novel source is configured
+    orf_count_matrix = ch_orf_count_matrix // channel: [ meta, orf_psite_counts.tsv ] - per-ORF P-site count matrix (issue #166); empty unless extended-ORF + plastid both active
 }
 
 /*
