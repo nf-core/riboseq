@@ -362,16 +362,27 @@ The hybrid GTF is exposed as a workflow channel (`hybrid_gtf` emit) and is wired
 
 ## Extended ORF discovery
 
-By default, all ORF callers run against the canonical backbone GTF so the pipeline produces well-characterised annotated-ORF calls. To discover novel ORFs in the novel intergenic transcripts produced by StringTie or supplied via `--novel_gtf`, set `--extended_orf_analysis true`. This routes the hybrid GTF (`<outdir>/stringtie/hybrid_reference.gtf`) into the genome-BAM ORF callers:
+By default, all ORF callers run against the canonical backbone GTF so the pipeline produces well-characterised annotated-ORF calls. To discover novel ORFs in the novel intergenic transcripts produced by StringTie or supplied via `--novel_gtf`, set `--extended_orf_analysis true`. This routes the hybrid GTF (`<outdir>/stringtie/hybrid_reference.gtf`) into the ORF callers:
 
 - **Ribo-TISH `predict`**: hybrid GTF on `-g` (discovery target); canonical backbone on `-a` (background and ORF classification).
 - **Ribotricer `prepare-orfs`**: hybrid GTF directly (Ribotricer has no secondary-annotation concept; CDS-absent novel transcripts are auto-labelled `novel`).
+- **RiboCode**: hybrid GTF as the annotation source plus a hybrid transcriptome BAM produced by a second STAR alignment pass (see below).
 
 A novel-transcript source must be configured — `--skip_stringtie false` or `--novel_gtf <path>`. If `--extended_orf_analysis true` is set without one of those, the pipeline warns and falls back to the canonical GTF (the flag is a no-op rather than an error so users can compose flags incrementally).
 
-**RiboCode, riboWaltz and plastid stay on the canonical backbone regardless of `--extended_orf_analysis`.** These tools consume the transcriptome BAM produced by `STAR --quantMode TranscriptomeSAM`, which is keyed to the reference transcriptome FASTA used at alignment time. Novel StringTie transcripts do not exist in that transcriptome FASTA and therefore cannot be counted from the transcriptome BAM. Bringing RiboCode online for novel transcripts requires a second STAR alignment pass against a hybrid transcriptome FASTA; see [nf-core/riboseq#171](https://github.com/nf-core/riboseq/issues/171) for the follow-on issue. riboWaltz is a QC/calibration tool that does not call ORFs; feeding it a hybrid GTF would degrade its CDS-diagnostic plots without any discovery benefit, so it remains canonical-only by design.
+### Second STAR pass for RiboCode
 
-The default `--extended_orf_analysis false` keeps the pre-#165 behaviour unchanged.
+RiboCode (and STAR `--quantMode TranscriptomeSAM` in general) needs a transcriptome-coordinate BAM keyed to whichever transcriptome FASTA was supplied at alignment time. The primary STAR pass is built against the reference transcriptome, so novel StringTie transcripts are invisible to it. When `--extended_orf_analysis true` is set, the pipeline therefore:
+
+1. Extracts spliced transcript sequences from the hybrid GTF with `gffread -w` to produce a hybrid transcriptome FASTA (canonical + novel).
+2. Rebuilds a STAR index against the original genome FASTA, using the hybrid GTF as `--sjdbGTFfile`.
+3. Re-aligns the Ribo-seq reads against that hybrid index to obtain a hybrid transcriptome BAM, which is then fed to RiboCode in place of the reference transcriptome BAM.
+
+The second pass roughly doubles STAR alignment compute for Ribo-seq samples and consumes additional disk for the hybrid index and BAMs. It runs only when `--extended_orf_analysis true` and a novel-transcript source are configured, and is restricted to Ribo-seq samples (RNA-seq and TI-seq do not feed RiboCode). The hybrid transcriptome FASTA and hybrid STAR index are each built once per pipeline run. Outputs are published under `<outdir>/hybrid_star/`.
+
+**riboWaltz stays on the canonical reference transcriptome BAM by design.** riboWaltz is a QC/calibration tool and its CDS-dependent plots (frame distribution, start/stop metaprofiles) are driven by CDS-bearing canonical transcripts. Routing CDS-absent novel transcripts through riboWaltz would dilute its diagnostic plots without contributing to ORF discovery (riboWaltz does not call ORFs). Plastid and Salmon-based quantification likewise stay on the canonical/reference annotation regardless of `--extended_orf_analysis`.
+
+The default `--extended_orf_analysis false` keeps the pre-#165 behaviour unchanged: the primary STAR pass is the only alignment and every ORF caller runs against the canonical backbone.
 
 ## P-site identification
 
