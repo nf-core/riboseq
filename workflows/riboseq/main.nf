@@ -17,6 +17,7 @@ include { BUILD_HYBRID_TRANSCRIPTOME } from '../../subworkflows/local/build_hybr
 include { CONCAT_GTF               } from '../../modules/local/concat_gtf'
 include { FILTER_GTF_CLASS_CODE    } from '../../modules/local/filter_gtf_class_code'
 include { RUN_RPBP                 } from '../../subworkflows/local/run_rpbp'
+include { BUILD_ORF_CATALOGUE      } from '../../subworkflows/local/build_orf_catalogue'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -714,6 +715,34 @@ workflow RIBOSEQ {
             RIBOCODE_PREPARE.out.annotation,
             ch_ribocode_inputs.map { meta, bam, config -> [ meta, config ] }
         )
+    }
+
+    //
+    // Cross-sample ORF catalogue (issue #167). Built once per pipeline run
+    // when extended-ORF analysis is enabled AND at least one ORF caller ran.
+    // The catalogue normalises each caller's per-sample output into a unified
+    // BED12, merges with class-aware collapse (transcript-ID for canonical
+    // CDS, reciprocal overlap for novel intergenic / smORFs), and emits the
+    // merged BED12 + sidecar TSV + ORF-to-gene mapping + AA FASTA.
+    //
+    if (extended_orf_active && enabled_orf_callers) {
+        ch_ribotish_pred_cat   = (!params.skip_ribotish) ? RIBOTISH_PREDICT_INDIVIDUAL.out.predictions : Channel.empty()
+        ch_ribocode_pred_cat   = (!params.skip_ribocode) ? RIBOCODE_RIBOCODE.out.orf_txt              : Channel.empty()
+        ch_ribotricer_pred_cat = ( params.run_ribotricer) ? RIBOTRICER_DETECTORFS.out.orfs            : Channel.empty()
+        ch_rpbp_pred_cat       = ( params.run_rpbp)       ? RUN_RPBP.out.bed                          : Channel.empty()
+
+        def ch_orf_catalogue_gtf = ch_hybrid_gtf
+
+        BUILD_ORF_CATALOGUE(
+            ch_ribotish_pred_cat,
+            ch_ribocode_pred_cat,
+            ch_ribotricer_pred_cat,
+            ch_rpbp_pred_cat,
+            ch_fasta,
+            ch_orf_catalogue_gtf
+        )
+        ch_versions      = ch_versions.mix(BUILD_ORF_CATALOGUE.out.versions)
+        ch_multiqc_files = ch_multiqc_files.mix(BUILD_ORF_CATALOGUE.out.multiqc_summary.collect{it[1]}.ifEmpty([]))
     }
 
 

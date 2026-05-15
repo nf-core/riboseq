@@ -396,6 +396,19 @@ The second pass roughly doubles STAR alignment compute for Ribo-seq samples and 
 
 The default `--extended_orf_analysis false` keeps the pre-#165 behaviour unchanged: the primary STAR pass is the only alignment and every ORF caller runs against the canonical backbone.
 
+### Cross-sample ORF catalogue
+
+When `--extended_orf_analysis true` is set and at least one ORF caller is enabled, the pipeline produces a cohort-level ORF catalogue under `<outdir>/orf_catalogue/`. The catalogue normalises each per-sample, per-caller output into a unified BED12 (genomic blocks, multi-exon-aware), then merges across samples and callers with a class-aware strategy:
+
+- annotated multi-exon CDS are collapsed by `transcript_id` to preserve intron-chain identity;
+- single-exon novel intergenic ORFs are clustered by 80% reciprocal overlap on the outer genomic span;
+- smORFs (≤ 100 aa) are clustered by 80% reciprocal overlap as a coordinate seed - the published `orf_catalogue.faa` is the input for any subsequent sequence-level dedup;
+- cross-caller consensus is recorded in `called_by_<caller>` binary columns plus `score_<caller>` columns for Ribo-TISH / RiboCode / Rp-Bp (Ribotricer scores are excluded from rank aggregation per #163).
+
+The catalogue runs once per pipeline invocation (cohort-level, not per sample) and gates on `--extended_orf_analysis true` plus a non-empty enabled-caller set. The default-off path keeps the pre-#167 behaviour unchanged.
+
+See [ORF catalogue (cross-sample)](output.md#orf-catalogue-cross-sample) in the output docs for the full list of published files.
+
 ## P-site identification
 
 The pipeline will by default run [riboWaltz](https://github.com/LabTranslationalArchitectomics/riboWaltz) for P-site identification and diagnostics, unless disabled with `--skip_ribowaltz`. Additional arguments can be supplied via `--extra_ribowaltz_args` parameters. An example is: `--extra_ribowaltz_args "--length_range 27:31 --periodicity_threshold 40 --extremity 5end --start_nts 45 --stop_nts 24"`. If not provided, defaults used in the [nf-core module](https://github.com/nf-core/modules/blob/master/modules/nf-core/ribowaltz/templates/ribowaltz.r) are used.

@@ -456,6 +456,32 @@ If RiboCode is not needed for your analysis, you can skip it entirely with `--sk
 
 Produced only when `--run_rpbp true` is set. Rp-Bp's Bayesian fit is slow (~20-24h per replicate at genome-wide scale); see [Rp-Bp in usage.md](usage.md#rp-bp-opt-in-overnight). Rp-Bp's Bayes factor is stable across replicates and is retained in the cross-caller rank-aggregation set. When `--extended_orf_analysis true` is set, Rp-Bp consumes the hybrid GTF and so reports novel intergenic ORFs alongside annotated ones.
 
+### ORF catalogue (cross-sample)
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `orf_catalogue/normalised/`
+  - `*.normalised.bed12`: per-sample, per-caller BED12 of called ORFs in genomic coordinates (multi-exon blocks for spliced ORFs).
+  - `*.normalised.tsv`: matching sidecar with caller, sample id, ORF class (`canonical_cds`, `uORF`, `dORF`, `novel_u`, `smORF`, `other`), amino-acid length and the caller's score.
+- `orf_catalogue/`
+  - `orf_catalogue.bed12`: merged, deduplicated ORF catalogue (BED12, stable `orf_NNNNNNNN` ids in column 4).
+  - `orf_catalogue.tsv`: per-ORF table with `called_by_<caller>` binary columns for all four callers and `score_<caller>` columns for Ribo-TISH / RiboCode / Rp-Bp (Ribotricer scores are excluded per issue #163). Includes `orf_class`, `aa_length`, host `gene_id` and `transcript_id`.
+  - `orf_to_gene.tsv`: ORF-to-gene mapping. An ORF that maps to multiple host transcripts/genes gets multiple rows here; downstream gene-level aggregation collapses by `gene_id`.
+  - `orf_catalogue.faa`: amino-acid FASTA of every catalogue ORF, keyed by `orf_NNNNNNNN`.
+  - `orf_catalogue.mqc.tsv`: per-class ORF counts surfaced as a MultiQC custom-content table.
+
+</details>
+
+Produced only when `--extended_orf_analysis true` is set and at least one ORF caller is enabled. The catalogue runs once per pipeline invocation (cohort-level, not per sample) and merges per-sample per-caller calls with a class-aware strategy:
+
+- **Annotated multi-exon CDS** are collapsed by `transcript_id` so that different intron chains aren't accidentally merged into a single entry.
+- **Single-exon novel intergenic ORFs** (class code `u`) are clustered by 80% reciprocal overlap on the outer genomic span.
+- **smORFs** (amino-acid length ≤ 100) are clustered by 80% reciprocal overlap; the AA FASTA from `orf_catalogue_extractaa` is the input for any subsequent sequence-level dedup.
+- **Cross-caller consensus** is recorded by setting `called_by_<caller> = 1` for every caller that contributed a member of the cluster, plus a per-caller score column.
+
+The catalogue uses the hybrid GTF (canonical + filtered novel intergenic) as its coordinate-validation reference, matching the GTF that the underlying ORF callers consumed when `--extended_orf_analysis true`.
+
 ## P-site identification
 
 ### riboWaltz

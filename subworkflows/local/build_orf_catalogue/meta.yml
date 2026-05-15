@@ -1,0 +1,70 @@
+name: build_orf_catalogue
+description: |
+  Build a cohort-level ORF catalogue from per-sample, per-caller outputs.
+  Chains per-caller normalisation (BED12 + sidecar TSV) -> cohort merge
+  (transcript-ID grouping for canonical CDS; reciprocal-overlap clustering
+  for novel intergenic and smORFs) -> AA-sequence extraction.
+
+  Runs once per pipeline invocation, gated upstream by
+  `params.extended_orf_analysis` and a non-empty enabled-caller set.
+keywords:
+  - orf
+  - catalogue
+  - merge
+  - cohort
+components:
+  - orf/normalise/ribotish
+  - orf/normalise/ribocode
+  - orf/normalise/ribotricer
+  - orf/normalise/rpbp
+  - orf/catalogue/merge
+  - orf/catalogue/extractaa
+input:
+  - ch_ribotish_pred:
+      type: channel
+      description: Per-sample Ribo-TISH predict output `[meta, *_pred.txt]`.
+  - ch_ribocode_pred:
+      type: channel
+      description: Per-sample RiboCode ORF table `[meta, *.txt]`.
+  - ch_ribotricer_pred:
+      type: channel
+      description: |
+        Per-sample Ribotricer detect-orfs output
+        `[meta, *_translating_ORFs.tsv]`. Pass `Channel.empty()` if
+        Ribotricer is disabled.
+  - ch_rpbp_pred:
+      type: channel
+      description: |
+        Per-sample Rp-Bp predicted-ORF BED `[meta, *.predicted-orfs.bed.gz]`.
+        Pass `Channel.empty()` if Rp-Bp is disabled.
+  - ch_fasta:
+      type: channel
+      description: Genome FASTA `path(genome.fasta)`.
+  - ch_gtf:
+      type: channel
+      description: |
+        Annotation GTF `path(annotation.gtf)`. Use the hybrid GTF when
+        `--extended_orf_analysis` is on, else the canonical GTF.
+output:
+  - catalogue_bed:
+      type: channel
+      description: Merged BED12 catalogue `[meta, orf_catalogue.bed12]`.
+  - catalogue_tsv:
+      type: channel
+      description: Per-ORF catalogue table with caller-call columns.
+  - catalogue_faa:
+      type: channel
+      description: AA-sequence FASTA of catalogue ORFs.
+  - orf_to_gene_tsv:
+      type: channel
+      description: ORF-to-gene mapping table (one row per host transcript).
+  - multiqc_summary:
+      type: channel
+      description: MultiQC custom-content TSV with per-class counts.
+  - versions:
+      type: channel
+      description: Versions of catalogue-building components.
+authors:
+  - "@pinin4fjords"
+maintainers:
+  - "@pinin4fjords"
