@@ -424,7 +424,7 @@ workflow RIBOSEQ {
     // Strict-majority of enabled callers (floor(N/2)+1): N=2 -> 2 (both must
     // agree), N=3 -> 2 (majority). Adapts as the caller set grows.
     def orf_agreement_min_callers = enabled_orf_callers
-        ? (int) Math.floor(enabled_orf_callers.size() / 2.0d) + 1
+        ? enabled_orf_callers.size().intdiv(2) + 1
         : 0
     ch_enabled_orf_callers      = Channel.value(enabled_orf_callers)
     ch_rank_aggregation_callers = Channel.value(rank_aggregation_callers)
