@@ -646,6 +646,22 @@ When using `--translational_efficiency_method deltate`, the pipeline produces th
 
 </details>
 
+### ORF-level DTE outputs (issue #168)
+
+When `--extended_orf_analysis true` is set with `--te_quantification_method plastid_psite`, the pipeline produces two additional output directories alongside the gene-level anota2seq / deltaTE results. See [Translational efficiency / ORF-level differential translation](usage.md#orf-level-differential-translation-issue-168) for the analysis rationale and the row-independence caveat.
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `dte/gene_level_cds_aggregated/`
+  - `gene_cds_psite_counts.tsv`: Tier 1 gene-level Ribo-seq count matrix re-aggregated from the per-ORF P-site catalogue, summing ONLY `canonical_cds` ORFs. Long-format `sample<TAB>gene_id<TAB>count`. This file is the replacement input for the existing gene-level TE Ribo-seq counts; gene-level anota2seq / deltaTE in `<outdir>/translational_efficiency/` is run on this re-aggregation.
+- `dte/orf_level/`
+  - `*.orf_dte.results.tsv`: Tier 2 per-ORF DESeq2 DTE results (one file per contrast). Columns include `orf_id`, `gene_id`, `baseMean`, `log2FoldChange`, `lfcSE`, `stat`, `pvalue`, `padj`. The `log2FoldChange` is the interaction-term effect (per-ORF differential translation efficiency).
+  - `*.orf_dte.dispersions.png`: DESeq2 `plotDispEsts` diagnostic. Inspect before interpreting results: well-behaved fits should show dispersion estimates clustering around the fitted line at intermediate counts. Heavy-tailed or floored dispersions indicate the min-count filter (`--extra_orf_dte_args "--min_count N"`) should be raised.
+  - `*.orf_dte.R_sessionInfo.log`: R session information for reproducibility.
+
+</details>
+
 ### Fold change plots
 
 Both methods produce fold change plots that visualize the relationship between RNA-seq and Ribo-seq changes. The examples below were generated using the `test_full` profile on the same dataset, allowing direct comparison between methods.
