@@ -1,0 +1,39 @@
+nextflow_process {
+
+    name "Test Process RPBP_PREDICTORFS"
+    script "../main.nf"
+    process "RPBP_PREDICTORFS"
+
+    tag "modules"
+    tag "modules_local"
+    tag "rpbp"
+    tag "rpbp_predictorfs"
+
+    test("synthetic data - stub") {
+        options "-stub-run"
+
+        when {
+            process {
+                """
+                def bam = file('sample.bam')
+                bam.text = ""
+                def bai = file('sample.bam.bai')
+                bai.text = ""
+                def idx = file('rpbp_index')
+                idx.mkdirs()
+                def cfg = file('rpbp_config.yaml')
+                cfg.text = ""
+
+                input[0] = Channel.of([ [id:'sample_X'], bam, bai, idx, cfg ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}
