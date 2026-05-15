@@ -561,10 +561,10 @@
                 },
                 "te_quantification_method": {
                     "type": "string",
-                    "default": "alignment",
+                    "default": "plastid_psite",
                     "enum": ["alignment", "pseudo", "plastid_psite"],
-                    "description": "Quantification method for translational efficiency analysis: 'alignment' (STAR → Salmon), 'pseudo' (Salmon pseudo-alignment) or 'plastid_psite' (in-frame p-site counts from plastid).",
-                    "help_text": "Choose 'alignment' for STAR alignment followed by Salmon in alignment-based mode (default). Choose 'pseudo' for direct Salmon pseudo-alignment, an experimental alternative that uses the same k-mer index for both modalities and may help reduce length-related quantification biases without requiring read trimming. Choose 'plastid_psite' to replace Ribo-seq counts with the sum of in-frame p-site counts per gene as determined by plastid (experimental). Only p-sites that fall on in-frame codon positions within CDS segments are counted.",
+                    "description": "Quantification method for translational efficiency analysis: 'plastid_psite' (in-frame P-site counts from plastid, default), 'alignment' (STAR -> Salmon) or 'pseudo' (Salmon pseudo-alignment).",
+                    "help_text": "Default is 'plastid_psite': Ribo-seq reads are counted only when their inferred P-site coincides with an in-frame codon position in an annotated CDS (derived from plastid wiggle tracks). This is the scientifically appropriate quantity for Ribo-seq, because Salmon's underlying assumptions (uniform coverage, fragment-length distribution, multi-mapping resolution from longer/paired reads) are violated by short, length-constrained Ribo-seq footprints (see Ribomap, Bioinformatics 2016). Choose 'alignment' to keep STAR alignment followed by Salmon in alignment-based mode, e.g. for backward compatibility, comparison with prior runs, or downstream tools that expect Salmon-format transcript-level counts. Choose 'pseudo' for direct Salmon pseudo-alignment from reads, an experimental alternative that uses the same k-mer index for both modalities and may help reduce length-related quantification biases without requiring read trimming.",
                     "fa_icon": "fas fa-calculator"
                 }
             }

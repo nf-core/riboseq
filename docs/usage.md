@@ -368,13 +368,30 @@ Both methods require the same input format and contrasts specification, but prod
 
 The pipeline offers three methods for quantifying gene expression for TE analysis, controlled by the `--te_quantification_method` parameter:
 
-#### Alignment-based (default)
+#### In-frame P-sites (default)
+
+```bash
+--te_quantification_method plastid_psite
+```
+
+This is the default method. RNA-seq reads are quantified using the alignment-based method (STAR + Salmon). Ribo-seq reads are counted only if they map to coding regions and their predicted P-sites (as determined by Plastid) coincide with the annotated reading frame. Specifically, a Ribo-seq read is counted only when its inferred P-site aligns with the reading frame of a coding sequence (CDS) defined in the provided annotation (GTF) file.
+
+This is the scientifically appropriate quantity for Ribo-seq. Salmon's underlying model assumes uniform coverage and a length-dependent fragment distribution and relies on long or paired-end reads to resolve multi-mapping. Ribo-seq footprints (~28-32 nt) violate all three assumptions: coverage non-uniformity is the biological signal, fragment lengths are physically constrained by the ribosome, and short footprints cannot disambiguate shared exons (see [Ribomap, Bioinformatics 2016](https://academic.oup.com/bioinformatics/article/32/12/1880/1744291)).
+
+Caveats:
+
+- The methods used to quantify RNA-seq reads and Ribo-seq reads are not the same, giving rise to different technical biases in the counts.
+- The quantification of in-frame P-sites is subject to the periodicity of the Ribo-seq experiment. Before comparing samples against each other, it should be confirmed that the periodicities of the samples are similar.
+- Quantification of overlapping ORFs is still flawed and cannot be fully deconvoluted, since the counts from one ORF can leak into the other ORF unless the periodicity efficiency is perfect (which it usually is not).
+- Counts are summed per gene; ORF-level quantification is not yet supported in this mode.
+
+#### Alignment-based
 
 ```bash
 --te_quantification_method alignment
 ```
 
-This is the default method. Reads are aligned with STAR, and Salmon quantifies from the transcriptome BAM in alignment-based mode. This approach leverages full alignment information and is suitable for most analyses.
+Reads are aligned with STAR, and Salmon quantifies from the transcriptome BAM in alignment-based mode. This was the default in earlier pipeline versions and is retained for backward compatibility and for downstream tools that expect Salmon-format transcript-level counts. Choose this if you need to reproduce results from a prior run, compare against a Salmon-based cohort, or feed counts into a tool that specifically expects Salmon output. Note that switching from `alignment` to `plastid_psite` (or vice versa) changes the actual per-gene count values - downstream comparisons across pipeline versions are not apples-to-apples if the default changed between runs.
 
 #### Pseudo-alignment
 
@@ -394,22 +411,6 @@ Consider this option when:
 - You prefer k-mer-based quantification for methodological consistency between modalities
 
 > **Note**: The pseudo-alignment pathway runs **in addition to** the standard STAR alignment, which is still needed for position-dependent analyses (P-sites, ribosome periodicity, ORF detection). The pseudo-alignment counts are only used for TE analysis.
-
-#### In-frame P-sites
-
-```bash
---te_quantification_method plastid_psite
-```
-
-In this mode, RNA‑seq reads are quantified using the default alignment‑based method. Ribo‑seq reads, however, are counted only if they map to coding regions and their predicted P‑sites (as determined by Plastid) coincide with the annotated reading frame. This **experimental mode** applies conservative filters to Ribo‑seq quantification. Specifically, a Ribo‑seq read is counted only when its inferred P‑site aligns with the reading frame of a coding sequence (CDS) defined in the provided annotation (GTF) file.
-
-Consider using this option when you want to quantify on the level of ORFs rather than transcripts. This is particularly relevant in cases where a transcript has multiple ORFs, but you want to focus on annotated ones rather than summing up the counts from all ORFs of the transcript.
-
-Note that this method comes with potential caveats:
-
-- The methods used to quantify RNA-seq reads and Ribo-seq reads are not the same, giving rise to different technical biases in the counts.
-- The quantification of in-frame P-sites is subject to the periodicity of the Ribo-seq experiment. Before comparing samples against each other, it should be confirmed that the periodicities of the samples are similar.
-- Although this method counts only in-frame P-sites, quantification of overlapping ORFs is still flawed and cannot be fully deconvoluted, since the counts from one ORF can leak into the other ORF unless the periodicity efficiency is perfect (which it usually is not).
 
 ### Contrasts specification
 
