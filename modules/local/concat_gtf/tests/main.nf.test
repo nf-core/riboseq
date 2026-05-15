@@ -1,0 +1,59 @@
+nextflow_process {
+
+    name "Test Process CONCAT_GTF"
+    script "../main.nf"
+    process "CONCAT_GTF"
+
+    tag "modules"
+    tag "modules_local"
+    tag "concat_gtf"
+
+    test("synthetic data - canonical + novel") {
+        when {
+            process {
+                """
+                def canonical = file('canonical.gtf')
+                canonical.text = "chr1\\tHAVANA\\tgene\\t10\\t100\\t.\\t+\\t.\\tgene_id \"g1\";\\nchr2\\tHAVANA\\tgene\\t50\\t150\\t.\\t+\\t.\\tgene_id \"g2\";\\n"
+
+                def novel = file('novel.gtf')
+                novel.text = "chr1\\tStringTie\\ttranscript\\t5\\t9\\t.\\t+\\t.\\tgene_id \"n1\"; class_code \"u\";\\n"
+
+                input[0] = Channel.of([ [id:'hybrid'], canonical, novel ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert file(process.out.gtf[0][1]).name == 'hybrid.gtf' },
+                { assert snapshot(process.out.gtf).match() }
+            )
+        }
+    }
+
+    test("synthetic data - stub") {
+        options "-stub-run"
+
+        when {
+            process {
+                """
+                def canonical = file('canonical.gtf')
+                canonical.text = "chr1\\tHAVANA\\tgene\\t10\\t100\\t.\\t+\\t.\\tgene_id \"g1\";\\n"
+
+                def novel = file('novel.gtf')
+                novel.text = ""
+
+                input[0] = Channel.of([ [id:'hybrid'], canonical, novel ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

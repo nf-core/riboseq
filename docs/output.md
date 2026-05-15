@@ -293,18 +293,22 @@ The pipeline produces coverage tracks in bigWig format. In the case of stranded 
   - `<SAMPLE>.reverse.bigWig`: Coverage on the reverse strand (only created for stranded libraries)
   - `<SAMPLE>.unstranded.bigWig`: Sum of coverage of forward and reverse strand (only created for unstranded libraries)
 
-## Novel transcript discovery (StringTie)
+## Novel transcript discovery (StringTie / hybrid GTF)
 
-When `--skip_stringtie false` is set, [StringTie](https://ccb.jhu.edu/software/stringtie/) is run per sample in reference-guided mode against the supplied GTF, and the per-sample assemblies are then merged into a unified annotation. The merged GTF is published as a side product for downstream use; **the rest of the pipeline continues to use the reference annotation**.
+When `--skip_stringtie false` is set, [StringTie](https://ccb.jhu.edu/software/stringtie/) is run per sample in reference-guided mode (preferring RNA-seq BAMs, falling back to Ribo-seq with tightened parameters) and the per-sample assemblies are merged. Alternatively, when `--novel_gtf` is supplied, StringTie is skipped and the user-supplied GTF is used as the novel-transcript source. Either source is then classified against the reference with [gffcompare](https://ccb.jhu.edu/software/stringtie/gffcompare.shtml), filtered to the user-configured class codes (`--stringtie_class_codes`, default `u`), optionally cleaned with an rRNA/repeat blacklist (`--rrna_blacklist`), and concatenated with the canonical reference to produce a hybrid annotation.
 
-The merged GTF is not yet wired into the riboseq ORF callers because their nf-core modules accept only a single GTF input and have no slot for a secondary annotation. Ribo-TISH `predict` and Ribotricer can in principle scan novel transcripts for ORFs while classifying against the reference (Ribo-TISH `-a` flag, equivalent for Ribotricer), but doing so cleanly requires an upstream module update first; see the PR/issue tracker for the follow-on.
+The hybrid GTF is published as a side product; the rest of the pipeline continues to run against the canonical reference in this release. Wiring the hybrid GTF into Ribo-TISH `predict` and Ribotricer is the subject of a separate follow-on issue.
 
 <details markdown="1">
 <summary>Output files</summary>
 
 - `stringtie/`
-  - `<SAMPLE>.denovo.transcripts.gtf`: Per-sample reference-guided assembly. The `.denovo` prefix marks these as the assembly inputs to the merge step (not the merged annotation).
-  - `stringtie_merge.gtf`: Merged annotation produced by `stringtie --merge` across all per-sample assemblies. Novel transcripts appear with `MSTRG.*` IDs.
+  - `<SAMPLE>.denovo.transcripts.gtf`: Per-sample reference-guided assembly (only produced when StringTie ran; the `.denovo` prefix marks these as inputs to the merge step).
+  - `stringtie_merge.gtf`: Merged annotation produced by `stringtie --merge` across all per-sample assemblies. Novel transcripts appear with `MSTRG.*` IDs. Absent when `--novel_gtf` is used.
+  - `gffcompare/`: Full gffcompare output (`*.annotated.gtf`, `*.stats`, `*.tracking`, `*.loci`, etc.) classifying novel transcripts against the full reference annotation.
+  - `novel_filtered.gtf`: Novel transcripts retained after the gffcompare class-code filter (default class `u` = intergenic only).
+  - `novel_filtered.blacklisted.gtf`: Class-filtered novel transcripts after the optional rRNA/repeat blacklist intersect (only present when `--rrna_blacklist` is supplied).
+  - `hybrid_reference.gtf`: Canonical reference + filtered novel transcripts, sorted by chromosome and start coordinate. Exposed as the `hybrid_gtf` workflow emit channel.
 
 </details>
 
