@@ -1,0 +1,48 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: orf_inframe_psites
+description: Expand a BED12 ORF catalogue into per-codon in-frame P-site positions
+keywords:
+  - riboseq
+  - orf
+  - psite
+  - bed
+tools:
+  - python:
+      description: Stdlib Python; runs `bin/orf_bed12_to_inframe_psites.py`
+      homepage: https://www.python.org/
+      documentation: https://docs.python.org/3/
+      licence: ["PSF"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: Cohort-level metadata
+    - catalogue_bed12:
+        type: file
+        description: |
+          BED12 ORF catalogue with one record per merged ORF (from
+          `BUILD_ORF_CATALOGUE`). Block starts/sizes define exonic structure;
+          frame is taken from the ORF's own ATG, not the GTF `phase` attribute.
+        pattern: "*.bed"
+        ontologies: []
+output:
+  bed:
+    - - meta:
+          type: map
+          description: Cohort-level metadata
+      - "*.orf_inframe_psites.bed":
+          type: file
+          description: BED6 file with one row per in-frame codon-start position per ORF
+          pattern: "*.orf_inframe_psites.bed"
+          ontologies: []
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@pinin4fjords"
+maintainers:
+  - "@pinin4fjords"

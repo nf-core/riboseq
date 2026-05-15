@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "quantify_orf_psite"
+description: |
+  Per-ORF P-site quantification (issue #166). Expands the cohort ORF catalogue
+  BED12 into in-frame codon-start positions, intersects per-sample plastid
+  wiggle tracks to count P-sites per ORF, and merges per-sample counts into a
+  single ORF x sample matrix.
+keywords:
+  - riboseq
+  - orf
+  - psite
+  - quantification
+components:
+  - orf/inframe_psites
+  - quantify_inframe_psite_orf
+  - orf/count_matrix
+input:
+  - ch_orf_catalogue_bed:
+      description: Cohort ORF catalogue BED12 (from `BUILD_ORF_CATALOGUE`)
+      pattern: "*.bed"
+  - ch_psite_tracks:
+      description: Per-sample forward + reverse P-site bedgraphs from plastid `make_wiggle`
+      pattern: "*.bedgraph"
+  - ch_orf_to_gene:
+      description: ORF id -> gene id mapping (currently passed through for downstream use)
+      pattern: "*.tsv"
+output:
+  - orf_count_matrix:
+      description: ORF x sample P-site count matrix
+      pattern: "orf_psite_counts.tsv"
+  - versions:
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@pinin4fjords"
+maintainers:
+  - "@pinin4fjords"

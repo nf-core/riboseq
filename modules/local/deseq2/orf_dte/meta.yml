@@ -1,0 +1,98 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: deseq2_orf_dte
+description: |
+  Tier 2 of issue #168. Per-ORF DESeq2 interaction-model differential
+  translation analysis: `~ condition + seq_type + condition:seq_type`. The
+  Ribo-seq numerator is the per-ORF P-site matrix (#166); the RNA-seq
+  denominator is the gene-level Salmon matrix joined per ORF via
+  orf_to_gene.tsv (#167). Novel intergenic ORFs with no host gene are
+  dropped inside the R template.
+keywords:
+  - riboseq
+  - orf
+  - dte
+  - deseq2
+  - differential
+tools:
+  - bioconductor-deseq2:
+      description: Differential expression analysis based on the negative binomial distribution
+      homepage: https://bioconductor.org/packages/release/bioc/html/DESeq2.html
+      documentation: https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html
+      doi: "10.1186/s13059-014-0550-8"
+      licence: ["LGPL-3.0-or-later"]
+      identifier: biotools:deseq2
+input:
+  - - meta:
+        type: map
+        description: Contrast metadata row from the contrasts CSV
+    - contrast_variable:
+        type: string
+        description: Column in the samplesheet that distinguishes reference vs target
+    - reference:
+        type: string
+        description: Reference level of `contrast_variable`
+    - target:
+        type: string
+        description: Target level of `contrast_variable`
+  - - meta2:
+        type: map
+        description: Cohort-level metadata
+    - samplesheet:
+        type: file
+        description: Pipeline samplesheet CSV
+        pattern: "*.csv"
+        ontologies: []
+    - ribo_counts:
+        type: file
+        description: ORF x sample P-site count matrix (`orf_psite_counts.tsv`)
+        pattern: "*.tsv"
+        ontologies: []
+    - rna_counts:
+        type: file
+        description: Gene-level Salmon RNA-seq counts (length-scaled)
+        pattern: "*.tsv"
+        ontologies: []
+    - orf_to_gene:
+        type: file
+        description: ORF id -> gene id mapping from the ORF catalogue
+        pattern: "*.tsv"
+        ontologies: []
+output:
+  results:
+    - - meta:
+          type: map
+          description: Contrast metadata
+      - "*.orf_dte.results.tsv":
+          type: file
+          description: Per-ORF DESeq2 results (log2FC, p-value, padj, mean counts)
+          pattern: "*.orf_dte.results.tsv"
+          ontologies: []
+  dispersion_plot:
+    - - meta:
+          type: map
+          description: Contrast metadata
+      - "*.orf_dte.dispersions.png":
+          type: file
+          description: DESeq2 dispersion diagnostic plot
+          pattern: "*.orf_dte.dispersions.png"
+          ontologies: []
+  session_info:
+    - - meta:
+          type: map
+          description: Contrast metadata
+      - "*.orf_dte.R_sessionInfo.log":
+          type: file
+          description: R sessionInfo for reproducibility
+          pattern: "*.orf_dte.R_sessionInfo.log"
+          ontologies: []
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@pinin4fjords"
+maintainers:
+  - "@pinin4fjords"

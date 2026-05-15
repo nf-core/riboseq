@@ -1,0 +1,52 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: orf_count_matrix
+description: Merge per-sample ORF P-site count TSVs into a single ORF x sample matrix
+keywords:
+  - riboseq
+  - orf
+  - quantification
+  - matrix
+tools:
+  - python:
+      description: Stdlib Python; runs `bin/build_orf_count_matrix.py`
+      homepage: https://www.python.org/
+      documentation: https://docs.python.org/3/
+      licence: ["PSF"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: Cohort-level metadata
+    - per_sample_counts:
+        type: file
+        description: |
+          Per-sample TSVs of `(orf_id, count)` rows (from
+          `QUANTIFY_INFRAME_PSITE_ORF`). Staged under `counts/`.
+        pattern: "*.tsv"
+        ontologies: []
+    - orf_catalogue_bed12:
+        type: file
+        description: ORF catalogue BED12 used to define the matrix row order
+        pattern: "*.bed"
+        ontologies: []
+output:
+  matrix:
+    - - meta:
+          type: map
+          description: Cohort-level metadata
+      - orf_psite_counts.tsv:
+          type: file
+          description: ORF x sample P-site count matrix, zero-filled for absent samples
+          pattern: "orf_psite_counts.tsv"
+          ontologies: []
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@pinin4fjords"
+maintainers:
+  - "@pinin4fjords"

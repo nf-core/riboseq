@@ -1,0 +1,58 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: orf_to_gene_cds_counts
+description: |
+  Tier 1 of issue #168. Sum per-ORF P-site counts to the gene level, keeping
+  only ORFs whose class is `canonical_cds`. Emits the replacement Ribo-seq
+  numerator for the gene-level translational-efficiency analysis.
+keywords:
+  - riboseq
+  - orf
+  - dte
+  - aggregation
+tools:
+  - python:
+      description: Stdlib Python; runs `bin/orf_to_gene_cds_counts.py`
+      homepage: https://www.python.org/
+      documentation: https://docs.python.org/3/
+      licence: ["PSF"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: Cohort-level metadata
+    - orf_count_matrix:
+        type: file
+        description: ORF x sample P-site count matrix (`orf_psite_counts.tsv`)
+        pattern: "*.tsv"
+        ontologies: []
+    - orf_to_gene_tsv:
+        type: file
+        description: ORF id -> gene id mapping from the ORF catalogue
+        pattern: "*.tsv"
+        ontologies: []
+    - orf_catalogue_tsv:
+        type: file
+        description: ORF catalogue sidecar TSV (carries the `orf_class` column)
+        pattern: "*.tsv"
+        ontologies: []
+output:
+  gene_counts:
+    - - meta:
+          type: map
+          description: Cohort-level metadata
+      - gene_cds_psite_counts.tsv:
+          type: file
+          description: Long-format `sample\tgene_id\tcount` for canonical_cds ORFs only
+          pattern: "gene_cds_psite_counts.tsv"
+          ontologies: []
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@pinin4fjords"
+maintainers:
+  - "@pinin4fjords"
