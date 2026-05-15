@@ -19,6 +19,8 @@ include { FILTER_GTF_CLASS_CODE    } from '../../modules/local/filter_gtf_class_
 include { RUN_RPBP                 } from '../../subworkflows/local/run_rpbp'
 include { BUILD_ORF_CATALOGUE      } from '../../subworkflows/local/build_orf_catalogue'
 include { QUANTIFY_ORF_PSITE       } from '../../subworkflows/local/quantify_orf_psite'
+include { DTE_ORF_LEVEL            } from '../../subworkflows/local/dte_orf_level'
+include { ORF_TO_GENE_CDS_COUNTS   } from '../../modules/local/orf_to_gene_cds_counts'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -897,6 +899,23 @@ workflow RIBOSEQ {
             .collectFile(name: 'gene_inframe_psite_counts.tsv') { meta, file -> file }
             .map { file -> [ [:], file ] }
 
+        // Issue #168 Tier 1: when extended ORF analysis is active and a
+        // cohort ORF P-site matrix exists, replace the plastid-derived
+        // gene-CDS p-site counts with a re-aggregation that sums ONLY
+        // canonical_cds ORFs from the catalogue. This keeps the gene-level
+        // TE numerator clean of uORF/dORF dynamics, which are picked up
+        // separately in the Tier 2 ORF-level DTE below.
+        if (extended_orf_active && enabled_orf_callers) {
+            ORF_TO_GENE_CDS_COUNTS(
+                ch_orf_count_matrix
+                    .combine(BUILD_ORF_CATALOGUE.out.orf_to_gene_tsv.map { _meta, tsv -> tsv })
+                    .combine(BUILD_ORF_CATALOGUE.out.catalogue_tsv.map { _meta, tsv -> tsv })
+                    .map { meta, orf_counts, o2g, cat_tsv -> [meta, orf_counts, o2g, cat_tsv] }
+            )
+            ch_versions = ch_versions.mix(ORF_TO_GENE_CDS_COUNTS.out.versions)
+            ch_psite_counts_merged = ORF_TO_GENE_CDS_COUNTS.out.gene_counts
+        }
+
         REPLACE_RIBOSEQ_COUNTS_IN_MATRIX(
             ch_psite_counts_merged
                 .combine(QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled.map{ meta, counts -> counts })
@@ -938,6 +957,28 @@ workflow RIBOSEQ {
             )
             ch_versions = ch_versions.mix(DESEQ2_DELTATE.out.versions)
         }
+
+        // Issue #168 Tier 2: per-ORF DESeq2 interaction-model DTE.
+        // Runs additively to the gene-level DTE above whenever the
+        // ORF count matrix is populated (extended ORFs + plastid).
+        if (extended_orf_active && enabled_orf_callers) {
+            DTE_ORF_LEVEL(
+                ch_contrasts,
+                ch_orf_count_matrix,
+                QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled,
+                BUILD_ORF_CATALOGUE.out.orf_to_gene_tsv,
+                ch_samplesheet
+            )
+            ch_versions = ch_versions.mix(DTE_ORF_LEVEL.out.versions)
+        }
+    }
+
+    // Issue #168 Tier 3 (DOTSeq): deferred. The package is in
+    // Bioconductor devel only; the param is a placeholder so users can
+    // express intent now and so the schema/docs stay aligned with the
+    // implementation plan. Tracked in #168.
+    if (params.run_dotseq) {
+        log.info "--run_dotseq is enabled, but DOTSeq Tier-3 ORF-level DTE/DOU is deferred to a future release (DOTSeq is currently in Bioconductor devel only). See issue #168."
     }
 
     //

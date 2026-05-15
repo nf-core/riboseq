@@ -437,6 +437,23 @@ Alternatively, you can use the deltaTE method by specifying `--translational_eff
 
 Both methods analyze differences between conditions for RNA-seq and Ribo-seq samples, but use different statistical frameworks to identify translational regulation.
 
+### ORF-level differential translation (issue #168)
+
+When `--extended_orf_analysis true` is set with `--te_quantification_method plastid_psite` (the default), at least one ORF caller is enabled, and `--contrasts` is supplied, the pipeline runs ORF-level differential translation analysis additively to the gene-level DTE above. Three tiers are defined; Tier 1 and Tier 2 are implemented, Tier 3 is opt-in but currently a deferred stub.
+
+**Tier 1: re-aggregate ORF counts to a cleaner gene-level numerator.** The existing gene-level anota2seq / deltaTE TE Ribo-seq numerator is replaced with a re-aggregation that sums per-ORF P-site counts ONLY for ORFs in the `canonical_cds` class. uORF, dORF, novel intergenic (`novel_u`), smORF, and `other` ORFs are excluded from the gene-level sum, so a repressed uORF cannot inflate the gene-level Ribo-seq column. The RNA-seq denominator continues to come from Salmon at gene level. The aggregated gene matrix is published under `<outdir>/dte/gene_level_cds_aggregated/`. Gene-level anota2seq / deltaTE then runs on this cleaner input.
+
+**Tier 2: per-ORF DESeq2 interaction model.** The pipeline fits `~ condition + seq_type + condition:seq_type` per ORF using DESeq2. The Ribo-seq numerator is the per-ORF P-site count matrix (`<outdir>/orf_quantification/orf_psite_counts.tsv`); the RNA-seq denominator is the gene-level Salmon count for the ORF's host gene (joined via `orf_to_gene.tsv` from the catalogue). The interaction coefficient is the per-ORF differential translation efficiency. Results land under `<outdir>/dte/orf_level/<contrast>.orf_dte.results.tsv` alongside a dispersion-estimate diagnostic plot.
+
+Two caveats apply to Tier 2:
+
+- **Row independence.** Multiple ORFs from the same gene share a single gene-level RNA-seq denominator row. After the join, those rows are perfectly correlated. DESeq2 treats them as independent observations; this is a known statistical limitation. The accepted alternative (Fishpond/Swish with inferential replicates) is out of scope. Users should be aware that p-values for ORFs sharing a host gene are not strictly independent.
+- **Low-count ORFs.** uORFs, smORFs and low-abundance novel ORFs frequently have sparse P-site counts. DESeq2 dispersion estimation is unreliable on rows with too many zeros, so the module filters out ORFs with fewer than 10 P-site counts in fewer than 3 Ribo-seq samples by default. Tune via `--extra_orf_dte_args "--min_count N --min_samples M"`. The published dispersion plot should be inspected before interpreting results.
+
+Novel intergenic ORFs (ORF class `novel_u`) have no host gene and therefore no RNA-seq denominator. They are dropped from Tier 2 fitting; their raw P-site counts remain available in `orf_psite_counts.tsv` for count-only inspection.
+
+**Tier 3: DOTSeq (deferred).** A `--run_dotseq` parameter is exposed for forward compatibility with DOTSeq's ORF-level DTE + DOU analysis once it lands in Bioconductor stable. Currently DOTSeq is in Bioconductor devel only; setting the flag emits an info message at workflow startup and runs no analysis. Tracked in issue #168.
+
 ### Method comparison
 
 **anota2seq** studies differences between conditions for both RNA-seq and Ribo-seq samples. It also assesses combined results from two measures as they relate to one another:

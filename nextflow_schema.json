@@ -524,6 +524,16 @@
                     "type": "string",
                     "description": "Extra arguments to pass to deltaTE (DESeq2) in addition to defaults defined by the pipeline."
                 },
+                "extra_orf_dte_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to the per-ORF DESeq2 DTE module (issue #168 Tier 2). Available options include `--min_count`, `--min_samples`, `--alpha`, `--fit_type`, `--batch_col`.",
+                    "help_text": "Forwarded verbatim to `modules/local/deseq2/orf_dte`. ORFs failing the min-count filter (default: at least 10 P-site counts in at least 3 samples) are dropped before DESeq2 fitting to keep dispersion estimation reliable on sparse ORF rows."
+                },
+                "run_dotseq": {
+                    "type": "boolean",
+                    "description": "Opt-in switch for the deferred DOTSeq Tier-3 ORF-level DTE/DOU analysis (issue #168). DOTSeq is currently in Bioconductor devel only; setting this flag emits an info message and does not run any analysis. Reserved for a future release once DOTSeq lands in Bioconductor stable.",
+                    "fa_icon": "fas fa-flask"
+                },
                 "te_lfc_threshold": {
                     "type": "number",
                     "default": 0.2630344,
