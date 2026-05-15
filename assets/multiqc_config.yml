@@ -265,6 +265,9 @@ sp:
   seqkit/stats:
     fn: "*_stats.tsv"
 
+  orf_catalogue/summary:
+    fn: "orf_catalogue.mqc.tsv"
+
 fn_ignore_files:
   - "*umi_dedup.transcriptome.sorted.log"
 
