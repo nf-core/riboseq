@@ -495,6 +495,14 @@
                     "type": "string",
                     "description": "Extra arguments to pass to the riboWaltz command in addition to defaults defined by the pipeline."
                 },
+                "extra_stringtie_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to per-sample StringTie in addition to defaults defined by the pipeline."
+                },
+                "extra_stringtie_merge_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to StringTie --merge (e.g. `-T 1 -f 0.1` to tighten the merged annotation)."
+                },
                 "extra_anota2seq_run_args": {
                     "type": "string",
                     "description": "Extra arguments to pass to anota2seq in addition to defaults defined by the pipeline. Available options include: --gene_id_col (column name for gene IDs in count table, default: 'gene_id'), --exclude_samples_col and --exclude_samples_values (exclude samples by column value, semicolon-separated). Note: --samples_pairing_col and --samples_batch_col are automatically set from the 'pair' and 'batch' columns in the contrast file if present."
@@ -725,6 +733,13 @@
                 "skip_plastid": {
                     "type": "boolean",
                     "description": "Skip plastid.",
+                    "fa_icon": "fas fa-fast-forward"
+                },
+                "skip_stringtie": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Skip StringTie reference-guided transcript assembly and merge.",
+                    "help_text": "When `false`, the pipeline runs StringTie per sample (reference-guided) then merges per-sample GTFs into a unified annotation. The merged GTF is published under `<outdir>/stringtie/stringtie_merge.gtf` as a side product. The downstream ORF callers continue to consume the supplied reference GTF in this version; routing the merged GTF into Ribo-TISH `predict` / Ribotricer is the planned follow-on once their nf-core modules expose a secondary-annotation argument.",
                     "fa_icon": "fas fa-fast-forward"
                 }
             }

@@ -322,6 +322,17 @@ MANE Select vs `Ensembl_canonical` for non-coding genes: MANE Select covers virt
 
 The pipeline will by default run the [Ribo-TISH](https://github.com/zhpn1024/ribotish) [quality](https://github.com/zhpn1024/ribotish?tab=readme-ov-file#quality) and [predict](https://github.com/zhpn1024/ribotish?tab=readme-ov-file#predict) commands for QC and ORF prediction, respectively. Additional arguments can be supplied to either command via the `--extra_ribotish_quality_args` and `--extra_ribotish_predict_args` parameters.
 
+## Novel transcript discovery (StringTie)
+
+Set `--skip_stringtie false` to enable [StringTie](https://ccb.jhu.edu/software/stringtie/) reference-guided assembly. The pipeline runs StringTie per sample using the input GTF as a guide, then merges per-sample assemblies into a unified annotation with `stringtie --merge`. The merged GTF is published under `<outdir>/stringtie/stringtie_merge.gtf` for users to consume downstream.
+
+In this initial PR the merged GTF is **not yet routed back into the riboseq ORF callers** - the rest of the pipeline still runs against the supplied reference GTF. Wiring Ribo-TISH `predict` and Ribotricer to use the merged GTF for novel-ORF discovery (with the reference GTF as a secondary annotation for classification) is the planned follow-on; it depends on an upstream nf-core/modules update to expose a secondary-annotation argument on those modules.
+
+Knobs:
+
+- `--extra_stringtie_args` - extra args passed to per-sample StringTie.
+- `--extra_stringtie_merge_args` - extra args passed to `stringtie --merge` (e.g. `'-T 1 -f 0.1'` for stricter TPM and isoform-fraction cutoffs); see the [StringTie manual](https://ccb.jhu.edu/software/stringtie/index.shtml?t=manual) for the full set of merge flags.
+
 ## P-site identification
 
 The pipeline will by default run [riboWaltz](https://github.com/LabTranslationalArchitectomics/riboWaltz) for P-site identification and diagnostics, unless disabled with `--skip_ribowaltz`. Additional arguments can be supplied via `--extra_ribowaltz_args` parameters. An example is: `--extra_ribowaltz_args "--length_range 27:31 --periodicity_threshold 40 --extremity 5end --start_nts 45 --stop_nts 24"`. If not provided, defaults used in the [nf-core module](https://github.com/nf-core/modules/blob/master/modules/nf-core/ribowaltz/templates/ribowaltz.r) are used.

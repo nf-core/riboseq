@@ -293,6 +293,21 @@ The pipeline produces coverage tracks in bigWig format. In the case of stranded 
   - `<SAMPLE>.reverse.bigWig`: Coverage on the reverse strand (only created for stranded libraries)
   - `<SAMPLE>.unstranded.bigWig`: Sum of coverage of forward and reverse strand (only created for unstranded libraries)
 
+## Novel transcript discovery (StringTie)
+
+When `--skip_stringtie false` is set, [StringTie](https://ccb.jhu.edu/software/stringtie/) is run per sample in reference-guided mode against the supplied GTF, and the per-sample assemblies are then merged into a unified annotation. The merged GTF is published as a side product for downstream use; **the rest of the pipeline continues to use the reference annotation**.
+
+The merged GTF is not yet wired into the riboseq ORF callers because their nf-core modules accept only a single GTF input and have no slot for a secondary annotation. Ribo-TISH `predict` and Ribotricer can in principle scan novel transcripts for ORFs while classifying against the reference (Ribo-TISH `-a` flag, equivalent for Ribotricer), but doing so cleanly requires an upstream module update first; see the PR/issue tracker for the follow-on.
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `stringtie/`
+  - `<SAMPLE>.denovo.transcripts.gtf`: Per-sample reference-guided assembly. The `.denovo` prefix marks these as the assembly inputs to the merge step (not the merged annotation).
+  - `stringtie_merge.gtf`: Merged annotation produced by `stringtie --merge` across all per-sample assemblies. Novel transcripts appear with `MSTRG.*` IDs.
+
+</details>
+
 ## Riboseq-specific QC
 
 Read distribution metrics around annotated protein coding regions or based on alignments alone, plus related metrics.

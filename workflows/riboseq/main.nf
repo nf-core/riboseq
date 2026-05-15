@@ -9,8 +9,9 @@
 //
 include { FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS                                                 } from '../../subworkflows/nf-core/fastq_qc_trim_filter_setstrandedness/main'
 include { FASTQ_EQUALISE_READ_LENGTHS                                                          } from '../../subworkflows/local/fastq_equalise_read_lengths'
-include { BAM_DEDUP_UMI      } from '../../subworkflows/nf-core/bam_dedup_umi'
-include { FASTQ_ALIGN_STAR   } from '../../subworkflows/nf-core/fastq_align_star'
+include { BAM_DEDUP_UMI       } from '../../subworkflows/nf-core/bam_dedup_umi'
+include { FASTQ_ALIGN_STAR    } from '../../subworkflows/nf-core/fastq_align_star'
+include { BAM_STRINGTIE_MERGE } from '../../subworkflows/nf-core/bam_stringtie_merge'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -288,6 +289,20 @@ workflow RIBOSEQ {
 
         ch_multiqc_files = ch_multiqc_files
             .mix(BAM_DEDUP_UMI.out.multiqc_files)
+    }
+
+    //
+    // SUBWORKFLOW: Reference-guided novel transcript discovery with StringTie.
+    // The merged GTF is published as a side product. Wiring it back into the
+    // ORF callers needs upstream nf-core/modules updates to expose a secondary
+    // annotation arg (Ribo-TISH `-a`, equivalent for Ribotricer); see #157
+    // and the PR description for the planned follow-on.
+    //
+    if (!params.skip_stringtie) {
+        BAM_STRINGTIE_MERGE(
+            ch_genome_bam,
+            ch_gtf.map { gtf -> [ [:], gtf ] }
+        )
     }
 
     //
