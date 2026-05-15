@@ -647,7 +647,6 @@ workflow RIBOSEQ {
             ch_rpbp_annotation,
             params.rpbp_config_extra_yaml ?: ''
         )
-        ch_versions = ch_versions.mix(RUN_RPBP.out.versions)
     }
 
     //
@@ -712,11 +711,7 @@ workflow RIBOSEQ {
             RIBOCODE_PREPARE.out.annotation
         )
 
-        // Step 4: Run RiboCode ORF detection.
-        // Use `remainder: true` so samples whose RIBOCODE_METAPLOTS produced no
-        // config (a real failure mode on sparse periodicity data) are visible
-        // here rather than silently dropped by an inner join. Surface them via
-        // a per-sample log.warn, then filter to samples with a valid config.
+        // Step 4: Run RiboCode ORF detection
         ch_ribocode_with_config = ch_transcriptome_bams_for_ribocode
             .join(RIBOCODE_METAPLOTS.out.config, remainder: true)
 
@@ -760,7 +755,6 @@ workflow RIBOSEQ {
             ch_fasta,
             ch_orf_catalogue_gtf
         )
-        ch_versions      = ch_versions.mix(BUILD_ORF_CATALOGUE.out.versions)
         ch_multiqc_files = ch_multiqc_files.mix(BUILD_ORF_CATALOGUE.out.multiqc_summary.collect{it[1]}.ifEmpty([]))
     }
 
@@ -972,10 +966,7 @@ workflow RIBOSEQ {
 
         // Issue #168 Tier 2: per-ORF DESeq2 interaction-model DTE.
         // Runs additively to the gene-level DTE above whenever the
-        // ORF count matrix is populated (extended ORFs + plastid). Gate
-        // explicitly on `!params.skip_plastid` so the silent skip when
-        // plastid is disabled is intentional (ch_orf_count_matrix is
-        // only populated inside the plastid block above).
+        // ORF count matrix is populated (extended ORFs + plastid).
         if (extended_orf_active && enabled_orf_callers && !params.skip_plastid) {
             DTE_ORF_LEVEL(
                 ch_contrasts,

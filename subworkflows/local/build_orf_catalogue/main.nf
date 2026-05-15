@@ -29,8 +29,6 @@ workflow BUILD_ORF_CATALOGUE {
 
     main:
 
-    ch_versions = Channel.empty()
-
     // Reference channel for normalisers: [ [id: 'reference'], gtf ]
     ch_ref_gtf = ch_gtf.map { gtf -> [ [id: 'reference'], gtf ] }.first()
 
@@ -47,7 +45,6 @@ workflow BUILD_ORF_CATALOGUE {
         .mix(ORF_NORMALISE_RPBP.out.bed12)
         .map { _meta, bed -> bed }
         .collect()
-        .ifEmpty([])
 
     ch_all_tsvs = ORF_NORMALISE_RIBOTISH.out.tsv
         .mix(ORF_NORMALISE_RIBOCODE.out.tsv)
@@ -55,7 +52,6 @@ workflow BUILD_ORF_CATALOGUE {
         .mix(ORF_NORMALISE_RPBP.out.tsv)
         .map { _meta, tsv -> tsv }
         .collect()
-        .ifEmpty([])
 
     ch_merge_in = ch_all_beds
         .combine(ch_all_tsvs)
@@ -74,5 +70,4 @@ workflow BUILD_ORF_CATALOGUE {
     catalogue_faa    = ORF_CATALOGUE_EXTRACTAA.out.faa
     orf_to_gene_tsv  = ORF_CATALOGUE_MERGE.out.orf_to_gene
     multiqc_summary  = ORF_CATALOGUE_MERGE.out.mqc
-    versions         = ch_versions
 }

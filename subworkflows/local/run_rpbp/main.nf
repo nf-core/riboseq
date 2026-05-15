@@ -18,8 +18,6 @@ workflow RUN_RPBP {
 
     main:
 
-    ch_versions = Channel.empty()
-
     // 1. Build the Rp-Bp YAML config from pipeline inputs.
     RPBP_BUILDCONFIG(
         ch_fasta_gtf,
@@ -47,8 +45,7 @@ workflow RUN_RPBP {
     RPBP_PREDICTORFS(ch_predict_in)
 
     emit:
-    bed      = RPBP_PREDICTORFS.out.bed
-    tab      = RPBP_PREDICTORFS.out.tab
-    outdir   = RPBP_PREDICTORFS.out.outdir
-    versions = ch_versions
+    bed    = RPBP_PREDICTORFS.out.bed
+    tab    = RPBP_PREDICTORFS.out.tab
+    outdir = RPBP_PREDICTORFS.out.outdir
 }
