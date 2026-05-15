@@ -9,9 +9,9 @@ process ORF_INFRAME_PSITES {
     label 'process_single'
 
     conda "conda-forge::python=3.11"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/python:3.11' :
-        'biocontainers/python:3.11' }"
+        'quay.io/biocontainers/python:3.11' }"
 
     input:
     tuple val(meta), path(catalogue_bed12)

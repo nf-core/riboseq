@@ -8,9 +8,9 @@ process ORF_COUNT_MATRIX {
     label 'process_low'
 
     conda "conda-forge::python=3.11"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/python:3.11' :
-        'biocontainers/python:3.11' }"
+        'quay.io/biocontainers/python:3.11' }"
 
     input:
     tuple val(meta), path(per_sample_counts, stageAs: 'counts/*'), path(orf_catalogue_bed12)

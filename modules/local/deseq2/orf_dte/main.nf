@@ -21,7 +21,7 @@ process DESEQ2_ORF_DTE {
     label 'process_medium'
 
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
         'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/b3/b39a67d1085303bdc1a56f1ab0da64673269e065297d2c58f66a42a025c97e84/data':
         'community.wave.seqera.io/library/bioconductor-deseq2_bioconductor-apeglm_bioconductor-complexheatmap_r-data.table_pruned:fdc920cced486331' }"
 

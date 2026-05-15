@@ -17,9 +17,9 @@ process QUANTIFY_INFRAME_PSITE_ORF {
     label 'process_low'
 
     conda "bioconda::bedtools=2.31.1"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/bedtools==2.31.1--h13024bc_3' :
-        'biocontainers/bedtools:2.31.1--h13024bc_3' }"
+        'quay.io/biocontainers/bedtools:2.31.1--h13024bc_3' }"
 
     input:
     tuple val(meta), path(forward_bedgraph), path(reverse_bedgraph)
