@@ -143,6 +143,16 @@
                     "description": "Define the attribute type used to group features in the GTF file when running Salmon.",
                     "fa_icon": "fas fa-layer-group"
                 },
+                "canonical_gtf": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.gtf(\\.gz)?$",
+                    "description": "Optional one-transcript-per-gene canonical GTF used as the annotation backbone for ORF calling, P-site calibration and DTE.",
+                    "fa_icon": "fas fa-code-branch",
+                    "help_text": "When supplied, this GTF replaces the full multi-isoform `--gtf` as the annotation backbone for ORF callers (RiboCode, Ribo-TISH, Ribotricer), riboWaltz P-site calibration, plastid P-site quantification and the translational-efficiency analysis. The full `--gtf` is still used for genome-guided alignment (STAR/Salmon). When omitted, the pipeline falls back to AGAT longest-isoform extraction from the full GTF; if that is unavailable, the full GTF is used as the backbone (with a multi-isoform ambiguity warning). Recommended sources: MANE Select for human (https://ftp.ncbi.nlm.nih.gov/refseq/MANE/MANE_human/current/), or `grep 'tag \"Ensembl_canonical\"' input.gtf > canonical.gtf` for any Ensembl organism at release ≥104."
+                },
                 "igenomes_ignore": {
                     "type": "boolean",
                     "description": "Do not load the iGenomes reference config.",

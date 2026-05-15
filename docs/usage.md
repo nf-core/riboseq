@@ -302,6 +302,22 @@ However this is no longer recommended because:
 
 By default, the input GTF file will be filtered to ensure that sequence names correspond to those in the genome fasta file, and to remove rows with empty transcript identifiers. Filtering can be bypassed completely where you are confident it is not necessary, using the `--skip_gtf_filter` parameter. If you just want to skip the 'transcript_id' checking component of the GTF filtering script used in the pipeline this can be disabled specifically using the `--skip_gtf_transcript_filter` parameter.
 
+### Canonical annotation backbone
+
+Ribo-seq footprint reads are ~28-32 nt and cannot resolve which isoform is being translated when reads fall on exons shared between isoforms (see [Wang et al. 2016, Bioinformatics 32:1880](https://academic.oup.com/bioinformatics/article/32/12/1880/1744291) for a quantitative analysis: only ~7% of human Ribo-seq reads map uniquely against a full multi-isoform annotation). The pipeline therefore separates the annotation used for genome-guided alignment (full multi-isoform, supplied via `--gtf`) from the annotation backbone used for ORF calling, P-site calibration and translational-efficiency analysis (one-transcript-per-gene, supplied via `--canonical_gtf`).
+
+Recommended sources for `--canonical_gtf`:
+
+| Organism                                              | Source                                                                                               | Extraction                                                 |
+| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Human (GRCh38)                                        | [MANE Select GTF](https://ftp.ncbi.nlm.nih.gov/refseq/MANE/MANE_human/current/)                      | use directly                                               |
+| Mouse, zebrafish, any Ensembl organism (release ≥104) | [Ensembl GTF](https://www.ensembl.org/info/genome/genebuild/canonical.html)                          | `grep 'tag "Ensembl_canonical"' input.gtf > canonical.gtf` |
+| Any organism (fallback)                               | full `--gtf` + [AGAT](https://agat.readthedocs.io/en/latest/tools/agat_sp_keep_longest_isoform.html) | done automatically when `--canonical_gtf` is omitted       |
+
+If `--canonical_gtf` is not supplied the pipeline runs [`agat_sp_keep_longest_isoform.pl`](https://agat.readthedocs.io/en/latest/tools/agat_sp_keep_longest_isoform.html) on the full GTF and uses the result as the backbone. AGAT operates structurally (longest isoform per gene) rather than from curation, so a curated source is strongly preferred where available.
+
+MANE Select vs `Ensembl_canonical` for non-coding genes: MANE Select covers virtually all protein-coding genes plus a growing but partial set of non-coding genes ([NCBI Insights, MANE v1.4](https://ncbiinsights.ncbi.nlm.nih.gov/2024/10/28/mane-v1-4-mane-select-non-coding-genes/)). `Ensembl_canonical` has broader biotype priority including lncRNA and other ncRNA biotypes, so users working primarily on smORFs in lncRNAs may get better transcript recall from `Ensembl_canonical`.
+
 ## Riboseq-specific options
 
 The pipeline will by default run the [Ribo-TISH](https://github.com/zhpn1024/ribotish) [quality](https://github.com/zhpn1024/ribotish?tab=readme-ov-file#quality) and [predict](https://github.com/zhpn1024/ribotish?tab=readme-ov-file#predict) commands for QC and ORF prediction, respectively. Additional arguments can be supplied to either command via the `--extra_ribotish_quality_args` and `--extra_ribotish_predict_args` parameters.
