@@ -712,15 +712,27 @@ workflow RIBOSEQ {
             RIBOCODE_PREPARE.out.annotation
         )
 
-        // Step 4: Run RiboCode ORF detection
-        // Join BAMs with their corresponding config files by meta
-        ch_ribocode_inputs = ch_transcriptome_bams_for_ribocode
-            .join(RIBOCODE_METAPLOTS.out.config)
+        // Step 4: Run RiboCode ORF detection.
+        // Use `remainder: true` so samples whose RIBOCODE_METAPLOTS produced no
+        // config (a real failure mode on sparse periodicity data) are visible
+        // here rather than silently dropped by an inner join. Surface them via
+        // a per-sample log.warn, then filter to samples with a valid config.
+        ch_ribocode_with_config = ch_transcriptome_bams_for_ribocode
+            .join(RIBOCODE_METAPLOTS.out.config, remainder: true)
+
+        ch_ribocode_with_config
+            .filter { _meta, _bam, config -> config == null }
+            .subscribe { meta, _bam, _config ->
+                log.warn "Skipping ${meta.id} for RiboCode: RIBOCODE_METAPLOTS produced no config (likely sparse periodicity data)."
+            }
+
+        ch_ribocode_inputs = ch_ribocode_with_config
+            .filter { _meta, _bam, config -> config != null }
 
         RIBOCODE_RIBOCODE(
-            ch_ribocode_inputs.map { meta, bam, config -> [ meta, bam ] },
+            ch_ribocode_inputs.map { meta, bam, _config  -> [ meta, bam ] },
             RIBOCODE_PREPARE.out.annotation,
-            ch_ribocode_inputs.map { meta, bam, config -> [ meta, config ] }
+            ch_ribocode_inputs.map { meta, _bam, config  -> [ meta, config ] }
         )
     }
 
@@ -960,8 +972,11 @@ workflow RIBOSEQ {
 
         // Issue #168 Tier 2: per-ORF DESeq2 interaction-model DTE.
         // Runs additively to the gene-level DTE above whenever the
-        // ORF count matrix is populated (extended ORFs + plastid).
-        if (extended_orf_active && enabled_orf_callers) {
+        // ORF count matrix is populated (extended ORFs + plastid). Gate
+        // explicitly on `!params.skip_plastid` so the silent skip when
+        // plastid is disabled is intentional (ch_orf_count_matrix is
+        // only populated inside the plastid block above).
+        if (extended_orf_active && enabled_orf_callers && !params.skip_plastid) {
             DTE_ORF_LEVEL(
                 ch_contrasts,
                 ch_orf_count_matrix,
