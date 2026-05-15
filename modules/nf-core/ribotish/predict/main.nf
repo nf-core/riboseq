@@ -27,7 +27,7 @@ process RIBOTISH_PREDICT {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def reference_gtf_arg = reference_gtf.name != 'NO_FILE' ? "-a ${reference_gtf}" : ''
+    def reference_gtf_arg = reference_gtf ? "-a ${reference_gtf}" : ''
 
     ribo_bam_cmd = ''
     ti_bam_cmd = ''
