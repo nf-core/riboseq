@@ -322,6 +322,18 @@ MANE Select vs `Ensembl_canonical` for non-coding genes: MANE Select covers virt
 
 The pipeline will by default run the [Ribo-TISH](https://github.com/zhpn1024/ribotish) [quality](https://github.com/zhpn1024/ribotish?tab=readme-ov-file#quality) and [predict](https://github.com/zhpn1024/ribotish?tab=readme-ov-file#predict) commands for QC and ORF prediction, respectively. Additional arguments can be supplied to either command via the `--extra_ribotish_quality_args` and `--extra_ribotish_predict_args` parameters.
 
+### Rp-Bp (opt-in, overnight)
+
+[Rp-Bp](https://github.com/dieterich-lab/rp-bp) (Malone et al., 2017) is a Bayesian-strict ORF caller that complements RiboCode's permissive canonical-CDS calls. It is the recommended second caller when statistical rigour matters more than turnaround time. Activate with `--run_rpbp true`.
+
+> :warning: **Runtime cost.** Rp-Bp's Bayesian MCMC fit dominates wall-clock and takes roughly **20-24 hours per replicate** at genome-wide scale. The pipeline emits a runtime warning when `--run_rpbp` is set. Plan compute time, queue limits and instance lifetimes accordingly.
+
+Benchmark data (FK/NGB, May 2026; 6 biological replicates, genome-wide) places Rp-Bp at Tier-1 for both rank concordance (mean Spearman 0.893) and set overlap (mean Jaccard 0.673). Its score column (Bayes factor) is stable and is retained in the cross-caller rank-aggregation set alongside RiboCode and Ribo-TISH; Ribotricer's score column is excluded due to known instability but Rp-Bp's is not.
+
+The pipeline auto-renders the YAML config required by `prepare-rpbp-genome` / `predict-translated-orfs` from your `--fasta`/`--gtf` inputs - you do not need to author one. To override or extend the defaults (for example to raise `min_metagene_profile_count`), pass arbitrary YAML to `--rpbp_config_extra_yaml`; the string is appended verbatim to the rendered config. Tool CLI arguments are exposed via `--extra_rpbp_preparegenome_args` and `--extra_rpbp_predictorfs_args`.
+
+Per-sample predicted-ORF BED and tab outputs (with Bayes factor scores) are published under `<outdir>/orf_predictions/rpbp/`. When `--extended_orf_analysis true` is set, Rp-Bp receives the hybrid GTF and so can call ORFs on novel intergenic transcripts in the same way as Ribo-TISH `predict` and Ribotricer.
+
 ## Novel transcript discovery (StringTie / user-supplied GTF)
 
 The pipeline can extend the canonical reference annotation with novel intergenic transcripts, either by running [StringTie](https://ccb.jhu.edu/software/stringtie/) reference-guided assembly or by accepting a user-supplied GTF via `--novel_gtf`. The two sources feed the same downstream filtering chain and produce a hybrid annotation at `<outdir>/stringtie/hybrid_reference.gtf` (canonical backbone + filtered novel transcripts, sorted by genomic position).

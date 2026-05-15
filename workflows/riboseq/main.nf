@@ -16,6 +16,7 @@ include { BAM_STRINGTIE_MERGE      } from '../../subworkflows/nf-core/bam_string
 include { BUILD_HYBRID_TRANSCRIPTOME } from '../../subworkflows/local/build_hybrid_transcriptome'
 include { CONCAT_GTF               } from '../../modules/local/concat_gtf'
 include { FILTER_GTF_CLASS_CODE    } from '../../modules/local/filter_gtf_class_code'
+include { RUN_RPBP                 } from '../../subworkflows/local/run_rpbp'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -626,19 +627,36 @@ workflow RIBOSEQ {
         ch_versions = ch_versions.mix(RIBOTRICER_DETECTORFS.out.versions)
     }
 
+    if (params.run_rpbp){
+        log.warn "Rp-Bp is enabled via --run_rpbp. Benchmark data (FK/NGB, May 2026) places it at Tier-1 for both rank concordance (mean Spearman 0.893) and set overlap (mean Jaccard 0.673), but expect ~20-24h per replicate at genome-wide scale because the Bayesian MCMC fit dominates. Plan compute accordingly."
+
+        def ch_rpbp_annotation = extended_orf_active ?
+            ch_fasta_gtf_extended :
+            ch_fasta_gtf
+
+        RUN_RPBP(
+            ch_bams_for_analysis,
+            ch_rpbp_annotation,
+            params.rpbp_config_extra_yaml ?: ''
+        )
+        ch_versions = ch_versions.mix(RUN_RPBP.out.versions)
+    }
+
     //
     // Dynamic ORF-caller set for cross-caller agreement (issue #07).
     // The enabled list reflects which callers ran at runtime; the agreement
     // threshold and rank-aggregation set are derived from it so the logic
-    // works whether 2 (default) or 3 callers are active.
+    // works whether 2 (default) or 3+ callers are active.
     //
     def enabled_orf_callers = []
     if (!params.skip_ribotish)   { enabled_orf_callers << 'ribotish' }
     if (!params.skip_ribocode)   { enabled_orf_callers << 'ribocode' }
     if ( params.run_ribotricer)  { enabled_orf_callers << 'ribotricer' }
+    if ( params.run_rpbp)        { enabled_orf_callers << 'rpbp' }
 
     // Ribotricer contributes binary calls only; its scores are excluded from
-    // the cross-caller rank aggregation due to known rank instability.
+    // the cross-caller rank aggregation due to known rank instability. Rp-Bp's
+    // Bayes factor is stable (Spearman 0.893) and is retained for ranking.
     def rank_aggregation_callers  = enabled_orf_callers - 'ribotricer'
     // Strict-majority of enabled callers (floor(N/2)+1): N=2 -> 2 (both must
     // agree), N=3 -> 2 (majority). Adapts as the caller set grows.

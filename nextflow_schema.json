@@ -726,6 +726,28 @@
                     "help_text": "Ribotricer is disabled by default because benchmark data (FK/NGB, May 2026) showed its ORF-score column is rank-unstable across biological replicates (mean Spearman 0.288 vs Jaccard 0.770). Its binary call set is reproducible, but the score should not be used as a primary ranking source. Enable with `--run_ribotricer true` if you need its calls; the pipeline will warn at runtime and exclude its score column from any cross-caller rank aggregation.",
                     "fa_icon": "fas fa-fast-forward"
                 },
+                "run_rpbp": {
+                    "type": "boolean",
+                    "description": "Opt in to running Rp-Bp as an additional ORF caller (Bayesian, slow).",
+                    "help_text": "Rp-Bp is a Bayesian-strict ORF caller (Malone et al. 2017) that complements RiboCode's permissive canonical-CDS calls. Benchmark data (FK/NGB, May 2026) places it at Tier-1 on both replicate concordance (mean Spearman 0.893) and set overlap (mean Jaccard 0.673). Runtime is on the order of 20-24h per replicate at genome-wide scale because the MCMC fit dominates, hence it is opt-in. Plan accordingly. Rp-Bp's score column (Bayes factor) is stable and participates in the cross-caller rank-aggregation set alongside RiboCode and Ribo-TISH.",
+                    "fa_icon": "fas fa-fast-forward"
+                },
+                "extra_rpbp_preparegenome_args": {
+                    "type": "string",
+                    "description": "Extra CLI arguments passed to `prepare-rpbp-genome`.",
+                    "fa_icon": "fas fa-terminal"
+                },
+                "extra_rpbp_predictorfs_args": {
+                    "type": "string",
+                    "description": "Extra CLI arguments passed to `predict-translated-orfs`.",
+                    "fa_icon": "fas fa-terminal"
+                },
+                "rpbp_config_extra_yaml": {
+                    "type": "string",
+                    "description": "Free-form YAML appended to the auto-generated Rp-Bp config (e.g. `min_metagene_profile_count: 1000`).",
+                    "help_text": "The pipeline auto-renders the Rp-Bp YAML config from your `--fasta`/`--gtf` inputs; this parameter lets you override or extend it without writing a full config file. The string is appended verbatim to the rendered YAML.",
+                    "fa_icon": "fas fa-file-code"
+                },
                 "skip_ribocode": {
                     "type": "boolean",
                     "description": "Skip RiboCode.",
