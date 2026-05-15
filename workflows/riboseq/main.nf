@@ -693,7 +693,7 @@ workflow RIBOSEQ {
 
         def ch_ribocode_gtf_source = extended_orf_active ?
             ch_hybrid_gtf :
-            ch_canonical_gtf
+            ch_gtf
 
         // Step 1: Update GTF annotation
         RIBOCODE_GTFUPDATE(
@@ -779,7 +779,7 @@ workflow RIBOSEQ {
     if (!params.skip_ribowaltz) {
         RIBOWALTZ(
             ch_transcriptome_bam_by_type.riboseq,
-            ch_canonical_gtf.map { [ [:], it ] },
+            ch_gtf.map { [ [:], it ] },
             ch_fasta.map { [ [:], it ] })
 
         ch_versions = ch_versions.mix(RIBOWALTZ.out.versions)
