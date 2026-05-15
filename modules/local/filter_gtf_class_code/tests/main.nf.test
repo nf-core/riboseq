@@ -1,0 +1,76 @@
+nextflow_process {
+
+    name "Test Process FILTER_GTF_CLASS_CODE"
+    script "../main.nf"
+    process "FILTER_GTF_CLASS_CODE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "filter_gtf_class_code"
+
+    test("synthetic data - class u only") {
+        when {
+            process {
+                """
+                def annotated = file('annotated.gtf')
+                annotated.text = "chr1\\tStringTie\\ttranscript\\t5\\t9\\t.\\t+\\t.\\tgene_id \"n1\"; class_code \"u\";\\nchr1\\tStringTie\\ttranscript\\t20\\t30\\t.\\t+\\t.\\tgene_id \"n2\"; class_code \"j\";\\nchr2\\tStringTie\\ttranscript\\t40\\t60\\t.\\t-\\t.\\tgene_id \"n3\"; class_code \"x\";\\n"
+
+                input[0] = Channel.of([ [id:'novel'], annotated ])
+                input[1] = "u"
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert file(process.out.gtf[0][1]).name == 'novel.gtf' },
+                { assert snapshot(process.out.gtf).match() }
+            )
+        }
+    }
+
+    test("synthetic data - class u,x") {
+        when {
+            process {
+                """
+                def annotated = file('annotated.gtf')
+                annotated.text = "chr1\\tStringTie\\ttranscript\\t5\\t9\\t.\\t+\\t.\\tgene_id \"n1\"; class_code \"u\";\\nchr1\\tStringTie\\ttranscript\\t20\\t30\\t.\\t+\\t.\\tgene_id \"n2\"; class_code \"j\";\\nchr2\\tStringTie\\ttranscript\\t40\\t60\\t.\\t-\\t.\\tgene_id \"n3\"; class_code \"x\";\\n"
+
+                input[0] = Channel.of([ [id:'novel'], annotated ])
+                input[1] = "u,x"
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.gtf).match() }
+            )
+        }
+    }
+
+    test("synthetic data - stub") {
+        options "-stub-run"
+
+        when {
+            process {
+                """
+                def annotated = file('annotated.gtf')
+                annotated.text = ""
+
+                input[0] = Channel.of([ [id:'novel'], annotated ])
+                input[1] = "u"
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

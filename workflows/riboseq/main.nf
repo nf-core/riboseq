@@ -11,7 +11,9 @@ include { FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS                                  
 include { FASTQ_EQUALISE_READ_LENGTHS                                                          } from '../../subworkflows/local/fastq_equalise_read_lengths'
 include { BAM_DEDUP_UMI       } from '../../subworkflows/nf-core/bam_dedup_umi'
 include { FASTQ_ALIGN_STAR    } from '../../subworkflows/nf-core/fastq_align_star'
-include { BAM_STRINGTIE_MERGE } from '../../subworkflows/nf-core/bam_stringtie_merge'
+include { BAM_STRINGTIE_MERGE      } from '../../subworkflows/nf-core/bam_stringtie_merge'
+include { CONCAT_GTF               } from '../../modules/local/concat_gtf'
+include { FILTER_GTF_CLASS_CODE    } from '../../modules/local/filter_gtf_class_code'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -47,6 +49,8 @@ include { GAWK as GTF_TO_INFRAME_PSITES                        } from '../../mod
 include { GAWK as REPLACE_RIBOSEQ_COUNTS_IN_MATRIX             } from '../../modules/nf-core/gawk'
 include { SAMTOOLS_VIEW as SAMTOOLS_VIEW_SPLIT_BY_STRAND       } from '../../modules/nf-core/samtools/view'
 include { BEDTOOLS_GENOMECOV                                   } from '../../modules/nf-core/bedtools/genomecov/main'
+include { BEDTOOLS_INTERSECT                                   } from '../../modules/nf-core/bedtools/intersect/main'
+include { GFFCOMPARE                                           } from '../../modules/nf-core/gffcompare/main'
 include { UCSC_BEDGRAPHTOBIGWIG                                } from '../../modules/nf-core/ucsc/bedgraphtobigwig/main'
 
 /*
@@ -292,17 +296,141 @@ workflow RIBOSEQ {
     }
 
     //
-    // SUBWORKFLOW: Reference-guided novel transcript discovery with StringTie.
-    // The merged GTF is published as a side product. Wiring it back into the
-    // ORF callers needs upstream nf-core/modules updates to expose a secondary
-    // annotation arg (Ribo-TISH `-a`, equivalent for Ribotricer); see #157
-    // and the PR description for the planned follow-on.
+    // Branch BAMs by sample type so the StringTie path can prefer RNA-seq
+    // when available, and so downstream blocks can route Ribo-seq vs RNA-seq
+    // independently.
     //
-    if (!params.skip_stringtie) {
-        BAM_STRINGTIE_MERGE(
-            ch_genome_bam,
-            ch_gtf.map { gtf -> [ [:], gtf ] }
+    ch_genome_bam
+        .branch { meta, bam ->
+            riboseq: meta.sample_type == 'riboseq'
+                return [ meta, bam ]
+            tiseq: meta.sample_type == 'tiseq'
+                return [ meta, bam ]
+            rnaseq: meta.sample_type == 'rnaseq'
+                return [ meta, bam ]
+        }
+        .set{
+            ch_genome_bam_by_type
+        }
+
+    //
+    // SUBWORKFLOW: Novel transcript discovery and hybrid GTF construction.
+    //
+    // Two upstream sources feed the same downstream chain
+    // (gffcompare -> class-code filter -> optional rRNA blacklist intersect
+    //  -> concat with canonical):
+    //   1. `--novel_gtf <file>`  : user-supplied annotation, skip StringTie.
+    //   2. `--skip_stringtie false`: run StringTie on RNA-seq BAMs (preferred)
+    //      or fall back to Ribo-seq BAMs with tightened parameters.
+    //
+    // When neither path produces novel transcripts, ch_hybrid_gtf falls back
+    // to ch_canonical_gtf so downstream wiring stays uniform.
+    //
+
+    ch_hybrid_gtf = ch_canonical_gtf
+
+    def run_stringtie = !params.skip_stringtie && !params.novel_gtf
+    def has_user_novel_gtf = params.novel_gtf as Boolean
+
+    if (run_stringtie || has_user_novel_gtf) {
+
+        ch_novel_pre_filter = Channel.empty()
+
+        if (has_user_novel_gtf) {
+            ch_novel_pre_filter = Channel
+                .fromPath(params.novel_gtf, checkIfExists: true)
+                .map { gtf -> [ [id: 'stringtie_merge'], gtf ] }
+        }
+        else {
+            // Prefer RNA-seq BAMs; fall back to Ribo-seq with tightened args.
+            // The fallback is signalled via meta.stringtie_fallback so the
+            // `withName: STRINGTIE_STRINGTIE` block in conf/modules.config can
+            // swap ext.args based on the BAM source.
+            def ribo_fallback_args = params.extra_stringtie_args ?: params.stringtie_ribo_fallback_args
+
+            ch_rnaseq_count = ch_genome_bam_by_type.rnaseq.count()
+
+            ch_stringtie_rnaseq = ch_genome_bam_by_type.rnaseq
+                .map { meta, bam -> [ meta + [stringtie_fallback: false], bam ] }
+
+            // Ribo-seq is only consumed when no RNA-seq BAMs are present.
+            // `combine` with the count value channel gates the emission.
+            ch_stringtie_ribo = ch_genome_bam_by_type.riboseq
+                .combine(ch_rnaseq_count)
+                .filter { _meta, _bam, rna_count -> rna_count == 0 }
+                .map { meta, bam, _rna_count ->
+                    [ meta + [stringtie_fallback: true], bam ]
+                }
+
+            ch_rnaseq_count
+                .filter { it == 0 }
+                .subscribe {
+                    log.warn "No RNA-seq BAMs available for StringTie assembly. Using Ribo-seq BAMs with conservative parameters (${ribo_fallback_args}). Novel transcript assemblies may contain artefacts; review carefully and consider supplying --novel_gtf from a dedicated RNA-seq run."
+                }
+
+            BAM_STRINGTIE_MERGE(
+                ch_stringtie_rnaseq.mix(ch_stringtie_ribo),
+                ch_gtf.map { gtf -> [ [:], gtf ] }
+            )
+
+            ch_novel_pre_filter = BAM_STRINGTIE_MERGE.out.stringtie_gtf
+                .map { _meta, gtf -> [ [id: 'stringtie_merge'], gtf ] }
+        }
+
+        //
+        // Classify novel transcripts vs the full reference GTF; gffcompare's
+        // class codes depend on the full annotation, not the canonical backbone.
+        //
+        GFFCOMPARE(
+            ch_novel_pre_filter,
+            [[:], [], []],
+            ch_gtf.map { gtf -> [ [:], gtf ] }.first()
         )
+
+        //
+        // Retain only entries whose class_code is in the user-configured set
+        // (default `u` = intergenic).
+        //
+        FILTER_GTF_CLASS_CODE(
+            GFFCOMPARE.out.annotated_gtf,
+            params.stringtie_class_codes
+        )
+
+        ch_novel_filtered = FILTER_GTF_CLASS_CODE.out.gtf
+
+        //
+        // Optional strand-aware blacklist intersect to drop assemblies in
+        // rRNA / repeat regions.
+        //
+        if (params.rrna_blacklist) {
+            ch_blacklist = Channel
+                .fromPath(params.rrna_blacklist, checkIfExists: true)
+
+            ch_intersect_input = ch_novel_filtered
+                .combine(ch_blacklist)
+                .map { meta, gtf, bed -> [ meta, gtf, bed ] }
+
+            BEDTOOLS_INTERSECT(
+                ch_intersect_input,
+                [[:], []]
+            )
+
+            ch_novel_filtered = BEDTOOLS_INTERSECT.out.intersect
+        }
+        else {
+            log.info "No rRNA/repeat blacklist supplied via --rrna_blacklist; skipping post-assembly blacklist intersect."
+        }
+
+        //
+        // Concatenate the canonical backbone with the filtered novel GTF.
+        //
+        ch_concat_input = ch_canonical_gtf
+            .combine(ch_novel_filtered)
+            .map { canonical, meta, novel -> [ [id: 'hybrid_reference'], canonical, novel ] }
+
+        CONCAT_GTF(ch_concat_input)
+
+        ch_hybrid_gtf = CONCAT_GTF.out.gtf.map { _meta, gtf -> gtf }
     }
 
     //
@@ -351,19 +479,6 @@ workflow RIBOSEQ {
     //
     // Take the riboseq samples and route to ribotish
     //
-
-    ch_genome_bam
-        .branch { meta, bam ->
-            riboseq: meta.sample_type == 'riboseq'
-                return [ meta, bam ]
-            tiseq: meta.sample_type == 'tiseq'
-                return [ meta, bam ]
-            rnaseq: meta.sample_type == 'rnaseq'
-                return [ meta, bam ]
-        }
-        .set{
-            ch_genome_bam_by_type
-        }
 
     ch_bams_for_analysis = ch_genome_bam_by_type.riboseq.join(ch_genome_bam_index)
     // Use the canonical (one-transcript-per-gene) annotation backbone for ORF
@@ -716,6 +831,7 @@ workflow RIBOSEQ {
     emit:
     multiqc_report = ch_multiqc_report   // channel: /path/to/multiqc_report.html
     versions       = ch_versions         // channel: [ path(versions.yml) ]
+    hybrid_gtf     = ch_hybrid_gtf       // channel: path(hybrid_reference.gtf) - canonical + filtered novel; equals canonical when no novel source is configured
 }
 
 /*
