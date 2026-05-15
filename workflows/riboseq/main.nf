@@ -484,7 +484,7 @@ workflow RIBOSEQ {
     // Use the canonical (one-transcript-per-gene) annotation backbone for ORF
     // calling, P-site calibration and DTE; the full `ch_gtf` is reserved for
     // genome-guided alignment.
-    ch_fasta_gtf = ch_fasta.combine(ch_canonical_gtf).map{ fasta, gtf -> [ [:], fasta, gtf ] }.first()
+    ch_fasta_gtf = ch_fasta.combine(ch_canonical_gtf).map{ fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }.first()
     ch_fasta_gtf_for_ribotish = ch_fasta_gtf.map{ meta, fasta, gtf -> [ meta, fasta, gtf, [] ] }.first()
 
     //
@@ -505,12 +505,12 @@ workflow RIBOSEQ {
 
     ch_fasta_gtf_extended = ch_fasta
         .combine(ch_hybrid_gtf)
-        .map { fasta, gtf -> [ [:], fasta, gtf ] }
+        .map { fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }
         .first()
     ch_fasta_gtf_for_ribotish_extended = ch_fasta
         .combine(ch_hybrid_gtf)
         .combine(ch_canonical_gtf)
-        .map { fasta, hybrid, canonical -> [ [:], fasta, hybrid, canonical ] }
+        .map { fasta, hybrid, canonical -> [ [id: 'reference'], fasta, hybrid, canonical ] }
         .first()
 
     if (!params.skip_ribotish){
