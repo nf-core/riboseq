@@ -27,6 +27,7 @@ process FILTER_GTF_CLASS_CODE {
         for (i = 1; i <= n; i++) keep[arr[i]] = 1;
     }
     /^#/ { next }
+    \$7 == "." { next }
     {
         if (match(\$0, /class_code "([^"]+)"/, m)) {
             if (m[1] in keep) print \$0;
