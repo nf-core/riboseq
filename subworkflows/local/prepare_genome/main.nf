@@ -4,6 +4,7 @@
 
 include { GUNZIP as GUNZIP_FASTA            } from '../../../modules/nf-core/gunzip'
 include { GUNZIP as GUNZIP_GTF              } from '../../../modules/nf-core/gunzip'
+include { GUNZIP as GUNZIP_CANONICAL_GTF    } from '../../../modules/nf-core/gunzip'
 include { GUNZIP as GUNZIP_GFF              } from '../../../modules/nf-core/gunzip'
 include { GUNZIP as GUNZIP_GENE_BED         } from '../../../modules/nf-core/gunzip'
 include { GUNZIP as GUNZIP_TRANSCRIPT_FASTA } from '../../../modules/nf-core/gunzip'
@@ -17,6 +18,8 @@ include { UNTAR as UNTAR_SALMON_INDEX       } from '../../../modules/nf-core/unt
 include { CUSTOM_CATADDITIONALFASTA         } from '../../../modules/nf-core/custom/catadditionalfasta'
 include { SAMTOOLS_FAIDX                    } from '../../../modules/nf-core/samtools/faidx'
 include { GFFREAD                           } from '../../../modules/nf-core/gffread'
+include { GFFREAD as GFFREAD_CANONICAL      } from '../../../modules/nf-core/gffread'
+include { AGAT_SPKEEPLONGESTISOFORM         } from '../../../modules/nf-core/agat/spkeeplongestisoform'
 include { BBMAP_BBSPLIT                     } from '../../../modules/nf-core/bbmap/bbsplit'
 include { SORTMERNA as SORTMERNA_INDEX      } from '../../../modules/nf-core/sortmerna'
 include { STAR_GENOMEGENERATE               } from '../../../modules/nf-core/star/genomegenerate'
@@ -51,6 +54,7 @@ workflow PREPARE_GENOME {
     ribo_removal_tool        //    string: Tool for rRNA removal ('sortmerna', 'bowtie2', or 'ribodetector')
     skip_alignment           //   boolean: Skip all of the alignment-based processes within the pipeline
     build_te_pseudo_index    //   boolean: Build Salmon index for TE pseudo-alignment
+    canonical_gtf            //      file: /path/to/canonical.gtf (one-transcript-per-gene backbone; null to derive)
 
     main:
     ch_versions = Channel.empty()
@@ -124,6 +128,33 @@ workflow PREPARE_GENOME {
         ch_fasta    = CUSTOM_CATADDITIONALFASTA.out.fasta.map{it[1]}.first()
         ch_gtf      = CUSTOM_CATADDITIONALFASTA.out.gtf.map{it[1]}.first()
         ch_versions = ch_versions.mix(CUSTOM_CATADDITIONALFASTA.out.versions)
+    }
+
+    //
+    // Build the canonical (one-transcript-per-gene) annotation backbone used by
+    // ORF callers, riboWaltz, plastid P-site quantification and DTE. The full
+    // multi-isoform `ch_gtf` is still used for genome-guided alignment.
+    //
+    ch_canonical_gtf = ch_gtf
+    if (canonical_gtf) {
+        if (canonical_gtf.endsWith('.gz')) {
+            ch_canonical_gtf = GUNZIP_CANONICAL_GTF ( [ [:], canonical_gtf ] ).gunzip.map { it[1] }
+        } else {
+            ch_canonical_gtf = Channel.value(file(canonical_gtf))
+        }
+    } else if (gtf || gff) {
+        // No explicit canonical GTF: derive longest-isoform per gene with AGAT.
+        // Versions are emitted via the `versions` topic channel and collected
+        // workflow-wide; no explicit mix into ch_versions required.
+        AGAT_SPKEEPLONGESTISOFORM (
+            ch_gtf.map { [ [id: it.baseName], it ] },
+            []
+        )
+        GFFREAD_CANONICAL (
+            AGAT_SPKEEPLONGESTISOFORM.out.gff,
+            []
+        )
+        ch_canonical_gtf = GFFREAD_CANONICAL.out.gtf.map { it[1] }
     }
 
     //
@@ -268,6 +299,7 @@ workflow PREPARE_GENOME {
     emit:
     fasta            = ch_fasta                  // channel: path(genome.fasta)
     gtf              = ch_gtf                    // channel: path(genome.gtf)
+    canonical_gtf    = ch_canonical_gtf          // channel: path(canonical.gtf) - one-transcript-per-gene backbone
     fai              = ch_fai                    // channel: path(genome.fai)
     transcript_fasta = ch_transcript_fasta       // channel: path(transcript.fasta)
     chrom_sizes      = ch_chrom_sizes            // channel: path(genome.sizes)
