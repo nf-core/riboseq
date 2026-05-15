@@ -34,33 +34,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#152](https://github.com/nf-core/riboseq/pull/152) - Update ribodetector module to 0.3.3 (nf-core/modules#11131) ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#154](https://github.com/nf-core/riboseq/pull/154) - Update nf-core/multiqc module to 1.34 ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#154](https://github.com/nf-core/riboseq/pull/154) - Align FastQC/SortMeRNA general-stats handling with `nf-core/rnaseq` ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#163](https://github.com/nf-core/riboseq/issues/163) - Demote Ribotricer from the default ORF caller set to opt-in: replace `--skip_ribotricer` (default `false`) with `--run_ribotricer` (default `false`), warn at runtime when enabled, and exclude its score column from cross-caller rank aggregation. The default caller set is now Ribo-TISH + RiboCode; agreement logic is parameterised on the runtime-enabled caller set ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Parameters`
 
-| Old parameter | New parameter                            |
-| ------------- | ---------------------------------------- |
-|               | `--ribo_removal_tool`                    |
-|               | `--skip_ribocode`                        |
-|               | `--extra_ribocode_gtfupdate_args`        |
-|               | `--extra_ribocode_prepare_args`          |
-|               | `--extra_ribocode_metaplots_args`        |
-|               | `--extra_ribocode_ribocode_args`         |
-|               | `--translational_efficiency_method`      |
-|               | `--extra_deltate_args`                   |
-|               | `--te_lfc_threshold`                     |
-|               | `--rna_lfc_threshold`                    |
-|               | `--ribo_lfc_threshold`                   |
-|               | `--equalise_read_lengths`                |
-|               | `--equalise_read_lengths_target`         |
-|               | `--skip_plastid`                         |
-|               | `--plastid_min_length`                   |
-|               | `--plastid_max_length`                   |
-|               | `--plastid_default_psite_offset`         |
-|               | `--extra_plastid_metagene_generate_args` |
-|               | `--extra_plastid_psite_args`             |
-|               | `--extra_plastid_make_wiggle_args`       |
-|               | `--skip_coverage_tracks`                 |
-|               | `--ribodetector_chunk_size`              |
+| Old parameter       | New parameter                            |
+| ------------------- | ---------------------------------------- |
+| `--skip_ribotricer` | `--run_ribotricer`                       |
+|                     | `--ribo_removal_tool`                    |
+|                     | `--skip_ribocode`                        |
+|                     | `--extra_ribocode_gtfupdate_args`        |
+|                     | `--extra_ribocode_prepare_args`          |
+|                     | `--extra_ribocode_metaplots_args`        |
+|                     | `--extra_ribocode_ribocode_args`         |
+|                     | `--translational_efficiency_method`      |
+|                     | `--extra_deltate_args`                   |
+|                     | `--te_lfc_threshold`                     |
+|                     | `--rna_lfc_threshold`                    |
+|                     | `--ribo_lfc_threshold`                   |
+|                     | `--equalise_read_lengths`                |
+|                     | `--equalise_read_lengths_target`         |
+|                     | `--skip_plastid`                         |
+|                     | `--plastid_min_length`                   |
+|                     | `--plastid_max_length`                   |
+|                     | `--plastid_default_psite_offset`         |
+|                     | `--extra_plastid_metagene_generate_args` |
+|                     | `--extra_plastid_psite_args`             |
+|                     | `--extra_plastid_make_wiggle_args`       |
+|                     | `--skip_coverage_tracks`                 |
+|                     | `--ribodetector_chunk_size`              |
 
 ### `Dependencies`
 

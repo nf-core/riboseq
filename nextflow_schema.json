@@ -696,9 +696,10 @@
                     "description": "Skip Ribo-TISH.",
                     "fa_icon": "fas fa-fast-forward"
                 },
-                "skip_ribotricer": {
+                "run_ribotricer": {
                     "type": "boolean",
-                    "description": "Skip Riboricer.",
+                    "description": "Opt in to running Ribotricer as an additional ORF caller.",
+                    "help_text": "Ribotricer is disabled by default because benchmark data (FK/NGB, May 2026) showed its ORF-score column is rank-unstable across biological replicates (mean Spearman 0.288 vs Jaccard 0.770). Its binary call set is reproducible, but the score should not be used as a primary ranking source. Enable with `--run_ribotricer true` if you need its calls; the pipeline will warn at runtime and exclude its score column from any cross-caller rank aggregation.",
                     "fa_icon": "fas fa-fast-forward"
                 },
                 "skip_ribocode": {
