@@ -355,6 +355,7 @@ workflow RIBOSEQ {
     // calling, P-site calibration and DTE; the full `ch_gtf` is reserved for
     // genome-guided alignment.
     ch_fasta_gtf = ch_fasta.combine(ch_canonical_gtf).map{ fasta, gtf -> [ [:], fasta, gtf ] }.first()
+    ch_fasta_gtf_for_ribotish = ch_fasta_gtf.map{ meta, fasta, gtf -> [ meta, fasta, gtf, [] ] }.first()
 
     if (!params.skip_ribotish){
         RIBOTISH_QUALITY_RIBOSEQ(
@@ -374,7 +375,7 @@ workflow RIBOSEQ {
         RIBOTISH_PREDICT_INDIVIDUAL(
             ribotish_predict_inputs.bam,
             [[:],[],[]],
-            ch_fasta_gtf,
+            ch_fasta_gtf_for_ribotish,
             [[:],[]],
             ribotish_predict_inputs.offset,
             [[:],[]]
@@ -384,7 +385,7 @@ workflow RIBOSEQ {
         RIBOTISH_PREDICT_ALL(
             ribotish_predict_inputs.bam.map{meta, bam, bai -> [[id:'allsamples'], bam, bai]}.groupTuple(),
             [[:],[],[]],
-            ch_fasta_gtf,
+            ch_fasta_gtf_for_ribotish,
             [[:],[]],
             ribotish_predict_inputs.offset.map{meta, offset -> [[id:'allsamples'], offset]}.groupTuple(),
             [[:],[]]
