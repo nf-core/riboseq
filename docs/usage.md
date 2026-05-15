@@ -394,6 +394,8 @@ The second pass roughly doubles STAR alignment compute for Ribo-seq samples and 
 
 **riboWaltz stays on the canonical reference transcriptome BAM by design.** riboWaltz is a QC/calibration tool and its CDS-dependent plots (frame distribution, start/stop metaprofiles) are driven by CDS-bearing canonical transcripts. Routing CDS-absent novel transcripts through riboWaltz would dilute its diagnostic plots without contributing to ORF discovery (riboWaltz does not call ORFs). Plastid and Salmon-based quantification likewise stay on the canonical/reference annotation regardless of `--extended_orf_analysis`.
 
+**Ribo-TISH `quality` stays on the canonical backbone.** The `quality` step estimates P-site offsets and read-length QC against CDS-bearing canonical transcripts. Feeding it the hybrid GTF would mix in CDS-absent novel transcripts that the P-site model cannot interpret. The Ribo-TISH `predict` step (which actually calls ORFs) is the one that consumes the hybrid GTF on `-g` plus the canonical backbone on `-a`. Empirical confirmation that canonical-only is the correct choice for `quality` is pending full-scale validation; the default reflects the spec recommendation in issue #162.
+
 The default `--extended_orf_analysis false` keeps the pre-#165 behaviour unchanged: the primary STAR pass is the only alignment and every ORF caller runs against the canonical backbone.
 
 ### Cross-sample ORF catalogue
