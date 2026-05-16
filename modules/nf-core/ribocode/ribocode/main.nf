@@ -45,7 +45,7 @@ process RIBOCODE_RIBOCODE {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    prefix = task.ext.prefix ?: "${meta.id}"
 
     """
     touch ${prefix}.txt
