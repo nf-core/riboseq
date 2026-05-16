@@ -34,11 +34,13 @@ process GEDI_PRICE {
     ls -1 bams/*.bam > price_input.bamlist
 
     # Convert the cohort BAM list to a Gedi CIT container, which is what
-    # PRICE consumes via -reads.
+    # PRICE consumes via -reads. bamlist2cit appends `.cit` to the input
+    # filename rather than replacing the extension, so the output is
+    # price_input.bamlist.cit.
     bamlist2cit -n ${task.cpus} -p price_input.bamlist
 
     gedi -e Price \\
-        -reads price_input.cit \\
+        -reads price_input.bamlist.cit \\
         -genomic ${oml} \\
         -prefix ${prefix} \\
         -nthreads ${task.cpus} \\
