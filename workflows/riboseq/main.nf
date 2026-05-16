@@ -573,8 +573,7 @@ workflow RIBOSEQ {
         .first()
     ch_fasta_gtf_for_ribotish_extended = ch_fasta
         .combine(ch_hybrid_gtf)
-        .combine(ch_canonical_gtf)
-        .map { fasta, hybrid, canonical -> [ [id: 'reference'], fasta, hybrid, canonical ] }
+        .map { fasta, hybrid -> [ [id: 'reference'], fasta, hybrid, [] ] }
         .first()
 
     if (!params.skip_ribotish){
