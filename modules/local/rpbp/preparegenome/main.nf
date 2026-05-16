@@ -1,6 +1,6 @@
 process RPBP_PREPAREGENOME {
     tag "$meta.id"
-    label 'process_medium'
+    label 'process_high'
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
@@ -19,11 +19,13 @@ process RPBP_PREPAREGENOME {
 
     script:
     def args = task.ext.args ?: ''
+    def mem_arg = task.memory ? "--mem ${task.memory.toGiga()}G" : ''
     """
     mkdir -p rpbp_index
     prepare-rpbp-genome \\
         ${config_yaml} \\
         --num-cpus ${task.cpus} \\
+        ${mem_arg} \\
         ${args}
     """
 
