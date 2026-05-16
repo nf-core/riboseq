@@ -346,6 +346,8 @@ PRICE classifies ORFs into eleven types (`CDS`, `Ext`, `Trunc`, `Variant`, `uORF
 
 PRICE's CLI banner reports `Price version 1.0.4` while the Bioconda package is `gedi 1.0.6a` (Price is one tool inside the Gedi umbrella). The pipeline captures the package version via `gedi -e Version` for `versions.yml`; the internal Price version is a property of the upstream tool and not used for provenance.
 
+> :information_source: **Data scale.** PRICE's ORF inference step (`PriceOrfInference`) requires more candidate ORFs than the chr20-only `-profile test` data provides; on small test inputs it fails late in the pipeline with `Index out of bounds`. The other PRICE pipeline stages (`IndexGenome`, `bamlist2cit`, codon stats, model estimation, start-prediction training, noise training) all run cleanly. End-to-end PRICE validation needs realistic Ribo-seq depth and is exercised on the full-scale Platform iteration, not in the chr20 CI test set.
+
 ## Novel transcript discovery (StringTie / user-supplied GTF)
 
 The pipeline can extend the canonical reference annotation with novel intergenic transcripts, either by running [StringTie](https://ccb.jhu.edu/software/stringtie/) reference-guided assembly or by accepting a user-supplied GTF via `--novel_gtf`. The two sources feed the same downstream filtering chain and produce a hybrid annotation at `<outdir>/stringtie/hybrid_reference.gtf` (canonical backbone + filtered novel transcripts, sorted by genomic position).
