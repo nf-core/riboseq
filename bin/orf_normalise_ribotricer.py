@@ -22,6 +22,8 @@ import os
 import sys
 from pathlib import Path
 
+csv.field_size_limit(sys.maxsize)
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from orf_normalise_common import (
     classify_ribotricer,
