@@ -4,8 +4,8 @@ process PRICE_INDEXGENOME {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/6f/6f293f3713b7/data' :
-        'community.wave.seqera.io/library/gedi:1.0.6a--df2db6b3258d372d' }"
+        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/43/436a8b9b8bf7be4bb2122a21daef20c11b5b01353e1232ced2702f87792ff71e/data' :
+        'community.wave.seqera.io/library/price_indexgenome:21e4498061541eb9' }"
 
     input:
     tuple val(meta), path(fasta), path(gtf)

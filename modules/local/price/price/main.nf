@@ -5,8 +5,8 @@ process PRICE_PRICE {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/6f/6f293f3713b7/data' :
-        'community.wave.seqera.io/library/gedi:1.0.6a--df2db6b3258d372d' }"
+        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/e9/e908ab4f6bf42a2f4915954ac3bfaa4be69dde333e0d7f2061487c94e4b923ef/data' :
+        'community.wave.seqera.io/library/price_price:3db74c14a3c54c99' }"
 
     input:
     tuple val(meta), path(bams, stageAs: 'bams/*'), path(bais, stageAs: 'bams/*')
