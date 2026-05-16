@@ -17,6 +17,8 @@ include { BUILD_HYBRID_TRANSCRIPTOME } from '../../subworkflows/local/build_hybr
 include { CONCAT_GTF               } from '../../modules/local/concat_gtf'
 include { FILTER_GTF_CLASS_CODE    } from '../../modules/local/filter_gtf_class_code'
 include { RUN_RPBP                 } from '../../subworkflows/local/run_rpbp'
+include { PRICE_INDEXGENOME        } from '../../modules/local/price/indexgenome'
+include { PRICE_PRICE              } from '../../modules/local/price/price'
 include { BUILD_ORF_CATALOGUE      } from '../../subworkflows/local/build_orf_catalogue'
 include { QUANTIFY_ORF_PSITE       } from '../../subworkflows/local/quantify_orf_psite'
 include { DTE_ORF_LEVEL            } from '../../subworkflows/local/dte_orf_level'
@@ -649,6 +651,31 @@ workflow RIBOSEQ {
         )
     }
 
+    if (params.run_price){
+        log.warn "PRICE is enabled via --run_price. PRICE (Erhard et al. 2018) estimates a shared cohort-level codon-position model via EM and is opt-in because its runtime at genome-wide scale is comparable to Rp-Bp. Plan compute accordingly."
+
+        def ch_price_fasta_gtf = extended_orf_active ?
+            ch_fasta_gtf_extended :
+            ch_fasta_gtf
+
+        PRICE_INDEXGENOME(
+            ch_price_fasta_gtf
+        )
+        ch_versions = ch_versions.mix(PRICE_INDEXGENOME.out.versions)
+
+        // PRICE estimates the codon-position model from the riboseq cohort
+        // as a whole, so feed all riboseq BAMs into a single PRICE call.
+        ch_price_inputs = ch_bams_for_analysis
+            .map { meta, bam, bai -> [ [id: 'allsamples'], bam, bai ] }
+            .groupTuple()
+
+        PRICE_PRICE(
+            ch_price_inputs,
+            PRICE_INDEXGENOME.out.index.first()
+        )
+        ch_versions = ch_versions.mix(PRICE_PRICE.out.versions)
+    }
+
     //
     // Dynamic ORF-caller set for cross-caller agreement (issue #07).
     // The enabled list reflects which callers ran at runtime; the agreement
@@ -660,6 +687,7 @@ workflow RIBOSEQ {
     if (!params.skip_ribocode)   { enabled_orf_callers << 'ribocode' }
     if ( params.run_ribotricer)  { enabled_orf_callers << 'ribotricer' }
     if ( params.run_rpbp)        { enabled_orf_callers << 'rpbp' }
+    if ( params.run_price)       { enabled_orf_callers << 'price' }
 
     // Ribotricer contributes binary calls only; its scores are excluded from
     // the cross-caller rank aggregation due to known rank instability. Rp-Bp's
@@ -745,6 +773,7 @@ workflow RIBOSEQ {
         ch_ribocode_pred_cat   = (!params.skip_ribocode) ? RIBOCODE_RIBOCODE.out.orf_txt              : Channel.empty()
         ch_ribotricer_pred_cat = ( params.run_ribotricer) ? RIBOTRICER_DETECTORFS.out.orfs            : Channel.empty()
         ch_rpbp_pred_cat       = ( params.run_rpbp)       ? RUN_RPBP.out.bed                          : Channel.empty()
+        ch_price_pred_cat      = ( params.run_price)      ? PRICE_PRICE.out.orfs_tsv                  : Channel.empty()
 
         def ch_orf_catalogue_gtf = ch_hybrid_gtf
 
@@ -753,6 +782,7 @@ workflow RIBOSEQ {
             ch_ribocode_pred_cat,
             ch_ribotricer_pred_cat,
             ch_rpbp_pred_cat,
+            ch_price_pred_cat,
             ch_fasta,
             ch_orf_catalogue_gtf
         )

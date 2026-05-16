@@ -334,6 +334,18 @@ The pipeline auto-renders the YAML config required by `prepare-rpbp-genome` / `p
 
 Per-sample predicted-ORF BED and tab outputs (with Bayes factor scores) are published under `<outdir>/orf_predictions/rpbp/`. When `--extended_orf_analysis true` is set, Rp-Bp receives the hybrid GTF and so can call ORFs on novel intergenic transcripts in the same way as Ribo-TISH `predict` and Ribotricer.
 
+### PRICE (opt-in, overnight)
+
+[PRICE](https://github.com/erhard-lab/gedi/wiki/Price) (Erhard et al., 2018) is a Bayesian ORF caller distributed as part of the [Gedi](https://github.com/erhard-lab/gedi) Java framework (`gedi -e Price`). Unlike the per-sample callers, PRICE estimates a shared codon-position model across the riboseq cohort by EM and is invoked one-shot rather than per-sample. Activate with `--run_price true`.
+
+> :warning: **Runtime cost.** PRICE's EM fit is comparable in wall-clock to Rp-Bp at genome-wide scale. The pipeline emits a runtime warning when `--run_price` is set. Plan compute accordingly.
+
+`prepare-rpbp-genome`'s analogue here is `gedi -e IndexGenome`, which builds a binary `.oml` genome index from your `--fasta`/`--gtf` once per pipeline run. PRICE itself is then called once across the cohort with the index plus the riboseq BAMs (`gedi -e Price -reads <cohort.cit> -genomic <name>.oml -prefix <out>`). PRICE's primary output is `${prefix}.orfs.tsv`, a table of all called ORFs with start-codon score, range score, p-value (uncorrected) and per-condition / total read counts; the pipeline normalises it into the cohort-level ORF catalogue alongside the other callers. Tool CLI arguments can be appended via `--extra_price_indexgenome_args` and `--extra_price_price_args`.
+
+PRICE classifies ORFs into eleven types (`CDS`, `Ext`, `Trunc`, `Variant`, `uORF`, `uoORF`, `iORF`, `dORF`, `ncRNA`, `intronic`, `orphan`). The pipeline maps these onto the harmonised cross-caller class scheme used by the catalogue merge (`CDS/Ext/Trunc/Variant` → `canonical_cds`, `uORF/uoORF` → `uORF`, `dORF` → `dORF`, `ncRNA` → `novel_u`, the rest → `other`). When `--extended_orf_analysis true` is set, PRICE's IndexGenome receives the hybrid GTF so ORFs on novel intergenic transcripts are within its discovery scope.
+
+PRICE's CLI banner reports `Price version 1.0.4` while the Bioconda package is `gedi 1.0.6a` (Price is one tool inside the Gedi umbrella). The pipeline captures the package version via `gedi -e Version` for `versions.yml`; the internal Price version is a property of the upstream tool and not used for provenance.
+
 ## Novel transcript discovery (StringTie / user-supplied GTF)
 
 The pipeline can extend the canonical reference annotation with novel intergenic transcripts, either by running [StringTie](https://ccb.jhu.edu/software/stringtie/) reference-guided assembly or by accepting a user-supplied GTF via `--novel_gtf`. The two sources feed the same downstream filtering chain and produce a hybrid annotation at `<outdir>/stringtie/hybrid_reference.gtf` (canonical backbone + filtered novel transcripts, sorted by genomic position).

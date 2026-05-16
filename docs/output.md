@@ -38,6 +38,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
     - [Ribotricer detect-orfs](#ribotricer-detect-orfs)
     - [RiboCode](#ribocode)
     - [Rp-Bp](#rp-bp)
+    - [PRICE](#price)
   - [P-site identification](#p-site-identification)
     - [riboWaltz](#ribowaltz)
     - [plastid](#plastid)
@@ -455,6 +456,20 @@ If RiboCode is not needed for your analysis, you can skip it entirely with `--sk
 </details>
 
 Produced only when `--run_rpbp true` is set. Rp-Bp's Bayesian fit is slow (~20-24h per replicate at genome-wide scale); see [Rp-Bp in usage.md](usage.md#rp-bp-opt-in-overnight). Rp-Bp's Bayes factor is stable across replicates and is retained in the cross-caller rank-aggregation set. When `--extended_orf_analysis true` is set, Rp-Bp consumes the hybrid GTF and so reports novel intergenic ORFs alongside annotated ones.
+
+### PRICE
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `price/index/`: Gedi `.oml` genome index plus binary sidecar files (built once per reference by `gedi -e IndexGenome -nomapping`).
+- `price/`
+  - `${prefix}.orfs.tsv`: cohort-level PRICE ORF table (Gene, Id, Location, Type, Start, Range, p value, per-condition + Total counts).
+  - `${prefix}.orfs.cit`, `${prefix}.orfs.cit.metadata.json`, `${prefix}.signal.tsv`, `${prefix}.param`: PRICE companion artefacts (CIT index, signal-to-noise data, parameter log).
+
+</details>
+
+Produced only when `--run_price true` is set. PRICE is invoked once across the riboseq cohort (it estimates a shared codon-position model by EM). Its calls feed `ORF_NORMALISE_PRICE` and join the cross-caller catalogue alongside Ribo-TISH, RiboCode, Ribotricer and Rp-Bp. When `--extended_orf_analysis true` is set, the IndexGenome step builds the index from the hybrid GTF so PRICE can discover ORFs on novel intergenic transcripts.
 
 ### ORF catalogue (cross-sample)
 

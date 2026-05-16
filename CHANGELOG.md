@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Added`
 
+- [#170](https://github.com/nf-core/riboseq/issues/170) - Add PRICE (Erhard et al. 2018) as an opt-in ORF caller via `--run_price` (default `false`). Invoked one-shot across the riboseq cohort (`gedi -e IndexGenome` + `gedi -e Price`); calls flow into the cross-caller ORF catalogue. Container via `bioconda::gedi=1.0.6a` ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#125](https://github.com/nf-core/riboseq/pull/125) - Add rRNA removal tool selection with support for SortMeRNA (default), Bowtie2, and RiboDetector ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#128](https://github.com/nf-core/riboseq/pull/128) - Add DESeq2-based deltaTE analysis as an alternative to anota2seq for translational efficiency analysis ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#131](https://github.com/nf-core/riboseq/pull/131) - Add ribotish quality output routing to MultiQC ([@pinin4fjords](https://github.com/pinin4fjords))

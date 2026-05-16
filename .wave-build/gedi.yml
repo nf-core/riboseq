@@ -3,5 +3,4 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
-  - bioconda::gedi=1.0.6a
-  - conda-forge::openjdk=17
+  - bioconda::gedi=1.0.6a=hdfd78af_1
