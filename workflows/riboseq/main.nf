@@ -696,8 +696,9 @@ workflow RIBOSEQ {
             ch_gtf
 
         // Step 1: Update GTF annotation
+        def ribocode_gtf_meta_id = extended_orf_active ? 'hybrid_reference' : 'reference'
         RIBOCODE_GTFUPDATE(
-            ch_ribocode_gtf_source.map { [ [:], it ] }.first()
+            ch_ribocode_gtf_source.map { [ [id: ribocode_gtf_meta_id], it ] }.first()
         )
 
         // Step 2: Prepare annotation files
