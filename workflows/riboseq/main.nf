@@ -742,7 +742,11 @@ workflow RIBOSEQ {
     //
     if (extended_orf_active && enabled_orf_callers) {
         ch_ribotish_pred_cat   = (!params.skip_ribotish) ? RIBOTISH_PREDICT_INDIVIDUAL.out.predictions : Channel.empty()
-        ch_ribocode_pred_cat   = (!params.skip_ribocode) ? RIBOCODE_RIBOCODE.out.orf_txt              : Channel.empty()
+        ch_ribocode_pred_cat   = (!params.skip_ribocode) ?
+            RIBOCODE_RIBOCODE.out.orf_txt.map { meta, files ->
+                def list = (files instanceof List) ? files : [ files ]
+                [ meta, list.findAll { !it.name.endsWith('_collapsed.txt') } ]
+            } : Channel.empty()
         ch_ribotricer_pred_cat = ( params.run_ribotricer) ? RIBOTRICER_DETECTORFS.out.orfs            : Channel.empty()
         ch_rpbp_pred_cat       = ( params.run_rpbp)       ? RUN_RPBP.out.bed                          : Channel.empty()
 
