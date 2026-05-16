@@ -23,13 +23,13 @@ process RPBP_BUILDCONFIG {
     def extras = extra_yaml ?: ''
     """
     cat > rpbp_config.yaml <<EOF
-genome_base_path: \$PWD/rpbp_index
+genome_base_path: rpbp_index
 genome_name: ${name}
-gtf: \$PWD/${gtf}
-fasta: \$PWD/${fasta}
-star_index: \$PWD/rpbp_index/star
-ribosomal_index: \$PWD/rpbp_index/ribosomal
-ribosomal_fasta: \$PWD/${fasta}
+gtf: ${gtf}
+fasta: ${fasta}
+star_index: rpbp_index/star
+ribosomal_index: rpbp_index/ribosomal
+ribosomal_fasta: ${fasta}
 ${extras}
 EOF
     """
