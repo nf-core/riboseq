@@ -25,7 +25,7 @@ process FILTER_COUNTS_CANONICAL {
         BEGIN { OFS=FS }
         FNR == NR {
             if (\$0 ~ /^#/) { next }
-            if (\$3 != "gene")       { next }
+            if (\$3 != "gene" && \$3 != "transcript") { next }
             if (match(\$9, /gene_id "([^"]+)"/, m)) keep[m[1]] = 1
             next
         }
