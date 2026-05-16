@@ -661,7 +661,6 @@ workflow RIBOSEQ {
         GEDI_INDEXGENOME(
             ch_price_fasta_gtf
         )
-        ch_versions = ch_versions.mix(GEDI_INDEXGENOME.out.versions)
 
         // PRICE estimates the codon-position model from the riboseq cohort
         // as a whole, so feed all riboseq BAMs into a single PRICE call.
@@ -673,7 +672,6 @@ workflow RIBOSEQ {
             ch_price_inputs,
             GEDI_INDEXGENOME.out.index.first()
         )
-        ch_versions = ch_versions.mix(GEDI_PRICE.out.versions)
     }
 
     //

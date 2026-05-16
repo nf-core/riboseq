@@ -20,7 +20,7 @@ process GEDI_PRICE {
     tuple val(meta), path("${prefix}.model")                                                    , emit: model, optional: true
     tuple val(meta), path("${prefix}.signal.tsv")                                               , emit: signal, optional: true
     tuple val(meta), path("${prefix}.param")                                                    , emit: param, optional: true
-    tuple val("${task.process}"), val('gedi'), eval("gedi -e Version 2>&1 | sed -n 's/.*Gedi version \\([^ ]*\\).*/\\1/p' | head -n 1"), emit: versions, topic: versions
+    tuple val("${task.process}"), val('gedi'), eval("gedi -e Version 2>&1 | sed -n 's/.*Gedi version \\([^ ]*\\).*/\\1/p' | head -n 1"), topic: versions
 
     when:
     task.ext.when == null || task.ext.when
