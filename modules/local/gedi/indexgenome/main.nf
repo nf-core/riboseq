@@ -27,6 +27,7 @@ process GEDI_INDEXGENOME {
         -a ${gtf} \\
         -n ${name} \\
         -f price_index \\
+        -o price_index/${name}.oml \\
         -nomapping \\
         -p \\
         ${args}
