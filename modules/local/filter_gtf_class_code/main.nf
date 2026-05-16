@@ -24,13 +24,16 @@ process FILTER_GTF_CLASS_CODE {
     """
     awk -v codes="${codes_csv}" 'BEGIN {
         n = split(codes, arr, /,[[:space:]]*/);
-        for (i = 1; i <= n; i++) keep[arr[i]] = 1;
+        for (i = 1; i <= n; i++) keep_code[arr[i]] = 1;
     }
     /^#/ { next }
     \$7 == "." { next }
     {
-        if (match(\$0, /class_code "([^"]+)"/, m)) {
-            if (m[1] in keep) print \$0;
+        if (match(\$0, /transcript_id "([^"]+)"/, t)) {
+            if (match(\$0, /class_code "([^"]+)"/, c)) {
+                if (c[1] in keep_code) keep_tx[t[1]] = 1;
+            }
+            if (t[1] in keep_tx) print \$0;
         }
     }' ${annotated_gtf} > ${prefix}.gtf
     """
