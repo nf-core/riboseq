@@ -12,7 +12,7 @@ process PRICE_INDEXGENOME {
 
     output:
     tuple val(meta), path("price_index")                                                  , emit: index
-    tuple val("${task.process}"), val('gedi'), eval("gedi -e Version 2>&1 | grep -oP 'Gedi version \\K[^ ]+'"), emit: versions, topic: versions
+    tuple val("${task.process}"), val('gedi'), eval("gedi -e Version 2>&1 | sed -n 's/.*Gedi version \\([^ ]*\\).*/\\1/p' | head -n 1"), emit: versions, topic: versions
 
     when:
     task.ext.when == null || task.ext.when

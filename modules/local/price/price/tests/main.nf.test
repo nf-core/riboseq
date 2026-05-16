@@ -1,0 +1,40 @@
+nextflow_process {
+
+    name "Test Process PRICE_PRICE"
+    script "../main.nf"
+    process "PRICE_PRICE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "price"
+    tag "price_price"
+
+    test("synthetic data - stub") {
+        options "-stub-run"
+
+        when {
+            process {
+                """
+                def bam = file('sample.bam')
+                bam.text = ""
+                def bai = file('sample.bam.bai')
+                bai.text = ""
+                def index = file('price_index')
+                index.mkdir()
+                def oml = file('price_index/reference.oml')
+                oml.text = ""
+
+                input[0] = Channel.of([ [id:'allsamples'], [bam], [bai] ])
+                input[1] = Channel.of([ [id:'reference'], index ])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}
