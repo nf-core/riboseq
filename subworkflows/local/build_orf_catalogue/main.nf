@@ -43,14 +43,16 @@ workflow BUILD_ORF_CATALOGUE {
         .mix(ORF_NORMALISE_RIBOCODE.out.bed12)
         .mix(ORF_NORMALISE_RIBOTRICER.out.bed12)
         .mix(ORF_NORMALISE_RPBP.out.bed12)
-        .map { _meta, bed -> bed }
+        .dump(tag: 'orf_catalogue_bed_per_sample')
+        .map { entry -> entry[1] }
         .collect()
 
     ch_all_tsvs = ORF_NORMALISE_RIBOTISH.out.tsv
         .mix(ORF_NORMALISE_RIBOCODE.out.tsv)
         .mix(ORF_NORMALISE_RIBOTRICER.out.tsv)
         .mix(ORF_NORMALISE_RPBP.out.tsv)
-        .map { _meta, tsv -> tsv }
+        .dump(tag: 'orf_catalogue_tsv_per_sample')
+        .map { entry -> entry[1] }
         .collect()
 
     ch_merge_in = ch_all_beds
