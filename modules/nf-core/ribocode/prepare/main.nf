@@ -27,6 +27,16 @@ process RIBOCODE_PREPARE {
         -f ${fasta} \\
         -o annotation \\
         $args
+
+    # Pre-build the pyfasta index files alongside transcripts_sequence.fa so
+    # downstream consumers (RIBOCODE_RIBOCODE) never need write access to
+    # the staged annotation directory. Without this, pyfasta builds .gdx /
+    # .flat on first read inside the staged input dir; on shared-filesystem
+    # stagers (Fusion-on-S3, certain NFS mounts) parallel readers race.
+    python - <<'PYTHON'
+from pyfasta import Fasta
+Fasta('annotation/transcripts_sequence.fa')
+PYTHON
     """
 
     stub:
@@ -36,6 +46,8 @@ process RIBOCODE_PREPARE {
 
     touch annotation/transcripts_cds.txt
     touch annotation/transcripts_sequence.fa
+    touch annotation/transcripts_sequence.fa.gdx
+    touch annotation/transcripts_sequence.fa.flat
     touch annotation/transcripts.pickle
     """
 }
