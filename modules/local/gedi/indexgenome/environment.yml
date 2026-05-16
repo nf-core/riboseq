@@ -1,4 +1,4 @@
-name: price_price
+name: gedi_indexgenome
 channels:
   - bioconda
   - conda-forge

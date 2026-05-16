@@ -17,8 +17,8 @@ include { BUILD_HYBRID_TRANSCRIPTOME } from '../../subworkflows/local/build_hybr
 include { CONCAT_GTF               } from '../../modules/local/concat_gtf'
 include { FILTER_GTF_CLASS_CODE    } from '../../modules/local/filter_gtf_class_code'
 include { RUN_RPBP                 } from '../../subworkflows/local/run_rpbp'
-include { PRICE_INDEXGENOME        } from '../../modules/local/price/indexgenome'
-include { PRICE_PRICE              } from '../../modules/local/price/price'
+include { GEDI_INDEXGENOME        } from '../../modules/local/gedi/indexgenome'
+include { GEDI_PRICE              } from '../../modules/local/gedi/price'
 include { BUILD_ORF_CATALOGUE      } from '../../subworkflows/local/build_orf_catalogue'
 include { QUANTIFY_ORF_PSITE       } from '../../subworkflows/local/quantify_orf_psite'
 include { DTE_ORF_LEVEL            } from '../../subworkflows/local/dte_orf_level'
@@ -658,10 +658,10 @@ workflow RIBOSEQ {
             ch_fasta_gtf_extended :
             ch_fasta_gtf
 
-        PRICE_INDEXGENOME(
+        GEDI_INDEXGENOME(
             ch_price_fasta_gtf
         )
-        ch_versions = ch_versions.mix(PRICE_INDEXGENOME.out.versions)
+        ch_versions = ch_versions.mix(GEDI_INDEXGENOME.out.versions)
 
         // PRICE estimates the codon-position model from the riboseq cohort
         // as a whole, so feed all riboseq BAMs into a single PRICE call.
@@ -669,11 +669,11 @@ workflow RIBOSEQ {
             .map { meta, bam, bai -> [ [id: 'allsamples'], bam, bai ] }
             .groupTuple()
 
-        PRICE_PRICE(
+        GEDI_PRICE(
             ch_price_inputs,
-            PRICE_INDEXGENOME.out.index.first()
+            GEDI_INDEXGENOME.out.index.first()
         )
-        ch_versions = ch_versions.mix(PRICE_PRICE.out.versions)
+        ch_versions = ch_versions.mix(GEDI_PRICE.out.versions)
     }
 
     //
@@ -773,7 +773,7 @@ workflow RIBOSEQ {
         ch_ribocode_pred_cat   = (!params.skip_ribocode) ? RIBOCODE_RIBOCODE.out.orf_txt              : Channel.empty()
         ch_ribotricer_pred_cat = ( params.run_ribotricer) ? RIBOTRICER_DETECTORFS.out.orfs            : Channel.empty()
         ch_rpbp_pred_cat       = ( params.run_rpbp)       ? RUN_RPBP.out.bed                          : Channel.empty()
-        ch_price_pred_cat      = ( params.run_price)      ? PRICE_PRICE.out.orfs_tsv                  : Channel.empty()
+        ch_price_pred_cat      = ( params.run_price)      ? GEDI_PRICE.out.orfs_tsv                  : Channel.empty()
 
         def ch_orf_catalogue_gtf = ch_hybrid_gtf
 

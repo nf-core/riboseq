@@ -1,8 +1,8 @@
 nextflow_process {
 
-    name "Test Process PRICE_INDEXGENOME"
+    name "Test Process GEDI_INDEXGENOME"
     script "../main.nf"
-    process "PRICE_INDEXGENOME"
+    process "GEDI_INDEXGENOME"
 
     tag "modules"
     tag "modules_local"

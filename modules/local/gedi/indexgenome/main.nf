@@ -1,11 +1,11 @@
-process PRICE_INDEXGENOME {
+process GEDI_INDEXGENOME {
     tag "$meta.id"
     label 'process_medium'
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/43/436a8b9b8bf7be4bb2122a21daef20c11b5b01353e1232ced2702f87792ff71e/data' :
-        'community.wave.seqera.io/library/price_indexgenome:21e4498061541eb9' }"
+        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/ba/bae29fa913dea79a3dcdbfbf544f0391f82bbfdbf3e6430f71db45ba21d6cf79/data' :
+        'community.wave.seqera.io/library/gedi_indexgenome:cfca16738f306c86' }"
 
     input:
     tuple val(meta), path(fasta), path(gtf)

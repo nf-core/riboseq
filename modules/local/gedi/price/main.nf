@@ -1,12 +1,12 @@
-process PRICE_PRICE {
+process GEDI_PRICE {
     tag "$meta.id"
-    label 'process_high'
+    label 'process_medium'
     label 'process_long'
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/e9/e908ab4f6bf42a2f4915954ac3bfaa4be69dde333e0d7f2061487c94e4b923ef/data' :
-        'community.wave.seqera.io/library/price_price:3db74c14a3c54c99' }"
+        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/cd/cd008e5721759d5909909254c77ec449778e0fc7c669b7c926b68f0c9059f510/data' :
+        'community.wave.seqera.io/library/gedi_price:2392624d5f803049' }"
 
     input:
     tuple val(meta), path(bams, stageAs: 'bams/*'), path(bais, stageAs: 'bams/*')
