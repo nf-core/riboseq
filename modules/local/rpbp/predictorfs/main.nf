@@ -25,8 +25,19 @@ process RPBP_PREDICTORFS {
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     mkdir -p rpbp_out
+
+    # predict-translated-orfs requires a `riboseq_data` mapping in the config
+    # so it can resolve <sample-name> -> BAM. BUILDCONFIG renders the shared
+    # genome config but doesn't know the sample list, so we append the
+    # current sample's entry here per-task.
+    cp ${config_yaml} predict_config.yaml
+    cat >> predict_config.yaml <<EOF
+riboseq_data:
+  ${prefix}: ${bam}
+EOF
+
     predict-translated-orfs \\
-        ${config_yaml} \\
+        predict_config.yaml \\
         ${prefix} \\
         --num-cpus ${task.cpus} \\
         ${args}
