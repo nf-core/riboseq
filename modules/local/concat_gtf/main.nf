@@ -39,7 +39,7 @@ process CONCAT_GTF {
             print; next
         }
         { print }
-    ' combined.gtf | sort -k1,1 -k4,4n > ${prefix}.gtf
+    ' combined.gtf > ${prefix}.gtf
 
     rm combined.gtf
     """
