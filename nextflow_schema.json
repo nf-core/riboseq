@@ -758,6 +758,22 @@
                     "help_text": "The pipeline auto-renders the Rp-Bp YAML config from your `--fasta`/`--gtf` inputs; this parameter lets you override or extend it without writing a full config file. The string is appended verbatim to the rendered YAML.",
                     "fa_icon": "fas fa-file-code"
                 },
+                "run_price": {
+                    "type": "boolean",
+                    "description": "Opt in to running PRICE as an additional ORF caller (Bayesian, slow).",
+                    "help_text": "PRICE (Probabilistic inference of codon activities, Erhard et al. 2018) is a Bayesian ORF caller distributed as part of the Gedi Java framework (`gedi -e Price`). Like Rp-Bp it is opt-in because the EM fit dominates runtime at full scale. PRICE is invoked once across the riboseq cohort (it estimates a shared codon-position model) and joins the cross-caller ORF catalogue alongside Ribo-TISH, RiboCode, Ribotricer and Rp-Bp.",
+                    "fa_icon": "fas fa-fast-forward"
+                },
+                "extra_price_indexgenome_args": {
+                    "type": "string",
+                    "description": "Extra CLI arguments passed to `gedi -e IndexGenome`.",
+                    "fa_icon": "fas fa-terminal"
+                },
+                "extra_price_price_args": {
+                    "type": "string",
+                    "description": "Extra CLI arguments passed to `gedi -e Price`.",
+                    "fa_icon": "fas fa-terminal"
+                },
                 "skip_ribocode": {
                     "type": "boolean",
                     "description": "Skip RiboCode.",

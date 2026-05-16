@@ -1,0 +1,6 @@
+name: gedi_indexgenome
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - bioconda::gedi=1.0.6a

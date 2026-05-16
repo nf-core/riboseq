@@ -315,6 +315,24 @@ def classify_rpbp(orf_type: str | None) -> str:
     return "other"
 
 
+def classify_price(orf_type: str | None) -> str:
+    """PRICE emits one of: CDS, Ext, Trunc, Variant, uoORF, uORF, iORF, dORF,
+    ncRNA, intronic, orphan. Map onto the harmonised class scheme used by the
+    catalogue merge."""
+    if not orf_type:
+        return "other"
+    t = orf_type.strip()
+    if t in ("CDS", "Ext", "Trunc", "Variant"):
+        return "canonical_cds"
+    if t in ("uORF", "uoORF"):
+        return "uORF"
+    if t == "dORF":
+        return "dORF"
+    if t == "ncRNA":
+        return "novel_u"
+    return "other"
+
+
 def reclassify_smorf(orf_class: str, aa_length: int) -> str:
     """Promote any ORF with aa_length <= 100 to smORF class, regardless of
     location-based classification."""

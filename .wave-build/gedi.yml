@@ -1,0 +1,6 @@
+name: gedi-price
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - bioconda::gedi=1.0.6a=hdfd78af_1
