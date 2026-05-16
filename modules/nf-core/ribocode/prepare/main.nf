@@ -30,12 +30,19 @@ process RIBOCODE_PREPARE {
 
     # Pre-build the pyfasta index files alongside transcripts_sequence.fa so
     # downstream consumers (RIBOCODE_RIBOCODE) never need write access to
-    # the staged annotation directory. Without this, pyfasta builds .gdx /
-    # .flat on first read inside the staged input dir; on shared-filesystem
-    # stagers (Fusion-on-S3, certain NFS mounts) parallel readers race.
+    # the staged annotation directory. The key_fn must match RiboCode's
+    # prepare_transcripts.GenomeSeq, otherwise the .gdx is keyed by the full
+    # FASTA header (e.g. 'ENST00000488147 1380') instead of the transcript
+    # id alone and downstream lookups raise KeyError.
     python - <<'PYTHON'
 from pyfasta import Fasta
-Fasta('annotation/transcripts_sequence.fa')
+def key_fn(name):
+    if ' ' in name:
+        return name.split()[0]
+    if '|' in name:
+        return name.split('|')
+    return name
+Fasta('annotation/transcripts_sequence.fa', key_fn=key_fn)
 PYTHON
     """
 
