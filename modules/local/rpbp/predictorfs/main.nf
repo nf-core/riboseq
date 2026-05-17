@@ -37,6 +37,7 @@ keep_riboseq_multimappers: True
 EOF
 
     run-rpbp-pipeline \\
+        ${bam} \\
         predict_config.yaml \\
         ${prefix} \\
         --num-cpus ${task.cpus} \\
