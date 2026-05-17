@@ -21,9 +21,15 @@ process RPBP_ESTIMATEMETAGENEBAYESFACTORS {
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
     """
+    RPBP_MODELS_BASE=\$(python3 -c "import os, inspect, rpbp; print(os.path.join(os.path.dirname(inspect.getfile(rpbp)), 'models'))")
+    PERIODIC_MODELS=\$(ls \$RPBP_MODELS_BASE/periodic/*.stan | xargs)
+    NONPERIODIC_MODELS=\$(ls \$RPBP_MODELS_BASE/nonperiodic/*.stan | xargs)
+
     estimate-metagene-profile-bayes-factors \\
         ${metagene_profile} \\
         ${prefix}.metagene-periodicity-bayes-factors.csv.gz \\
+        --periodic-models \$PERIODIC_MODELS \\
+        --nonperiodic-models \$NONPERIODIC_MODELS \\
         --num-cpus ${task.cpus} \\
         ${args}
     """

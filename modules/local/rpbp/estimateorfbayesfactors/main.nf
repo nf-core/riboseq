@@ -23,10 +23,16 @@ process RPBP_ESTIMATEORFBAYESFACTORS {
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
     """
+    RPBP_MODELS_BASE=\$(python3 -c "import os, inspect, rpbp; print(os.path.join(os.path.dirname(inspect.getfile(rpbp)), 'models'))")
+    TRANSLATED_MODELS=\$(ls \$RPBP_MODELS_BASE/translated/*.stan | xargs)
+    UNTRANSLATED_MODELS=\$(ls \$RPBP_MODELS_BASE/untranslated/*.stan | xargs)
+
     estimate-orf-bayes-factors \\
         ${profiles} \\
         ${orfs_genomic_bed} \\
         ${prefix}.bayes-factors.bed.gz \\
+        --translated-models \$TRANSLATED_MODELS \\
+        --untranslated-models \$UNTRANSLATED_MODELS \\
         --num-cpus ${task.cpus} \\
         ${args}
     """
