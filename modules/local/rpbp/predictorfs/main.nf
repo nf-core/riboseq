@@ -26,14 +26,22 @@ process RPBP_PREDICTORFS {
     """
     mkdir -p rpbp_out
 
-    # predict-translated-orfs requires a `riboseq_data` mapping in the config
-    # so it can resolve <sample-name> -> BAM. BUILDCONFIG renders the shared
-    # genome config but doesn't know the sample list, so we append the
-    # current sample's entry here per-task.
+    # `predict-translated-orfs` expects rpbp's directory layout. For
+    # existing alignments (we do our own STAR upstream) rpbp wants:
+    #   <riboseq_data>/without-rrna-mapping/<sample>.Aligned.sortedByCoord.out.bam
+    # plus `riboseq_data` (output base path, string) and `riboseq_samples`
+    # (dict {sample_key: any_value}) in the config. BUILDCONFIG renders the
+    # shared genome config; the per-sample bits get appended here.
+    mkdir -p without-rrna-mapping
+    ln -sf ../${bam} without-rrna-mapping/${prefix}.Aligned.sortedByCoord.out.bam
+    ln -sf ../${bai} without-rrna-mapping/${prefix}.Aligned.sortedByCoord.out.bam.bai
+
     cp ${config_yaml} predict_config.yaml
     cat >> predict_config.yaml <<EOF
-riboseq_data:
-  ${prefix}: ${bam}
+riboseq_data: .
+riboseq_samples:
+  ${prefix}: ${prefix}.bam
+keep_riboseq_multimappers: True
 EOF
 
     predict-translated-orfs \\
