@@ -35,12 +35,14 @@ workflow RUN_RPBP {
 
     RPBP_PREPAREGENOME(ch_preparegenome_in)
 
-    // 3. Pull the BED files PREPAREGENOME wrote into the index dir
-    //    (rpbp filenames.py path convention: $G/$N.bed.gz and
-    //    $G/transcript-index/$N.orfs-{genomic,exons}.bed.gz, where
-    //    $G=genome_base_path=rpbp_index and $N=genome_name=reference).
+    // 3. Pull the BED files PREPAREGENOME wrote into the index dir.
+    //    rpbp filenames.py path conventions (with is_annotated=True):
+    //      $G/$N.annotated.bed.gz                      (get_bed)
+    //      $G/transcript-index/$N.orfs-genomic.bed.gz  (get_orfs)
+    //      $G/transcript-index/$N.orfs-exons.bed.gz    (get_exons)
+    //    where $G=genome_base_path=rpbp_index and $N=genome_name=reference.
     ch_transcript_bed   = RPBP_PREPAREGENOME.out.index
-        .map { _meta, idx, _cfg -> file("${idx}/reference.bed.gz") }
+        .map { _meta, idx, _cfg -> file("${idx}/reference.annotated.bed.gz") }
         .first()
     ch_orfs_genomic_bed = RPBP_PREPAREGENOME.out.index
         .map { _meta, idx, _cfg -> file("${idx}/transcript-index/reference.orfs-genomic.bed.gz") }
