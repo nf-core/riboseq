@@ -22,6 +22,7 @@ process FILTER_GTF_CLASS_CODE {
     def prefix       = task.ext.prefix ?: "${meta.id}"
     def codes_csv    = (class_codes instanceof List) ? class_codes.join(',') : "${class_codes}"
     """
+    # Single-pass: requires transcript rows before their child exons (gffcompare order).
     awk -v codes="${codes_csv}" 'BEGIN {
         n = split(codes, arr, /,[[:space:]]*/);
         for (i = 1; i <= n; i++) keep_code[arr[i]] = 1;

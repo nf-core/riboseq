@@ -24,15 +24,7 @@ process RPBP_PREDICTORFS {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    mkdir -p rpbp_out
-
-    # `predict-translated-orfs` expects rpbp's directory layout. For
-    # existing alignments (we do our own STAR upstream) rpbp wants:
-    #   <riboseq_data>/without-rrna-mapping/<sample>.Aligned.sortedByCoord.out.bam
-    # plus `riboseq_data` (output base path, string) and `riboseq_samples`
-    # (dict {sample_key: any_value}) in the config. BUILDCONFIG renders the
-    # shared genome config; the per-sample bits get appended here.
-    mkdir -p without-rrna-mapping
+    mkdir -p rpbp_out without-rrna-mapping
     ln -sf ../${bam} without-rrna-mapping/${prefix}.Aligned.sortedByCoord.out.bam
     ln -sf ../${bai} without-rrna-mapping/${prefix}.Aligned.sortedByCoord.out.bam.bai
 
@@ -44,14 +36,13 @@ riboseq_samples:
 keep_riboseq_multimappers: True
 EOF
 
-    predict-translated-orfs \\
+    run-rpbp-pipeline \\
         predict_config.yaml \\
         ${prefix} \\
         --num-cpus ${task.cpus} \\
         ${args}
 
-    # Surface the per-sample predicted-orfs outputs at top-level for easy publishing.
-    find rpbp_out \\( -name "*predicted-orfs*.bed.gz" -o -name "*predicted-orfs*.tab.gz" \\) \\
+    find . \\( -name "*predicted-orfs*.bed.gz" -o -name "*predicted-orfs*.tab.gz" \\) \\
         -exec cp -L {} . \\; || true
     """
 

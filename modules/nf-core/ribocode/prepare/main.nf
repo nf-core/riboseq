@@ -28,12 +28,7 @@ process RIBOCODE_PREPARE {
         -o annotation \\
         $args
 
-    # Pre-build the pyfasta index files alongside transcripts_sequence.fa so
-    # downstream consumers (RIBOCODE_RIBOCODE) never need write access to
-    # the staged annotation directory. The key_fn must match RiboCode's
-    # prepare_transcripts.GenomeSeq, otherwise the .gdx is keyed by the full
-    # FASTA header (e.g. 'ENST00000488147 1380') instead of the transcript
-    # id alone and downstream lookups raise KeyError.
+    # Pre-build pyfasta .gdx/.flat with RiboCode's key_fn so consumers don't write to staged inputs.
     python - <<'PYTHON'
 from pyfasta import Fasta
 def key_fn(name):

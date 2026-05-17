@@ -30,13 +30,8 @@ process GEDI_PRICE {
     prefix = task.ext.prefix ?: "${meta.id}"
     def oml = "${index}/${meta2.id ?: 'reference'}.oml"
     """
-    # Build a bamlist that lists each input BAM on its own line.
     ls -1 bams/*.bam > price_input.bamlist
-
-    # Convert the cohort BAM list to a Gedi CIT container, which is what
-    # PRICE consumes via -reads. bamlist2cit appends `.cit` to the input
-    # filename rather than replacing the extension, so the output is
-    # price_input.bamlist.cit.
+    # bamlist2cit appends .cit to the input name (so output is *.bamlist.cit).
     bamlist2cit -n ${task.cpus} -p price_input.bamlist
 
     gedi -e Price \\

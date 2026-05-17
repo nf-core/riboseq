@@ -1,0 +1,53 @@
+name: orf_normalise_price
+description: |
+  Convert PRICE's cohort-level `${prefix}.orfs.tsv` output into a
+  unified BED12 + sidecar metadata TSV suitable for cross-caller merging.
+  PRICE estimates a shared codon-position model across the riboseq cohort
+  by EM, so the input is one TSV across all samples (not per-sample).
+  The BED12 parses PRICE's `Location` field (chrom:strand:start-end[|...])
+  into block coordinates; the sidecar TSV carries `orf_id, caller,
+  sample_id, chrom, start, end, strand, gene_id, transcript_id,
+  orf_class, aa_length, score`.
+keywords:
+  - price
+  - orf
+  - normalisation
+  - bed12
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map with at least `id` (cohort label, e.g. `allsamples`).
+    - orfs_tsv:
+        type: file
+        description: PRICE cohort output table (`*.orfs.tsv`).
+        pattern: "*.orfs.tsv"
+  - - meta2:
+        type: map
+        description: |
+          Groovy Map for the annotation (typically a reference id).
+    - gtf:
+        type: file
+        description: Annotation GTF (canonical or hybrid) used for coordinate validation.
+        pattern: "*.gtf"
+output:
+  - bed12:
+      - meta:
+          type: map
+          description: Groovy Map inherited from input meta.
+      - "*.normalised.bed12":
+          type: file
+          description: Normalised BED12 with genomic ORF blocks.
+          pattern: "*.normalised.bed12"
+  - tsv:
+      - meta:
+          type: map
+          description: Groovy Map inherited from input meta.
+      - "*.normalised.tsv":
+          type: file
+          description: Per-ORF metadata sidecar (caller, sample, classification, score).
+          pattern: "*.normalised.tsv"
+authors:
+  - "@pinin4fjords"
+maintainers:
+  - "@pinin4fjords"
