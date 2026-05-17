@@ -42,13 +42,13 @@ workflow RUN_RPBP {
     //      $G/transcript-index/$N.orfs-exons.bed.gz    (get_exons)
     //    where $G=genome_base_path=rpbp_index and $N=genome_name=reference.
     ch_transcript_bed   = RPBP_PREPAREGENOME.out.index
-        .map { _meta, idx, _cfg -> file("${idx}/reference.annotated.bed.gz") }
+        .map { _meta, idx, _cfg -> file("${idx}/reference.annotated.bed.gz", checkIfExists: true) }
         .first()
     ch_orfs_genomic_bed = RPBP_PREPAREGENOME.out.index
-        .map { _meta, idx, _cfg -> file("${idx}/transcript-index/reference.orfs-genomic.bed.gz") }
+        .map { _meta, idx, _cfg -> file("${idx}/transcript-index/reference.orfs-genomic.bed.gz", checkIfExists: true) }
         .first()
     ch_orfs_exons_bed   = RPBP_PREPAREGENOME.out.index
-        .map { _meta, idx, _cfg -> file("${idx}/transcript-index/reference.orfs-exons.bed.gz") }
+        .map { _meta, idx, _cfg -> file("${idx}/transcript-index/reference.orfs-exons.bed.gz", checkIfExists: true) }
         .first()
     ch_genome_fasta     = ch_fasta_gtf.map { _meta, fasta, _gtf -> fasta }.first()
 
