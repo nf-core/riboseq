@@ -11,7 +11,10 @@ process RPBP_PREPAREGENOME {
     tuple val(meta), path(fasta), path(gtf), path(config_yaml)
 
     output:
-    tuple val(meta), path("rpbp_index"), path(config_yaml), emit: index
+    tuple val(meta), path("rpbp_index"), path(config_yaml)                          , emit: index
+    tuple val(meta), path("rpbp_index/reference.annotated.bed.gz")                  , emit: transcript_bed
+    tuple val(meta), path("rpbp_index/transcript-index/reference.orfs-genomic.bed.gz"), emit: orfs_genomic_bed
+    tuple val(meta), path("rpbp_index/transcript-index/reference.orfs-exons.bed.gz")  , emit: orfs_exons_bed
     tuple val("${task.process}"), val('rpbp'), eval("prepare-rpbp-genome --version 2>&1 | sed 's/^.*rpbp //; s/ .*//'"), topic: versions
 
     when:

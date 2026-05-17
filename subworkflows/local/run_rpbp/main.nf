@@ -35,21 +35,12 @@ workflow RUN_RPBP {
 
     RPBP_PREPAREGENOME(ch_preparegenome_in)
 
-    // 3. Pull the BED files PREPAREGENOME wrote into the index dir.
-    //    rpbp filenames.py path conventions (with is_annotated=True):
-    //      $G/$N.annotated.bed.gz                      (get_bed)
-    //      $G/transcript-index/$N.orfs-genomic.bed.gz  (get_orfs)
-    //      $G/transcript-index/$N.orfs-exons.bed.gz    (get_exons)
-    //    where $G=genome_base_path=rpbp_index and $N=genome_name=reference.
-    ch_transcript_bed   = RPBP_PREPAREGENOME.out.index
-        .map { _meta, idx, _cfg -> file("${idx}/reference.annotated.bed.gz", checkIfExists: true) }
-        .first()
-    ch_orfs_genomic_bed = RPBP_PREPAREGENOME.out.index
-        .map { _meta, idx, _cfg -> file("${idx}/transcript-index/reference.orfs-genomic.bed.gz", checkIfExists: true) }
-        .first()
-    ch_orfs_exons_bed   = RPBP_PREPAREGENOME.out.index
-        .map { _meta, idx, _cfg -> file("${idx}/transcript-index/reference.orfs-exons.bed.gz", checkIfExists: true) }
-        .first()
+    // 3. Take the dedicated BED emissions from PREPAREGENOME (named outputs are
+    //    safer than `file("${idx}/sub.bed")` under Fusion - the latter loses the
+    //    s3:// scheme and the head node can't stage it).
+    ch_transcript_bed   = RPBP_PREPAREGENOME.out.transcript_bed  .map { _meta, bed -> bed }.first()
+    ch_orfs_genomic_bed = RPBP_PREPAREGENOME.out.orfs_genomic_bed.map { _meta, bed -> bed }.first()
+    ch_orfs_exons_bed   = RPBP_PREPAREGENOME.out.orfs_exons_bed  .map { _meta, bed -> bed }.first()
     ch_genome_fasta     = ch_fasta_gtf.map { _meta, fasta, _gtf -> fasta }.first()
 
     // 4. Per-sample ORF prediction.

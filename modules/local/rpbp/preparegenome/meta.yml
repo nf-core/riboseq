@@ -41,6 +41,30 @@ output:
           type: file
           description: The same config file, passed through for downstream use.
           pattern: "*.yaml"
+  - transcript_bed:
+      - meta:
+          type: map
+          description: Groovy Map inherited from input meta.
+      - "reference.annotated.bed.gz":
+          type: file
+          description: Annotated transcripts BED used by `extract-metagene-profiles`.
+          pattern: "reference.annotated.bed.gz"
+  - orfs_genomic_bed:
+      - meta:
+          type: map
+          description: Groovy Map inherited from input meta.
+      - "reference.orfs-genomic.bed.gz":
+          type: file
+          description: Per-ORF genomic BED used by `extract-orf-profiles` / `estimate-orf-bayes-factors`.
+          pattern: "reference.orfs-genomic.bed.gz"
+  - orfs_exons_bed:
+      - meta:
+          type: map
+          description: Groovy Map inherited from input meta.
+      - "reference.orfs-exons.bed.gz":
+          type: file
+          description: Per-ORF exons BED used by `extract-orf-profiles`.
+          pattern: "reference.orfs-exons.bed.gz"
   - versions:
       - versions.yml:
           type: file
