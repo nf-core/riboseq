@@ -23,6 +23,8 @@ process CONCAT_GTF {
     """
     cat ${canonical_gtf} ${novel} | grep -v '^#' > combined.gtf
 
+    # Synthesised gene span = first transcript's coords; relies on the novel
+    # source giving one transcript per intergenic locus (gffcompare class 'u').
     awk -F'\\t' 'BEGIN { OFS=FS }
         \$3 == "gene" {
             if (match(\$9, /gene_id "([^"]+)"/, m)) gene_seen[m[1]] = 1

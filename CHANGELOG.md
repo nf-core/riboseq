@@ -53,36 +53,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Parameters`
 
-| Old parameter       | New parameter                            |
-| ------------------- | ---------------------------------------- |
-| `--skip_ribotricer` | `--run_ribotricer`                       |
-|                     | `--ribo_removal_tool`                    |
-|                     | `--skip_ribocode`                        |
-|                     | `--extra_ribocode_gtfupdate_args`        |
-|                     | `--extra_ribocode_prepare_args`          |
-|                     | `--extra_ribocode_metaplots_args`        |
-|                     | `--extra_ribocode_ribocode_args`         |
-|                     | `--translational_efficiency_method`      |
-|                     | `--extra_deltate_args`                   |
-|                     | `--te_lfc_threshold`                     |
-|                     | `--rna_lfc_threshold`                    |
-|                     | `--ribo_lfc_threshold`                   |
-|                     | `--equalise_read_lengths`                |
-|                     | `--equalise_read_lengths_target`         |
-|                     | `--skip_plastid`                         |
-|                     | `--plastid_min_length`                   |
-|                     | `--plastid_max_length`                   |
-|                     | `--plastid_default_psite_offset`         |
-|                     | `--extra_plastid_metagene_generate_args` |
-|                     | `--extra_plastid_psite_args`             |
-|                     | `--extra_plastid_make_wiggle_args`       |
-|                     | `--skip_coverage_tracks`                 |
-|                     | `--ribodetector_chunk_size`              |
-|                     | `--canonical_gtf`                        |
-|                     | `--skip_stringtie`                       |
-|                     | `--extra_stringtie_args`                 |
-|                     | `--extra_stringtie_merge_args`           |
-|                     | `--extended_orf_analysis`                |
+| Old parameter       | New parameter                     |
+| ------------------- | --------------------------------- |
+| `--skip_ribotricer` | `--run_ribotricer`                |
+|                     | `--canonical_gtf`                 |
+|                     | `--skip_stringtie`                |
+|                     | `--extra_stringtie_args`          |
+|                     | `--extra_stringtie_merge_args`    |
+|                     | `--stringtie_class_codes`         |
+|                     | `--stringtie_ribo_fallback_args`  |
+|                     | `--novel_gtf`                     |
+|                     | `--rrna_blacklist`                |
+|                     | `--extended_orf_analysis`         |
+|                     | `--run_rpbp`                      |
+|                     | `--extra_rpbp_preparegenome_args` |
+|                     | `--extra_rpbp_predictorfs_args`   |
+|                     | `--rpbp_config_extra_yaml`        |
+|                     | `--run_price`                     |
+|                     | `--extra_price_indexgenome_args`  |
+|                     | `--extra_price_price_args`        |
+|                     | `--run_dotseq` (Tier-3 DTE stub)  |
 
 ### `Dependencies`
 
