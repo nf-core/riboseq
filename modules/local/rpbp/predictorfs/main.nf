@@ -24,9 +24,11 @@ process RPBP_PREDICTORFS {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
+    # rpbp 4.x with `keep_riboseq_multimappers: True` looks for
+    # without-rrna-mapping/<sample>.bam (filenames.py get_riboseq_bam).
     mkdir -p rpbp_out without-rrna-mapping
-    ln -sf ../${bam} without-rrna-mapping/${prefix}.Aligned.sortedByCoord.out.bam
-    ln -sf ../${bai} without-rrna-mapping/${prefix}.Aligned.sortedByCoord.out.bam.bai
+    ln -sf ../${bam} without-rrna-mapping/${prefix}.bam
+    ln -sf ../${bai} without-rrna-mapping/${prefix}.bam.bai
 
     cp ${config_yaml} predict_config.yaml
     cat >> predict_config.yaml <<EOF
