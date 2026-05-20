@@ -1,47 +1,34 @@
-// Merge per-sample ORF P-site count TSVs into a single ORF x sample
-// matrix. The matrix has one row per ORF in the catalogue (zero-filled
-// for samples with no observed P-sites) and one column per sample, in
-// lexicographic sample-id order.
-
 process ORF_COUNT_MATRIX {
     tag "$meta.id"
-    label 'process_low'
+    label 'process_single'
 
-    conda "conda-forge::python=3.11"
+    conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/python:3.11' :
-        'quay.io/biocontainers/python:3.11' }"
+        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/7a/7a17ff642fb8c74fbf9feece8df823d78bcecca69f76770aa585e7468e6a9187/data' :
+        'community.wave.seqera.io/library/python_pandas_pyyaml:3ce680b21acf323f' }"
 
     input:
     tuple val(meta), path(per_sample_counts, stageAs: 'counts/*'), path(orf_catalogue_bed12)
 
     output:
-    tuple val(meta), path("orf_psite_counts.tsv"), emit: matrix
-    path "versions.yml"                          , emit: versions
+    tuple val(meta), path("*.tsv"), emit: matrix
+    path "versions.yml"           , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    """
-    build_orf_count_matrix.py \\
-        counts/*.tsv \\
-        --orf-list $orf_catalogue_bed12 \\
-        -o orf_psite_counts.tsv
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version 2>&1 | sed 's/^Python //')
-    END_VERSIONS
-    """
+    prefix = task.ext.prefix ?: "orf_psite_counts"
+    template 'build_orf_count_matrix.py'
 
     stub:
+    prefix = task.ext.prefix ?: "orf_psite_counts"
     """
-    touch orf_psite_counts.tsv
+    touch ${prefix}.tsv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        python: \$(python --version 2>&1 | sed 's/^Python //')
+        python: \$(python --version | sed -e "s/Python //g")
     END_VERSIONS
     """
 }
