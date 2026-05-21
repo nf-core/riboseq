@@ -23,7 +23,7 @@ include { BUILD_ORF_CATALOGUE      } from '../../subworkflows/local/build_orf_ca
 include { QUANTIFY_ORF_PSITE       } from '../../subworkflows/local/quantify_orf_psite'
 include { DTE_ORF_LEVEL            } from '../../subworkflows/local/dte_orf_level'
 include { ORF_TO_GENE_CDS_COUNTS   } from '../../modules/local/orf_to_gene_cds_counts'
-include { FILTER_COUNTS_CANONICAL  } from '../../modules/local/filter_counts_canonical'
+include { GAWK as FILTER_COUNTS_CANONICAL                      } from '../../modules/nf-core/gawk'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -947,12 +947,19 @@ workflow RIBOSEQ {
 
     if (ch_contrasts_file){
 
+        // GTF first, counts second: the awk script uses the FNR==NR idiom
+        // to build the gene_id keep-set from the first file (the GTF) before
+        // streaming the second (the counts TSV) and emitting matched rows.
+        ch_filter_counts_in = ch_te_counts
+            .combine(ch_canonical_gtf)
+            .map { meta, counts, gtf -> [ meta, [ gtf, counts ] ] }
+
         FILTER_COUNTS_CANONICAL(
-            ch_te_counts,
-            ch_canonical_gtf.map { [ [id: 'canonical'], it ] }.first()
+            ch_filter_counts_in,
+            file("${projectDir}/bin/filter_counts_canonical.awk"),
+            false
         )
-        ch_te_counts = FILTER_COUNTS_CANONICAL.out.counts
-        ch_versions  = ch_versions.mix(FILTER_COUNTS_CANONICAL.out.versions)
+        ch_te_counts = FILTER_COUNTS_CANONICAL.out.output
 
         ch_contrasts = ch_contrasts_file
             .splitCsv ( header:true, sep:',' )
