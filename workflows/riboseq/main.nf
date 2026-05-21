@@ -893,7 +893,7 @@ workflow RIBOSEQ {
         // Convert GTF CDS segments to in-frame p-site positions
         GTF_TO_INFRAME_PSITES(
             ch_canonical_gtf.map { gtf -> [ [id: gtf.baseName, feature: 'gene'], gtf ] },
-            file("${projectDir}/bin/gtf_to_inframe_psites.awk"),
+            file("${projectDir}/assets/gtf_to_inframe_psites.awk"),
             false
         )
 
@@ -934,7 +934,7 @@ workflow RIBOSEQ {
             ch_psite_counts_merged
                 .combine(QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled.map{ meta, counts -> counts })
                 .map { meta, psite_counts, salmon_counts -> [meta, [psite_counts, salmon_counts]] },
-            file("${projectDir}/bin/replace_riboseq_counts_in_matrix.awk"),
+            file("${projectDir}/assets/replace_riboseq_counts_in_matrix.awk"),
             false
         )
         ch_te_counts = REPLACE_RIBOSEQ_COUNTS_IN_MATRIX.out.output
@@ -956,7 +956,7 @@ workflow RIBOSEQ {
 
         FILTER_COUNTS_CANONICAL(
             ch_filter_counts_in,
-            file("${projectDir}/bin/filter_counts_canonical.awk"),
+            file("${projectDir}/assets/filter_counts_canonical.awk"),
             false
         )
         ch_te_counts = FILTER_COUNTS_CANONICAL.out.output
