@@ -11,8 +11,8 @@ process GEDI_INDEXGENOME {
     tuple val(meta), path(fasta), path(gtf)
 
     output:
-    tuple val(meta), path("price_index")                                                  , emit: index
-    tuple val("${task.process}"), val('gedi'), eval("gedi -e Version 2>&1 | sed -n 's/.*Gedi version \\([^ ]*\\).*/\\1/p' | head -n 1"), topic: versions
+    tuple val(meta), path("${prefix}"), emit: index
+    tuple val("${task.process}"), val('gedi'), eval("gedi -e Version 2>&1 | sed -n 's/.*Gedi version \\([^ ]*\\).*/\\1/p' | head -n 1"), topic: versions, emit: versions_gedi
 
     when:
     task.ext.when == null || task.ext.when
@@ -20,14 +20,15 @@ process GEDI_INDEXGENOME {
     script:
     def args = task.ext.args ?: ''
     def name = meta.id ?: 'reference'
+    prefix   = task.ext.prefix ?: "${meta.id}"
     """
-    mkdir -p price_index
+    mkdir -p ${prefix}
     gedi -e IndexGenome \\
         -s ${fasta} \\
         -a ${gtf} \\
         -n ${name} \\
-        -f price_index \\
-        -o price_index/${name}.oml \\
+        -f ${prefix} \\
+        -o ${prefix}/${name}.oml \\
         -nomapping \\
         -p \\
         ${args}
@@ -35,8 +36,9 @@ process GEDI_INDEXGENOME {
 
     stub:
     def name = meta.id ?: 'reference'
+    prefix   = task.ext.prefix ?: "${meta.id}"
     """
-    mkdir -p price_index
-    touch price_index/${name}.oml
+    mkdir -p ${prefix}
+    touch ${prefix}/${name}.oml
     """
 }

@@ -20,7 +20,7 @@ process GEDI_PRICE {
     tuple val(meta), path("${prefix}.model")                                                    , emit: model, optional: true
     tuple val(meta), path("${prefix}.signal.tsv")                                               , emit: signal, optional: true
     tuple val(meta), path("${prefix}.param")                                                    , emit: param, optional: true
-    tuple val("${task.process}"), val('gedi'), eval("gedi -e Version 2>&1 | sed -n 's/.*Gedi version \\([^ ]*\\).*/\\1/p' | head -n 1"), topic: versions
+    tuple val("${task.process}"), val('gedi'), eval("gedi -e Version 2>&1 | sed -n 's/.*Gedi version \\([^ ]*\\).*/\\1/p' | head -n 1"), topic: versions, emit: versions_gedi
 
     when:
     task.ext.when == null || task.ext.when
@@ -31,7 +31,6 @@ process GEDI_PRICE {
     def oml = "${index}/${meta2.id ?: 'reference'}.oml"
     """
     ls -1 bams/*.bam > price_input.bamlist
-    # bamlist2cit appends .cit to the input name (so output is *.bamlist.cit).
     bamlist2cit -n ${task.cpus} -p price_input.bamlist
 
     gedi -e Price \\
