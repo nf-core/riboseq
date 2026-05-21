@@ -16,7 +16,7 @@
 
 include { CUSTOM_BED12CODONPOSITIONS } from '../../../modules/nf-core/custom/bed12codonpositions/main'
 include { QUANTIFY_INFRAME_PSITE_ORF } from '../../../modules/local/quantify_inframe_psite_orf'
-include { ORF_COUNT_MATRIX           } from '../../../modules/local/orf/count_matrix'
+include { ORF_COUNT_MATRIX           } from '../../../modules/local/orf_count_matrix'
 
 workflow QUANTIFY_ORF_PSITE {
 

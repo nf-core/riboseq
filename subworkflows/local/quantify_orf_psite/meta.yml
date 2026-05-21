@@ -13,7 +13,7 @@ keywords:
 components:
   - custom/bed12codonpositions
   - quantify_inframe_psite_orf
-  - orf/count_matrix
+  - orf_count_matrix
 input:
   - ch_orf_catalogue_bed:
       description: Cohort ORF catalogue BED12 (from `BUILD_ORF_CATALOGUE`)
