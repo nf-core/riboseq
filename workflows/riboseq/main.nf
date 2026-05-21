@@ -16,7 +16,7 @@ include { BAM_STRINGTIE_MERGE      } from '../../subworkflows/nf-core/bam_string
 include { BUILD_HYBRID_TRANSCRIPTOME } from '../../subworkflows/local/build_hybrid_transcriptome'
 include { CONCAT_GTF               } from '../../modules/local/concat_gtf'
 include { FILTER_GTF_CLASS_CODE    } from '../../modules/local/filter_gtf_class_code'
-include { RUN_RPBP                 } from '../../subworkflows/local/run_rpbp'
+include { FASTA_GTF_BAM_RPBP       } from '../../subworkflows/nf-core/fasta_gtf_bam_rpbp/main'
 include { GEDI_INDEXGENOME         } from '../../modules/nf-core/gedi/indexgenome/main'
 include { GEDI_PRICE               } from '../../modules/nf-core/gedi/price/main'
 include { BUILD_ORF_CATALOGUE      } from '../../subworkflows/local/build_orf_catalogue'
@@ -644,10 +644,9 @@ workflow RIBOSEQ {
             ch_fasta_gtf_extended :
             ch_fasta_gtf
 
-        RUN_RPBP(
+        FASTA_GTF_BAM_RPBP(
             ch_bams_for_analysis,
-            ch_rpbp_annotation,
-            params.rpbp_config_extra_yaml ?: ''
+            ch_rpbp_annotation
         )
     }
 
@@ -770,7 +769,7 @@ workflow RIBOSEQ {
         ch_ribotish_pred_cat   = (!params.skip_ribotish) ? RIBOTISH_PREDICT_INDIVIDUAL.out.predictions : Channel.empty()
         ch_ribocode_pred_cat   = (!params.skip_ribocode) ? RIBOCODE_RIBOCODE.out.orf_txt              : Channel.empty()
         ch_ribotricer_pred_cat = ( params.run_ribotricer) ? RIBOTRICER_DETECTORFS.out.orfs            : Channel.empty()
-        ch_rpbp_pred_cat       = ( params.run_rpbp)       ? RUN_RPBP.out.bed                          : Channel.empty()
+        ch_rpbp_pred_cat       = ( params.run_rpbp)       ? FASTA_GTF_BAM_RPBP.out.predicted          : Channel.empty()
         ch_price_pred_cat      = ( params.run_price)      ? GEDI_PRICE.out.orfs_tsv                  : Channel.empty()
 
         def ch_orf_catalogue_gtf = ch_hybrid_gtf

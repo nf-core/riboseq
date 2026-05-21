@@ -749,14 +749,8 @@
                 },
                 "extra_rpbp_predictorfs_args": {
                     "type": "string",
-                    "description": "Extra CLI arguments passed to `predict-translated-orfs`.",
+                    "description": "Extra CLI arguments passed to `select-final-prediction-set`.",
                     "fa_icon": "fas fa-terminal"
-                },
-                "rpbp_config_extra_yaml": {
-                    "type": "string",
-                    "description": "Free-form YAML appended to the auto-generated Rp-Bp config (e.g. `min_metagene_profile_count: 1000`).",
-                    "help_text": "The pipeline auto-renders the Rp-Bp YAML config from your `--fasta`/`--gtf` inputs; this parameter lets you override or extend it without writing a full config file. The string is appended verbatim to the rendered YAML.",
-                    "fa_icon": "fas fa-file-code"
                 },
                 "run_price": {
                     "type": "boolean",
