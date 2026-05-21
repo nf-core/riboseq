@@ -10,44 +10,46 @@ process ORF_TO_GENE_CDS_COUNTS {
     tag "$meta.id"
     label 'process_low'
 
-    conda "conda-forge::python=3.11"
+    conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/python:3.11' :
-        'quay.io/biocontainers/python:3.11' }"
+        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/0f/0f1019bd22c111267bcb670fdb128829776f0ca6adfa7b0e2d126f91577d08e3/data' :
+        'community.wave.seqera.io/library/python_pandas_pyyaml:75514f9f977be607' }"
 
     input:
     tuple val(meta), path(orf_count_matrix), path(orf_to_gene_tsv), path(orf_catalogue_tsv)
 
     output:
-    tuple val(meta), path("gene_cds_psite_counts.tsv"), emit: gene_counts
-    path "versions.yml"                               , emit: versions
+    tuple val(meta), path("${prefix}.gene_cds_psite_counts.tsv"), emit: gene_counts
+    path "versions.yml"                                         , emit: versions, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
-    """
-    orf_to_gene_cds_counts.py \\
-        --orf-counts ${orf_count_matrix} \\
-        --orf-to-gene ${orf_to_gene_tsv} \\
-        --orf-catalogue ${orf_catalogue_tsv} \\
-        -o gene_cds_psite_counts.tsv \\
-        ${args}
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version 2>&1 | sed 's/^Python //')
-    END_VERSIONS
-    """
+    prefix = task.ext.prefix ?: "${meta.id}"
+    args   = task.ext.args ?: ''
+    template 'orf_to_gene_cds_counts.py'
 
     stub:
+    prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch gene_cds_psite_counts.tsv
+    touch ${prefix}.gene_cds_psite_counts.tsv
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version 2>&1 | sed 's/^Python //')
-    END_VERSIONS
+    python - <<END
+import platform
+import yaml
+
+with open("versions.yml", "w") as fh:
+    yaml.safe_dump(
+        {
+            "${task.process}": {
+                "python": platform.python_version(),
+            }
+        },
+        fh,
+        default_flow_style=False,
+        sort_keys=False,
+    )
+END
     """
 }

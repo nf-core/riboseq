@@ -926,7 +926,6 @@ workflow RIBOSEQ {
                     .combine(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.catalogue_tsv.map { _meta, tsv -> tsv })
                     .map { meta, orf_counts, o2g, cat_tsv -> [meta, orf_counts, o2g, cat_tsv] }
             )
-            ch_versions = ch_versions.mix(ORF_TO_GENE_CDS_COUNTS.out.versions)
             ch_psite_counts_merged = ORF_TO_GENE_CDS_COUNTS.out.gene_counts
         }
 
@@ -938,7 +937,6 @@ workflow RIBOSEQ {
             false
         )
         ch_te_counts = REPLACE_RIBOSEQ_COUNTS_IN_MATRIX.out.output
-        ch_versions = ch_versions.mix(QUANTIFY_INFRAME_PSITE_PLASTID.out.versions)
     }
 
     //

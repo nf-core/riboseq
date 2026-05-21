@@ -27,7 +27,7 @@ process QUANTIFY_INFRAME_PSITE_ORF {
 
     output:
     tuple val(meta), path("*.orf_inframe_psite_counts.tsv"), emit: counts
-    path "versions.yml"                                    , emit: versions
+    tuple val("${task.process}"), val('bedtools'), eval("bedtools --version | cut -f2 -dv"), topic: versions, emit: versions_bedtools
 
     when:
     task.ext.when == null || task.ext.when
@@ -47,20 +47,10 @@ process QUANTIFY_INFRAME_PSITE_ORF {
     bedtools groupby -g 4 -c 10 -o sum |
     sed 's/^/${meta.id}\\t/' \\
     > "${meta.id}.orf_inframe_psite_counts.tsv"
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        bedtools: \$(bedtools --version | cut -f2 -dv)
-    END_VERSIONS
     """
 
     stub:
     """
     touch ${meta.id}.orf_inframe_psite_counts.tsv
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        bedtools: \$(bedtools --version | cut -f2 -dv)
-    END_VERSIONS
     """
 }

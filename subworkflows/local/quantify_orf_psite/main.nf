@@ -37,7 +37,6 @@ workflow QUANTIFY_ORF_PSITE {
 
     // 2. Per-sample P-site counting.
     QUANTIFY_INFRAME_PSITE_ORF ( ch_psite_tracks, ch_inframe_psites )
-    ch_versions = ch_versions.mix(QUANTIFY_INFRAME_PSITE_ORF.out.versions)
 
     // 3. Collect all per-sample TSVs into one list, then pair with the
     //    cohort-level catalogue BED. `ch_catalogue_bed.first()` reduces a

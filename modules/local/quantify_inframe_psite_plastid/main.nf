@@ -18,7 +18,7 @@ process QUANTIFY_INFRAME_PSITE_PLASTID {
 
     output:
     tuple val(meta), path("*_inframe_psite_counts.tsv"), emit: counts
-    path "versions.yml", emit: versions
+    tuple val("${task.process}"), val('bedtools'), eval("bedtools --version | cut -f2 -dv"), topic: versions, emit: versions_bedtools
 
     script:
     """
@@ -34,20 +34,10 @@ process QUANTIFY_INFRAME_PSITE_PLASTID {
     bedtools groupby -g 4 -c 10 -o sum |
     sed 's/^/${meta.id}\\t/' \\
     > "${meta.id}.${meta2.feature}_inframe_psite_counts.tsv"
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        bedtools: \$(bedtools --version | cut -f2 -dv)
-    END_VERSIONS
     """
 
     stub:
     """
     touch ${meta.id}.${meta2.feature}_inframe_psite_counts.tsv
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        bedtools: \$(bedtools --version | cut -f2 -dv)
-    END_VERSIONS
     """
 }

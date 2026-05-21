@@ -11,7 +11,9 @@ keywords:
   - aggregation
 tools:
   - python:
-      description: Stdlib Python; runs `bin/orf_to_gene_cds_counts.py`
+      description: |
+        Bundled Python template (templates/orf_to_gene_cds_counts.py)
+        using stdlib csv + pyyaml for the versions emit.
       homepage: https://www.python.org/
       documentation: https://docs.python.org/3/
       licence: ["PSF"]
@@ -40,10 +42,10 @@ output:
     - - meta:
           type: map
           description: Cohort-level metadata
-      - gene_cds_psite_counts.tsv:
+      - "${prefix}.gene_cds_psite_counts.tsv":
           type: file
           description: Long-format `sample\tgene_id\tcount` for canonical_cds ORFs only
-          pattern: "gene_cds_psite_counts.tsv"
+          pattern: "*.gene_cds_psite_counts.tsv"
           ontologies: []
   versions:
     - versions.yml:
