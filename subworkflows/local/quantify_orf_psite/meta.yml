@@ -16,7 +16,7 @@ components:
   - orf_count_matrix
 input:
   - ch_orf_catalogue_bed:
-      description: Cohort ORF catalogue BED12 (from `BUILD_ORF_CATALOGUE`)
+      description: Cohort ORF catalogue BED12 (from `ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE`)
       pattern: "*.bed"
   - ch_psite_tracks:
       description: Per-sample forward + reverse P-site bedgraphs from plastid `make_wiggle`

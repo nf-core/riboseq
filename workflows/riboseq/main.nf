@@ -19,7 +19,7 @@ include { GTF_HYBRIDMERGE_GFFCOMPARE } from '../../subworkflows/nf-core/gtf_hybr
 include { FASTA_GTF_BAM_RPBP       } from '../../subworkflows/nf-core/fasta_gtf_bam_rpbp/main'
 include { GEDI_INDEXGENOME         } from '../../modules/nf-core/gedi/indexgenome/main'
 include { GEDI_PRICE               } from '../../modules/nf-core/gedi/price/main'
-include { BUILD_ORF_CATALOGUE      } from '../../subworkflows/local/build_orf_catalogue'
+include { ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE } from '../../subworkflows/nf-core/orftable_fasta_gtf_buildorfcatalogue/main'
 include { QUANTIFY_ORF_PSITE       } from '../../subworkflows/local/quantify_orf_psite'
 include { DTE_ORF_LEVEL            } from '../../subworkflows/local/dte_orf_level'
 include { ORF_TO_GENE_CDS_COUNTS   } from '../../modules/local/orf_to_gene_cds_counts'
@@ -746,24 +746,24 @@ workflow RIBOSEQ {
     // merged BED12 + sidecar TSV + ORF-to-gene mapping + AA FASTA.
     //
     if (extended_orf_active && enabled_orf_callers) {
-        ch_ribotish_pred_cat   = (!params.skip_ribotish) ? RIBOTISH_PREDICT_INDIVIDUAL.out.predictions : Channel.empty()
-        ch_ribocode_pred_cat   = (!params.skip_ribocode) ? RIBOCODE_RIBOCODE.out.orf_txt              : Channel.empty()
-        ch_ribotricer_pred_cat = ( params.run_ribotricer) ? RIBOTRICER_DETECTORFS.out.orfs            : Channel.empty()
-        ch_rpbp_pred_cat       = ( params.run_rpbp)       ? FASTA_GTF_BAM_RPBP.out.predicted          : Channel.empty()
-        ch_price_pred_cat      = ( params.run_price)      ? GEDI_PRICE.out.orfs_tsv                  : Channel.empty()
+        ch_ribotish_pred_cat   = (!params.skip_ribotish)  ? RIBOTISH_PREDICT_INDIVIDUAL.out.predictions : Channel.empty()
+        ch_ribocode_pred_cat   = (!params.skip_ribocode)  ? RIBOCODE_RIBOCODE.out.orf_txt              : Channel.empty()
+        ch_ribotricer_pred_cat = ( params.run_ribotricer) ? RIBOTRICER_DETECTORFS.out.orfs             : Channel.empty()
+        ch_rpbp_pred_cat       = ( params.run_rpbp)       ? FASTA_GTF_BAM_RPBP.out.predicted           : Channel.empty()
+        ch_price_pred_cat      = ( params.run_price)      ? GEDI_PRICE.out.orfs_tsv                   : Channel.empty()
 
-        def ch_orf_catalogue_gtf = ch_hybrid_gtf
+        ch_orf_tables = ch_ribotish_pred_cat  .map { meta, f -> [ meta, f, 'ribotish'   ] }
+            .mix(ch_ribocode_pred_cat         .map { meta, f -> [ meta, f, 'ribocode'   ] })
+            .mix(ch_ribotricer_pred_cat       .map { meta, f -> [ meta, f, 'ribotricer' ] })
+            .mix(ch_rpbp_pred_cat             .map { meta, f -> [ meta, f, 'rpbp'       ] })
+            .mix(ch_price_pred_cat            .map { meta, f -> [ meta, f, 'price'      ] })
 
-        BUILD_ORF_CATALOGUE(
-            ch_ribotish_pred_cat,
-            ch_ribocode_pred_cat,
-            ch_ribotricer_pred_cat,
-            ch_rpbp_pred_cat,
-            ch_price_pred_cat,
-            ch_fasta,
-            ch_orf_catalogue_gtf
+        ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE(
+            ch_orf_tables,
+            ch_fasta    .map { fasta -> [ [id: 'reference'], fasta ] }.first(),
+            ch_hybrid_gtf.map { gtf   -> [ [id: 'reference'], gtf   ] }.first()
         )
-        ch_multiqc_files = ch_multiqc_files.mix(BUILD_ORF_CATALOGUE.out.multiqc_summary.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.multiqc.collect{it[1]}.ifEmpty([]))
     }
 
 
@@ -817,7 +817,7 @@ workflow RIBOSEQ {
         //
         // Per-ORF P-site quantification (issue #166). Runs additively to the
         // gene-level QUANTIFY_INFRAME_PSITE_PLASTID path. Gated on the same
-        // predicate as BUILD_ORF_CATALOGUE so it only fires when the
+        // predicate as ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE so it only fires when the
         // catalogue exists.
         //
         if (extended_orf_active && enabled_orf_callers) {
@@ -825,9 +825,9 @@ workflow RIBOSEQ {
                 .map { meta, tracks -> [ meta, tracks[0], tracks[1] ] }
 
             QUANTIFY_ORF_PSITE (
-                BUILD_ORF_CATALOGUE.out.catalogue_bed,
+                ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.catalogue_bed12,
                 ch_orf_psite_tracks,
-                BUILD_ORF_CATALOGUE.out.orf_to_gene_tsv
+                ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.orf_to_gene_tsv
             )
             ch_versions         = ch_versions.mix(QUANTIFY_ORF_PSITE.out.versions)
             ch_orf_count_matrix = QUANTIFY_ORF_PSITE.out.orf_count_matrix
@@ -922,8 +922,8 @@ workflow RIBOSEQ {
         if (extended_orf_active && enabled_orf_callers) {
             ORF_TO_GENE_CDS_COUNTS(
                 ch_orf_count_matrix
-                    .combine(BUILD_ORF_CATALOGUE.out.orf_to_gene_tsv.map { _meta, tsv -> tsv })
-                    .combine(BUILD_ORF_CATALOGUE.out.catalogue_tsv.map { _meta, tsv -> tsv })
+                    .combine(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.orf_to_gene_tsv.map { _meta, tsv -> tsv })
+                    .combine(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.catalogue_tsv.map { _meta, tsv -> tsv })
                     .map { meta, orf_counts, o2g, cat_tsv -> [meta, orf_counts, o2g, cat_tsv] }
             )
             ch_versions = ch_versions.mix(ORF_TO_GENE_CDS_COUNTS.out.versions)
@@ -994,7 +994,7 @@ workflow RIBOSEQ {
                 ch_contrasts,
                 ch_orf_count_matrix,
                 QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled,
-                BUILD_ORF_CATALOGUE.out.orf_to_gene_tsv,
+                ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.orf_to_gene_tsv,
                 ch_samplesheet
             )
             ch_versions = ch_versions.mix(DTE_ORF_LEVEL.out.versions)
