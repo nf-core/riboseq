@@ -13,7 +13,8 @@ include { BAM_DEDUP_UMI       } from '../../subworkflows/nf-core/bam_dedup_umi'
 include { FASTQ_ALIGN_STAR    } from '../../subworkflows/nf-core/fastq_align_star'
 include { FASTQ_ALIGN_STAR as FASTQ_ALIGN_STAR_HYBRID } from '../../subworkflows/nf-core/fastq_align_star'
 include { BAM_STRINGTIE_MERGE      } from '../../subworkflows/nf-core/bam_stringtie_merge'
-include { BUILD_HYBRID_TRANSCRIPTOME } from '../../subworkflows/local/build_hybrid_transcriptome'
+include { GFFREAD as GFFREAD_HYBRID_TRANSCRIPTOME           } from '../../modules/nf-core/gffread'
+include { STAR_GENOMEGENERATE as STAR_GENOMEGENERATE_HYBRID } from '../../modules/nf-core/star/genomegenerate'
 include { GTF_HYBRIDMERGE_GFFCOMPARE } from '../../subworkflows/nf-core/gtf_hybridmerge_gffcompare/main'
 include { FASTA_GTF_BAM_RPBP       } from '../../subworkflows/nf-core/fasta_gtf_bam_rpbp/main'
 include { GEDI_INDEXGENOME         } from '../../modules/nf-core/gedi/indexgenome/main'
@@ -422,9 +423,11 @@ workflow RIBOSEQ {
     // The hybrid transcriptome FASTA and hybrid STAR index are each built once
     // per pipeline run (value channels). The second STAR pass runs only on
     // Ribo-seq samples — RNA-seq and TI-seq are not consumed by RiboCode.
-    //
-    // riboWaltz stays on the canonical/reference transcriptome BAM by design
-    // (see comment in subworkflows/local/build_hybrid_transcriptome/main.nf).
+    // riboWaltz stays on the canonical/reference transcriptome BAM by design:
+    // it's a QC/calibration tool whose frame plots and metaheatmaps are driven
+    // by CDS-bearing canonical transcripts. Feeding it CDS-absent novel
+    // transcripts would degrade diagnostic plots without any ORF-discovery gain.
+    // See docs/usage.md (Extended ORF discovery) for the full rationale.
     //
     def novel_source_configured = !params.skip_stringtie || params.novel_gtf
     def extended_orf_active = params.extended_orf_analysis && novel_source_configured
@@ -440,13 +443,22 @@ workflow RIBOSEQ {
     ch_hybrid_transcriptome_bam = Channel.empty()
 
     if (extended_orf_active) {
-        BUILD_HYBRID_TRANSCRIPTOME(
-            ch_fasta,
-            ch_hybrid_gtf
+        // Extract spliced transcript sequences (canonical + novel) from the
+        // hybrid GTF into a single transcriptome FASTA, then rebuild a STAR
+        // index against the same genome FASTA + hybrid GTF so a second STAR
+        // pass can emit a hybrid transcriptome BAM that RiboCode can consume.
+        GFFREAD_HYBRID_TRANSCRIPTOME(
+            ch_hybrid_gtf.map { gtf -> [ [id: 'hybrid_reference'], gtf ] },
+            ch_fasta
         )
 
-        ch_hybrid_transcriptome_fasta = BUILD_HYBRID_TRANSCRIPTOME.out.hybrid_transcriptome_fasta.first()
-        ch_hybrid_star_index          = BUILD_HYBRID_TRANSCRIPTOME.out.hybrid_star_index.first()
+        STAR_GENOMEGENERATE_HYBRID(
+            ch_fasta.map { fasta -> [ [id: 'hybrid_reference'], fasta ] },
+            ch_hybrid_gtf.map { gtf -> [ [id: 'hybrid_reference'], gtf ] }
+        )
+
+        ch_hybrid_transcriptome_fasta = GFFREAD_HYBRID_TRANSCRIPTOME.out.gffread_fasta.map { _meta, fasta -> fasta }.first()
+        ch_hybrid_star_index          = STAR_GENOMEGENERATE_HYBRID.out.index.map { _meta, index -> index }.first()
 
         // Only Ribo-seq samples feed RiboCode; skip the costly re-alignment
         // for RNA-seq and TI-seq.
