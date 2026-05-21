@@ -171,6 +171,7 @@ workflow PREPARE_GENOME {
         if (gencode) {
             PREPROCESS_TRANSCRIPTS_FASTA_GENCODE ( ch_transcript_fasta )
             ch_transcript_fasta = PREPROCESS_TRANSCRIPTS_FASTA_GENCODE.out.fasta
+            ch_versions         = ch_versions.mix(PREPROCESS_TRANSCRIPTS_FASTA_GENCODE.out.versions)
         }
     } else {
         ch_transcript_fasta = MAKE_TRANSCRIPTS_FASTA ( ch_fasta, ch_gtf ).transcript_fasta

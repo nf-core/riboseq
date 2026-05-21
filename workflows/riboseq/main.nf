@@ -937,6 +937,7 @@ workflow RIBOSEQ {
             false
         )
         ch_te_counts = REPLACE_RIBOSEQ_COUNTS_IN_MATRIX.out.output
+        ch_versions = ch_versions.mix(QUANTIFY_INFRAME_PSITE_PLASTID.out.versions)
     }
 
     //
