@@ -671,9 +671,12 @@ When `--extended_orf_analysis true` is set with `--te_quantification_method plas
 - `dte/gene_level_cds_aggregated/`
   - `gene_cds_psite_counts.tsv`: Tier 1 gene-level Ribo-seq count matrix re-aggregated from the per-ORF P-site catalogue, summing ONLY `canonical_cds` ORFs. Long-format `sample<TAB>gene_id<TAB>count`. This file is the replacement input for the existing gene-level TE Ribo-seq counts; gene-level anota2seq / deltaTE in `<outdir>/translational_efficiency/` is run on this re-aggregation.
 - `dte/orf_level/`
-  - `*.orf_dte.results.tsv`: Tier 2 per-ORF DESeq2 DTE results (one file per contrast). Columns include `orf_id`, `gene_id`, `baseMean`, `log2FoldChange`, `lfcSE`, `stat`, `pvalue`, `padj`. The `log2FoldChange` is the interaction-term effect (per-ORF differential translation efficiency).
-  - `*.orf_dte.dispersions.png`: DESeq2 `plotDispEsts` diagnostic. Inspect before interpreting results: well-behaved fits should show dispersion estimates clustering around the fitted line at intermediate counts. Heavy-tailed or floored dispersions indicate the min-count filter (`--extra_orf_dte_args "--min_count N"`) should be raised.
-  - `*.orf_dte.R_sessionInfo.log`: R session information for reproducibility.
+  - `orf_combined_counts.tsv`: Combined ORF x sample count matrix produced by the join step. Rows are ORFs; columns are Ribo-seq samples (per-ORF P-site counts) followed by RNA-seq samples (host gene's count replicated across all ORFs mapping to that gene). This is the input fed to the deltaTE module for the Tier 2 ORF-level fit.
+  - `*.translation.deltate.results.tsv`, `*.translated_mRNA.deltate.results.tsv`, `*.total_mRNA.deltate.results.tsv`: deltaTE result tables at ORF resolution (one set per contrast). The first column header is `gene_id` for compatibility with the gene-level path but the rows are ORF ids.
+  - `*.dtegs.deltate.genes.tsv` and the four classified ORF lists (`*.mRNA_abundance`, `*.translation`, `*.intensified`, `*.buffering`): ORF ids assigned to each deltaTE category.
+  - `*.fold_change.png`, `*.interaction_p_distribution.png`, `*.pca_ribo.png`, `*.pca_rna.png`, `*.heatmap.png` (plus their `.tsv` underlying data files): the same deltaTE diagnostic plots as the gene-level path, computed at ORF resolution.
+  - `*.DESeqDataSet.rds`: serialised DESeq2 objects for downstream inspection.
+  - `*.R_sessionInfo.log`: R session information for reproducibility.
 
 </details>
 

@@ -526,8 +526,8 @@
                 },
                 "extra_orf_dte_args": {
                     "type": "string",
-                    "description": "Extra arguments to pass to the per-ORF DESeq2 DTE module (issue #168 Tier 2). Available options include `--min_count`, `--min_samples`, `--alpha`, `--fit_type`, `--batch_col`.",
-                    "help_text": "Forwarded verbatim to `modules/local/deseq2/orf_dte`. ORFs failing the min-count filter (default: at least 10 P-site counts in at least 3 samples) are dropped before DESeq2 fitting to keep dispersion estimation reliable on sparse ORF rows."
+                    "description": "Extra arguments forwarded to the deltaTE DESeq2 module for the Tier 2 ORF-level call (issue #168). Accepts the same options as the gene-level deltaTE module.",
+                    "help_text": "The Tier 2 ORF-level analysis runs the same deltaTE DESeq2 module as the gene-level path after a join step expands the gene-level RNA-seq matrix onto ORF rows via `orf_to_gene.tsv`. ORFs whose host gene is absent from the RNA-seq matrix, and novel intergenic ORFs with no host gene, are dropped at the join step."
                 },
                 "run_dotseq": {
                     "type": "boolean",
