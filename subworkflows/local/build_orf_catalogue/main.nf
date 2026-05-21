@@ -13,14 +13,14 @@
 // Inputs that come from optional callers (ribotricer, rpbp, price) may be
 // passed as `Channel.empty()`; the subworkflow handles missing callers cleanly.
 //
-include { ORF_NORMALISE_RIBOTISH    } from '../../../modules/local/orf/normalise/ribotish'
-include { ORF_NORMALISE_RIBOCODE    } from '../../../modules/local/orf/normalise/ribocode'
-include { ORF_NORMALISE_RIBOTRICER  } from '../../../modules/local/orf/normalise/ribotricer'
-include { ORF_NORMALISE_RPBP        } from '../../../modules/local/orf/normalise/rpbp'
-include { ORF_NORMALISE_PRICE       } from '../../../modules/local/orf/normalise/price'
-include { ORF_CATALOGUE_MERGE       } from '../../../modules/local/orf/catalogue/merge'
-include { BEDTOOLS_GETFASTA         } from '../../../modules/nf-core/bedtools/getfasta/main'
-include { SEQKIT_TRANSLATE          } from '../../../modules/nf-core/seqkit/translate/main'
+include { ORF_NORMALISE as ORF_NORMALISE_RIBOTISH    } from '../../../modules/local/orf_normalise'
+include { ORF_NORMALISE as ORF_NORMALISE_RIBOCODE    } from '../../../modules/local/orf_normalise'
+include { ORF_NORMALISE as ORF_NORMALISE_RIBOTRICER  } from '../../../modules/local/orf_normalise'
+include { ORF_NORMALISE as ORF_NORMALISE_RPBP        } from '../../../modules/local/orf_normalise'
+include { ORF_NORMALISE as ORF_NORMALISE_PRICE       } from '../../../modules/local/orf_normalise'
+include { ORF_CATALOGUE_MERGE                        } from '../../../modules/local/orf_catalogue_merge'
+include { BEDTOOLS_GETFASTA                          } from '../../../modules/nf-core/bedtools/getfasta/main'
+include { SEQKIT_TRANSLATE                           } from '../../../modules/nf-core/seqkit/translate/main'
 
 workflow BUILD_ORF_CATALOGUE {
 
@@ -38,11 +38,13 @@ workflow BUILD_ORF_CATALOGUE {
     // Reference channel for normalisers: [ [id: 'reference'], gtf ]
     ch_ref_gtf = ch_gtf.map { gtf -> [ [id: 'reference'], gtf ] }.first()
 
-    ORF_NORMALISE_RIBOTISH ( ch_ribotish_pred,   ch_ref_gtf )
-    ORF_NORMALISE_RIBOCODE ( ch_ribocode_pred,   ch_ref_gtf )
-    ORF_NORMALISE_RIBOTRICER ( ch_ribotricer_pred, ch_ref_gtf )
-    ORF_NORMALISE_RPBP     ( ch_rpbp_pred,       ch_ref_gtf )
-    ORF_NORMALISE_PRICE    ( ch_price_pred,      ch_ref_gtf )
+    // Tag each input with meta.caller so the consolidated ORF_NORMALISE
+    // template can dispatch on caller-specific parsing / classification.
+    ORF_NORMALISE_RIBOTISH   ( ch_ribotish_pred.map   { meta, f -> [ meta + [caller: 'ribotish'],   f ] }, ch_ref_gtf )
+    ORF_NORMALISE_RIBOCODE   ( ch_ribocode_pred.map   { meta, f -> [ meta + [caller: 'ribocode'],   f ] }, ch_ref_gtf )
+    ORF_NORMALISE_RIBOTRICER ( ch_ribotricer_pred.map { meta, f -> [ meta + [caller: 'ribotricer'], f ] }, ch_ref_gtf )
+    ORF_NORMALISE_RPBP       ( ch_rpbp_pred.map       { meta, f -> [ meta + [caller: 'rpbp'],       f ] }, ch_ref_gtf )
+    ORF_NORMALISE_PRICE      ( ch_price_pred.map      { meta, f -> [ meta + [caller: 'price'],      f ] }, ch_ref_gtf )
 
     // Collect normalised BED12s and sidecar TSVs across callers and samples
     // into a single cohort-keyed channel: [ [id:'allsamples'], [beds...], [tsvs...] ].

@@ -13,12 +13,8 @@ keywords:
   - merge
   - cohort
 components:
-  - orf/normalise/ribotish
-  - orf/normalise/ribocode
-  - orf/normalise/ribotricer
-  - orf/normalise/rpbp
-  - orf/normalise/price
-  - orf/catalogue/merge
+  - orf_normalise
+  - orf_catalogue_merge
   - bedtools/getfasta
   - seqkit/translate
 input:

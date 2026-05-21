@@ -1,6 +1,0 @@
-name: orf_normalise_price
-channels:
-  - bioconda
-  - conda-forge
-dependencies:
-  - conda-forge::python=3.11
