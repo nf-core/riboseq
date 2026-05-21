@@ -671,11 +671,17 @@ When `--extended_orf_analysis true` is set with `--te_quantification_method plas
 - `dte/gene_level_cds_aggregated/`
   - `gene_cds_psite_counts.tsv`: Tier 1 gene-level Ribo-seq count matrix re-aggregated from the per-ORF P-site catalogue, summing ONLY `canonical_cds` ORFs. Long-format `sample<TAB>gene_id<TAB>count`. This file is the replacement input for the existing gene-level TE Ribo-seq counts; gene-level anota2seq / deltaTE in `<outdir>/translational_efficiency/` is run on this re-aggregation.
 - `dte/orf_level/`
-  - `orf_combined_counts.tsv`: Combined ORF x sample count matrix produced by the join step. Rows are ORFs; columns are Ribo-seq samples (per-ORF P-site counts) followed by RNA-seq samples (host gene's count replicated across all ORFs mapping to that gene). This is the input fed to the deltaTE module for the Tier 2 ORF-level fit.
+  - `orf_combined_counts.tsv`: Combined ORF x sample count matrix produced by the join step. Rows are ORFs; columns are Ribo-seq samples (per-ORF P-site counts) followed by RNA-seq samples (host gene's count replicated across all ORFs mapping to that gene). This is the input fed to the selected DTE method (`--translational_efficiency_method`) for the Tier 2 ORF-level fit.
+- `dte/orf_level/deltate/` (when `--translational_efficiency_method deltate`):
   - `*.translation.deltate.results.tsv`, `*.translated_mRNA.deltate.results.tsv`, `*.total_mRNA.deltate.results.tsv`: deltaTE result tables at ORF resolution (one set per contrast). The first column header is `gene_id` for compatibility with the gene-level path but the rows are ORF ids.
   - `*.dtegs.deltate.genes.tsv` and the four classified ORF lists (`*.mRNA_abundance`, `*.translation`, `*.intensified`, `*.buffering`): ORF ids assigned to each deltaTE category.
   - `*.fold_change.png`, `*.interaction_p_distribution.png`, `*.pca_ribo.png`, `*.pca_rna.png`, `*.heatmap.png` (plus their `.tsv` underlying data files): the same deltaTE diagnostic plots as the gene-level path, computed at ORF resolution.
   - `*.DESeqDataSet.rds`: serialised DESeq2 objects for downstream inspection.
+  - `*.R_sessionInfo.log`: R session information for reproducibility.
+- `dte/orf_level/anota2seq/` (when `--translational_efficiency_method anota2seq`, the default):
+  - `*.translated_mRNA.anota2seq.results.tsv`, `*.total_mRNA.anota2seq.results.tsv`, `*.translation.anota2seq.results.tsv`, `*.buffering.anota2seq.results.tsv`, `*.mRNA_abundance.anota2seq.results.tsv`: anota2seq result tables at ORF resolution (one set per contrast); rows are ORF ids.
+  - `*.fold_change.png`, `*.interaction_p_distribution.pdf`, `*.residual_distribution_summary.jpeg`, `*.residual_vs_fitted.jpeg`, `*.rvm_fit_for_*.jpg`, `*.simulated_vs_obt_dfbetas_without_interaction.pdf`: anota2seq diagnostic plots, computed at ORF resolution. Inspect the residual and RVM fit plots before interpreting results: per-ORF inputs typically have more sparse rows than per-gene inputs and the QC plots surface any failure of the APV / RVM assumptions.
+  - `*.Anota2seqDataSet.rds`: serialised Anota2seqDataSet object.
   - `*.R_sessionInfo.log`: R session information for reproducibility.
 
 </details>

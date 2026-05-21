@@ -23,6 +23,7 @@ include { ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE } from '../../subworkflows/nf-cor
 include { QUANTIFY_ORF_PSITE       } from '../../subworkflows/local/quantify_orf_psite'
 include { DTE_COUNTS_PREP          } from '../../modules/local/dte_counts_prep'
 include { DESEQ2_DELTATE as DESEQ2_DELTATE_ORF } from '../../modules/local/deseq2/deltate'
+include { ANOTA2SEQ_ANOTA2SEQRUN as ANOTA2SEQ_ANOTA2SEQRUN_ORF } from '../../modules/nf-core/anota2seq/anota2seqrun'
 include { ORF_TO_GENE_CDS_COUNTS   } from '../../modules/local/orf_to_gene_cds_counts'
 include { GAWK as FILTER_COUNTS_CANONICAL                      } from '../../modules/nf-core/gawk'
 
@@ -993,18 +994,28 @@ workflow RIBOSEQ {
                     .combine(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.orf_to_gene_tsv.map { _meta, tsv -> tsv })
                     .map { meta, ribo, rna, o2g -> [ meta, ribo, rna, o2g ] }
             )
+            ch_versions = ch_versions.mix(DTE_COUNTS_PREP.out.versions)
 
             ch_orf_samplesheet_matrix = DTE_COUNTS_PREP.out.counts
                 .combine(ch_samplesheet)
                 .map { meta, counts, samplesheet -> [ meta, samplesheet, counts ] }
                 .first()
 
-            DESEQ2_DELTATE_ORF(
-                ch_contrasts,
-                ch_orf_samplesheet_matrix
-            )
-            ch_versions = ch_versions.mix(DTE_COUNTS_PREP.out.versions)
-            ch_versions = ch_versions.mix(DESEQ2_DELTATE_ORF.out.versions)
+            if (params.translational_efficiency_method == 'anota2seq') {
+                ANOTA2SEQ_ANOTA2SEQRUN_ORF(
+                    ch_contrasts,
+                    ch_orf_samplesheet_matrix
+                )
+                ch_versions = ch_versions.mix(ANOTA2SEQ_ANOTA2SEQRUN_ORF.out.versions)
+            }
+
+            if (params.translational_efficiency_method == 'deltate') {
+                DESEQ2_DELTATE_ORF(
+                    ch_contrasts,
+                    ch_orf_samplesheet_matrix
+                )
+                ch_versions = ch_versions.mix(DESEQ2_DELTATE_ORF.out.versions)
+            }
         }
     }
 
