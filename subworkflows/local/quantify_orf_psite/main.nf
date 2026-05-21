@@ -2,7 +2,7 @@
 // ORF-level in-frame P-site quantification (issue #166).
 //
 // Chains:
-//   1. ORF_INFRAME_PSITES: expand the BED12 catalogue into codon-start BED6.
+//   1. CUSTOM_BED12CODONPOSITIONS: expand the BED12 catalogue into codon-start BED6.
 //   2. QUANTIFY_INFRAME_PSITE_ORF: per-sample bedtools intersect + groupby
 //      against plastid wiggle tracks.
 //   3. ORF_COUNT_MATRIX: assemble per-sample TSVs into one ORF x sample
@@ -14,7 +14,7 @@
 // The matrix is the input for the future DTE step in issue #168. This
 // subworkflow does not run DTE itself.
 
-include { ORF_INFRAME_PSITES         } from '../../../modules/local/orf/inframe_psites'
+include { CUSTOM_BED12CODONPOSITIONS } from '../../../modules/nf-core/custom/bed12codonpositions/main'
 include { QUANTIFY_INFRAME_PSITE_ORF } from '../../../modules/local/quantify_inframe_psite_orf'
 include { ORF_COUNT_MATRIX           } from '../../../modules/local/orf/count_matrix'
 
@@ -30,10 +30,10 @@ workflow QUANTIFY_ORF_PSITE {
     ch_versions = Channel.empty()
 
     // 1. Expand catalogue to codon-start BED6 (cohort-level, runs once).
-    ORF_INFRAME_PSITES ( ch_catalogue_bed )
-    ch_versions = ch_versions.mix(ORF_INFRAME_PSITES.out.versions)
+    CUSTOM_BED12CODONPOSITIONS ( ch_catalogue_bed )
+    ch_versions = ch_versions.mix(CUSTOM_BED12CODONPOSITIONS.out.versions)
 
-    ch_inframe_psites = ORF_INFRAME_PSITES.out.bed.first()
+    ch_inframe_psites = CUSTOM_BED12CODONPOSITIONS.out.bed.first()
 
     // 2. Per-sample P-site counting.
     QUANTIFY_INFRAME_PSITE_ORF ( ch_psite_tracks, ch_inframe_psites )
@@ -59,7 +59,7 @@ workflow QUANTIFY_ORF_PSITE {
     ch_versions = ch_versions.mix(ORF_COUNT_MATRIX.out.versions)
 
     emit:
-    orf_count_matrix = ORF_COUNT_MATRIX.out.matrix     // [ meta, orf_psite_counts.tsv ]
-    inframe_psites   = ORF_INFRAME_PSITES.out.bed      // [ meta, *.orf_inframe_psites.bed ]
+    orf_count_matrix = ORF_COUNT_MATRIX.out.matrix             // [ meta, orf_psite_counts.tsv ]
+    inframe_psites   = CUSTOM_BED12CODONPOSITIONS.out.bed      // [ meta, *.bed ]
     versions         = ch_versions
 }

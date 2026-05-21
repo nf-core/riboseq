@@ -11,7 +11,7 @@ keywords:
   - psite
   - quantification
 components:
-  - orf/inframe_psites
+  - custom/bed12codonpositions
   - quantify_inframe_psite_orf
   - orf/count_matrix
 input:
