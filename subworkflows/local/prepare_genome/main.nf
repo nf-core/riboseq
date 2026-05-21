@@ -29,8 +29,7 @@ include { RSEM_PREPAREREFERENCE as RSEM_PREPAREREFERENCE_GENOME } from '../../..
 include { RSEM_PREPAREREFERENCE as MAKE_TRANSCRIPTS_FASTA       } from '../../../modules/nf-core/rsem/preparereference'
 
 include { PREPROCESS_TRANSCRIPTS_FASTA_GENCODE } from '../../../modules/local/preprocess_transcripts_fasta_gencode'
-include { GTF2BED                              } from '../../../modules/local/gtf2bed'
-include { GTF_FILTER                           } from '../../../modules/local/gtf_filter'
+include { CUSTOM_GTFFILTER                     } from '../../../modules/nf-core/custom/gtffilter/main'
 include { STAR_GENOMEGENERATE_IGENOMES         } from '../../../modules/local/star_genomegenerate_igenomes'
 
 workflow PREPARE_GENOME {
@@ -103,9 +102,12 @@ workflow PREPARE_GENOME {
                 !skip_gtf_filter
             )
         if (filter_gtf) {
-            GTF_FILTER ( ch_fasta, ch_gtf )
-            ch_gtf = GTF_FILTER.out.genome_gtf
-            ch_versions = ch_versions.mix(GTF_FILTER.out.versions)
+            CUSTOM_GTFFILTER (
+                ch_gtf.map   { gtf   -> [ [ id: 'reference' ], gtf   ] },
+                ch_fasta.map { fasta -> [ [ id: 'reference' ], fasta ] }
+            )
+            ch_gtf      = CUSTOM_GTFFILTER.out.gtf.map { _meta, gtf -> gtf }
+            ch_versions = ch_versions.mix(CUSTOM_GTFFILTER.out.versions)
         }
     }
 
