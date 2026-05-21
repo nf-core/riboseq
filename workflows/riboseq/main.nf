@@ -14,8 +14,7 @@ include { FASTQ_ALIGN_STAR    } from '../../subworkflows/nf-core/fastq_align_sta
 include { FASTQ_ALIGN_STAR as FASTQ_ALIGN_STAR_HYBRID } from '../../subworkflows/nf-core/fastq_align_star'
 include { BAM_STRINGTIE_MERGE      } from '../../subworkflows/nf-core/bam_stringtie_merge'
 include { BUILD_HYBRID_TRANSCRIPTOME } from '../../subworkflows/local/build_hybrid_transcriptome'
-include { CONCAT_GTF               } from '../../modules/local/concat_gtf'
-include { FILTER_GTF_CLASS_CODE    } from '../../modules/local/filter_gtf_class_code'
+include { GTF_HYBRIDMERGE_GFFCOMPARE } from '../../subworkflows/nf-core/gtf_hybridmerge_gffcompare/main'
 include { FASTA_GTF_BAM_RPBP       } from '../../subworkflows/nf-core/fasta_gtf_bam_rpbp/main'
 include { GEDI_INDEXGENOME         } from '../../modules/nf-core/gedi/indexgenome/main'
 include { GEDI_PRICE               } from '../../modules/nf-core/gedi/price/main'
@@ -59,8 +58,6 @@ include { GAWK as GTF_TO_INFRAME_PSITES                        } from '../../mod
 include { GAWK as REPLACE_RIBOSEQ_COUNTS_IN_MATRIX             } from '../../modules/nf-core/gawk'
 include { SAMTOOLS_VIEW as SAMTOOLS_VIEW_SPLIT_BY_STRAND       } from '../../modules/nf-core/samtools/view'
 include { BEDTOOLS_GENOMECOV                                   } from '../../modules/nf-core/bedtools/genomecov/main'
-include { BEDTOOLS_INTERSECT                                   } from '../../modules/nf-core/bedtools/intersect/main'
-include { GFFCOMPARE                                           } from '../../modules/nf-core/gffcompare/main'
 include { UCSC_BEDGRAPHTOBIGWIG                                } from '../../modules/nf-core/ucsc/bedgraphtobigwig/main'
 
 /*
@@ -388,59 +385,30 @@ workflow RIBOSEQ {
         }
 
         //
-        // Classify novel transcripts vs the full reference GTF; gffcompare's
-        // class codes depend on the full annotation, not the canonical backbone.
+        // Classify novel transcripts against the full reference GTF, drop
+        // class codes not in --stringtie_class_codes, optionally subtract a
+        // strand-aware blacklist, then concatenate with the canonical backbone
+        // (synthesising parent gene rows for any novel transcripts whose
+        // gene_id isn't already in the backbone). One subworkflow call covers
+        // gffcompare + gawk filter + (optional) bedtools intersect + gawk concat.
         //
-        GFFCOMPARE(
-            ch_novel_pre_filter,
-            [[:], [], []],
-            ch_gtf.map { gtf -> [ [:], gtf ] }.first()
-        )
+        ch_blacklist_bed = params.rrna_blacklist
+            ? Channel.fromPath(params.rrna_blacklist, checkIfExists: true).map { bed -> [ [id: 'rrna_blacklist'], bed ] }
+            : Channel.empty()
 
-        //
-        // Retain only entries whose class_code is in the user-configured set
-        // (default `u` = intergenic).
-        //
-        FILTER_GTF_CLASS_CODE(
-            GFFCOMPARE.out.annotated_gtf,
-            params.stringtie_class_codes
-        )
-
-        ch_novel_filtered = FILTER_GTF_CLASS_CODE.out.gtf
-
-        //
-        // Optional strand-aware blacklist intersect to drop assemblies in
-        // rRNA / repeat regions.
-        //
-        if (params.rrna_blacklist) {
-            ch_blacklist = Channel
-                .fromPath(params.rrna_blacklist, checkIfExists: true)
-
-            ch_intersect_input = ch_novel_filtered
-                .combine(ch_blacklist)
-                .map { meta, gtf, bed -> [ meta, gtf, bed ] }
-
-            BEDTOOLS_INTERSECT(
-                ch_intersect_input,
-                [[:], []]
-            )
-
-            ch_novel_filtered = BEDTOOLS_INTERSECT.out.intersect
-        }
-        else {
+        if (!params.rrna_blacklist) {
             log.info "No rRNA/repeat blacklist supplied via --rrna_blacklist; skipping post-assembly blacklist intersect."
         }
 
-        //
-        // Concatenate the canonical backbone with the filtered novel GTF.
-        //
-        ch_concat_input = ch_canonical_gtf
-            .combine(ch_novel_filtered)
-            .map { canonical, meta, novel -> [ [id: 'hybrid_reference'], canonical, novel ] }
+        GTF_HYBRIDMERGE_GFFCOMPARE(
+            ch_novel_pre_filter,
+            ch_gtf.map { gtf -> [ [:], gtf ] }.first(),
+            ch_canonical_gtf.map { gtf -> [ [id: 'hybrid_reference'], gtf ] }.first(),
+            Channel.value(params.stringtie_class_codes),
+            ch_blacklist_bed
+        )
 
-        CONCAT_GTF(ch_concat_input)
-
-        ch_hybrid_gtf = CONCAT_GTF.out.gtf.map { _meta, gtf -> gtf }
+        ch_hybrid_gtf = GTF_HYBRIDMERGE_GFFCOMPARE.out.hybrid_gtf.map { _meta, gtf -> gtf }
     }
 
     //
