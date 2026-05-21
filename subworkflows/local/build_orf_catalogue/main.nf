@@ -5,7 +5,10 @@
 //   1. Per-caller normalisation (BED12 + sidecar TSV).
 //   2. Concatenation across samples + callers into a single (BED, TSV) pair.
 //   3. ORF_CATALOGUE_MERGE applies class-aware collapse strategy.
-//   4. ORF_CATALOGUE_EXTRACTAA produces the AA FASTA from the merged BED12.
+//   4. BEDTOOLS_GETFASTA + SEQKIT_TRANSLATE produce the AA FASTA from the
+//      merged BED12 (-split -s -nameOnly walks BED12 blocks in mRNA order
+//      and reverse-complements minus-strand records; seqkit translate --trim
+//      drops trailing stop codons).
 //
 // Inputs that come from optional callers (ribotricer, rpbp, price) may be
 // passed as `Channel.empty()`; the subworkflow handles missing callers cleanly.
@@ -16,7 +19,8 @@ include { ORF_NORMALISE_RIBOTRICER  } from '../../../modules/local/orf/normalise
 include { ORF_NORMALISE_RPBP        } from '../../../modules/local/orf/normalise/rpbp'
 include { ORF_NORMALISE_PRICE       } from '../../../modules/local/orf/normalise/price'
 include { ORF_CATALOGUE_MERGE       } from '../../../modules/local/orf/catalogue/merge'
-include { ORF_CATALOGUE_EXTRACTAA  } from '../../../modules/local/orf/catalogue/extractaa'
+include { BEDTOOLS_GETFASTA         } from '../../../modules/nf-core/bedtools/getfasta/main'
+include { SEQKIT_TRANSLATE          } from '../../../modules/nf-core/seqkit/translate/main'
 
 workflow BUILD_ORF_CATALOGUE {
 
@@ -66,15 +70,17 @@ workflow BUILD_ORF_CATALOGUE {
 
     ORF_CATALOGUE_MERGE ( ch_merge_in )
 
-    ORF_CATALOGUE_EXTRACTAA (
+    BEDTOOLS_GETFASTA (
         ORF_CATALOGUE_MERGE.out.catalogue_bed,
-        ch_fasta.map { fasta -> [ [id: 'reference'], fasta ] }.first()
+        ch_fasta.first()
     )
+
+    SEQKIT_TRANSLATE ( BEDTOOLS_GETFASTA.out.fasta )
 
     emit:
     catalogue_bed    = ORF_CATALOGUE_MERGE.out.catalogue_bed
     catalogue_tsv    = ORF_CATALOGUE_MERGE.out.catalogue_tsv
-    catalogue_faa    = ORF_CATALOGUE_EXTRACTAA.out.faa
+    catalogue_faa    = SEQKIT_TRANSLATE.out.fastx
     orf_to_gene_tsv  = ORF_CATALOGUE_MERGE.out.orf_to_gene
     multiqc_summary  = ORF_CATALOGUE_MERGE.out.mqc
 }

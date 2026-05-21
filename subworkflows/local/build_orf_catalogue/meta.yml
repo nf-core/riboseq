@@ -17,8 +17,10 @@ components:
   - orf/normalise/ribocode
   - orf/normalise/ribotricer
   - orf/normalise/rpbp
+  - orf/normalise/price
   - orf/catalogue/merge
-  - orf/catalogue/extractaa
+  - bedtools/getfasta
+  - seqkit/translate
 input:
   - ch_ribotish_pred:
       type: channel
