@@ -21,7 +21,7 @@ include { GEDI_INDEXGENOME         } from '../../modules/nf-core/gedi/indexgenom
 include { GEDI_PRICE               } from '../../modules/nf-core/gedi/price/main'
 include { ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE } from '../../subworkflows/nf-core/orftable_fasta_gtf_buildorfcatalogue/main'
 include { QUANTIFY_ORF_PSITE       } from '../../subworkflows/local/quantify_orf_psite'
-include { DTE_ORF_LEVEL            } from '../../subworkflows/local/dte_orf_level'
+include { DESEQ2_ORF_DTE           } from '../../modules/local/deseq2/orf_dte'
 include { ORF_TO_GENE_CDS_COUNTS   } from '../../modules/local/orf_to_gene_cds_counts'
 include { GAWK as FILTER_COUNTS_CANONICAL                      } from '../../modules/nf-core/gawk'
 
@@ -987,17 +987,27 @@ workflow RIBOSEQ {
         }
 
         // Issue #168 Tier 2: per-ORF DESeq2 interaction-model DTE.
-        // Runs additively to the gene-level DTE above whenever the
-        // ORF count matrix is populated (extended ORFs + plastid).
+        // Per contrast, fits ~ condition + seq_type + condition:seq_type at
+        // ORF resolution. Ribo numerator = per-ORF P-site matrix (#166);
+        // RNA denominator = gene-level Salmon matrix joined per ORF via
+        // orf_to_gene.tsv (#167). Novel-intergenic ORFs (no host gene) are
+        // dropped inside the R template; raw counts remain in
+        // orf_psite_counts.tsv for count-only inspection.
+        // Runs additively to the gene-level DTE above whenever the ORF
+        // count matrix is populated (extended ORFs + plastid).
         if (extended_orf_active && enabled_orf_callers && !params.skip_plastid) {
-            DTE_ORF_LEVEL(
+            ch_orf_dte_inputs = ch_samplesheet
+                .combine(ch_orf_count_matrix.map { _meta, counts -> counts })
+                .combine(QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled.map { _meta, counts -> counts })
+                .combine(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.orf_to_gene_tsv.map { _meta, tsv -> tsv })
+                .map { samplesheet, ribo, rna, o2g -> [ [id: 'allsamples'], samplesheet, ribo, rna, o2g ] }
+                .first()
+
+            DESEQ2_ORF_DTE(
                 ch_contrasts,
-                ch_orf_count_matrix,
-                QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled,
-                ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.orf_to_gene_tsv,
-                ch_samplesheet
+                ch_orf_dte_inputs
             )
-            ch_versions = ch_versions.mix(DTE_ORF_LEVEL.out.versions)
+            ch_versions = ch_versions.mix(DESEQ2_ORF_DTE.out.versions)
         }
     }
 
