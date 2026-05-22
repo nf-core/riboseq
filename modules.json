@@ -494,6 +494,17 @@
                     }
                 }
             }
+        },
+        "https://github.com/pinin4fjords/nf-core-modules.git": {
+            "modules": {
+                "nf-core": {
+                    "dotseq/dotseq": {
+                        "branch": "dotseq-add-module",
+                        "git_sha": "679ba79abaf405ecbab492bf62ecf5d6ea8ac7d8",
+                        "installed_by": ["modules"]
+                    }
+                }
+            }
         }
     }
 }

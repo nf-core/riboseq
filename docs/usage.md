@@ -463,7 +463,13 @@ When `--extended_orf_analysis true` is set with `--te_quantification_method plas
 
 **Tier 1: re-aggregate ORF counts to a cleaner gene-level numerator.** The existing gene-level anota2seq / deltaTE TE Ribo-seq numerator is replaced with a re-aggregation that sums per-ORF P-site counts ONLY for ORFs in the `canonical_cds` class. uORF, dORF, novel intergenic (`novel_u`), smORF, and `other` ORFs are excluded from the gene-level sum, so a repressed uORF cannot inflate the gene-level Ribo-seq column. The RNA-seq denominator continues to come from Salmon at gene level. The aggregated gene matrix is published under `<outdir>/dte/gene_level_cds_aggregated/`. Gene-level anota2seq / deltaTE then runs on this cleaner input.
 
-**Tier 2: per-ORF DTE.** The pipeline reuses the same DTE method as the gene-level path (controlled by `--translational_efficiency_method`, default `anota2seq`; alternative `deltate`) but at ORF resolution. A pre-processing step joins the per-ORF P-site count matrix (`<outdir>/orf_quantification/orf_psite_counts.tsv`) with the gene-level Salmon RNA-seq matrix via `orf_to_gene.tsv` from the catalogue, producing one combined count table whose rows are ORFs and whose RNA columns hold the host gene's count replicated across all ORFs sharing that gene. The selected method (anota2seq APV+RVM or deltaTE DESeq2 `~ condition + seq_type + condition:seq_type`) is then fitted, treating each ORF row as a feature. Results land under `<outdir>/dte/orf_level/<method>/`, alongside the shared combined input matrix (`<outdir>/dte/orf_level/orf_combined_counts.tsv`).
+**Tier 2: per-ORF DTE.** The pipeline reuses the same DTE method selector as the gene-level path (controlled by `--translational_efficiency_method`) but at ORF resolution. Three methods are available:
+
+- `anota2seq` (default, gene-level + ORF-level): APV + RVM regression of Ribo on RNA per identifier.
+- `deltate`: DESeq2 with a `~ condition + seq_type + condition:seq_type` interaction model.
+- `dotseq` (ORF-level only): DOTSeq's ORF-level differential translation efficiency (DESeq2 + ashr) AND its DOTSeq-specific DOU contrast - a per-gene beta-binomial GLM modelling whether each ORF gains or loses a share of its parent gene's ribosome occupancy across conditions (the question "is this ORF gaining ribosomes at the expense of its siblings?", which DTE alone can't answer). Selecting `dotseq` requires `--extended_orf_analysis true` and an enabled ORF caller; the gene-level fit is skipped.
+
+A pre-processing step joins the per-ORF P-site count matrix (`<outdir>/orf_quantification/orf_psite_counts.tsv`) with the gene-level Salmon RNA-seq matrix via `orf_to_gene.tsv` from the catalogue, producing one combined count table whose rows are ORFs and whose RNA columns hold the host gene's count replicated across all ORFs sharing that gene. The selected method is then fitted, treating each ORF row as a feature. Results land under `<outdir>/dte/orf_level/<method>/`, alongside the shared combined input matrix (`<outdir>/dte/orf_level/orf_combined_counts.tsv`).
 
 Two caveats apply to Tier 2:
 
@@ -472,8 +478,6 @@ Two caveats apply to Tier 2:
 - **Multiple-testing scale.** Per-ORF runs typically have 5-50x more rows than per-gene runs, so BH-adjusted p-values are more conservative by construction. This is expected and applies identically to both methods.
 
 Novel intergenic ORFs (ORF class `novel_u`) have no host gene and therefore no RNA-seq denominator. They are dropped during the join step; their raw P-site counts remain available in `orf_psite_counts.tsv` for count-only inspection.
-
-**Tier 3: DOTSeq (deferred).** A `--run_dotseq` parameter is exposed for forward compatibility with DOTSeq's ORF-level DTE + DOU analysis once it lands in Bioconductor stable. Currently DOTSeq is in Bioconductor devel only; setting the flag emits an info message at workflow startup and runs no analysis. Tracked in issue #168.
 
 ### Method comparison
 

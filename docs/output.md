@@ -683,6 +683,14 @@ When `--extended_orf_analysis true` is set with `--te_quantification_method plas
   - `*.fold_change.png`, `*.interaction_p_distribution.pdf`, `*.residual_distribution_summary.jpeg`, `*.residual_vs_fitted.jpeg`, `*.rvm_fit_for_*.jpg`, `*.simulated_vs_obt_dfbetas_without_interaction.pdf`: anota2seq diagnostic plots, computed at ORF resolution. Inspect the residual and RVM fit plots before interpreting results: per-ORF inputs typically have more sparse rows than per-gene inputs and the QC plots surface any failure of the APV / RVM assumptions.
   - `*.Anota2seqDataSet.rds`: serialised Anota2seqDataSet object.
   - `*.R_sessionInfo.log`: R session information for reproducibility.
+- `dte/orf_level/dotseq/` (when `--translational_efficiency_method dotseq`):
+  - `*.translation.dotseq.results.tsv`: per-ORF differential translation efficiency from DOTSeq's DTE interaction term (DESeq2 + ashr shrinkage); rows are ORF ids. Same biological quantity as the anota2seq / deltate `translation` table at gene resolution.
+  - `*.dou.dotseq.results.tsv`: per-ORF Differential ORF Usage (DOU) results, DOTSeq's per-gene beta-binomial GLM modelling changes in Ribo / RNA proportion across an ORF and its sibling ORFs (shrunk with ashr). DOU has no anota2seq / deltate counterpart and answers a different question to DTE: not "does this ORF's translation change?" but "does this ORF gain or lose share of its parent gene's ribosome occupancy?".
+  - `*.dou_strategy.dotseq.results.tsv`, `*.dte_strategy.dotseq.results.tsv`: per-condition Ribo-vs-RNA strategy contrasts, when DOTSeq emits them.
+  - `*.volcano.png`, `*.composite.png`, `*.venn.png`, `*.heatmap.png`: DOTSeq `plotDOT()` outputs visualising the DOU + DTE joint result space.
+  - `*.interaction_p_distribution.png`: histogram of the DTE adjusted p-values.
+  - `*.DOTSeqDataSets.rds`: serialised DOTSeqDataSets object containing both DOU and DTE fits.
+  - `*.R_sessionInfo.log`: R session information for reproducibility.
 
 </details>
 

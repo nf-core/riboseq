@@ -20,6 +20,7 @@ include { COVERAGE_TRACKS          } from '../../subworkflows/local/coverage_tra
 include { DTE_COUNTS_PREP          } from '../../modules/local/dte_counts_prep'
 include { DESEQ2_DELTATE as DESEQ2_DELTATE_ORF } from '../../modules/local/deseq2/deltate'
 include { ANOTA2SEQ_ANOTA2SEQRUN as ANOTA2SEQ_ANOTA2SEQRUN_ORF } from '../../modules/nf-core/anota2seq/anota2seqrun'
+include { DOTSEQ_DOTSEQ as DOTSEQ_DOTSEQ_ORF } from '../../modules/nf-core/dotseq/dotseq'
 include { ORF_TO_GENE_CDS_COUNTS   } from '../../modules/local/orf_to_gene_cds_counts'
 include { GAWK as FILTER_COUNTS_CANONICAL                      } from '../../modules/nf-core/gawk'
 
@@ -34,7 +35,6 @@ include { GAWK as FILTER_COUNTS_CANONICAL                      } from '../../mod
 //
 include { MULTIQC                                              } from '../../modules/nf-core/multiqc/main'
 include { UMITOOLS_PREPAREFORRSEM as UMITOOLS_PREPAREFORSALMON } from '../../modules/nf-core/umitools/prepareforrsem'
-include { RIBOTISH_QUALITY as RIBOTISH_QUALITY_TISEQ           } from '../../modules/nf-core/ribotish/quality'
 include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../modules/nf-core/anota2seq/anota2seqrun'
 include { DESEQ2_DELTATE                                       } from '../../modules/local/deseq2/deltate'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
@@ -697,15 +697,25 @@ workflow RIBOSEQ {
                 )
                 ch_versions = ch_versions.mix(DESEQ2_DELTATE_ORF.out.versions)
             }
+
+            if (params.translational_efficiency_method == 'dotseq') {
+                ch_dotseq_input = DTE_COUNTS_PREP.out.counts
+                    .combine(ch_samplesheet)
+                    .combine(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.catalogue_tsv.map { _meta, tsv -> tsv })
+                    .map { meta, counts, samplesheet, annotation -> [ meta, samplesheet, counts, annotation ] }
+                    .first()
+
+                DOTSEQ_DOTSEQ_ORF(
+                    ch_contrasts,
+                    ch_dotseq_input
+                )
+                ch_versions = ch_versions.mix(DOTSEQ_DOTSEQ_ORF.out.versions)
+            }
         }
     }
 
-    // Issue #168 Tier 3 (DOTSeq): deferred. The package is in
-    // Bioconductor devel only; the param is a placeholder so users can
-    // express intent now and so the schema/docs stay aligned with the
-    // implementation plan. Tracked in #168.
-    if (params.run_dotseq) {
-        log.info "--run_dotseq is enabled, but DOTSeq Tier-3 ORF-level DTE/DOU is deferred to a future release (DOTSeq is currently in Bioconductor devel only). See issue #168."
+    if (params.translational_efficiency_method == 'dotseq' && !(extended_orf_active && enabled_orf_callers && !params.skip_plastid)) {
+        log.warn "--translational_efficiency_method dotseq runs only at the ORF level and requires --extended_orf_analysis true plus a configured ORF caller and plastid P-sites; one or more of those is currently off, so no DTE analysis will run. Pick anota2seq or deltate for the gene-level path, or wire up the ORF prerequisites."
     }
 
     //
