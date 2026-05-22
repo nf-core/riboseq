@@ -498,10 +498,34 @@
         "https://github.com/pinin4fjords/nf-core-modules.git": {
             "modules": {
                 "nf-core": {
+                    "custom/bed12codonpositions": {
+                        "branch": "custom-bed12codonpositions",
+                        "git_sha": "73cfad118c8c65461cc3dc6bdaa3d9852e8234c9",
+                        "installed_by": ["modules"]
+                    },
+                    "custom/orfmerge": {
+                        "branch": "custom-orf-catalogue",
+                        "git_sha": "ee7eaa363c7d22fade0394625125d6e6f1342c02",
+                        "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
+                    },
+                    "custom/orfnormalise": {
+                        "branch": "custom-orf-catalogue",
+                        "git_sha": "ee7eaa363c7d22fade0394625125d6e6f1342c02",
+                        "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
+                    },
                     "dotseq/dotseq": {
                         "branch": "dotseq-add-module",
                         "git_sha": "679ba79abaf405ecbab492bf62ecf5d6ea8ac7d8",
                         "installed_by": ["modules"]
+                    }
+                }
+            },
+            "subworkflows": {
+                "nf-core": {
+                    "orftable_fasta_gtf_buildorfcatalogue": {
+                        "branch": "custom-orf-catalogue",
+                        "git_sha": "ee7eaa363c7d22fade0394625125d6e6f1342c02",
+                        "installed_by": ["subworkflows"]
                     }
                 }
             }
