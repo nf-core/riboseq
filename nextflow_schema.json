@@ -800,7 +800,7 @@
                 "run_rpbp": {
                     "type": "boolean",
                     "description": "Opt in to running Rp-Bp as an additional ORF caller (Bayesian, slow).",
-                    "help_text": "Rp-Bp is a Bayesian-strict ORF caller (Malone et al. 2017) that complements RiboCode's permissive canonical-CDS calls. Benchmark data (FK/NGB, May 2026) places it at Tier-1 on both replicate concordance (mean Spearman 0.893) and set overlap (mean Jaccard 0.673). Runtime is on the order of 20-24h per replicate at genome-wide scale because the MCMC fit dominates, hence it is opt-in. Plan accordingly. Rp-Bp's score column (Bayes factor) is stable and participates in the cross-caller rank-aggregation set alongside RiboCode and Ribo-TISH.",
+                    "help_text": "Rp-Bp (Malone et al. 2017) is a Bayesian-strict ORF caller that complements RiboCode's permissive canonical-CDS calls. Runtime is on the order of 20-24h per replicate at genome-wide scale because the MCMC fit dominates, hence it is opt-in. Plan accordingly. Rp-Bp's score column (Bayes factor) participates in the cross-caller rank aggregation alongside RiboCode and Ribo-TISH.",
                     "fa_icon": "fas fa-fast-forward"
                 },
                 "extra_rpbp_preparegenome_args": {
