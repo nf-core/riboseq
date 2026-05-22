@@ -151,7 +151,7 @@
                     "pattern": "^\\S+\\.gtf(\\.gz)?$",
                     "description": "Optional one-transcript-per-gene canonical GTF used as the annotation backbone for ORF calling, P-site calibration and DTE.",
                     "fa_icon": "fas fa-code-branch",
-                    "help_text": "When supplied, this GTF replaces the full multi-isoform `--gtf` as the annotation backbone for ORF callers (RiboCode, Ribo-TISH, Ribotricer), riboWaltz P-site calibration, plastid P-site quantification and the translational-efficiency analysis. The full `--gtf` is still used for genome-guided alignment (STAR/Salmon). When omitted, the pipeline falls back to AGAT longest-isoform extraction from the full GTF; if that is unavailable, the full GTF is used as the backbone (with a multi-isoform ambiguity warning). Recommended sources: MANE Select for human (https://ftp.ncbi.nlm.nih.gov/refseq/MANE/MANE_human/current/), or `grep 'tag \"Ensembl_canonical\"' input.gtf > canonical.gtf` for any Ensembl organism at release ≥104."
+                    "help_text": "When supplied, this GTF replaces the full multi-isoform `--gtf` as the annotation backbone for ORF callers (RiboCode, Ribo-TISH, Ribotricer), riboWaltz P-site calibration, plastid P-site quantification and the translational-efficiency analysis. The full `--gtf` is still used for genome-guided alignment (STAR/Salmon). When omitted, the pipeline falls back to AGAT longest-isoform extraction from the full GTF; if that is unavailable, the full GTF is used as the backbone (with a multi-isoform ambiguity warning). Recommended sources: MANE Select for human (https://ftp.ncbi.nlm.nih.gov/refseq/MANE/MANE_human/current/), or `grep 'tag \"Ensembl_canonical\"' input.gtf > canonical.gtf` for any Ensembl organism at release \u2265104."
                 },
                 "igenomes_ignore": {
                     "type": "boolean",
@@ -576,6 +576,20 @@
                     "description": "Quantification method for translational efficiency analysis: 'plastid_psite' (in-frame P-site counts from plastid, default), 'alignment' (STAR -> Salmon) or 'pseudo' (Salmon pseudo-alignment).",
                     "help_text": "Default is 'plastid_psite': Ribo-seq reads are counted only when their inferred P-site coincides with an in-frame codon position in an annotated CDS (derived from plastid wiggle tracks). This is the scientifically appropriate quantity for Ribo-seq, because Salmon's underlying assumptions (uniform coverage, fragment-length distribution, multi-mapping resolution from longer/paired reads) are violated by short, length-constrained Ribo-seq footprints (see Ribomap, Bioinformatics 2016). Choose 'alignment' to keep STAR alignment followed by Salmon in alignment-based mode, e.g. for backward compatibility, comparison with prior runs, or downstream tools that expect Salmon-format transcript-level counts. Choose 'pseudo' for direct Salmon pseudo-alignment from reads, an experimental alternative that uses the same k-mer index for both modalities and may help reduce length-related quantification biases without requiring read trimming.",
                     "fa_icon": "fas fa-calculator"
+                },
+                "extra_stringtie_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to per-sample StringTie in addition to defaults defined by the pipeline."
+                },
+                "extra_stringtie_merge_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to StringTie --merge (e.g. `-T 1 -f 0.1` to tighten the merged annotation)."
+                },
+                "stringtie_ribo_fallback_args": {
+                    "type": "string",
+                    "default": "-m 100 -c 5 -j 3 -f 0.05 -g 100",
+                    "description": "StringTie arguments used when no RNA-seq BAMs are available and the pipeline falls back to Ribo-seq BAMs for assembly.",
+                    "help_text": "These tightened defaults reduce false-positive single-exon transcripts driven by P-site pileups in Ribo-seq data: `-m 100` (min transcript length, vs default 200 - retains sORF transcripts), `-c 5` (min coverage), `-j 3` (min junction reads), `-f 0.05` (min isoform fraction), `-g 100` (max gap). Empirical first-pass defaults; tune per dataset. Ignored when RNA-seq BAMs are available or when `--extra_stringtie_args` is set."
                 }
             }
         },
@@ -726,6 +740,40 @@
                     "type": "boolean",
                     "description": "Skip plastid.",
                     "fa_icon": "fas fa-fast-forward"
+                },
+                "skip_stringtie": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Skip StringTie reference-guided transcript assembly and merge.",
+                    "help_text": "When `false`, the pipeline runs StringTie per sample (reference-guided) then merges per-sample GTFs into a unified annotation. RNA-seq BAMs are preferred for assembly; if absent, the pipeline falls back to Ribo-seq BAMs with tightened parameters (see `--stringtie_ribo_fallback_args`). Merged transcripts are classified with gffcompare and filtered to class codes set by `--stringtie_class_codes`. The filtered novel GTF is concatenated with `--canonical_gtf` to produce `<outdir>/stringtie/hybrid_reference.gtf`. Ignored when `--novel_gtf` is supplied.",
+                    "fa_icon": "fas fa-fast-forward"
+                },
+                "novel_gtf": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.gtf(\\.gz)?$",
+                    "description": "Optional user-supplied novel-transcript GTF. When provided, StringTie assembly is skipped and this GTF is used directly as the source of novel transcripts.",
+                    "help_text": "Useful when you already have a curated cell-type-specific annotation (e.g. from long-read RNA-seq or a published ORF catalogue). The supplied GTF is still passed through the gffcompare class-code filter (`--stringtie_class_codes`, default `u` = intergenic only) so users can submit annotations containing any class of transcript and have the pipeline retain only the intergenic ones.",
+                    "fa_icon": "fas fa-file-import"
+                },
+                "stringtie_class_codes": {
+                    "type": "string",
+                    "default": "u",
+                    "description": "Comma-separated gffcompare class codes to retain when filtering novel transcripts.",
+                    "help_text": "Default `u` keeps only unambiguously intergenic transcripts. Stranded users may add `x` (antisense overlap with a known locus) via `--stringtie_class_codes 'u,x'` to recover translated antisense transcripts; this is unsafe for non-stranded or partially-stranded protocols. See https://ccb.jhu.edu/software/stringtie/gffcompare.shtml for the full class-code list.",
+                    "fa_icon": "fas fa-filter"
+                },
+                "rrna_blacklist": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.bed(\\.gz)?$",
+                    "description": "Optional BED file of rRNA/repeat regions to exclude from the novel-transcript GTF (strand-aware intersect).",
+                    "help_text": "When supplied, novel transcripts overlapping the blacklist on the same strand are removed via `bedtools intersect -v -s`. UCSC publishes ready-made blacklists for hg38 and mm10; for other organisms you must construct one yourself or omit this parameter (the step is skipped silently).",
+                    "fa_icon": "fas fa-ban"
                 }
             }
         },

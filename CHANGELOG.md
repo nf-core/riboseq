@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#154](https://github.com/nf-core/riboseq/pull/154) - Add riboWaltz QC plots to the MultiQC report (P-site region distribution, reading-frame distribution, start/stop-codon metaprofiles) via the new MultiQC riboWaltz module ([MultiQC#3465](https://github.com/MultiQC/MultiQC/pull/3465)) ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#161](https://github.com/nf-core/riboseq/issues/161) - Add a one-transcript-per-gene canonical annotation backbone via the new `--canonical_gtf` parameter, used for ORF calling, riboWaltz P-site calibration, plastid P-site quantification and the translational-efficiency analysis; falls back to AGAT longest-isoform extraction from `--gtf` when not supplied. The full `--gtf` is retained for genome-guided alignment ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#179](https://github.com/nf-core/riboseq/issues/179) - Wire the optional secondary reference annotation (`-a`) through to ribotish/predict via a dedicated 4-tuple `ch_fasta_gtf_for_ribotish` channel ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#164](https://github.com/nf-core/riboseq/issues/164) - Novel transcript discovery: StringTie reference-guided assembly (RNA-seq BAMs preferred, Ribo-seq fallback with tightened defaults) or user-supplied GTF via `--novel_gtf`. Output passes through gffcompare class-code filter (default `u` intergenic only), optional strand-aware rRNA/repeat blacklist (`--rrna_blacklist`), and is concatenated with the canonical backbone into `<outdir>/stringtie/hybrid_reference.gtf`. The hybrid GTF is exposed on the `hybrid_gtf` workflow channel (equals canonical when no novel source is configured) ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Fixed`
 
@@ -68,6 +69,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 |                     | `--skip_coverage_tracks`                 |
 |                     | `--ribodetector_chunk_size`              |
 |                     | `--canonical_gtf`                        |
+|                     | `--skip_stringtie`                       |
+|                     | `--novel_gtf`                            |
+|                     | `--stringtie_class_codes`                |
+|                     | `--rrna_blacklist`                       |
+|                     | `--extra_stringtie_args`                 |
+|                     | `--extra_stringtie_merge_args`           |
+|                     | `--stringtie_ribo_fallback_args`         |
 
 ### `Dependencies`
 

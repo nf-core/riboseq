@@ -453,6 +453,44 @@ This describes how to compare groups of samples between treatment groups, and be
 > [!NOTE]
 > The analysis automatically subsets the count data to only the samples involved in each contrast. Additional anota2seq options can be passed via `--extra_anota2seq_run_args` (see parameter documentation for details).
 
+## Novel transcript discovery (StringTie / user-supplied GTF)
+
+The pipeline can extend the canonical reference annotation with novel intergenic transcripts, either by running [StringTie](https://ccb.jhu.edu/software/stringtie/) reference-guided assembly or by accepting a user-supplied GTF via `--novel_gtf`. The two sources feed the same downstream filtering chain and produce a hybrid annotation at `<outdir>/stringtie/hybrid_reference.gtf` (canonical backbone + filtered novel transcripts, sorted by genomic position).
+
+### Source 1: StringTie assembly
+
+Set `--skip_stringtie false` to enable assembly. The pipeline prefers RNA-seq BAMs (which is what every published microprotein / novel-ORF discovery workflow uses) and falls back to Ribo-seq BAMs with tightened defaults if no RNA-seq is available, emitting a warning.
+
+When the Ribo-seq fallback is active, StringTie is invoked with `--stringtie_ribo_fallback_args` (default `-m 100 -c 5 -j 3 -f 0.05 -g 100`). These are first-pass empirical defaults extrapolated from RNA-seq parameter rationale and general Ribo-seq coverage properties; they are not literature-validated. Treat fallback assemblies with care. If `--extra_stringtie_args` is set, it overrides the fallback defaults verbatim - the warning will still fire but the tightening is no longer in force, so review the assembly output before trusting it.
+
+Per-sample StringTie GTFs are merged with `stringtie --merge` into a unified annotation.
+
+### Source 2: User-supplied GTF (`--novel_gtf`)
+
+Pass `--novel_gtf path/to/curated.gtf` to skip StringTie entirely and feed your own annotation through the filtering chain. Useful when you already have a tissue/cell-type-specific annotation from long-read RNA-seq or a published ORF catalogue. Setting `--novel_gtf` takes precedence over `--skip_stringtie`.
+
+### Filtering: gffcompare class codes
+
+The novel GTF is classified against the full reference with [gffcompare](https://ccb.jhu.edu/software/stringtie/gffcompare.shtml) and filtered to entries whose `class_code` is in `--stringtie_class_codes` (default `"u"`, intergenic only).
+
+Stranded users (stranded RNA-seq and stranded Ribo-seq libraries) can extend the filter to `--stringtie_class_codes "u,x"` to recover translated antisense transcripts (class `x` = antisense overlap with a known locus). The default remains `u`-only because antisense classification is unreliable for non-stranded or partially-stranded protocols.
+
+### Optional rRNA / repeat blacklist
+
+Supply `--rrna_blacklist path/to/blacklist.bed` to drop novel transcripts overlapping known rRNA or repeat regions on the same strand (`bedtools intersect -v -s`). UCSC publishes ready-made blacklists for hg38 and mm10; for other organisms you must construct one yourself (or omit the parameter to skip the step silently).
+
+### Knobs
+
+- `--skip_stringtie` - default `true`. Set to `false` to run StringTie assembly.
+- `--novel_gtf` - user-supplied novel GTF (bypasses StringTie when set).
+- `--extra_stringtie_args` - extra args passed to per-sample StringTie.
+- `--extra_stringtie_merge_args` - extra args passed to `stringtie --merge` (e.g. `'-T 1 -f 0.1'` for stricter TPM and isoform-fraction cutoffs); see the [StringTie manual](https://ccb.jhu.edu/software/stringtie/index.shtml?t=manual) for the full set of merge flags.
+- `--stringtie_ribo_fallback_args` - args used when no RNA-seq BAMs are available (default `-m 100 -c 5 -j 3 -f 0.05 -g 100`).
+- `--stringtie_class_codes` - comma-separated gffcompare class codes to retain (default `u`).
+- `--rrna_blacklist` - optional BED of rRNA / repeat regions to exclude.
+
+The hybrid GTF is exposed as the `hybrid_gtf` workflow channel. With the default settings (no novel-transcript source configured) it equals the canonical backbone, so downstream wiring stays uniform. Follow-on work in the modernisation plan wires the hybrid GTF into the genome-BAM ORF callers (Ribo-TISH `predict`, Ribotricer) under an opt-in flag.
+
 ## Running the pipeline
 
 The typical command for running the pipeline is as follows:

@@ -9,8 +9,9 @@
 //
 include { FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS                                                 } from '../../subworkflows/nf-core/fastq_qc_trim_filter_setstrandedness/main'
 include { FASTQ_EQUALISE_READ_LENGTHS                                                          } from '../../subworkflows/local/fastq_equalise_read_lengths'
-include { BAM_DEDUP_UMI      } from '../../subworkflows/nf-core/bam_dedup_umi'
-include { FASTQ_ALIGN_STAR   } from '../../subworkflows/nf-core/fastq_align_star'
+include { BAM_DEDUP_UMI                   } from '../../subworkflows/nf-core/bam_dedup_umi'
+include { FASTQ_ALIGN_STAR                } from '../../subworkflows/nf-core/fastq_align_star'
+include { NOVEL_TRANSCRIPT_DISCOVERY      } from '../../subworkflows/local/novel_transcript_discovery'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -349,6 +350,34 @@ workflow RIBOSEQ {
         .set{
             ch_genome_bam_by_type
         }
+
+    //
+    // SUBWORKFLOW: Novel transcript discovery and hybrid GTF construction.
+    // When neither StringTie nor a user-supplied novel GTF is configured, the
+    // hybrid GTF falls back to the canonical backbone so downstream wiring
+    // stays uniform.
+    //
+
+    ch_hybrid_gtf = ch_canonical_gtf
+
+    def run_stringtie = !params.skip_stringtie && !params.novel_gtf
+    def has_user_novel_gtf = params.novel_gtf as Boolean
+
+    if (run_stringtie || has_user_novel_gtf) {
+        NOVEL_TRANSCRIPT_DISCOVERY(
+            ch_genome_bam_by_type.rnaseq,
+            ch_genome_bam_by_type.riboseq,
+            ch_gtf,
+            ch_canonical_gtf,
+            has_user_novel_gtf ? params.novel_gtf : null,
+            run_stringtie,
+            params.stringtie_class_codes,
+            params.rrna_blacklist,
+            params.extra_stringtie_args ?: params.stringtie_ribo_fallback_args
+        )
+
+        ch_hybrid_gtf = NOVEL_TRANSCRIPT_DISCOVERY.out.hybrid_gtf
+    }
 
     ch_bams_for_analysis = ch_genome_bam_by_type.riboseq.join(ch_genome_bam_index)
     // Use the canonical (one-transcript-per-gene) annotation backbone for ORF
