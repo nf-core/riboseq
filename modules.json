@@ -60,16 +60,6 @@
                         "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
                         "installed_by": ["modules"]
                     },
-                    "custom/orfmerge": {
-                        "branch": "custom-orf-catalogue",
-                        "git_sha": "6597190ca",
-                        "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
-                    },
-                    "custom/orfnormalise": {
-                        "branch": "custom-orf-catalogue",
-                        "git_sha": "6597190ca",
-                        "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
-                    },
                     "custom/tx2gene": {
                         "branch": "master",
                         "git_sha": "0de77432a7fb128e2fdeb3d4bd5a74c2ec02d6c6",
@@ -477,11 +467,6 @@
                         "git_sha": "bf60969a3abb40d294cffd5105f574637bfa6260",
                         "installed_by": ["subworkflows"]
                     },
-                    "orftable_fasta_gtf_buildorfcatalogue": {
-                        "branch": "custom-orf-catalogue",
-                        "git_sha": "6597190ca",
-                        "installed_by": ["subworkflows"]
-                    },
                     "quant_tximport_summarizedexperiment": {
                         "branch": "master",
                         "git_sha": "bf0ea0eb763f9d692093ef4b40cb2a46ac762194",
@@ -505,6 +490,31 @@
                     "utils_nfschema_plugin": {
                         "branch": "master",
                         "git_sha": "fdc08b8b1ae74f56686ce21f7ea11ad11990ce57",
+                        "installed_by": ["subworkflows"]
+                    }
+                }
+            }
+        },
+        "https://github.com/pinin4fjords/nf-core-modules.git": {
+            "modules": {
+                "nf-core": {
+                    "custom/orfmerge": {
+                        "branch": "custom-orf-catalogue",
+                        "git_sha": "ee7eaa363c7d22fade0394625125d6e6f1342c02",
+                        "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
+                    },
+                    "custom/orfnormalise": {
+                        "branch": "custom-orf-catalogue",
+                        "git_sha": "ee7eaa363c7d22fade0394625125d6e6f1342c02",
+                        "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
+                    }
+                }
+            },
+            "subworkflows": {
+                "nf-core": {
+                    "orftable_fasta_gtf_buildorfcatalogue": {
+                        "branch": "custom-orf-catalogue",
+                        "git_sha": "ee7eaa363c7d22fade0394625125d6e6f1342c02",
                         "installed_by": ["subworkflows"]
                     }
                 }
