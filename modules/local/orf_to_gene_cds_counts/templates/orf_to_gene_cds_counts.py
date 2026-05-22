@@ -9,10 +9,10 @@ uORF / dORF / novel_u / smORF / other ORFs are excluded so the
 translational numerator stays clean.
 
 Inputs (positional, via the Nextflow template):
-  ${orf_count_matrix}   ORF x sample matrix from issue #166.
+  ${orf_count_matrix}   ORF x sample matrix.
                         First column `orf_id`, remaining columns are
                         sample ids, integer counts.
-  ${orf_to_gene_tsv}    ORF id -> gene id mapping from issue #167.
+  ${orf_to_gene_tsv}    ORF id -> gene id mapping.
                         Three columns: orf_id, gene_id, transcript_id.
                         First gene_id wins per ORF (deterministic by
                         file order) so an ORF's counts are never
