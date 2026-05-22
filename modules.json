@@ -50,11 +50,6 @@
                         "git_sha": "5d28ea7cfaebcfae6f74d1067ea766d8ff19dff3",
                         "installed_by": ["fastq_qc_trim_filter_setstrandedness"]
                     },
-                    "custom/bed12codonpositions": {
-                        "branch": "custom-bed12codonpositions",
-                        "git_sha": "PR-11733-pending",
-                        "installed_by": ["modules"]
-                    },
                     "custom/catadditionalfasta": {
                         "branch": "master",
                         "git_sha": "96c57dfd98a0641886a67bd449fe33ee2ec0e374",
@@ -64,16 +59,6 @@
                         "branch": "master",
                         "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
                         "installed_by": ["modules"]
-                    },
-                    "custom/orfmerge": {
-                        "branch": "custom-orf-catalogue",
-                        "git_sha": "6597190ca",
-                        "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
-                    },
-                    "custom/orfnormalise": {
-                        "branch": "custom-orf-catalogue",
-                        "git_sha": "6597190ca",
-                        "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
                     },
                     "custom/tx2gene": {
                         "branch": "master",
@@ -482,11 +467,6 @@
                         "git_sha": "bf60969a3abb40d294cffd5105f574637bfa6260",
                         "installed_by": ["subworkflows"]
                     },
-                    "orftable_fasta_gtf_buildorfcatalogue": {
-                        "branch": "custom-orf-catalogue",
-                        "git_sha": "6597190ca",
-                        "installed_by": ["subworkflows"]
-                    },
                     "quant_tximport_summarizedexperiment": {
                         "branch": "master",
                         "git_sha": "bf0ea0eb763f9d692093ef4b40cb2a46ac762194",
@@ -510,6 +490,36 @@
                     "utils_nfschema_plugin": {
                         "branch": "master",
                         "git_sha": "fdc08b8b1ae74f56686ce21f7ea11ad11990ce57",
+                        "installed_by": ["subworkflows"]
+                    }
+                }
+            }
+        },
+        "https://github.com/pinin4fjords/nf-core-modules.git": {
+            "modules": {
+                "nf-core": {
+                    "custom/bed12codonpositions": {
+                        "branch": "custom-bed12codonpositions",
+                        "git_sha": "73cfad118c8c65461cc3dc6bdaa3d9852e8234c9",
+                        "installed_by": ["modules"]
+                    },
+                    "custom/orfmerge": {
+                        "branch": "custom-orf-catalogue",
+                        "git_sha": "ee7eaa363c7d22fade0394625125d6e6f1342c02",
+                        "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
+                    },
+                    "custom/orfnormalise": {
+                        "branch": "custom-orf-catalogue",
+                        "git_sha": "ee7eaa363c7d22fade0394625125d6e6f1342c02",
+                        "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
+                    }
+                }
+            },
+            "subworkflows": {
+                "nf-core": {
+                    "orftable_fasta_gtf_buildorfcatalogue": {
+                        "branch": "custom-orf-catalogue",
+                        "git_sha": "ee7eaa363c7d22fade0394625125d6e6f1342c02",
                         "installed_by": ["subworkflows"]
                     }
                 }
