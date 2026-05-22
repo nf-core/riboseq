@@ -15,7 +15,7 @@ components:
   - quantify_inframe_psite_orf
   - orf_count_matrix
 input:
-  - ch_orf_catalogue_bed:
+  - ch_catalogue_bed:
       description: Cohort ORF catalogue BED12 (from `ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE`)
       pattern: "*.bed"
   - ch_psite_tracks:
