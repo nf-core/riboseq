@@ -588,14 +588,13 @@ workflow RIBOSEQ {
     }
 
     //
-    // PRICE (Erhard et al. 2018) - Tier-2 opt-in ORF caller for near-cognate
-    // ORF discovery. Estimates a shared cohort-level codon-position model via
-    // EM and is invoked once across the riboseq cohort (one IndexGenome run
-    // followed by one PRICE run over all riboseq BAMs). Honours
-    // --extended_orf_analysis by feeding the hybrid GTF when active.
+    // PRICE (Erhard et al. 2018) - opt-in near-cognate ORF caller. Estimates
+    // a shared cohort-level codon-position model via EM and is invoked once
+    // across the riboseq cohort (one IndexGenome run followed by one PRICE
+    // run over all riboseq BAMs).
     //
     if (params.run_price) {
-        log.warn "PRICE is enabled via --run_price. PRICE estimates a shared cohort-level codon-position model via EM; runtime at genome-wide scale is comparable to Rp-Bp. Plan compute accordingly."
+        log.warn "PRICE is enabled via --run_price. PRICE estimates a shared cohort-level codon-position model via EM; runtime at genome-wide scale is comparable to other heavy ORF callers. Plan compute accordingly."
 
         def ch_price_fasta_gtf = extended_orf_active ?
             ch_fasta_gtf_extended :
