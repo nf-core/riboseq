@@ -392,7 +392,9 @@ workflow RIBOSEQ {
         ch_versions = ch_versions.mix(RIBOTISH_PREDICT_ALL.out.versions)
     }
 
-    if (!params.skip_ribotricer){
+    if (params.run_ribotricer){
+        log.warn "Ribotricer is enabled via --run_ribotricer. Benchmark data (FK/NGB, May 2026) found its ORF-score column is rank-unstable across biological replicates (mean Spearman 0.288 vs Jaccard 0.770). Its binary calls are usable, but do not rely on its scores as the primary ranking source; the cross-caller rank aggregation will exclude them."
+
         RIBOTRICER_PREPAREORFS(
             ch_fasta_gtf
         )
@@ -404,6 +406,28 @@ workflow RIBOSEQ {
         )
         ch_versions = ch_versions.mix(RIBOTRICER_DETECTORFS.out.versions)
     }
+
+    //
+    // Dynamic ORF-caller set for cross-caller agreement (issue #07).
+    // The enabled list reflects which callers ran at runtime; the agreement
+    // threshold and rank-aggregation set are derived from it so the logic
+    // works whether 2 (default) or 3 callers are active.
+    //
+    def enabled_orf_callers = []
+    if (!params.skip_ribotish)   { enabled_orf_callers << 'ribotish' }
+    if (!params.skip_ribocode)   { enabled_orf_callers << 'ribocode' }
+    if ( params.run_ribotricer)  { enabled_orf_callers << 'ribotricer' }
+
+    // Ribotricer contributes binary calls only; its scores are excluded from
+    // the cross-caller rank aggregation due to known rank instability.
+    def rank_aggregation_callers  = enabled_orf_callers - 'ribotricer'
+    // Strict-majority of enabled callers (floor(N/2)+1): N=2 -> 2 (both must
+    // agree), N=3 -> 2 (majority). Adapts as the caller set grows.
+    def orf_agreement_min_callers = enabled_orf_callers
+        ? enabled_orf_callers.size().intdiv(2) + 1
+        : 0
+    ch_enabled_orf_callers      = Channel.value(enabled_orf_callers)
+    ch_rank_aggregation_callers = Channel.value(rank_aggregation_callers)
 
     if (!params.skip_ribocode){
         // RiboCode requires transcriptome BAMs
