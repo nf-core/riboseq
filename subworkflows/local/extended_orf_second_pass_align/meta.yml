@@ -1,0 +1,40 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "extended_orf_second_pass_align"
+description: |
+  Second STAR pass against the hybrid transcriptome for extended-ORF discovery
+  (issue #171). Rebuilds a transcriptome FASTA from the hybrid GTF (gffread),
+  rebuilds a STAR index, then aligns Ribo-seq reads only, producing a hybrid
+  transcriptome BAM keyed to the hybrid annotation for RiboCode.
+keywords:
+  - star
+  - riboseq
+  - extended orf
+  - hybrid transcriptome
+components:
+  - gffread
+  - star/genomegenerate
+  - fastq_align_star
+input:
+  - ch_hybrid_gtf:
+      description: Canonical + novel hybrid GTF
+      pattern: "*.gtf"
+  - ch_fasta:
+      description: Genome FASTA
+      pattern: "*.fasta"
+  - ch_reads_for_alignment:
+      description: Pre-aligned reads channel (all sample types - subworkflow filters to riboseq)
+      pattern: "*.fastq.gz"
+  - star_ignore_sjdbgtf:
+      description: Forwarded to FASTQ_ALIGN_STAR (mirrors params.star_ignore_sjdbgtf)
+output:
+  - transcriptome_bam:
+      description: Hybrid transcriptome-coordinate BAM for Ribo-seq samples
+      pattern: "*.toTranscriptome.out.bam"
+  - multiqc_files:
+      description: STAR stats / flagstat / idxstats / log_final files for MultiQC
+      pattern: "*"
+authors:
+  - "@pinin4fjords"
+maintainers:
+  - "@pinin4fjords"

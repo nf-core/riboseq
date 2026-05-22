@@ -12,6 +12,7 @@ include { FASTQ_EQUALISE_READ_LENGTHS                                           
 include { BAM_DEDUP_UMI                   } from '../../subworkflows/nf-core/bam_dedup_umi'
 include { FASTQ_ALIGN_STAR                } from '../../subworkflows/nf-core/fastq_align_star'
 include { NOVEL_TRANSCRIPT_DISCOVERY      } from '../../subworkflows/local/novel_transcript_discovery'
+include { EXTENDED_ORF_SECOND_PASS_ALIGN  } from '../../subworkflows/local/extended_orf_second_pass_align'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -379,6 +380,42 @@ workflow RIBOSEQ {
         ch_hybrid_gtf = NOVEL_TRANSCRIPT_DISCOVERY.out.hybrid_gtf
     }
 
+    //
+    // Extended ORF gating shared across #165 (genome-BAM callers) and #171
+    // (second STAR pass + RiboCode rewire).
+    //
+    def novel_source_configured = !params.skip_stringtie || params.novel_gtf
+    def extended_orf_active = params.extended_orf_analysis && novel_source_configured
+
+    if (params.extended_orf_analysis && !novel_source_configured) {
+        log.warn "--extended_orf_analysis is enabled but no novel-transcript source is configured (--skip_stringtie is true and --novel_gtf is unset). The flag has no effect; ORF callers will run against the canonical GTF as usual."
+    }
+
+    //
+    // Second STAR pass against the hybrid transcriptome (issue #171). RiboCode
+    // requires a transcriptome-coordinate BAM keyed to whichever transcriptome
+    // FASTA was supplied at alignment time; the primary STAR pass is built
+    // against the reference transcriptome so novel StringTie transcripts are
+    // invisible to it. Re-align Ribo-seq samples only (RNA-seq and TI-seq are
+    // not consumed by RiboCode).
+    //
+    // Compute cost: roughly doubles STAR alignment work for Ribo-seq samples.
+    //
+
+    ch_hybrid_transcriptome_bam = Channel.empty()
+
+    if (extended_orf_active) {
+        EXTENDED_ORF_SECOND_PASS_ALIGN(
+            ch_hybrid_gtf,
+            ch_fasta,
+            ch_reads_for_alignment,
+            params.star_ignore_sjdbgtf
+        )
+
+        ch_hybrid_transcriptome_bam = EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcriptome_bam
+        ch_multiqc_files            = ch_multiqc_files.mix(EXTENDED_ORF_SECOND_PASS_ALIGN.out.multiqc_files)
+    }
+
     ch_bams_for_analysis = ch_genome_bam_by_type.riboseq.join(ch_genome_bam_index)
     // Use the canonical (one-transcript-per-gene) annotation backbone for ORF
     // calling, P-site calibration and DTE; the full `ch_gtf` is reserved for
@@ -387,19 +424,11 @@ workflow RIBOSEQ {
     ch_fasta_gtf_for_ribotish = ch_fasta_gtf.map{ meta, fasta, gtf -> [ meta, fasta, gtf, [] ] }.first()
 
     //
-    // Extended ORF discovery (issue #165): when --extended_orf_analysis is on
-    // and a novel-transcript source is configured, route genome-BAM ORF callers
-    // (Ribo-TISH predict, Ribotricer prepare-orfs) to the hybrid GTF so that
-    // novel intergenic ORFs are discovered. RiboCode, riboWaltz, plastid and
-    // Salmon-based quantification continue on the canonical backbone
-    // (transcriptome-BAM constraint, addressed in #171).
+    // Extended ORF discovery (issues #165 + #171): genome-BAM ORF callers
+    // (Ribo-TISH predict, Ribotricer prepare-orfs) get the hybrid GTF when
+    // extended-ORF mode is active; RiboCode additionally consumes the hybrid
+    // transcriptome BAM produced by the second STAR pass above.
     //
-    def novel_source_configured = !params.skip_stringtie || params.novel_gtf
-    def extended_orf_active = params.extended_orf_analysis && novel_source_configured
-
-    if (params.extended_orf_analysis && !novel_source_configured) {
-        log.warn "--extended_orf_analysis is enabled but no novel-transcript source is configured (--skip_stringtie is true and --novel_gtf is unset). The flag has no effect; ORF callers will run against the canonical GTF as usual."
-    }
 
     ch_fasta_gtf_extended = ch_fasta
         .combine(ch_hybrid_gtf)
@@ -492,17 +521,29 @@ workflow RIBOSEQ {
     ch_rank_aggregation_callers = Channel.value(rank_aggregation_callers)
 
     if (!params.skip_ribocode){
-        // RiboCode requires transcriptome BAMs
-        ch_transcriptome_bams_for_ribocode = ch_transcriptome_bam
+        // RiboCode requires transcriptome-coordinate BAMs. When extended-ORF
+        // analysis is active, swap in the hybrid transcriptome BAM (second
+        // STAR pass against the hybrid GTF, Ribo-seq only) plus the hybrid
+        // GTF as the annotation source so novel intergenic transcripts are
+        // visible to RiboCode. Otherwise keep the full-GTF wiring.
+        ch_ribocode_transcriptome_bam_source = extended_orf_active ?
+            ch_hybrid_transcriptome_bam :
+            ch_transcriptome_bam
+
+        ch_transcriptome_bams_for_ribocode = ch_ribocode_transcriptome_bam_source
             .branch { meta, bam ->
                 riboseq: meta.sample_type == 'riboseq'
                     return [ meta, bam ]
             }
             .riboseq
 
+        def ch_ribocode_gtf_source = extended_orf_active ?
+            ch_hybrid_gtf :
+            ch_gtf
+
         // Step 1: Update GTF annotation
         RIBOCODE_GTFUPDATE(
-            ch_gtf.map { [ [:], it ] }.first()
+            ch_ribocode_gtf_source.map { [ [:], it ] }.first()
         )
 
         // Step 2: Prepare annotation files
