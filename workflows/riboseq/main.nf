@@ -593,14 +593,13 @@ workflow RIBOSEQ {
     }
 
     //
-    // PRICE (Erhard et al. 2018) - Tier-2 opt-in ORF caller for near-cognate
-    // ORF discovery. Estimates a shared cohort-level codon-position model via
-    // EM and is invoked once across the riboseq cohort (one IndexGenome run
-    // followed by one PRICE run over all riboseq BAMs). Honours
-    // --extended_orf_analysis by feeding the hybrid GTF when active.
+    // PRICE (Erhard et al. 2018) - opt-in near-cognate ORF caller. Estimates
+    // a shared cohort-level codon-position model via EM and is invoked once
+    // across the riboseq cohort (one IndexGenome run followed by one PRICE
+    // run over all riboseq BAMs).
     //
     if (params.run_price) {
-        log.warn "PRICE is enabled via --run_price. PRICE estimates a shared cohort-level codon-position model via EM; runtime at genome-wide scale is comparable to Rp-Bp. Plan compute accordingly."
+        log.warn "PRICE is enabled via --run_price. PRICE estimates a shared cohort-level codon-position model via EM; runtime at genome-wide scale is comparable to other heavy ORF callers. Plan compute accordingly."
 
         def ch_price_fasta_gtf = extended_orf_active ?
             ch_fasta_gtf_extended :
@@ -813,12 +812,11 @@ workflow RIBOSEQ {
             .collectFile(name: 'gene_inframe_psite_counts.tsv') { meta, file -> file }
             .map { file -> [ [:], file ] }
 
-        // Issue #168 Tier 1: when extended ORF analysis is active and a cohort
-        // ORF P-site matrix exists, replace the plastid-derived gene-CDS p-site
-        // counts with a re-aggregation that sums ONLY canonical_cds ORFs from
-        // the catalogue. This keeps the gene-level TE numerator clean of
-        // uORF/dORF dynamics, which are picked up separately in the Tier 2
-        // ORF-level DTE below.
+        // When extended ORF analysis is active and a cohort ORF P-site matrix
+        // exists, replace the plastid-derived gene-CDS P-site counts with a
+        // re-aggregation that sums ONLY canonical_cds ORFs from the catalogue.
+        // Keeps the gene-level TE numerator clean of uORF/dORF dynamics, which
+        // are picked up separately in the per-ORF DTE below.
         if (extended_orf_active && enabled_orf_callers_for_catalogue) {
             ORF_TO_GENE_CDS_COUNTS(
                 QUANTIFY_ORF_PSITE.out.orf_count_matrix
@@ -872,12 +870,12 @@ workflow RIBOSEQ {
         }
 
         //
-        // Issue #168 Tier 2: per-ORF DTE. Prep a counts matrix joining the
-        // per-ORF Ribo-seq P-site counts with the gene-level Salmon counts via
-        // orf_to_gene.tsv (novel intergenic ORFs without a host gene drop out).
-        // Feeds the same DTE engines (anota2seq / deltaTE) but at ORF
-        // resolution. Row-independence caveat: ORFs sharing a gene-level
-        // Salmon denominator are perfectly correlated after the join; see
+        // Per-ORF DTE: prep a counts matrix joining the per-ORF Ribo-seq
+        // P-site counts with gene-level Salmon counts via orf_to_gene.tsv
+        // (novel intergenic ORFs without a host gene drop out). Feeds the
+        // same DTE engines (anota2seq / deltaTE) at ORF resolution.
+        // Row-independence caveat: ORFs sharing a gene-level Salmon
+        // denominator are perfectly correlated after the join; see
         // docs/usage.md.
         //
         if (extended_orf_active && enabled_orf_callers_for_catalogue && !params.skip_plastid) {

@@ -1,9 +1,9 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
 name: orf_to_gene_cds_counts
 description: |
-  Tier 1 of issue #168. Sum per-ORF P-site counts to the gene level, keeping
-  only ORFs whose class is `canonical_cds`. Emits the replacement Ribo-seq
-  numerator for the gene-level translational-efficiency analysis.
+  Sum per-ORF P-site counts to the gene level, keeping only ORFs whose class
+  is `canonical_cds`. Emits the replacement Ribo-seq numerator for the
+  gene-level translational-efficiency analysis.
 keywords:
   - riboseq
   - orf
