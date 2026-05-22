@@ -387,12 +387,13 @@ workflow RIBOSEQ {
     ch_fasta_gtf_for_ribotish = ch_fasta_gtf.map{ meta, fasta, gtf -> [ meta, fasta, gtf, [] ] }.first()
 
     //
-    // Extended ORF discovery (issue #165): when --extended_orf_analysis is on
-    // and a novel-transcript source is configured, route genome-BAM ORF callers
+    // Extended ORF discovery: when --extended_orf_analysis is on and a
+    // novel-transcript source is configured, route genome-BAM ORF callers
     // (Ribo-TISH predict, Ribotricer prepare-orfs) to the hybrid GTF so that
     // novel intergenic ORFs are discovered. RiboCode, riboWaltz, plastid and
     // Salmon-based quantification continue on the canonical backbone
-    // (transcriptome-BAM constraint, addressed in #171).
+    // (transcriptome-BAM consumers need an annotation matching the BAM they
+    // were built against).
     //
     def novel_source_configured = !params.skip_stringtie || params.novel_gtf
     def extended_orf_active = params.extended_orf_analysis && novel_source_configured
@@ -470,7 +471,7 @@ workflow RIBOSEQ {
     }
 
     //
-    // Dynamic ORF-caller set for cross-caller agreement (issue #07).
+    // Dynamic ORF-caller set for cross-caller agreement.
     // The enabled list reflects which callers ran at runtime; the agreement
     // threshold and rank-aggregation set are derived from it so the logic
     // works whether 2 (default) or 3 callers are active.
