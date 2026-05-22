@@ -13,9 +13,7 @@ include { BAM_DEDUP_UMI       } from '../../subworkflows/nf-core/bam_dedup_umi'
 include { FASTQ_ALIGN_STAR    } from '../../subworkflows/nf-core/fastq_align_star'
 include { NOVEL_TRANSCRIPT_DISCOVERY      } from '../../subworkflows/local/novel_transcript_discovery'
 include { EXTENDED_ORF_SECOND_PASS_ALIGN  } from '../../subworkflows/local/extended_orf_second_pass_align'
-include { FASTA_GTF_BAM_RPBP       } from '../../subworkflows/nf-core/fasta_gtf_bam_rpbp/main'
-include { GEDI_INDEXGENOME         } from '../../modules/nf-core/gedi/indexgenome/main'
-include { GEDI_PRICE               } from '../../modules/nf-core/gedi/price/main'
+include { ORF_CALLER_DISPATCH      } from '../../subworkflows/local/orf_caller_dispatch'
 include { ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE } from '../../subworkflows/nf-core/orftable_fasta_gtf_buildorfcatalogue/main'
 include { QUANTIFY_ORF_PSITE       } from '../../subworkflows/local/quantify_orf_psite'
 include { COVERAGE_TRACKS          } from '../../subworkflows/local/coverage_tracks'
@@ -36,16 +34,7 @@ include { GAWK as FILTER_COUNTS_CANONICAL                      } from '../../mod
 //
 include { MULTIQC                                              } from '../../modules/nf-core/multiqc/main'
 include { UMITOOLS_PREPAREFORRSEM as UMITOOLS_PREPAREFORSALMON } from '../../modules/nf-core/umitools/prepareforrsem'
-include { RIBOTISH_QUALITY as RIBOTISH_QUALITY_RIBOSEQ         } from '../../modules/nf-core/ribotish/quality'
 include { RIBOTISH_QUALITY as RIBOTISH_QUALITY_TISEQ           } from '../../modules/nf-core/ribotish/quality'
-include { RIBOTISH_PREDICT as RIBOTISH_PREDICT_INDIVIDUAL      } from '../../modules/nf-core/ribotish/predict'
-include { RIBOTISH_PREDICT as RIBOTISH_PREDICT_ALL             } from '../../modules/nf-core/ribotish/predict'
-include { RIBOTRICER_PREPAREORFS                               } from '../../modules/nf-core/ribotricer/prepareorfs'
-include { RIBOTRICER_DETECTORFS                                } from '../../modules/nf-core/ribotricer/detectorfs'
-include { RIBOCODE_GTFUPDATE                                   } from '../../modules/nf-core/ribocode/gtfupdate'
-include { RIBOCODE_PREPARE                                     } from '../../modules/nf-core/ribocode/prepare'
-include { RIBOCODE_METAPLOTS                                   } from '../../modules/nf-core/ribocode/metaplots'
-include { RIBOCODE_RIBOCODE                                    } from '../../modules/nf-core/ribocode/ribocode'
 include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../modules/nf-core/anota2seq/anota2seqrun'
 include { DESEQ2_DELTATE                                       } from '../../modules/local/deseq2/deltate'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
@@ -392,131 +381,25 @@ workflow RIBOSEQ {
     }
 
     //
-    // Take the riboseq samples and route to ribotish
+    // SUBWORKFLOW: Conditional ORF-caller dispatch (Ribo-TISH, Ribotricer,
+    // Rp-Bp, PRICE, RiboCode). Routes to hybrid annotation when extended-ORF
+    // analysis is active, canonical otherwise.
     //
 
     ch_bams_for_analysis = ch_genome_bam_by_type.riboseq.join(ch_genome_bam_index)
-    // Use the canonical (one-transcript-per-gene) annotation backbone for ORF
-    // calling, P-site calibration and DTE; the full `ch_gtf` is reserved for
-    // genome-guided alignment.
-    ch_fasta_gtf = ch_fasta.combine(ch_canonical_gtf).map{ fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }.first()
-    ch_fasta_gtf_for_ribotish = ch_fasta_gtf.map{ meta, fasta, gtf -> [ meta, fasta, gtf, [] ] }.first()
 
-    //
-    // Extended ORF discovery (issues #165 + #171): when --extended_orf_analysis
-    // is on and a novel-transcript source is configured, route genome-BAM ORF
-    // callers (Ribo-TISH predict, Ribotricer prepare-orfs) to the hybrid GTF
-    // so that novel intergenic ORFs are discovered. Ribo-TISH additionally
-    // receives the canonical backbone via -a for background + classification.
-    // RiboCode additionally consumes the hybrid transcriptome BAM produced by
-    // the second STAR pass above (#171); riboWaltz, plastid and Salmon-based
-    // quantification stay on the canonical backbone by design.
-    // `novel_source_configured` and `extended_orf_active` are defined earlier,
-    // alongside the second STAR pass that builds ch_hybrid_transcriptome_bam.
-    //
-    ch_fasta_gtf_extended = ch_fasta
-        .combine(ch_hybrid_gtf)
-        .map { fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }
-        .first()
-    ch_fasta_gtf_for_ribotish_extended = ch_fasta
-        .combine(ch_hybrid_gtf)
-        .map { fasta, hybrid -> [ [id: 'reference'], fasta, hybrid, [] ] }
-        .first()
-
-    if (!params.skip_ribotish){
-        RIBOTISH_QUALITY_RIBOSEQ(
-            ch_bams_for_analysis,
-            ch_canonical_gtf.map { [ [:], it ] }.first()
-        )
-        ch_versions      = ch_versions.mix(RIBOTISH_QUALITY_RIBOSEQ.out.versions)
-        ch_multiqc_files = ch_multiqc_files.mix(RIBOTISH_QUALITY_RIBOSEQ.out.distribution.collect{it[1]})
-
-        ribotish_predict_inputs = ch_bams_for_analysis
-            .join(RIBOTISH_QUALITY_RIBOSEQ.out.offset)
-            .multiMap{ meta, bam, bai, offset ->
-                bam: [ meta, bam, bai ]
-                offset: [ meta, offset ]
-            }
-
-        def ch_ribotish_predict_annotation = extended_orf_active ?
-            ch_fasta_gtf_for_ribotish_extended :
-            ch_fasta_gtf_for_ribotish
-
-        RIBOTISH_PREDICT_INDIVIDUAL(
-            ribotish_predict_inputs.bam,
-            [[:],[],[]],
-            ch_ribotish_predict_annotation,
-            [[:],[]],
-            ribotish_predict_inputs.offset,
-            [[:],[]]
-        )
-        ch_versions = ch_versions.mix(RIBOTISH_PREDICT_INDIVIDUAL.out.versions)
-
-        RIBOTISH_PREDICT_ALL(
-            ribotish_predict_inputs.bam.map{meta, bam, bai -> [[id:'allsamples'], bam, bai]}.groupTuple(),
-            [[:],[],[]],
-            ch_ribotish_predict_annotation,
-            [[:],[]],
-            ribotish_predict_inputs.offset.map{meta, offset -> [[id:'allsamples'], offset]}.groupTuple(),
-            [[:],[]]
-        )
-        ch_versions = ch_versions.mix(RIBOTISH_PREDICT_ALL.out.versions)
-    }
-
-    if (params.run_ribotricer){
-        log.warn "Ribotricer is enabled via --run_ribotricer. Benchmark data (FK/NGB, May 2026) found its ORF-score column is rank-unstable across biological replicates (mean Spearman 0.288 vs Jaccard 0.770). Its binary calls are usable, but do not rely on its scores as the primary ranking source; the cross-caller rank aggregation will exclude them."
-
-        def ch_ribotricer_annotation = extended_orf_active ?
-            ch_fasta_gtf_extended :
-            ch_fasta_gtf
-
-        RIBOTRICER_PREPAREORFS(
-            ch_ribotricer_annotation
-        )
-        ch_versions = ch_versions.mix(RIBOTRICER_PREPAREORFS.out.versions)
-
-        RIBOTRICER_DETECTORFS(
-            ch_bams_for_analysis,
-            RIBOTRICER_PREPAREORFS.out.candidate_orfs
-        )
-        ch_versions = ch_versions.mix(RIBOTRICER_DETECTORFS.out.versions)
-    }
-
-    if (params.run_rpbp){
-        log.warn "Rp-Bp is enabled via --run_rpbp. Benchmark data (FK/NGB, May 2026) places it at Tier-1 for both rank concordance (mean Spearman 0.893) and set overlap (mean Jaccard 0.673), but expect ~20-24h per replicate at genome-wide scale because the Bayesian MCMC fit dominates. Plan compute accordingly."
-
-        def ch_rpbp_annotation = extended_orf_active ?
-            ch_fasta_gtf_extended :
-            ch_fasta_gtf
-
-        FASTA_GTF_BAM_RPBP(
-            ch_bams_for_analysis,
-            ch_rpbp_annotation
-        )
-    }
-
-    if (params.run_price){
-        log.warn "PRICE is enabled via --run_price. PRICE (Erhard et al. 2018) estimates a shared cohort-level codon-position model via EM and is opt-in because its runtime at genome-wide scale is comparable to Rp-Bp. Plan compute accordingly."
-
-        def ch_price_fasta_gtf = extended_orf_active ?
-            ch_fasta_gtf_extended :
-            ch_fasta_gtf
-
-        GEDI_INDEXGENOME(
-            ch_price_fasta_gtf
-        )
-
-        // PRICE estimates the codon-position model from the riboseq cohort
-        // as a whole, so feed all riboseq BAMs into a single PRICE call.
-        ch_price_inputs = ch_bams_for_analysis
-            .map { meta, bam, bai -> [ [id: 'allsamples'], bam, bai ] }
-            .groupTuple()
-
-        GEDI_PRICE(
-            ch_price_inputs,
-            GEDI_INDEXGENOME.out.index.first()
-        )
-    }
+    ORF_CALLER_DISPATCH(
+        ch_bams_for_analysis,
+        ch_transcriptome_bam,
+        ch_hybrid_transcriptome_bam,
+        ch_fasta,
+        ch_canonical_gtf,
+        ch_hybrid_gtf,
+        ch_gtf,
+        extended_orf_active
+    )
+    ch_versions      = ch_versions.mix(ORF_CALLER_DISPATCH.out.versions)
+    ch_multiqc_files = ch_multiqc_files.mix(ORF_CALLER_DISPATCH.out.multiqc_files)
 
     //
     // Dynamic ORF-caller set for cross-caller agreement (issue #07).
@@ -543,65 +426,6 @@ workflow RIBOSEQ {
     ch_enabled_orf_callers      = Channel.value(enabled_orf_callers)
     ch_rank_aggregation_callers = Channel.value(rank_aggregation_callers)
 
-    if (!params.skip_ribocode){
-        // RiboCode requires transcriptome-coordinate BAMs. When extended-ORF
-        // analysis is active (#171), swap in the hybrid transcriptome BAM
-        // (second STAR pass against the hybrid GTF, Ribo-seq only) plus the
-        // hybrid GTF as the annotation source so novel intergenic transcripts
-        // are visible to RiboCode. Otherwise keep the canonical wiring.
-        ch_ribocode_transcriptome_bam_source = extended_orf_active ?
-            ch_hybrid_transcriptome_bam :
-            ch_transcriptome_bam
-
-        ch_transcriptome_bams_for_ribocode = ch_ribocode_transcriptome_bam_source
-            .branch { meta, bam ->
-                riboseq: meta.sample_type == 'riboseq'
-                    return [ meta, bam ]
-            }
-            .riboseq
-
-        def ch_ribocode_gtf_source = extended_orf_active ?
-            ch_hybrid_gtf :
-            ch_gtf
-
-        // Step 1: Update GTF annotation
-        def ribocode_gtf_meta_id = extended_orf_active ? 'hybrid_reference' : 'reference'
-        RIBOCODE_GTFUPDATE(
-            ch_ribocode_gtf_source.map { [ [id: ribocode_gtf_meta_id], it ] }.first()
-        )
-
-        // Step 2: Prepare annotation files
-        RIBOCODE_PREPARE(
-            ch_fasta.map { [ [:], it ] }.first(),
-            RIBOCODE_GTFUPDATE.out.gtf
-        )
-
-        // Step 3: Generate metaplots and config for each sample
-        RIBOCODE_METAPLOTS(
-            ch_transcriptome_bams_for_ribocode,
-            RIBOCODE_PREPARE.out.annotation
-        )
-
-        // Step 4: Run RiboCode ORF detection
-        ch_ribocode_with_config = ch_transcriptome_bams_for_ribocode
-            .join(RIBOCODE_METAPLOTS.out.config, remainder: true)
-
-        ch_ribocode_with_config
-            .filter { _meta, _bam, config -> config == null }
-            .subscribe { meta, _bam, _config ->
-                log.warn "Skipping ${meta.id} for RiboCode: RIBOCODE_METAPLOTS produced no config (likely sparse periodicity data)."
-            }
-
-        ch_ribocode_inputs = ch_ribocode_with_config
-            .filter { _meta, _bam, config -> config != null }
-
-        RIBOCODE_RIBOCODE(
-            ch_ribocode_inputs.map { meta, bam, _config  -> [ meta, bam ] },
-            RIBOCODE_PREPARE.out.annotation,
-            ch_ribocode_inputs.map { meta, _bam, config  -> [ meta, config ] }
-        )
-    }
-
     //
     // Cross-sample ORF catalogue (issue #167). Built once per pipeline run
     // when extended-ORF analysis is enabled AND at least one ORF caller ran.
@@ -611,17 +435,11 @@ workflow RIBOSEQ {
     // merged BED12 + sidecar TSV + ORF-to-gene mapping + AA FASTA.
     //
     if (extended_orf_active && enabled_orf_callers) {
-        ch_ribotish_pred_cat   = (!params.skip_ribotish)  ? RIBOTISH_PREDICT_INDIVIDUAL.out.predictions : Channel.empty()
-        ch_ribocode_pred_cat   = (!params.skip_ribocode)  ? RIBOCODE_RIBOCODE.out.orf_txt              : Channel.empty()
-        ch_ribotricer_pred_cat = ( params.run_ribotricer) ? RIBOTRICER_DETECTORFS.out.orfs             : Channel.empty()
-        ch_rpbp_pred_cat       = ( params.run_rpbp)       ? FASTA_GTF_BAM_RPBP.out.predicted           : Channel.empty()
-        ch_price_pred_cat      = ( params.run_price)      ? GEDI_PRICE.out.orfs_tsv                   : Channel.empty()
-
-        ch_orf_tables = ch_ribotish_pred_cat  .map { meta, f -> [ meta, f, 'ribotish'   ] }
-            .mix(ch_ribocode_pred_cat         .map { meta, f -> [ meta, f, 'ribocode'   ] })
-            .mix(ch_ribotricer_pred_cat       .map { meta, f -> [ meta, f, 'ribotricer' ] })
-            .mix(ch_rpbp_pred_cat             .map { meta, f -> [ meta, f, 'rpbp'       ] })
-            .mix(ch_price_pred_cat            .map { meta, f -> [ meta, f, 'price'      ] })
+        ch_orf_tables = ORF_CALLER_DISPATCH.out.ribotish_predictions  .map { meta, f -> [ meta, f, 'ribotish'   ] }
+            .mix(ORF_CALLER_DISPATCH.out.ribocode_predictions         .map { meta, f -> [ meta, f, 'ribocode'   ] })
+            .mix(ORF_CALLER_DISPATCH.out.ribotricer_predictions       .map { meta, f -> [ meta, f, 'ribotricer' ] })
+            .mix(ORF_CALLER_DISPATCH.out.rpbp_predictions             .map { meta, f -> [ meta, f, 'rpbp'       ] })
+            .mix(ORF_CALLER_DISPATCH.out.price_predictions            .map { meta, f -> [ meta, f, 'price'      ] })
 
         ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE(
             ch_orf_tables,
