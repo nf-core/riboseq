@@ -12,10 +12,9 @@ include { FASTQ_EQUALISE_READ_LENGTHS                                           
 include { BAM_DEDUP_UMI       } from '../../subworkflows/nf-core/bam_dedup_umi'
 include { FASTQ_ALIGN_STAR    } from '../../subworkflows/nf-core/fastq_align_star'
 include { FASTQ_ALIGN_STAR as FASTQ_ALIGN_STAR_HYBRID } from '../../subworkflows/nf-core/fastq_align_star'
-include { BAM_STRINGTIE_MERGE      } from '../../subworkflows/nf-core/bam_stringtie_merge'
+include { NOVEL_TRANSCRIPT_DISCOVERY } from '../../subworkflows/local/novel_transcript_discovery'
 include { GFFREAD as GFFREAD_HYBRID_TRANSCRIPTOME           } from '../../modules/nf-core/gffread'
 include { STAR_GENOMEGENERATE as STAR_GENOMEGENERATE_HYBRID } from '../../modules/nf-core/star/genomegenerate'
-include { GTF_HYBRIDMERGE_GFFCOMPARE } from '../../subworkflows/nf-core/gtf_hybridmerge_gffcompare/main'
 include { FASTA_GTF_BAM_RPBP       } from '../../subworkflows/nf-core/fasta_gtf_bam_rpbp/main'
 include { GEDI_INDEXGENOME         } from '../../modules/nf-core/gedi/indexgenome/main'
 include { GEDI_PRICE               } from '../../modules/nf-core/gedi/price/main'
@@ -314,16 +313,9 @@ workflow RIBOSEQ {
 
     //
     // SUBWORKFLOW: Novel transcript discovery and hybrid GTF construction.
-    //
-    // Two upstream sources feed the same downstream chain
-    // (gffcompare -> class-code filter -> optional rRNA blacklist intersect
-    //  -> concat with canonical):
-    //   1. `--novel_gtf <file>`  : user-supplied annotation, skip StringTie.
-    //   2. `--skip_stringtie false`: run StringTie on RNA-seq BAMs (preferred)
-    //      or fall back to Ribo-seq BAMs with tightened parameters.
-    //
-    // When neither path produces novel transcripts, ch_hybrid_gtf falls back
-    // to ch_canonical_gtf so downstream wiring stays uniform.
+    // When neither StringTie nor a user-supplied novel GTF is configured, the
+    // hybrid GTF falls back to the canonical backbone so downstream wiring
+    // stays uniform.
     //
 
     ch_hybrid_gtf = ch_canonical_gtf
@@ -332,75 +324,19 @@ workflow RIBOSEQ {
     def has_user_novel_gtf = params.novel_gtf as Boolean
 
     if (run_stringtie || has_user_novel_gtf) {
-
-        ch_novel_pre_filter = Channel.empty()
-
-        if (has_user_novel_gtf) {
-            ch_novel_pre_filter = Channel
-                .fromPath(params.novel_gtf, checkIfExists: true)
-                .map { gtf -> [ [id: 'stringtie_merge'], gtf ] }
-        }
-        else {
-            // Prefer RNA-seq BAMs; fall back to Ribo-seq with tightened args.
-            // The fallback is signalled via meta.stringtie_fallback so the
-            // `withName: STRINGTIE_STRINGTIE` block in conf/modules.config can
-            // swap ext.args based on the BAM source.
-            def ribo_fallback_args = params.extra_stringtie_args ?: params.stringtie_ribo_fallback_args
-
-            ch_rnaseq_count = ch_genome_bam_by_type.rnaseq.count()
-
-            ch_stringtie_rnaseq = ch_genome_bam_by_type.rnaseq
-                .map { meta, bam -> [ meta + [stringtie_fallback: false], bam ] }
-
-            // Ribo-seq is only consumed when no RNA-seq BAMs are present.
-            // `combine` with the count value channel gates the emission.
-            ch_stringtie_ribo = ch_genome_bam_by_type.riboseq
-                .combine(ch_rnaseq_count)
-                .filter { _meta, _bam, rna_count -> rna_count == 0 }
-                .map { meta, bam, _rna_count ->
-                    [ meta + [stringtie_fallback: true], bam ]
-                }
-
-            ch_rnaseq_count
-                .filter { it == 0 }
-                .subscribe {
-                    log.warn "No RNA-seq BAMs available for StringTie assembly. Using Ribo-seq BAMs with conservative parameters (${ribo_fallback_args}). Novel transcript assemblies may contain artefacts; review carefully and consider supplying --novel_gtf from a dedicated RNA-seq run."
-                }
-
-            BAM_STRINGTIE_MERGE(
-                ch_stringtie_rnaseq.mix(ch_stringtie_ribo),
-                ch_gtf.map { gtf -> [ [:], gtf ] }
-            )
-
-            ch_novel_pre_filter = BAM_STRINGTIE_MERGE.out.stringtie_gtf
-                .map { _meta, gtf -> [ [id: 'stringtie_merge'], gtf ] }
-        }
-
-        //
-        // Classify novel transcripts against the full reference GTF, drop
-        // class codes not in --stringtie_class_codes, optionally subtract a
-        // strand-aware blacklist, then concatenate with the canonical backbone
-        // (synthesising parent gene rows for any novel transcripts whose
-        // gene_id isn't already in the backbone). One subworkflow call covers
-        // gffcompare + gawk filter + (optional) bedtools intersect + gawk concat.
-        //
-        ch_blacklist_bed = params.rrna_blacklist
-            ? Channel.fromPath(params.rrna_blacklist, checkIfExists: true).map { bed -> [ [id: 'rrna_blacklist'], bed ] }
-            : Channel.empty()
-
-        if (!params.rrna_blacklist) {
-            log.info "No rRNA/repeat blacklist supplied via --rrna_blacklist; skipping post-assembly blacklist intersect."
-        }
-
-        GTF_HYBRIDMERGE_GFFCOMPARE(
-            ch_novel_pre_filter,
-            ch_gtf.map { gtf -> [ [:], gtf ] }.first(),
-            ch_canonical_gtf.map { gtf -> [ [id: 'hybrid_reference'], gtf ] }.first(),
-            Channel.value(params.stringtie_class_codes),
-            ch_blacklist_bed
+        NOVEL_TRANSCRIPT_DISCOVERY(
+            ch_genome_bam_by_type.rnaseq,
+            ch_genome_bam_by_type.riboseq,
+            ch_gtf,
+            ch_canonical_gtf,
+            has_user_novel_gtf ? params.novel_gtf : null,
+            run_stringtie,
+            params.stringtie_class_codes,
+            params.rrna_blacklist,
+            params.extra_stringtie_args ?: params.stringtie_ribo_fallback_args
         )
 
-        ch_hybrid_gtf = GTF_HYBRIDMERGE_GFFCOMPARE.out.hybrid_gtf.map { _meta, gtf -> gtf }
+        ch_hybrid_gtf = NOVEL_TRANSCRIPT_DISCOVERY.out.hybrid_gtf
     }
 
     //
