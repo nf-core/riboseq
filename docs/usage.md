@@ -358,9 +358,9 @@ The pipeline can extend the canonical reference annotation with novel intergenic
 
 ### Source 1: StringTie assembly
 
-Set `--skip_stringtie false` to enable assembly. The pipeline prefers RNA-seq BAMs (which is what every published microprotein / novel-ORF discovery workflow uses) and falls back to Ribo-seq BAMs with conservative parameters if no RNA-seq is available, emitting a warning.
+Set `--skip_stringtie false` to enable assembly. The pipeline prefers RNA-seq BAMs (which is what every published microprotein / novel-ORF discovery workflow uses) and falls back to Ribo-seq BAMs with tightened defaults if no RNA-seq is available, emitting a warning.
 
-When the Ribo-seq fallback is active, StringTie is invoked with `--stringtie_ribo_fallback_args` (default `-m 100 -c 5 -j 3 -f 0.05 -g 100`). These are first-pass empirical defaults extrapolated from RNA-seq parameter rationale and general Ribo-seq coverage properties; they are not literature-validated. Treat fallback assemblies with care. The fallback is overridden if `--extra_stringtie_args` is set.
+When the Ribo-seq fallback is active, StringTie is invoked with `--stringtie_ribo_fallback_args` (default `-m 100 -c 5 -j 3 -f 0.05 -g 100`). These are first-pass empirical defaults extrapolated from RNA-seq parameter rationale and general Ribo-seq coverage properties; they are not literature-validated. Treat fallback assemblies with care. If `--extra_stringtie_args` is set, it overrides the fallback defaults verbatim - the warning will still fire but the tightening is no longer in force, so review the assembly output before trusting it.
 
 Per-sample StringTie GTFs are merged with `stringtie --merge` into a unified annotation.
 
