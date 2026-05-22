@@ -1,0 +1,35 @@
+nextflow_process {
+
+    name "Test Process ORF_TO_GENE_CDS_COUNTS"
+    script "../main.nf"
+    process "ORF_TO_GENE_CDS_COUNTS"
+
+    tag "modules"
+    tag "modules_local"
+    tag "orf_to_gene_cds_counts"
+
+    test("stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'cohort' ],
+                    file('orf_psite_counts.tsv'),
+                    file('orf_to_gene.tsv'),
+                    file('orf_catalogue.tsv'),
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

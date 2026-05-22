@@ -40,8 +40,12 @@ include { GEDI_PRICE                                           } from '../../mod
 include { FASTA_GTF_BAM_RPBP                                   } from '../../subworkflows/nf-core/fasta_gtf_bam_rpbp/main'
 include { ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE                 } from '../../subworkflows/nf-core/orftable_fasta_gtf_buildorfcatalogue/main'
 include { QUANTIFY_ORF_PSITE                                   } from '../../subworkflows/local/quantify_orf_psite'
+include { ORF_TO_GENE_CDS_COUNTS                               } from '../../modules/local/orf_to_gene_cds_counts'
+include { DTE_COUNTS_PREP                                      } from '../../modules/local/dte_counts_prep'
 include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../modules/nf-core/anota2seq/anota2seqrun'
+include { ANOTA2SEQ_ANOTA2SEQRUN as ANOTA2SEQ_ANOTA2SEQRUN_ORF } from '../../modules/nf-core/anota2seq/anota2seqrun'
 include { DESEQ2_DELTATE                                       } from '../../modules/local/deseq2/deltate'
+include { DESEQ2_DELTATE as DESEQ2_DELTATE_ORF                 } from '../../modules/local/deseq2/deltate'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_PSEUDO_TE      } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
 include { RIBOWALTZ                                            } from '../../modules/nf-core/ribowaltz/main'
@@ -809,6 +813,22 @@ workflow RIBOSEQ {
             .collectFile(name: 'gene_inframe_psite_counts.tsv') { meta, file -> file }
             .map { file -> [ [:], file ] }
 
+        // Issue #168 Tier 1: when extended ORF analysis is active and a cohort
+        // ORF P-site matrix exists, replace the plastid-derived gene-CDS p-site
+        // counts with a re-aggregation that sums ONLY canonical_cds ORFs from
+        // the catalogue. This keeps the gene-level TE numerator clean of
+        // uORF/dORF dynamics, which are picked up separately in the Tier 2
+        // ORF-level DTE below.
+        if (extended_orf_active && enabled_orf_callers_for_catalogue) {
+            ORF_TO_GENE_CDS_COUNTS(
+                QUANTIFY_ORF_PSITE.out.orf_count_matrix
+                    .combine(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.orf_to_gene_tsv.map { _meta, tsv -> tsv })
+                    .combine(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.catalogue_tsv.map { _meta, tsv -> tsv })
+                    .map { meta, orf_counts, o2g, cat_tsv -> [meta, orf_counts, o2g, cat_tsv] }
+            )
+            ch_psite_counts_merged = ORF_TO_GENE_CDS_COUNTS.out.gene_counts
+        }
+
         REPLACE_RIBOSEQ_COUNTS_IN_MATRIX(
             ch_psite_counts_merged
                 .combine(QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled.map{ meta, counts -> counts })
@@ -849,6 +869,50 @@ workflow RIBOSEQ {
                 ch_samplesheet_matrix
             )
             ch_versions = ch_versions.mix(DESEQ2_DELTATE.out.versions)
+        }
+
+        //
+        // Issue #168 Tier 2: per-ORF DTE. Prep a counts matrix joining the
+        // per-ORF Ribo-seq P-site counts with the gene-level Salmon counts via
+        // orf_to_gene.tsv (novel intergenic ORFs without a host gene drop out).
+        // Feeds the same DTE engines (anota2seq / deltaTE) but at ORF
+        // resolution. Row-independence caveat: ORFs sharing a gene-level
+        // Salmon denominator are perfectly correlated after the join; see
+        // docs/usage.md.
+        //
+        if (extended_orf_active && enabled_orf_callers_for_catalogue && !params.skip_plastid) {
+            DTE_COUNTS_PREP(
+                QUANTIFY_ORF_PSITE.out.orf_count_matrix
+                    .combine(QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled.map { _meta, counts -> counts })
+                    .combine(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.orf_to_gene_tsv.map { _meta, tsv -> tsv })
+                    .map { meta, ribo, rna, o2g -> [ meta, ribo, rna, o2g ] }
+            )
+            ch_versions = ch_versions.mix(DTE_COUNTS_PREP.out.versions)
+
+            ch_orf_samplesheet_matrix = DTE_COUNTS_PREP.out.counts
+                .combine(ch_samplesheet)
+                .map { meta, counts, samplesheet -> [ meta, samplesheet, counts ] }
+                .first()
+
+            if (params.translational_efficiency_method == 'anota2seq') {
+                ANOTA2SEQ_ANOTA2SEQRUN_ORF(
+                    ch_contrasts,
+                    ch_orf_samplesheet_matrix
+                )
+                ch_versions = ch_versions.mix(ANOTA2SEQ_ANOTA2SEQRUN_ORF.out.versions)
+            }
+
+            if (params.translational_efficiency_method == 'deltate') {
+                DESEQ2_DELTATE_ORF(
+                    ch_contrasts,
+                    ch_orf_samplesheet_matrix
+                )
+                ch_versions = ch_versions.mix(DESEQ2_DELTATE_ORF.out.versions)
+            }
+
+            if (params.run_dotseq) {
+                log.info "--run_dotseq is set. The per-ORF DOTSeq DTE / DOU analysis is opt-in; DOTSeq is currently on Bioconductor devel and a dedicated module is pending (nf-core/modules#11742). This flag is a no-op until the module lands."
+            }
         }
     }
 
