@@ -14,9 +14,12 @@ samples. Primary rows whose mapped secondary id is absent from the
 secondary matrix are dropped. Primary rows with no mapping in the
 mapping table are also dropped.
 
-The two sample sets must be disjoint; the union of column names
-becomes the column space of the output, in `primary then secondary`
-order.
+Primary's column set is authoritative for the primary role. If any
+column in secondary overlaps with primary, the secondary copy is
+dropped (it almost always represents the same sample quantified in a
+different role, e.g. a Salmon all-sample matrix carrying its Ribo-seq
+columns alongside the wanted RNA-seq ones). The output column order
+is `primary then surviving-secondary`.
 
 When the secondary matrix is expanded by replication (multiple primary
 ids share one secondary id), the secondary columns of those rows are
@@ -111,12 +114,26 @@ def main():
     secondary = load_matrix("${secondary_counts}", opts.secondary_id_col, drop_cols=drop_cols)
     mapping = load_mapping("${mapping}", opts.primary_id_col, opts.secondary_id_col)
 
-    overlap = set(primary.columns) & set(secondary.columns)
+    # Sample IDs may overlap when the secondary matrix is wider than the
+    # secondary role demands (e.g. a Salmon gene matrix quantified across the
+    # whole sample sheet feeds the RNA-seq role, but its columns still include
+    # the Ribo-seq samples). Primary's columns are authoritative for the
+    # primary role, so drop those columns from secondary rather than failing.
+    overlap = sorted(set(primary.columns) & set(secondary.columns))
     if overlap:
-        raise SystemExit(
-            "Primary and secondary matrices share sample columns: "
-            + ", ".join(sorted(overlap))
+        print(
+            "Dropping {0} primary-role sample column(s) from secondary: {1}".format(
+                len(overlap), ", ".join(overlap)
+            ),
+            file=sys.stderr,
         )
+        secondary = secondary.drop(columns=overlap)
+        if secondary.shape[1] == 0:
+            raise SystemExit(
+                "Secondary matrix has no sample columns left after dropping primary-role "
+                "overlaps. Check that the secondary matrix includes the role-specific samples "
+                "(e.g. RNA-seq samples for the RNA-seq denominator)."
+            )
 
     keep_primary = primary.index[primary.index.isin(mapping.index)]
     mapped_secondary = mapping.loc[keep_primary]
