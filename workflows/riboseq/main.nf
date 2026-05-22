@@ -39,6 +39,7 @@ include { GEDI_INDEXGENOME                                     } from '../../mod
 include { GEDI_PRICE                                           } from '../../modules/nf-core/gedi/price'
 include { FASTA_GTF_BAM_RPBP                                   } from '../../subworkflows/nf-core/fasta_gtf_bam_rpbp/main'
 include { ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE                 } from '../../subworkflows/nf-core/orftable_fasta_gtf_buildorfcatalogue/main'
+include { QUANTIFY_ORF_PSITE                                   } from '../../subworkflows/local/quantify_orf_psite'
 include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../modules/nf-core/anota2seq/anota2seqrun'
 include { DESEQ2_DELTATE                                       } from '../../modules/local/deseq2/deltate'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
@@ -712,6 +713,22 @@ workflow RIBOSEQ {
         )
         ch_versions = ch_versions.mix(PLASTID_MAKE_WIGGLE.out.versions)
 
+        //
+        // Per-ORF P-site quantification (issue #166). Runs additively to the
+        // gene-level QUANTIFY_INFRAME_PSITE_PLASTID path. Gated on the same
+        // predicate as the catalogue invocation so it only fires when a
+        // catalogue exists.
+        //
+        if (extended_orf_active && enabled_orf_callers_for_catalogue) {
+            ch_orf_psite_tracks = PLASTID_MAKE_WIGGLE.out.tracks
+                .map { meta, tracks -> [ meta, tracks[0], tracks[1] ] }
+
+            QUANTIFY_ORF_PSITE (
+                ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.catalogue_bed12,
+                ch_orf_psite_tracks
+            )
+            ch_versions = ch_versions.mix(QUANTIFY_ORF_PSITE.out.versions)
+        }
     }
 
     //
