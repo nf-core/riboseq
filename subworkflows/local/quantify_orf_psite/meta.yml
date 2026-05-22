@@ -21,9 +21,6 @@ input:
   - ch_psite_tracks:
       description: Per-sample forward + reverse P-site bedgraphs from plastid `make_wiggle`
       pattern: "*.bedgraph"
-  - ch_orf_to_gene:
-      description: ORF id -> gene id mapping (currently passed through for downstream use)
-      pattern: "*.tsv"
 output:
   - orf_count_matrix:
       description: ORF x sample P-site count matrix

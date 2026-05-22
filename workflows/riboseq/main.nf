@@ -509,8 +509,7 @@ workflow RIBOSEQ {
 
             QUANTIFY_ORF_PSITE (
                 ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.catalogue_bed12,
-                ch_orf_psite_tracks,
-                ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.orf_to_gene_tsv
+                ch_orf_psite_tracks
             )
             ch_versions         = ch_versions.mix(QUANTIFY_ORF_PSITE.out.versions)
             ch_orf_count_matrix = QUANTIFY_ORF_PSITE.out.orf_count_matrix

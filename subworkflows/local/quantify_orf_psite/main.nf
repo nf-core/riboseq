@@ -23,7 +23,6 @@ workflow QUANTIFY_ORF_PSITE {
     take:
     ch_catalogue_bed   // channel: [ val(meta), path(orf_catalogue.bed12) ]
     ch_psite_tracks    // channel: [ val(meta), path(forward.bedgraph), path(reverse.bedgraph) ] - riboseq samples only
-    ch_orf_to_gene     // channel: [ val(meta), path(orf_to_gene.tsv) ] - pass-through for the count_matrix consumer
 
     main:
 
