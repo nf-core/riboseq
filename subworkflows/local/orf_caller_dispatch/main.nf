@@ -54,9 +54,12 @@ workflow ORF_CALLER_DISPATCH {
         .combine(ch_hybrid_gtf)
         .map { fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }
         .first()
+    // Extended mode: hybrid GTF feeds Ribo-TISH `-g` (discovery target), canonical
+    // backbone feeds `-a` (background model + ORF classification labels).
     ch_fasta_gtf_for_ribotish_extended = ch_fasta
         .combine(ch_hybrid_gtf)
-        .map { fasta, hybrid -> [ [id: 'reference'], fasta, hybrid, [] ] }
+        .combine(ch_canonical_gtf)
+        .map { fasta, hybrid, canonical -> [ [id: 'reference'], fasta, hybrid, canonical ] }
         .first()
 
     //
