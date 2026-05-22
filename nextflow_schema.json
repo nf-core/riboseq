@@ -774,6 +774,12 @@
                     "description": "Optional BED file of rRNA/repeat regions to exclude from the novel-transcript GTF (strand-aware intersect).",
                     "help_text": "When supplied, novel transcripts overlapping the blacklist on the same strand are removed via `bedtools intersect -v -s`. UCSC publishes ready-made blacklists for hg38 and mm10; for other organisms you must construct one yourself or omit this parameter (the step is skipped silently).",
                     "fa_icon": "fas fa-ban"
+                },
+                "extended_orf_analysis": {
+                    "type": "boolean",
+                    "description": "Discover novel ORFs in novel intergenic transcripts (from StringTie or user-supplied --novel_gtf) by feeding the hybrid GTF to genome-BAM ORF callers (Ribo-TISH predict, Ribotricer). Requires --skip_stringtie false or --novel_gtf <path>. Default false for backward compatibility.",
+                    "help_text": "When true and a novel-transcript source is enabled (--skip_stringtie false or --novel_gtf), the hybrid GTF (<outdir>/stringtie/hybrid_reference.gtf) is passed to Ribo-TISH predict (-g) and Ribotricer prepare-orfs so that novel intergenic ORFs are within scope. RiboCode, riboWaltz, plastid and Salmon-based quantification continue to use the canonical backbone GTF regardless of this flag, due to the transcriptome-BAM architectural constraint. When true but no novel-transcript source is configured, the flag is a no-op and a warning is emitted.",
+                    "fa_icon": "fas fa-expand-arrows-alt"
                 }
             }
         },

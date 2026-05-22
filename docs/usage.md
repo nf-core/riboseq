@@ -489,7 +489,18 @@ Supply `--rrna_blacklist path/to/blacklist.bed` to drop novel transcripts overla
 - `--stringtie_class_codes` - comma-separated gffcompare class codes to retain (default `u`).
 - `--rrna_blacklist` - optional BED of rRNA / repeat regions to exclude.
 
-The hybrid GTF is exposed as the `hybrid_gtf` workflow channel. With the default settings (no novel-transcript source configured) it equals the canonical backbone, so downstream wiring stays uniform. Follow-on work in the modernisation plan wires the hybrid GTF into the genome-BAM ORF callers (Ribo-TISH `predict`, Ribotricer) under an opt-in flag.
+The hybrid GTF is exposed as the `hybrid_gtf` workflow channel. With the default settings (no novel-transcript source configured) it equals the canonical backbone, so downstream wiring stays uniform.
+
+## Extended ORF discovery
+
+By default, all ORF callers run against the canonical backbone GTF so the pipeline produces well-characterised annotated-ORF calls. To discover novel ORFs in the novel intergenic transcripts produced by StringTie or supplied via `--novel_gtf`, set `--extended_orf_analysis true`. This routes the hybrid GTF (`<outdir>/stringtie/hybrid_reference.gtf`) into the genome-BAM ORF callers:
+
+- **Ribo-TISH `predict`**: hybrid GTF on `-g` (discovery target). The Ribo-TISH wrapper accepts an optional secondary GTF on `-a` for background calibration (see #179), but the extended path leaves it empty to skirt a known Ribo-TISH bug ([zhpn1024/ribotish#33](https://github.com/zhpn1024/ribotish/issues/33), [#24](https://github.com/zhpn1024/ribotish/issues/24)) hit when the hybrid and secondary annotations share CDS rows. The hybrid GTF preserves canonical CDS records so background calibration is intact.
+- **Ribotricer `prepare-orfs`**: hybrid GTF directly. Ribotricer has no secondary-annotation concept; CDS-absent novel transcripts are auto-labelled `novel` in its `ORF_type` column.
+
+RiboCode, riboWaltz, plastid and Salmon-based quantification continue to use the canonical backbone GTF regardless of `--extended_orf_analysis`. RiboCode in particular requires a transcriptome-BAM keyed to the annotation used at alignment time; bringing RiboCode online for novel transcripts needs a second STAR pass against a hybrid transcriptome (follow-on work, issue #171).
+
+A novel-transcript source must be configured: `--skip_stringtie false` or `--novel_gtf <path>`. If `--extended_orf_analysis true` is set without one of those, the pipeline warns and falls back to the canonical GTF (the flag is a no-op rather than an error so users can compose flags incrementally).
 
 ## Running the pipeline
 

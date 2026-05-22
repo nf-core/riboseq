@@ -386,6 +386,30 @@ workflow RIBOSEQ {
     ch_fasta_gtf = ch_fasta.combine(ch_canonical_gtf).map{ fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }.first()
     ch_fasta_gtf_for_ribotish = ch_fasta_gtf.map{ meta, fasta, gtf -> [ meta, fasta, gtf, [] ] }.first()
 
+    //
+    // Extended ORF discovery (issue #165): when --extended_orf_analysis is on
+    // and a novel-transcript source is configured, route genome-BAM ORF callers
+    // (Ribo-TISH predict, Ribotricer prepare-orfs) to the hybrid GTF so that
+    // novel intergenic ORFs are discovered. RiboCode, riboWaltz, plastid and
+    // Salmon-based quantification continue on the canonical backbone
+    // (transcriptome-BAM constraint, addressed in #171).
+    //
+    def novel_source_configured = !params.skip_stringtie || params.novel_gtf
+    def extended_orf_active = params.extended_orf_analysis && novel_source_configured
+
+    if (params.extended_orf_analysis && !novel_source_configured) {
+        log.warn "--extended_orf_analysis is enabled but no novel-transcript source is configured (--skip_stringtie is true and --novel_gtf is unset). The flag has no effect; ORF callers will run against the canonical GTF as usual."
+    }
+
+    ch_fasta_gtf_extended = ch_fasta
+        .combine(ch_hybrid_gtf)
+        .map { fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }
+        .first()
+    ch_fasta_gtf_for_ribotish_extended = ch_fasta
+        .combine(ch_hybrid_gtf)
+        .map { fasta, hybrid -> [ [id: 'reference'], fasta, hybrid, [] ] }
+        .first()
+
     if (!params.skip_ribotish){
         RIBOTISH_QUALITY_RIBOSEQ(
             ch_bams_for_analysis,
@@ -401,10 +425,14 @@ workflow RIBOSEQ {
                 offset: [ meta, offset ]
             }
 
+        def ch_ribotish_predict_annotation = extended_orf_active ?
+            ch_fasta_gtf_for_ribotish_extended :
+            ch_fasta_gtf_for_ribotish
+
         RIBOTISH_PREDICT_INDIVIDUAL(
             ribotish_predict_inputs.bam,
             [[:],[],[]],
-            ch_fasta_gtf_for_ribotish,
+            ch_ribotish_predict_annotation,
             [[:],[]],
             ribotish_predict_inputs.offset,
             [[:],[]]
@@ -414,7 +442,7 @@ workflow RIBOSEQ {
         RIBOTISH_PREDICT_ALL(
             ribotish_predict_inputs.bam.map{meta, bam, bai -> [[id:'allsamples'], bam, bai]}.groupTuple(),
             [[:],[],[]],
-            ch_fasta_gtf_for_ribotish,
+            ch_ribotish_predict_annotation,
             [[:],[]],
             ribotish_predict_inputs.offset.map{meta, offset -> [[id:'allsamples'], offset]}.groupTuple(),
             [[:],[]]
@@ -425,8 +453,12 @@ workflow RIBOSEQ {
     if (params.run_ribotricer){
         log.warn "Ribotricer is enabled via --run_ribotricer. Benchmark data (FK/NGB, May 2026) found its ORF-score column is rank-unstable across biological replicates (mean Spearman 0.288 vs Jaccard 0.770). Its binary calls are usable, but do not rely on its scores as the primary ranking source; the cross-caller rank aggregation will exclude them."
 
-        RIBOTRICER_PREPAREORFS(
+        def ch_ribotricer_annotation = extended_orf_active ?
+            ch_fasta_gtf_extended :
             ch_fasta_gtf
+
+        RIBOTRICER_PREPAREORFS(
+            ch_ribotricer_annotation
         )
         ch_versions = ch_versions.mix(RIBOTRICER_PREPAREORFS.out.versions)
 
