@@ -396,7 +396,7 @@ workflow RIBOSEQ {
     }
 
     //
-    // Second STAR pass against the hybrid transcriptome (issue #171). RiboCode
+    // Second STAR pass against the hybrid transcriptome. RiboCode
     // requires a transcriptome-coordinate BAM keyed to whichever transcriptome
     // FASTA was supplied at alignment time; the primary STAR pass is built
     // against the reference transcriptome so novel StringTie transcripts are
@@ -515,7 +515,7 @@ workflow RIBOSEQ {
     }
 
     //
-    // Dynamic ORF-caller set for cross-caller agreement (issue #07).
+    // Dynamic ORF-caller set for cross-caller agreement.
     // The enabled list reflects which callers ran at runtime; the agreement
     // threshold and rank-aggregation set are derived from it so the logic
     // works whether 2 (default) or 3 callers are active.
@@ -638,7 +638,7 @@ workflow RIBOSEQ {
     }
 
     //
-    // Cross-sample ORF catalogue (issue #167). Normalises each caller's
+    // Cross-sample ORF catalogue. Normalises each caller's
     // per-sample output to a unified BED12, merges with a class-aware strategy
     // (transcript-ID grouping for annotated multi-exon CDS, 80% reciprocal
     // overlap for single-exon novel intergenic and smORFs), and emits the
