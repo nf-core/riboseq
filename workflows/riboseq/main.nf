@@ -11,10 +11,8 @@ include { FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS                                  
 include { FASTQ_EQUALISE_READ_LENGTHS                                                          } from '../../subworkflows/local/fastq_equalise_read_lengths'
 include { BAM_DEDUP_UMI       } from '../../subworkflows/nf-core/bam_dedup_umi'
 include { FASTQ_ALIGN_STAR    } from '../../subworkflows/nf-core/fastq_align_star'
-include { FASTQ_ALIGN_STAR as FASTQ_ALIGN_STAR_HYBRID } from '../../subworkflows/nf-core/fastq_align_star'
-include { NOVEL_TRANSCRIPT_DISCOVERY } from '../../subworkflows/local/novel_transcript_discovery'
-include { GFFREAD as GFFREAD_HYBRID_TRANSCRIPTOME           } from '../../modules/nf-core/gffread'
-include { STAR_GENOMEGENERATE as STAR_GENOMEGENERATE_HYBRID } from '../../modules/nf-core/star/genomegenerate'
+include { NOVEL_TRANSCRIPT_DISCOVERY      } from '../../subworkflows/local/novel_transcript_discovery'
+include { EXTENDED_ORF_SECOND_PASS_ALIGN  } from '../../subworkflows/local/extended_orf_second_pass_align'
 include { FASTA_GTF_BAM_RPBP       } from '../../subworkflows/nf-core/fasta_gtf_bam_rpbp/main'
 include { GEDI_INDEXGENOME         } from '../../modules/nf-core/gedi/indexgenome/main'
 include { GEDI_PRICE               } from '../../modules/nf-core/gedi/price/main'
@@ -370,44 +368,15 @@ workflow RIBOSEQ {
     ch_hybrid_transcriptome_bam = Channel.empty()
 
     if (extended_orf_active) {
-        // Extract spliced transcript sequences (canonical + novel) from the
-        // hybrid GTF into a single transcriptome FASTA, then rebuild a STAR
-        // index against the same genome FASTA + hybrid GTF so a second STAR
-        // pass can emit a hybrid transcriptome BAM that RiboCode can consume.
-        GFFREAD_HYBRID_TRANSCRIPTOME(
-            ch_hybrid_gtf.map { gtf -> [ [id: 'hybrid_reference'], gtf ] },
-            ch_fasta
+        EXTENDED_ORF_SECOND_PASS_ALIGN(
+            ch_hybrid_gtf,
+            ch_fasta,
+            ch_reads_for_alignment,
+            params.star_ignore_sjdbgtf
         )
 
-        STAR_GENOMEGENERATE_HYBRID(
-            ch_fasta.map { fasta -> [ [id: 'hybrid_reference'], fasta ] },
-            ch_hybrid_gtf.map { gtf -> [ [id: 'hybrid_reference'], gtf ] }
-        )
-
-        ch_hybrid_transcriptome_fasta = GFFREAD_HYBRID_TRANSCRIPTOME.out.gffread_fasta.map { _meta, fasta -> fasta }.first()
-        ch_hybrid_star_index          = STAR_GENOMEGENERATE_HYBRID.out.index.map { _meta, index -> index }.first()
-
-        // Only Ribo-seq samples feed RiboCode; skip the costly re-alignment
-        // for RNA-seq and TI-seq.
-        ch_reads_for_hybrid_alignment = ch_reads_for_alignment
-            .filter { meta, _reads -> meta.sample_type == 'riboseq' }
-
-        FASTQ_ALIGN_STAR_HYBRID(
-            ch_reads_for_hybrid_alignment,
-            ch_hybrid_star_index.map { [ [:], it ] },
-            ch_hybrid_gtf.map { [ [:], it ] },
-            params.star_ignore_sjdbgtf,
-            ch_fasta.map { [ [:], it ] },
-            ch_hybrid_transcriptome_fasta.map { [ [:], it ] }
-        )
-
-        ch_hybrid_transcriptome_bam = FASTQ_ALIGN_STAR_HYBRID.out.orig_bam_transcript
-
-        ch_multiqc_files = ch_multiqc_files
-            .mix(FASTQ_ALIGN_STAR_HYBRID.out.stats.collect{it[1]})
-            .mix(FASTQ_ALIGN_STAR_HYBRID.out.flagstat.collect{it[1]})
-            .mix(FASTQ_ALIGN_STAR_HYBRID.out.idxstats.collect{it[1]})
-            .mix(FASTQ_ALIGN_STAR_HYBRID.out.log_final.collect{it[1]})
+        ch_hybrid_transcriptome_bam = EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcriptome_bam
+        ch_multiqc_files            = ch_multiqc_files.mix(EXTENDED_ORF_SECOND_PASS_ALIGN.out.multiqc_files)
     }
 
     //
