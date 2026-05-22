@@ -449,9 +449,9 @@ If RiboCode is not needed for your analysis, you can skip it entirely with `--sk
 <summary>Output files</summary>
 
 - `orf_predictions/rpbp/`
-  - `rpbp_config.yaml`: auto-generated Rp-Bp YAML config (genome paths, optional user overrides) - the same file consumed by both `prepare-rpbp-genome` and `predict-translated-orfs`.
-  - `*.predicted-orfs.bed.gz`: per-sample predicted-ORF BED with Bayes factor scores (column 5).
-  - `*.predicted-orfs.tab.gz`: per-sample predicted-ORF tab table - same content as the BED plus length-class, frame, codon and posterior-probability columns.
+  - `*.predicted-orfs.filtered.bed.gz`: per-sample predicted-ORF BED with Bayes factor scores (column 5) after the final-prediction-set filter (`--select-longest-by-stop --select-best-overlapping`).
+  - `*.predicted-orfs.filtered.dna.fa`: per-sample predicted-ORF nucleotide FASTA matching the filtered BED.
+  - `*.predicted-orfs.filtered.protein.fa`: per-sample predicted-ORF protein FASTA matching the filtered BED.
 
 </details>
 
@@ -480,11 +480,11 @@ Produced only when `--run_price true` is set. PRICE is invoked once across the r
   - `*.normalised.bed12`: per-sample, per-caller BED12 of called ORFs in genomic coordinates (multi-exon blocks for spliced ORFs).
   - `*.normalised.tsv`: matching sidecar with caller, sample id, ORF class (`canonical_cds`, `uORF`, `dORF`, `novel_u`, `smORF`, `other`), amino-acid length and the caller's score.
 - `orf_catalogue/`
-  - `orf_catalogue.bed12`: merged, deduplicated ORF catalogue (BED12, stable `orf_NNNNNNNN` ids in column 4).
-  - `orf_catalogue.tsv`: per-ORF table with `called_by_<caller>` binary columns for all four callers and `score_<caller>` columns for Ribo-TISH / RiboCode / Rp-Bp (Ribotricer scores are excluded per issue #163). Includes `orf_class`, `aa_length`, host `gene_id` and `transcript_id`.
-  - `orf_to_gene.tsv`: ORF-to-gene mapping. An ORF that maps to multiple host transcripts/genes gets multiple rows here; downstream gene-level aggregation collapses by `gene_id`.
-  - `orf_catalogue.faa`: amino-acid FASTA of every catalogue ORF, keyed by `orf_NNNNNNNN`.
-  - `orf_catalogue.mqc.tsv`: per-class ORF counts surfaced as a MultiQC custom-content table.
+  - `*.catalogue.bed12`: merged, deduplicated ORF catalogue (BED12, stable `orf_NNNNNNNN` ids in column 4).
+  - `*.catalogue.tsv`: per-ORF table with `called_by_<caller>` binary columns for every caller in the runtime-enabled set and `score_<caller>` columns for Ribo-TISH / RiboCode / Rp-Bp / PRICE (Ribotricer scores are excluded per issue #163). Includes `orf_class`, `aa_length`, host `gene_id` and `transcript_id`.
+  - `*.orf_to_gene.tsv`: ORF-to-gene mapping. An ORF that maps to multiple host transcripts/genes gets multiple rows here; downstream gene-level aggregation collapses by `gene_id`.
+  - `*.catalogue.aa.fasta`: amino-acid FASTA of every catalogue ORF, keyed by `orf_NNNNNNNN`. Produced by `bedtools getfasta` on the merged BED12 followed by `seqkit translate`.
+  - `*.catalogue.mqc.tsv`: per-class ORF counts surfaced as a MultiQC custom-content table.
 
 </details>
 
@@ -492,7 +492,7 @@ Produced only when `--extended_orf_analysis true` is set and at least one ORF ca
 
 - **Annotated multi-exon CDS** are collapsed by `transcript_id` so that different intron chains aren't accidentally merged into a single entry.
 - **Single-exon novel intergenic ORFs** (class code `u`) are clustered by 80% reciprocal overlap on the outer genomic span.
-- **smORFs** (amino-acid length ≤ 100) are clustered by 80% reciprocal overlap; the AA FASTA from `orf_catalogue_extractaa` is the input for any subsequent sequence-level dedup.
+- **smORFs** (amino-acid length ≤ 100) are clustered by 80% reciprocal overlap; the `*.catalogue.aa.fasta` from `bedtools getfasta` + `seqkit translate` is the input for any subsequent sequence-level dedup.
 - **Cross-caller consensus** is recorded by setting `called_by_<caller> = 1` for every caller that contributed a member of the cluster, plus a per-caller score column.
 
 The catalogue uses the hybrid GTF (canonical + filtered novel intergenic) as its coordinate-validation reference, matching the GTF that the underlying ORF callers consumed when `--extended_orf_analysis true`.
