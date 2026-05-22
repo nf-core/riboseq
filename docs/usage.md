@@ -338,6 +338,22 @@ PRICE's CLI banner reports `Price version 1.0.4` while the Bioconda package is `
 
 > :information_source: **Data scale.** PRICE's ORF inference step (`PriceOrfInference`) requires more candidate ORFs than the chr20-only `-profile test` data provides; on small test inputs it fails late in the pipeline with `Index out of bounds`. End-to-end PRICE validation needs realistic Ribo-seq depth and is exercised on the full-scale Platform iteration, not in the chr20 CI test set.
 
+### Rp-Bp (opt-in, overnight)
+
+[Rp-Bp](https://github.com/dieterich-lab/rp-bp) (Malone et al. 2017) is a Bayesian ORF caller using Stan MCMC. Activate with `--run_rpbp true`.
+
+> :warning: **Runtime cost.** Rp-Bp's Bayesian MCMC fit takes roughly 20-24 hours per replicate at genome-wide scale. The pipeline emits a runtime warning when `--run_rpbp` is set; plan compute accordingly (the `RPBP_ESTIMATEMETAGENEBAYESFACTORS` / `RPBP_ESTIMATEORFBAYESFACTORS` blocks request 30h per attempt as headroom).
+
+The implementation uses the upstream `fasta_gtf_bam_rpbp` subworkflow (nf-core/modules#11695): six per-tool processes (`extract-metagene-profiles`, `estimate-metagene-profile-bayes-factors`, `select-periodic-offsets`, `extract-orf-profiles`, `estimate-orf-bayes-factors`, `select-final-prediction-set`) plus a shared `prepare-genome`. The split avoids re-running flexbar/bowtie/STAR inside Rp-Bp - the pipeline's standard STAR alignment is used - and lets each step cache independently on resume.
+
+Tool CLI arguments can be appended via `--extra_rpbp_preparegenome_args` and `--extra_rpbp_predictorfs_args`. The final prediction step is invoked with `--select-longest-by-stop --select-best-overlapping` by default; pass extra flags via `--extra_rpbp_predictorfs_args`.
+
+When `--extended_orf_analysis true` is set, Rp-Bp consumes the hybrid GTF so novel intergenic ORFs are within its discovery scope.
+
+Per-sample predicted-ORF outputs land under `<outdir>/orf_predictions/rpbp/`. Pattern: `*.predicted-orfs.filtered.{bed.gz,dna.fa,protein.fa}`.
+
+> :information_source: **STAR alignment params vs upstream Rp-Bp.** Upstream Rp-Bp's own pipeline runs STAR with Ribo-seq-tuned settings (`outFilterMismatchNmax 1`, `outFilterMismatchNoverLmax 0.04`, `outFilterType BySJout`, `sjdbOverhang 33`, `winAnchorMultimapNmax 100`, `seedSearchStartLmaxOverLread 0.5`). The riboseq pipeline uses its standard STAR alignment (shared with the RNA-seq side of paired runs), which is more permissive. Practical impact: Rp-Bp processes whatever alignments it gets, but periodicity / Bayes-factor distributions will differ from a standalone Rp-Bp run on the same FASTQs. If you need bit-identical-to-standalone-Rp-Bp output, override with `--extra_star_align_args` matching those flags. Note that `sjdbOverhang` is baked into the STAR index and would require regenerating the index. Tracked for future work: [#173](https://github.com/nf-core/riboseq/issues/173).
+
 ## P-site identification
 
 The pipeline will by default run [riboWaltz](https://github.com/LabTranslationalArchitectomics/riboWaltz) for P-site identification and diagnostics, unless disabled with `--skip_ribowaltz`. Additional arguments can be supplied via `--extra_ribowaltz_args` parameters. An example is: `--extra_ribowaltz_args "--length_range 27:31 --periodicity_threshold 40 --extremity 5end --start_nts 45 --stop_nts 24"`. If not provided, defaults used in the [nf-core module](https://github.com/nf-core/modules/blob/master/modules/nf-core/ribowaltz/templates/ribowaltz.r) are used.

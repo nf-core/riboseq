@@ -37,6 +37,7 @@ include { RIBOCODE_METAPLOTS                                   } from '../../mod
 include { RIBOCODE_RIBOCODE                                    } from '../../modules/nf-core/ribocode/ribocode'
 include { GEDI_INDEXGENOME                                     } from '../../modules/nf-core/gedi/indexgenome'
 include { GEDI_PRICE                                           } from '../../modules/nf-core/gedi/price'
+include { FASTA_GTF_BAM_RPBP                                   } from '../../subworkflows/nf-core/fasta_gtf_bam_rpbp/main'
 include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../modules/nf-core/anota2seq/anota2seqrun'
 include { DESEQ2_DELTATE                                       } from '../../modules/local/deseq2/deltate'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
@@ -597,6 +598,27 @@ workflow RIBOSEQ {
         GEDI_PRICE(
             ch_price_inputs,
             GEDI_INDEXGENOME.out.index.first()
+        )
+    }
+
+    //
+    // Rp-Bp (Malone et al. 2017) - opt-in Bayesian ORF caller. Runs once per
+    // sample (per-tool processes: extract-metagene-profiles,
+    // estimate-metagene-profile-bayes-factors, select-periodic-offsets,
+    // extract-orf-profiles, estimate-orf-bayes-factors,
+    // select-final-prediction-set) plus shared PREPAREGENOME. Honours
+    // --extended_orf_analysis. Expect ~20-24h per replicate at genome scale.
+    //
+    if (params.run_rpbp) {
+        log.warn "Rp-Bp is enabled via --run_rpbp. The Bayesian MCMC fit takes ~20-24h per replicate at genome-wide scale. Plan compute accordingly."
+
+        def ch_rpbp_annotation = extended_orf_active ?
+            ch_fasta_gtf_extended :
+            ch_fasta_gtf
+
+        FASTA_GTF_BAM_RPBP(
+            ch_bams_for_analysis,
+            ch_rpbp_annotation
         )
     }
 
