@@ -38,6 +38,7 @@ include { RIBOCODE_RIBOCODE                                    } from '../../mod
 include { GEDI_INDEXGENOME                                     } from '../../modules/nf-core/gedi/indexgenome'
 include { GEDI_PRICE                                           } from '../../modules/nf-core/gedi/price'
 include { FASTA_GTF_BAM_RPBP                                   } from '../../subworkflows/nf-core/fasta_gtf_bam_rpbp/main'
+include { ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE                 } from '../../subworkflows/nf-core/orftable_fasta_gtf_buildorfcatalogue/main'
 include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../modules/nf-core/anota2seq/anota2seqrun'
 include { DESEQ2_DELTATE                                       } from '../../modules/local/deseq2/deltate'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
@@ -426,6 +427,16 @@ workflow RIBOSEQ {
     ch_fasta_gtf = ch_fasta.combine(ch_canonical_gtf).map{ fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }.first()
     ch_fasta_gtf_for_ribotish = ch_fasta_gtf.map{ meta, fasta, gtf -> [ meta, fasta, gtf, [] ] }.first()
 
+    // Per-caller prediction channels for the cross-sample ORF catalogue (#167).
+    // Each caller's if-block below overrides the default Channel.empty() when
+    // the caller actually runs. The catalogue subworkflow gathers them at the
+    // bottom of the workflow.
+    ch_ribotish_predictions   = Channel.empty()
+    ch_ribocode_predictions   = Channel.empty()
+    ch_ribotricer_predictions = Channel.empty()
+    ch_rpbp_predictions       = Channel.empty()
+    ch_price_predictions      = Channel.empty()
+
     //
     // Extended ORF discovery (issues #165 + #171): genome-BAM ORF callers
     // (Ribo-TISH predict, Ribotricer prepare-orfs) get the hybrid GTF when
@@ -470,6 +481,7 @@ workflow RIBOSEQ {
             [[:],[]]
         )
         ch_versions = ch_versions.mix(RIBOTISH_PREDICT_INDIVIDUAL.out.versions)
+        ch_ribotish_predictions = RIBOTISH_PREDICT_INDIVIDUAL.out.predictions
 
         RIBOTISH_PREDICT_ALL(
             ribotish_predict_inputs.bam.map{meta, bam, bai -> [[id:'allsamples'], bam, bai]}.groupTuple(),
@@ -499,6 +511,7 @@ workflow RIBOSEQ {
             RIBOTRICER_PREPAREORFS.out.candidate_orfs
         )
         ch_versions = ch_versions.mix(RIBOTRICER_DETECTORFS.out.versions)
+        ch_ribotricer_predictions = RIBOTRICER_DETECTORFS.out.orfs
     }
 
     //
@@ -571,6 +584,7 @@ workflow RIBOSEQ {
             RIBOCODE_PREPARE.out.annotation,
             ch_ribocode_inputs.map { meta, bam, config -> [ meta, config ] }
         )
+        ch_ribocode_predictions = RIBOCODE_RIBOCODE.out.orf_txt
     }
 
     //
@@ -599,6 +613,7 @@ workflow RIBOSEQ {
             ch_price_inputs,
             GEDI_INDEXGENOME.out.index.first()
         )
+        ch_price_predictions = GEDI_PRICE.out.orfs_tsv
     }
 
     //
@@ -620,6 +635,37 @@ workflow RIBOSEQ {
             ch_bams_for_analysis,
             ch_rpbp_annotation
         )
+        ch_rpbp_predictions = FASTA_GTF_BAM_RPBP.out.predicted
+    }
+
+    //
+    // Cross-sample ORF catalogue (issue #167). Normalises each caller's
+    // per-sample output to a unified BED12, merges with a class-aware strategy
+    // (transcript-ID grouping for annotated multi-exon CDS, 80% reciprocal
+    // overlap for single-exon novel intergenic and smORFs), and emits the
+    // merged BED12 + sidecar TSV + ORF-to-gene mapping + AA FASTA. Gates on
+    // extended-ORF mode being active and at least one caller running.
+    //
+    def enabled_orf_callers_for_catalogue = []
+    if (!params.skip_ribotish)  { enabled_orf_callers_for_catalogue << 'ribotish' }
+    if (!params.skip_ribocode)  { enabled_orf_callers_for_catalogue << 'ribocode' }
+    if ( params.run_ribotricer) { enabled_orf_callers_for_catalogue << 'ribotricer' }
+    if ( params.run_rpbp)       { enabled_orf_callers_for_catalogue << 'rpbp' }
+    if ( params.run_price)      { enabled_orf_callers_for_catalogue << 'price' }
+
+    if (extended_orf_active && enabled_orf_callers_for_catalogue) {
+        ch_orf_tables = ch_ribotish_predictions.map   { meta, f -> [ meta, f, 'ribotish'   ] }
+            .mix(ch_ribocode_predictions.map          { meta, f -> [ meta, f, 'ribocode'   ] })
+            .mix(ch_ribotricer_predictions.map        { meta, f -> [ meta, f, 'ribotricer' ] })
+            .mix(ch_rpbp_predictions.map              { meta, f -> [ meta, f, 'rpbp'       ] })
+            .mix(ch_price_predictions.map             { meta, f -> [ meta, f, 'price'      ] })
+
+        ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE(
+            ch_orf_tables,
+            ch_fasta    .map { fasta -> [ [id: 'reference'], fasta ] }.first(),
+            ch_hybrid_gtf.map { gtf   -> [ [id: 'reference'], gtf   ] }.first()
+        )
+        ch_multiqc_files = ch_multiqc_files.mix(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.multiqc.collect{it[1]}.ifEmpty([]))
     }
 
 
