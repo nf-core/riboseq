@@ -590,6 +590,16 @@
                     "default": "-m 100 -c 5 -j 3 -f 0.05 -g 100",
                     "description": "StringTie arguments used when no RNA-seq BAMs are available and the pipeline falls back to Ribo-seq BAMs for assembly.",
                     "help_text": "These tightened defaults reduce false-positive single-exon transcripts driven by P-site pileups in Ribo-seq data: `-m 100` (min transcript length, vs default 200 - retains sORF transcripts), `-c 5` (min coverage), `-j 3` (min junction reads), `-f 0.05` (min isoform fraction), `-g 100` (max gap). Empirical first-pass defaults; tune per dataset. Ignored when RNA-seq BAMs are available or when `--extra_stringtie_args` is set."
+                },
+                "extra_price_indexgenome_args": {
+                    "type": "string",
+                    "description": "Extra CLI arguments passed to `gedi -e IndexGenome`.",
+                    "fa_icon": "fas fa-terminal"
+                },
+                "extra_price_price_args": {
+                    "type": "string",
+                    "description": "Extra CLI arguments passed to `gedi -e Price`.",
+                    "fa_icon": "fas fa-terminal"
                 }
             }
         },
@@ -780,6 +790,12 @@
                     "description": "Discover novel ORFs in novel intergenic transcripts (from StringTie or user-supplied --novel_gtf) by feeding the hybrid GTF to genome-BAM ORF callers (Ribo-TISH predict, Ribotricer). Requires --skip_stringtie false or --novel_gtf <path>. Default false for backward compatibility.",
                     "help_text": "When true and a novel-transcript source is enabled (--skip_stringtie false or --novel_gtf), the hybrid GTF (<outdir>/stringtie/hybrid_reference.gtf) is passed to Ribo-TISH predict (-g) and Ribotricer prepare-orfs so that novel intergenic ORFs are within scope. RiboCode, riboWaltz, plastid and Salmon-based quantification continue to use the canonical backbone GTF regardless of this flag, due to the transcriptome-BAM architectural constraint. When true but no novel-transcript source is configured, the flag is a no-op and a warning is emitted.",
                     "fa_icon": "fas fa-expand-arrows-alt"
+                },
+                "run_price": {
+                    "type": "boolean",
+                    "description": "Opt in to running PRICE as an additional ORF caller (Bayesian, slow).",
+                    "help_text": "PRICE (Probabilistic inference of codon activities, Erhard et al. 2018) is a Bayesian ORF caller distributed as part of the Gedi Java framework (`gedi -e Price`). Like Rp-Bp it is opt-in because the EM fit dominates runtime at full scale. PRICE is invoked once across the riboseq cohort (it estimates a shared codon-position model) so the whole BAM cohort is staged into a single task; expect higher disk I/O than per-sample callers on local executors. PRICE joins the cross-caller ORF catalogue alongside Ribo-TISH, RiboCode, Ribotricer and Rp-Bp.",
+                    "fa_icon": "fas fa-fast-forward"
                 }
             }
         },

@@ -324,6 +324,20 @@ The pipeline will by default run the [Ribo-TISH](https://github.com/zhpn1024/rib
 
 Ribo-TISH `quality` is fed the canonical annotation (`--canonical_gtf`, or the AGAT-derived longest-isoform fallback) rather than the full multi-isoform GTF. `quality` estimates P-site offsets and read-length QC against CDS-bearing canonical transcripts; mixing in CDS-absent or near-duplicate isoforms degrades that calibration without adding diagnostic signal. The `predict` step, which scores translation candidates, gets the same canonical input; once novel-transcript discovery is added in a follow-up issue, `predict` will receive the hybrid annotation on `-g` and the canonical backbone on `-a`.
 
+### PRICE (opt-in, overnight)
+
+[PRICE](https://github.com/erhard-lab/gedi/wiki/Price) (Erhard et al., 2018) is a Bayesian ORF caller distributed as part of the [Gedi](https://github.com/erhard-lab/gedi) Java framework. Unlike the per-sample callers, PRICE estimates a shared codon-position model across the riboseq cohort by EM and is invoked one-shot rather than per-sample. Activate with `--run_price true`.
+
+> :warning: **Runtime cost.** PRICE's EM fit is comparable in wall-clock to other heavy ORF callers at genome-wide scale. The pipeline emits a runtime warning when `--run_price` is set. Plan compute accordingly.
+
+The pipeline builds a binary `.oml` genome index via `gedi -e IndexGenome` once per run, then calls PRICE once across the cohort with the index plus the riboseq BAMs. PRICE's primary output is `${prefix}.orfs.tsv`, a table of all called ORFs with start-codon score, range score, p-value (uncorrected) and per-condition / total read counts. Tool CLI arguments can be appended via `--extra_price_indexgenome_args` and `--extra_price_price_args`.
+
+When `--extended_orf_analysis true` is set, PRICE's IndexGenome receives the hybrid GTF so ORFs on novel intergenic transcripts are within its discovery scope.
+
+PRICE's CLI banner reports `Price version 1.0.4` while the Bioconda package is `gedi 1.0.6a` (Price is one tool inside the Gedi umbrella). The pipeline captures the package version via `gedi -e Version` for `versions.yml`.
+
+> :information_source: **Data scale.** PRICE's ORF inference step (`PriceOrfInference`) requires more candidate ORFs than the chr20-only `-profile test` data provides; on small test inputs it fails late in the pipeline with `Index out of bounds`. End-to-end PRICE validation needs realistic Ribo-seq depth and is exercised on the full-scale Platform iteration, not in the chr20 CI test set.
+
 ## P-site identification
 
 The pipeline will by default run [riboWaltz](https://github.com/LabTranslationalArchitectomics/riboWaltz) for P-site identification and diagnostics, unless disabled with `--skip_ribowaltz`. Additional arguments can be supplied via `--extra_ribowaltz_args` parameters. An example is: `--extra_ribowaltz_args "--length_range 27:31 --periodicity_threshold 40 --extremity 5end --start_nts 45 --stop_nts 24"`. If not provided, defaults used in the [nf-core module](https://github.com/nf-core/modules/blob/master/modules/nf-core/ribowaltz/templates/ribowaltz.r) are used.

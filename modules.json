@@ -95,6 +95,16 @@
                         "git_sha": "c0da8f3a26835d663873001382a708f75766fec6",
                         "installed_by": ["modules"]
                     },
+                    "gedi/indexgenome": {
+                        "branch": "master",
+                        "git_sha": "51af5cb84874647aa4733742b86142025705b042",
+                        "installed_by": ["modules"]
+                    },
+                    "gedi/price": {
+                        "branch": "master",
+                        "git_sha": "51af5cb84874647aa4733742b86142025705b042",
+                        "installed_by": ["modules"]
+                    },
                     "gffcompare": {
                         "branch": "master",
                         "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",

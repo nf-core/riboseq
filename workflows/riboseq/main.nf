@@ -35,6 +35,8 @@ include { RIBOCODE_GTFUPDATE                                   } from '../../mod
 include { RIBOCODE_PREPARE                                     } from '../../modules/nf-core/ribocode/prepare'
 include { RIBOCODE_METAPLOTS                                   } from '../../modules/nf-core/ribocode/metaplots'
 include { RIBOCODE_RIBOCODE                                    } from '../../modules/nf-core/ribocode/ribocode'
+include { GEDI_INDEXGENOME                                     } from '../../modules/nf-core/gedi/indexgenome'
+include { GEDI_PRICE                                           } from '../../modules/nf-core/gedi/price'
 include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../modules/nf-core/anota2seq/anota2seqrun'
 include { DESEQ2_DELTATE                                       } from '../../modules/local/deseq2/deltate'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
@@ -567,6 +569,34 @@ workflow RIBOSEQ {
             ch_ribocode_inputs.map { meta, bam, config -> [ meta, bam ] },
             RIBOCODE_PREPARE.out.annotation,
             ch_ribocode_inputs.map { meta, bam, config -> [ meta, config ] }
+        )
+    }
+
+    //
+    // PRICE (Erhard et al. 2018) - Tier-2 opt-in ORF caller for near-cognate
+    // ORF discovery. Estimates a shared cohort-level codon-position model via
+    // EM and is invoked once across the riboseq cohort (one IndexGenome run
+    // followed by one PRICE run over all riboseq BAMs). Honours
+    // --extended_orf_analysis by feeding the hybrid GTF when active.
+    //
+    if (params.run_price) {
+        log.warn "PRICE is enabled via --run_price. PRICE estimates a shared cohort-level codon-position model via EM; runtime at genome-wide scale is comparable to Rp-Bp. Plan compute accordingly."
+
+        def ch_price_fasta_gtf = extended_orf_active ?
+            ch_fasta_gtf_extended :
+            ch_fasta_gtf
+
+        GEDI_INDEXGENOME(
+            ch_price_fasta_gtf
+        )
+
+        ch_price_inputs = ch_bams_for_analysis
+            .map { _meta, bam, bai -> [ [id: 'allsamples'], bam, bai ] }
+            .groupTuple()
+
+        GEDI_PRICE(
+            ch_price_inputs,
+            GEDI_INDEXGENOME.out.index.first()
         )
     }
 
