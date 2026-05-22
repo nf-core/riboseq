@@ -59,7 +59,7 @@ workflow NOVEL_TRANSCRIPT_DISCOVERY {
         ch_rnaseq_count
             .filter { it == 0 }
             .subscribe {
-                log.warn "No RNA-seq BAMs available for StringTie assembly. Using Ribo-seq BAMs with conservative parameters (${ribo_fallback_args}). Novel transcript assemblies may contain artefacts; review carefully and consider supplying --novel_gtf from a dedicated RNA-seq run."
+                log.warn "No RNA-seq BAMs available for StringTie assembly. Using Ribo-seq BAMs with the configured StringTie arguments (${ribo_fallback_args}); the pipeline default --stringtie_ribo_fallback_args is tightened to suppress P-site-pileup artefacts, override via --extra_stringtie_args at your own risk. Novel transcript assemblies may still contain artefacts; review carefully and consider supplying --novel_gtf from a dedicated RNA-seq run."
             }
 
         BAM_STRINGTIE_MERGE(
