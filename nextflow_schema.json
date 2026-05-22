@@ -459,104 +459,6 @@
             "default": "",
             "fa_icon": "fas fa-circle",
             "properties": {
-                "extra_ribotish_quality_args": {
-                    "type": "string",
-                    "description": "Extra arguments to pass to the ribotish quality command in addition to defaults defined by the pipeline."
-                },
-                "extra_ribotish_predict_args": {
-                    "type": "string",
-                    "description": "Extra arguments to pass to the ribotish predict command in addition to defaults defined by the pipeline."
-                },
-                "extra_ribotricer_prepareorfs_args": {
-                    "type": "string",
-                    "description": "Extra arguments to pass to the ribotricer prepare-orfs command in addition to defaults defined by the pipeline."
-                },
-                "extra_ribotricer_detectorfs_args": {
-                    "type": "string",
-                    "description": "Extra arguments to pass to the ribotricer detect-orfs command in addition to defaults defined by the pipeline."
-                },
-                "extra_ribocode_gtfupdate_args": {
-                    "type": "string",
-                    "description": "Extra arguments to pass to the RiboCode GTFupdate command in addition to defaults defined by the pipeline."
-                },
-                "extra_ribocode_prepare_args": {
-                    "type": "string",
-                    "description": "Extra arguments to pass to the RiboCode prepare_transcripts command in addition to defaults defined by the pipeline."
-                },
-                "extra_ribocode_metaplots_args": {
-                    "type": "string",
-                    "description": "Extra arguments to pass to the RiboCode metaplots command in addition to defaults defined by the pipeline."
-                },
-                "extra_ribocode_ribocode_args": {
-                    "type": "string",
-                    "description": "Extra arguments to pass to the RiboCode command in addition to defaults defined by the pipeline."
-                },
-                "extra_ribowaltz_args": {
-                    "type": "string",
-                    "description": "Extra arguments to pass to the riboWaltz command in addition to defaults defined by the pipeline."
-                },
-                "extra_anota2seq_run_args": {
-                    "type": "string",
-                    "description": "Extra arguments to pass to anota2seq in addition to defaults defined by the pipeline. Available options include: --gene_id_col (column name for gene IDs in count table, default: 'gene_id'), --exclude_samples_col and --exclude_samples_values (exclude samples by column value, semicolon-separated). Note: --samples_pairing_col and --samples_batch_col are automatically set from the 'pair' and 'batch' columns in the contrast file if present."
-                },
-                "translational_efficiency_method": {
-                    "type": "string",
-                    "default": "anota2seq",
-                    "description": "Method to use for translational efficiency analysis.",
-                    "enum": ["anota2seq", "deltate"],
-                    "fa_icon": "fas fa-balance-scale"
-                },
-                "extra_deltate_args": {
-                    "type": "string",
-                    "description": "Extra arguments to pass to deltaTE (DESeq2) in addition to defaults defined by the pipeline."
-                },
-                "te_lfc_threshold": {
-                    "type": "number",
-                    "default": 0.2630344,
-                    "description": "Minimum absolute log2 fold change for translational efficiency (TE) to be considered significant. Genes must meet both p-value and effect size thresholds. Default is log2(1.2) matching anota2seq. Maps to anota2seq selDeltaPT / deltaTE lfc_threshold_te.",
-                    "fa_icon": "fas fa-ruler-vertical"
-                },
-                "rna_lfc_threshold": {
-                    "type": "number",
-                    "default": 0,
-                    "description": "Minimum absolute log2 fold change for total mRNA to be considered significant. Set to 0 to disable. Maps to anota2seq selDeltaT / deltaTE lfc_threshold_rna.",
-                    "fa_icon": "fas fa-ruler-vertical"
-                },
-                "ribo_lfc_threshold": {
-                    "type": "number",
-                    "default": 0,
-                    "description": "Minimum absolute log2 fold change for translated mRNA (Ribo-seq) to be considered significant. Set to 0 to disable. Maps to anota2seq selDeltaP / deltaTE lfc_threshold_ribo.",
-                    "fa_icon": "fas fa-ruler-vertical"
-                },
-                "extra_plastid_metagene_generate_args": {
-                    "type": "string",
-                    "description": "Extra arguments to pass to plastid/metagene_generate command in addition to defaults defined by the pipeline."
-                },
-                "extra_plastid_psite_args": {
-                    "type": "string",
-                    "description": "Extra arguments to pass to plastid/psite command in addition to defaults defined by the pipeline."
-                },
-                "extra_plastid_make_wiggle_args": {
-                    "type": "string",
-                    "description": "Extra arguments to pass to plastid/make_wiggle command in addition to defaults defined by the pipeline."
-                },
-                "plastid_min_length": {
-                    "type": "integer",
-                    "default": 15,
-                    "fa_icon": "fas fa-ruler-horizontal",
-                    "description": "Plastid only considers reads of at least the given length."
-                },
-                "plastid_max_length": {
-                    "type": "integer",
-                    "default": 50,
-                    "fa_icon": "fas fa-ruler-horizontal",
-                    "description": "Plastid only considers reads of at most the given length."
-                },
-                "plastid_default_psite_offset": {
-                    "type": "integer",
-                    "default": 12,
-                    "description": "Default p-site offset to use for read lengths where the offset cannot be determined automatically from the data."
-                },
                 "equalise_read_lengths": {
                     "type": "boolean",
                     "default": false,
@@ -569,27 +471,34 @@
                     "description": "Target read length for RNA-seq trimming. If not specified, the average Ribo-seq read length will be derived from paired samples using seqkit stats. This parameter is required if RNA-seq samples have no paired Ribo-seq sample.",
                     "fa_icon": "fas fa-ruler"
                 },
-                "te_quantification_method": {
+                "extra_anota2seq_run_args": {
                     "type": "string",
-                    "default": "plastid_psite",
-                    "enum": ["alignment", "pseudo", "plastid_psite"],
-                    "description": "Quantification method for translational efficiency analysis: 'plastid_psite' (in-frame P-site counts from plastid, default), 'alignment' (STAR -> Salmon) or 'pseudo' (Salmon pseudo-alignment).",
-                    "help_text": "Default is 'plastid_psite': Ribo-seq reads are counted only when their inferred P-site coincides with an in-frame codon position in an annotated CDS (derived from plastid wiggle tracks). This is the scientifically appropriate quantity for Ribo-seq, because Salmon's underlying assumptions (uniform coverage, fragment-length distribution, multi-mapping resolution from longer/paired reads) are violated by short, length-constrained Ribo-seq footprints (see Ribomap, Bioinformatics 2016). Choose 'alignment' to keep STAR alignment followed by Salmon in alignment-based mode, e.g. for backward compatibility, comparison with prior runs, or downstream tools that expect Salmon-format transcript-level counts. Choose 'pseudo' for direct Salmon pseudo-alignment from reads, an experimental alternative that uses the same k-mer index for both modalities and may help reduce length-related quantification biases without requiring read trimming.",
-                    "fa_icon": "fas fa-calculator"
+                    "description": "Extra arguments to pass to anota2seq in addition to defaults defined by the pipeline. Available options include: --gene_id_col (column name for gene IDs in count table, default: 'gene_id'), --exclude_samples_col and --exclude_samples_values (exclude samples by column value, semicolon-separated). Note: --samples_pairing_col and --samples_batch_col are automatically set from the 'pair' and 'batch' columns in the contrast file if present."
                 },
-                "extra_stringtie_args": {
+                "extra_deltate_args": {
                     "type": "string",
-                    "description": "Extra arguments to pass to per-sample StringTie in addition to defaults defined by the pipeline."
+                    "description": "Extra arguments to pass to deltaTE (DESeq2) in addition to defaults defined by the pipeline."
                 },
-                "extra_stringtie_merge_args": {
+                "extra_dotseq_args": {
                     "type": "string",
-                    "description": "Extra arguments to pass to StringTie --merge (e.g. `-T 1 -f 0.1` to tighten the merged annotation)."
+                    "description": "Extra arguments forwarded to the DOTSeq R template (ORF-level DTE + DOU). Accepts any of the template's `--key value` options, e.g. `--min_count`, `--stringent`, `--dispersion_modeling`, `--nullweight`, `--top_hits`."
                 },
-                "stringtie_ribo_fallback_args": {
+                "extra_orf_dte_args": {
                     "type": "string",
-                    "default": "-m 100 -c 5 -j 3 -f 0.05 -g 100",
-                    "description": "StringTie arguments used when no RNA-seq BAMs are available and the pipeline falls back to Ribo-seq BAMs for assembly.",
-                    "help_text": "These tightened defaults reduce false-positive single-exon transcripts driven by P-site pileups in Ribo-seq data: `-m 100` (min transcript length, vs default 200 - retains sORF transcripts), `-c 5` (min coverage), `-j 3` (min junction reads), `-f 0.05` (min isoform fraction), `-g 100` (max gap). Empirical first-pass defaults; tune per dataset. Ignored when RNA-seq BAMs are available or when `--extra_stringtie_args` is set."
+                    "description": "Extra arguments forwarded to the deltaTE DESeq2 module for the Tier 2 ORF-level call (issue #168). Accepts the same options as the gene-level deltaTE module.",
+                    "help_text": "The Tier 2 ORF-level analysis runs the same deltaTE DESeq2 module as the gene-level path after a join step expands the gene-level RNA-seq matrix onto ORF rows via `orf_to_gene.tsv`. ORFs whose host gene is absent from the RNA-seq matrix, and novel intergenic ORFs with no host gene, are dropped at the join step."
+                },
+                "extra_plastid_make_wiggle_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to plastid/make_wiggle command in addition to defaults defined by the pipeline."
+                },
+                "extra_plastid_metagene_generate_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to plastid/metagene_generate command in addition to defaults defined by the pipeline."
+                },
+                "extra_plastid_psite_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to plastid/psite command in addition to defaults defined by the pipeline."
                 },
                 "extra_price_indexgenome_args": {
                     "type": "string",
@@ -600,6 +509,106 @@
                     "type": "string",
                     "description": "Extra CLI arguments passed to `gedi -e Price`.",
                     "fa_icon": "fas fa-terminal"
+                },
+                "extra_ribocode_gtfupdate_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to the RiboCode GTFupdate command in addition to defaults defined by the pipeline."
+                },
+                "extra_ribocode_metaplots_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to the RiboCode metaplots command in addition to defaults defined by the pipeline."
+                },
+                "extra_ribocode_prepare_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to the RiboCode prepare_transcripts command in addition to defaults defined by the pipeline."
+                },
+                "extra_ribocode_ribocode_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to the RiboCode command in addition to defaults defined by the pipeline."
+                },
+                "extra_ribotish_predict_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to the ribotish predict command in addition to defaults defined by the pipeline."
+                },
+                "extra_ribotish_quality_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to the ribotish quality command in addition to defaults defined by the pipeline."
+                },
+                "extra_ribotricer_detectorfs_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to the ribotricer detect-orfs command in addition to defaults defined by the pipeline."
+                },
+                "extra_ribotricer_prepareorfs_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to the ribotricer prepare-orfs command in addition to defaults defined by the pipeline."
+                },
+                "extra_ribowaltz_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to the riboWaltz command in addition to defaults defined by the pipeline."
+                },
+                "extra_stringtie_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to per-sample StringTie in addition to defaults defined by the pipeline."
+                },
+                "extra_stringtie_merge_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to StringTie --merge (e.g. `-T 1 -f 0.1` to tighten the merged annotation)."
+                },
+                "plastid_default_psite_offset": {
+                    "type": "integer",
+                    "default": 12,
+                    "description": "Default p-site offset to use for read lengths where the offset cannot be determined automatically from the data."
+                },
+                "plastid_max_length": {
+                    "type": "integer",
+                    "default": 50,
+                    "fa_icon": "fas fa-ruler-horizontal",
+                    "description": "Plastid only considers reads of at most the given length."
+                },
+                "plastid_min_length": {
+                    "type": "integer",
+                    "default": 15,
+                    "fa_icon": "fas fa-ruler-horizontal",
+                    "description": "Plastid only considers reads of at least the given length."
+                },
+                "ribo_lfc_threshold": {
+                    "type": "number",
+                    "default": 0,
+                    "description": "Minimum absolute log2 fold change for translated mRNA (Ribo-seq) to be considered significant. Set to 0 to disable. Maps to anota2seq selDeltaP / deltaTE lfc_threshold_ribo.",
+                    "fa_icon": "fas fa-ruler-vertical"
+                },
+                "rna_lfc_threshold": {
+                    "type": "number",
+                    "default": 0,
+                    "description": "Minimum absolute log2 fold change for total mRNA to be considered significant. Set to 0 to disable. Maps to anota2seq selDeltaT / deltaTE lfc_threshold_rna.",
+                    "fa_icon": "fas fa-ruler-vertical"
+                },
+                "stringtie_ribo_fallback_args": {
+                    "type": "string",
+                    "default": "-m 100 -c 5 -j 3 -f 0.05 -g 100",
+                    "description": "StringTie arguments used when no RNA-seq BAMs are available and the pipeline falls back to Ribo-seq BAMs for assembly.",
+                    "help_text": "These tightened defaults reduce false-positive single-exon transcripts driven by P-site pileups in Ribo-seq data: `-m 100` (min transcript length, vs default 200 - retains sORF transcripts), `-c 5` (min coverage), `-j 3` (min junction reads), `-f 0.05` (min isoform fraction), `-g 100` (max gap). Empirical first-pass defaults; tune per dataset. Ignored when RNA-seq BAMs are available or when `--extra_stringtie_args` is set."
+                },
+                "te_lfc_threshold": {
+                    "type": "number",
+                    "default": 0.2630344,
+                    "description": "Minimum absolute log2 fold change for translational efficiency (TE) to be considered significant. Genes must meet both p-value and effect size thresholds. Default is log2(1.2) matching anota2seq. Maps to anota2seq selDeltaPT / deltaTE lfc_threshold_te.",
+                    "fa_icon": "fas fa-ruler-vertical"
+                },
+                "te_quantification_method": {
+                    "type": "string",
+                    "default": "plastid_psite",
+                    "enum": ["alignment", "pseudo", "plastid_psite"],
+                    "description": "Quantification method for translational efficiency analysis: 'plastid_psite' (in-frame P-site counts from plastid, default), 'alignment' (STAR -> Salmon) or 'pseudo' (Salmon pseudo-alignment).",
+                    "help_text": "Default is 'plastid_psite': Ribo-seq reads are counted only when their inferred P-site coincides with an in-frame codon position in an annotated CDS (derived from plastid wiggle tracks). This is the scientifically appropriate quantity for Ribo-seq, because Salmon's underlying assumptions (uniform coverage, fragment-length distribution, multi-mapping resolution from longer/paired reads) are violated by short, length-constrained Ribo-seq footprints (see Ribomap, Bioinformatics 2016). Choose 'alignment' to keep STAR alignment followed by Salmon in alignment-based mode, e.g. for backward compatibility, comparison with prior runs, or downstream tools that expect Salmon-format transcript-level counts. Choose 'pseudo' for direct Salmon pseudo-alignment from reads, an experimental alternative that uses the same k-mer index for both modalities and may help reduce length-related quantification biases without requiring read trimming.",
+                    "fa_icon": "fas fa-calculator"
+                },
+                "translational_efficiency_method": {
+                    "type": "string",
+                    "default": "anota2seq",
+                    "description": "Method to use for translational efficiency analysis. `dotseq` is ORF-level only and requires `--extended_orf_analysis true`.",
+                    "enum": ["anota2seq", "deltate", "dotseq"],
+                    "fa_icon": "fas fa-balance-scale"
                 }
             }
         },

@@ -1,0 +1,49 @@
+nextflow_pipeline {
+
+    name "Test pipeline with --translational_efficiency_method dotseq (ORF-level)"
+    script "../main.nf"
+    tag "pipeline"
+    tag "pipeline_riboseq"
+    tag "dotseq"
+    tag "extended_orf_analysis"
+
+    test("-profile test --skip_stringtie false --extended_orf_analysis true --translational_efficiency_method dotseq") {
+
+        when {
+            params {
+                outdir                          = "$outputDir"
+                skip_stringtie                  = false
+                extended_orf_analysis           = true
+                translational_efficiency_method = 'dotseq'
+                // ribotricer and rpbp left at their defaults - chr20 test
+                // data is too sparse for ribotricer's periodicity inference,
+                // and rpbp's MCMC runtime is incompatible with unit-test
+                // budget. Default ribotish + ribocode is enough to supply
+                // the ORF catalogue that DOTSeq consumes.
+            }
+        }
+
+        then {
+            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
+            def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
+
+            def dotseq_dir = file("${params.outdir}/dte/orf_level/dotseq")
+            assertAll(
+                { assert workflow.success },
+                { assert dotseq_dir.exists() && dotseq_dir.list().length > 0 },
+                { assert snapshot(
+                    removeNextflowVersion("$outputDir/pipeline_info/nf_core_riboseq_software_mqc_versions.yml"),
+                    stable_name,
+                    stable_path
+                ).match() }
+            )
+        }
+
+        cleanup {
+            if (System.getenv("NFT_PROFILE")?.contains("docker")) {
+                "docker system prune -a -f --volumes".execute()
+            }
+            new File("${launchDir}").deleteDir()
+        }
+    }
+}

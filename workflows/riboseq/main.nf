@@ -46,6 +46,7 @@ include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../mod
 include { ANOTA2SEQ_ANOTA2SEQRUN as ANOTA2SEQ_ANOTA2SEQRUN_ORF } from '../../modules/nf-core/anota2seq/anota2seqrun'
 include { DESEQ2_DELTATE                                       } from '../../modules/local/deseq2/deltate'
 include { DESEQ2_DELTATE as DESEQ2_DELTATE_ORF                 } from '../../modules/local/deseq2/deltate'
+include { DOTSEQ_DOTSEQ as DOTSEQ_DOTSEQ_ORF                   } from '../../modules/nf-core/dotseq/dotseq'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_PSEUDO_TE      } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
 include { RIBOWALTZ                                            } from '../../modules/nf-core/ribowaltz/main'
@@ -908,8 +909,18 @@ workflow RIBOSEQ {
                 ch_versions = ch_versions.mix(DESEQ2_DELTATE_ORF.out.versions)
             }
 
-            if (params.run_dotseq) {
-                log.info "--run_dotseq is set. The per-ORF DOTSeq DTE / DOU analysis is opt-in; DOTSeq is currently on Bioconductor devel and a dedicated module is pending (nf-core/modules#11742). This flag is a no-op until the module lands."
+            if (params.translational_efficiency_method == 'dotseq') {
+                ch_dotseq_input = DTE_COUNTS_PREP.out.counts
+                    .combine(ch_samplesheet)
+                    .combine(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.catalogue_tsv.map { _meta, tsv -> tsv })
+                    .map { meta, counts, samplesheet, annotation -> [ meta, samplesheet, counts, annotation ] }
+                    .first()
+
+                DOTSEQ_DOTSEQ_ORF(
+                    ch_contrasts,
+                    ch_dotseq_input
+                )
+                ch_versions = ch_versions.mix(DOTSEQ_DOTSEQ_ORF.out.versions)
             }
         }
     }
