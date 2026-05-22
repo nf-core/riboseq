@@ -714,10 +714,6 @@ workflow RIBOSEQ {
         }
     }
 
-    if (params.translational_efficiency_method == 'dotseq' && !(extended_orf_active && enabled_orf_callers && !params.skip_plastid)) {
-        log.warn "--translational_efficiency_method dotseq runs only at the ORF level and requires --extended_orf_analysis true plus a configured ORF caller and plastid P-sites; one or more of those is currently off, so no DTE analysis will run. Pick anota2seq or deltate for the gene-level path, or wire up the ORF prerequisites."
-    }
-
     //
     // Collate and save software versions
     // Combines traditional versions.yml files with versions emitted via topic channels
