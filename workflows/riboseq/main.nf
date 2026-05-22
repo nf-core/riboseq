@@ -21,6 +21,7 @@ include { GEDI_INDEXGENOME         } from '../../modules/nf-core/gedi/indexgenom
 include { GEDI_PRICE               } from '../../modules/nf-core/gedi/price/main'
 include { ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE } from '../../subworkflows/nf-core/orftable_fasta_gtf_buildorfcatalogue/main'
 include { QUANTIFY_ORF_PSITE       } from '../../subworkflows/local/quantify_orf_psite'
+include { COVERAGE_TRACKS          } from '../../subworkflows/local/coverage_tracks'
 include { DTE_COUNTS_PREP          } from '../../modules/local/dte_counts_prep'
 include { DESEQ2_DELTATE as DESEQ2_DELTATE_ORF } from '../../modules/local/deseq2/deltate'
 include { ANOTA2SEQ_ANOTA2SEQRUN as ANOTA2SEQ_ANOTA2SEQRUN_ORF } from '../../modules/nf-core/anota2seq/anota2seqrun'
@@ -59,9 +60,6 @@ include { PLASTID_MAKE_WIGGLE                                  } from '../../mod
 include { QUANTIFY_INFRAME_PSITE_PLASTID                       } from '../../modules/local/quantify_inframe_psite_plastid'
 include { GAWK as GTF_TO_INFRAME_PSITES                        } from '../../modules/nf-core/gawk'
 include { GAWK as REPLACE_RIBOSEQ_COUNTS_IN_MATRIX             } from '../../modules/nf-core/gawk'
-include { SAMTOOLS_VIEW as SAMTOOLS_VIEW_SPLIT_BY_STRAND       } from '../../modules/nf-core/samtools/view'
-include { BEDTOOLS_GENOMECOV                                   } from '../../modules/nf-core/bedtools/genomecov/main'
-include { UCSC_BEDGRAPHTOBIGWIG                                } from '../../modules/nf-core/ucsc/bedgraphtobigwig/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -81,15 +79,6 @@ include { validateInputSamplesheet } from '../../subworkflows/local/utils_nfcore
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-
-// A filter for samtools view which splits alignments by first-of-pair strand,
-// taking into consideration the strandedness of the library. Used by SAMTOOLS_VIEW_SPLIT_BY_STRAND.
-def getStrandFilter(strandedness, strand) {
-    def sameOrientation = (strand == 'forward') == (strandedness == 'forward')
-    sameOrientation
-        ? "-e '((flag.read1 || !flag.paired) && !flag.reverse) || (flag.read2 &&  flag.reverse)'"
-        : "-e '((flag.read1 || !flag.paired) &&  flag.reverse) || (flag.read2 && !flag.reverse)'"
-}
 
 workflow RIBOSEQ {
 
@@ -486,46 +475,15 @@ workflow RIBOSEQ {
     }
 
     //
-    // Generate coverage tracks
+    // SUBWORKFLOW: Generate strand-aware genome coverage tracks (bigWig).
     //
 
     if (!params.skip_coverage_tracks) {
-
-        // When protocol is stranded, split BAMs by mate1 strand
-        ch_split_by_strand = ch_genome_bam
-            .join(ch_genome_bam_index, by: [0])
-            .filter { meta, bam, bai -> meta.strandedness in ['forward', 'reverse'] }
-        SAMTOOLS_VIEW_SPLIT_BY_STRAND(
-            ch_split_by_strand
-                .flatMap { meta, bam, bai ->
-                    ['forward', 'reverse'].collect { strand ->
-                        def strand_filter = getStrandFilter(meta.strandedness, strand)
-                        [meta + [strand: strand, strand_filter: strand_filter], bam, bai]
-                    }
-                },
-            [[], [], []],  // No reference fasta/fai
-            [],            // No qname file
-            []             // No index format
-        )
-
-        // Create bedgraph tracks
-        BEDTOOLS_GENOMECOV(
-            SAMTOOLS_VIEW_SPLIT_BY_STRAND.out.bam
-                .map { meta, bam -> [meta, bam, 1] }
-                .mix(ch_genome_bam
-                    .filter { meta, bam -> meta.strandedness == 'unstranded' }
-                    .map { meta, bam -> [meta + [strand: 'unstranded'], bam, 1] }
-                ),
-            ch_fai,
-            'bedgraph',
-            false
-        )
-        // Convert bedgraphs to bigWig
-        UCSC_BEDGRAPHTOBIGWIG(
-            BEDTOOLS_GENOMECOV.out.genomecov,
+        COVERAGE_TRACKS(
+            ch_genome_bam,
+            ch_genome_bam_index,
             ch_fai
         )
-
     }
 
     //
