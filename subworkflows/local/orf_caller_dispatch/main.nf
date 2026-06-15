@@ -97,7 +97,6 @@ workflow ORF_CALLER_DISPATCH {
             [[:],[]],
             ch_predict_ref_gtf
         )
-        ch_versions = ch_versions.mix(RIBOTISH_PREDICT_INDIVIDUAL.out.versions)
         ch_ribotish_predictions = RIBOTISH_PREDICT_INDIVIDUAL.out.predictions
 
         RIBOTISH_PREDICT_ALL(
@@ -109,7 +108,6 @@ workflow ORF_CALLER_DISPATCH {
             [[:],[]],
             ch_predict_ref_gtf
         )
-        ch_versions = ch_versions.mix(RIBOTISH_PREDICT_ALL.out.versions)
     }
 
     //
