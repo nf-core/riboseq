@@ -25,11 +25,9 @@
                     "python": "3.9.5"
                 },
                 "CUSTOM_ORFMERGE": {
-                    "pandas": "2.3.0",
                     "python": "3.12.11"
                 },
                 "CUSTOM_ORFNORMALISE": {
-                    "pandas": "2.3.0",
                     "python": "3.12.11"
                 },
                 "CUSTOM_TX2GENE": {

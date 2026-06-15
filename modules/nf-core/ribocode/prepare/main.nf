@@ -3,7 +3,7 @@ process RIBOCODE_PREPARE {
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
         'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/fe/fe815db0864b45b91afc7bc84c55cb60acb0035e7248dda7f480a55c4cb105d7/data':
         'community.wave.seqera.io/library/ribocode:1.2.15--5530b252f5433a62' }"
 
@@ -28,17 +28,10 @@ process RIBOCODE_PREPARE {
         -o annotation \\
         $args
 
-    # Pre-build pyfasta .gdx/.flat with RiboCode's key_fn so consumers don't write to staged inputs.
-    python - <<'PYTHON'
-from pyfasta import Fasta
-def key_fn(name):
-    if ' ' in name:
-        return name.split()[0]
-    if '|' in name:
-        return name.split('|')
-    return name
-Fasta('annotation/transcripts_sequence.fa', key_fn=key_fn)
-PYTHON
+    # Pre-build the pyfasta .gdx/.flat sidecars by instantiating RiboCode's own GenomeSeq -
+    # so the published annotation is complete and downstream readers don't trigger pyfasta's
+    # lazy first-read index write.
+    python -c "from RiboCode.prepare_transcripts import GenomeSeq; GenomeSeq('annotation/transcripts_sequence.fa')"
     """
 
     stub:
