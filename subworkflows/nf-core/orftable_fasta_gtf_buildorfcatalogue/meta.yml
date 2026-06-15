@@ -32,6 +32,8 @@ components:
   - custom/orfmerge
   - bedtools/getfasta
   - seqkit/translate
+  - mmseqs/easycluster
+  - custom/orfcollapse
 input:
   - ch_orf_tables:
       description: |

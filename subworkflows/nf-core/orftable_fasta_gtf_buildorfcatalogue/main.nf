@@ -9,6 +9,8 @@ include { CUSTOM_ORFNORMALISE } from '../../../modules/nf-core/custom/orfnormali
 include { CUSTOM_ORFMERGE     } from '../../../modules/nf-core/custom/orfmerge/main'
 include { BEDTOOLS_GETFASTA   } from '../../../modules/nf-core/bedtools/getfasta/main'
 include { SEQKIT_TRANSLATE    } from '../../../modules/nf-core/seqkit/translate/main'
+include { MMSEQS_EASYCLUSTER  } from '../../../modules/nf-core/mmseqs/easycluster/main'
+include { CUSTOM_ORFCOLLAPSE  } from '../../../modules/nf-core/custom/orfcollapse/main'
 
 workflow ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE {
 
@@ -56,16 +58,33 @@ workflow ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE {
 
     CUSTOM_ORFMERGE ( ch_merge_in )
 
-    // 3. Lift the merged BED12 into nucleotide then amino-acid FASTA.
-    //    `bedtools getfasta -split` walks BED12 blocks in mRNA order;
-    //    `seqkit translate --trim` drops trailing stops.
+    // 3. Lift the merged BED12 into nucleotide then amino-acid FASTA, keyed by
+    //    orf_id. `bedtools getfasta -split -s -nameOnly` walks BED12 blocks in
+    //    mRNA order on the correct strand and names each sequence by the BED
+    //    name (orf_id); `seqkit translate --trim` drops trailing stops.
     BEDTOOLS_GETFASTA ( CUSTOM_ORFMERGE.out.bed12, ch_fasta.map { _meta, fa -> fa }.first() )
     SEQKIT_TRANSLATE  ( BEDTOOLS_GETFASTA.out.fasta )
 
+    // 4. The coordinate merge only collapses genomically overlapping ORFs, so
+    //    the same micropeptide encoded at distinct loci survives as separate
+    //    rows. Cluster catalogue peptides by amino-acid identity and fold the
+    //    small-ORF (aa_length <= 100) clusters down to one representative each
+    //    (GENCODE Ribo-seq ORF catalogue convention, Mudge et al. 2022).
+    MMSEQS_EASYCLUSTER ( SEQKIT_TRANSLATE.out.fastx )
+
+    ch_collapse_in = CUSTOM_ORFMERGE.out.bed12
+        .join(CUSTOM_ORFMERGE.out.catalogue_tsv)
+        .join(CUSTOM_ORFMERGE.out.orf_to_gene_tsv)
+        .join(CUSTOM_ORFMERGE.out.multiqc)
+        .join(SEQKIT_TRANSLATE.out.fastx)
+        .join(MMSEQS_EASYCLUSTER.out.tsv)
+
+    CUSTOM_ORFCOLLAPSE ( ch_collapse_in )
+
     emit:
-    catalogue_bed12    = CUSTOM_ORFMERGE.out.bed12
-    catalogue_tsv      = CUSTOM_ORFMERGE.out.catalogue_tsv
-    orf_to_gene_tsv    = CUSTOM_ORFMERGE.out.orf_to_gene_tsv
-    catalogue_aa_fasta = SEQKIT_TRANSLATE.out.fastx
-    multiqc            = CUSTOM_ORFMERGE.out.multiqc
+    catalogue_bed12    = CUSTOM_ORFCOLLAPSE.out.bed12
+    catalogue_tsv      = CUSTOM_ORFCOLLAPSE.out.catalogue_tsv
+    orf_to_gene_tsv    = CUSTOM_ORFCOLLAPSE.out.orf_to_gene_tsv
+    catalogue_aa_fasta = CUSTOM_ORFCOLLAPSE.out.aa_fasta
+    multiqc            = CUSTOM_ORFCOLLAPSE.out.multiqc
 }

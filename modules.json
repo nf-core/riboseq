@@ -65,6 +65,11 @@
                         "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
                         "installed_by": ["modules"]
                     },
+                    "custom/orfcollapse": {
+                        "branch": "master",
+                        "git_sha": "ccb13a7b8bb6bf2a9dde01111136b8ab3dbf1c08",
+                        "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
+                    },
                     "custom/orfmerge": {
                         "branch": "master",
                         "git_sha": "ccb13a7b8bb6bf2a9dde01111136b8ab3dbf1c08",
@@ -154,6 +159,11 @@
                         "branch": "master",
                         "git_sha": "77b38f082c32cf86d870802c5dc96b51062c926e",
                         "installed_by": ["quantify_pseudo_alignment"]
+                    },
+                    "mmseqs/easycluster": {
+                        "branch": "master",
+                        "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
+                        "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
                     },
                     "multiqc": {
                         "branch": "master",
