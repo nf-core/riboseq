@@ -29,6 +29,7 @@ preprocessing/trimgalore/*.fastq.gz_trimming_report.txt
 preprocessing/trimgalore/fastqc/*_fastqc.{html,zip}
 preprocessing/umitools/*.umi_extract.log
 quantification/salmon/*/aux_info/ambig_info.tsv
+quantification/salmon/*/aux_info/expected_bias.gz
 quantification/salmon/*/aux_info/fld.gz
 quantification/salmon/*/aux_info/meta_info.json
 quantification/salmon/*/libParams/flenDist.txt
