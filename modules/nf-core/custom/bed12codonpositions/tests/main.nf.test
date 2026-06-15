@@ -3,6 +3,7 @@ nextflow_process {
     name "Test Process CUSTOM_BED12CODONPOSITIONS"
     script "../main.nf"
     process "CUSTOM_BED12CODONPOSITIONS"
+    config "./nextflow.config"
 
     tag "modules"
     tag "modules_nfcore"
@@ -12,6 +13,9 @@ nextflow_process {
     test("sarscov2 - bed12 - default") {
 
         when {
+            params {
+                module_args = ''
+            }
             process {
                 """
                 input[0] = [
@@ -26,8 +30,8 @@ nextflow_process {
             assertAll(
                 { assert process.success },
                 { assert snapshot(
-                    process.out.bed,
-                    process.out.findAll { key, val -> key.startsWith('versions') }
+                    sanitizeOutput(process.out),
+                    path(process.out.versions[0]).yaml
                 ).match() }
             )
         }
@@ -35,9 +39,10 @@ nextflow_process {
 
     test("sarscov2 - bed12 - width 3") {
 
-        config "./nextflow.config"
-
         when {
+            params {
+                module_args = '--width 3'
+            }
             process {
                 """
                 input[0] = [
@@ -51,19 +56,17 @@ nextflow_process {
         then {
             assertAll(
                 { assert process.success },
-                { assert snapshot(
-                    process.out.bed,
-                    process.out.findAll { key, val -> key.startsWith('versions') }
-                ).match() }
+                { assert snapshot(sanitizeOutput(process.out)).match() }
             )
         }
     }
 
     test("sarscov2 - bed12 - frame 1") {
 
-        config "./frame.config"
-
         when {
+            params {
+                module_args = '--frame 1'
+            }
             process {
                 """
                 input[0] = [
@@ -77,10 +80,7 @@ nextflow_process {
         then {
             assertAll(
                 { assert process.success },
-                { assert snapshot(
-                    process.out.bed,
-                    process.out.findAll { key, val -> key.startsWith('versions') }
-                ).match() }
+                { assert snapshot(sanitizeOutput(process.out)).match() }
             )
         }
     }
@@ -88,6 +88,9 @@ nextflow_process {
     test("intron - bed12 - default") {
 
         when {
+            params {
+                module_args = ''
+            }
             process {
                 """
                 def intron_bed = new File('intron.bed12')
@@ -105,19 +108,17 @@ chr_test\t300\t410\tminus_2exon\t20\t-\t300\t410\t0\t2\t10,10\t0,100
         then {
             assertAll(
                 { assert process.success },
-                { assert snapshot(
-                    process.out.bed,
-                    process.out.findAll { key, val -> key.startsWith('versions') }
-                ).match() }
+                { assert snapshot(sanitizeOutput(process.out)).match() }
             )
         }
     }
 
     test("intron - bed12 - width 3") {
 
-        config "./nextflow.config"
-
         when {
+            params {
+                module_args = '--width 3'
+            }
             process {
                 """
                 def intron_bed = new File('intron_w3.bed12')
@@ -135,19 +136,17 @@ chr_test\t300\t410\tminus_2exon\t20\t-\t300\t410\t0\t2\t10,10\t0,100
         then {
             assertAll(
                 { assert process.success },
-                { assert snapshot(
-                    process.out.bed,
-                    process.out.findAll { key, val -> key.startsWith('versions') }
-                ).match() }
+                { assert snapshot(sanitizeOutput(process.out)).match() }
             )
         }
     }
 
     test("3 single-nt blocks - keep duplicates") {
 
-        config "./keep_duplicates.config"
-
         when {
+            params {
+                module_args = '--width 2 --step 1 --keep-duplicates'
+            }
             process {
                 """
                 def dup_bed = new File('dup.bed12')
@@ -163,10 +162,7 @@ chr_test\t300\t410\tminus_2exon\t20\t-\t300\t410\t0\t2\t10,10\t0,100
         then {
             assertAll(
                 { assert process.success },
-                { assert snapshot(
-                    process.out.bed,
-                    process.out.findAll { key, val -> key.startsWith('versions') }
-                ).match() }
+                { assert snapshot(sanitizeOutput(process.out)).match() }
             )
         }
     }
@@ -176,6 +172,9 @@ chr_test\t300\t410\tminus_2exon\t20\t-\t300\t410\t0\t2\t10,10\t0,100
         options '-stub'
 
         when {
+            params {
+                module_args = ''
+            }
             process {
                 """
                 input[0] = [

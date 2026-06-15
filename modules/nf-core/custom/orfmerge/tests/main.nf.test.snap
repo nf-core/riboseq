@@ -15,7 +15,7 @@
                         {
                             "id": "cohort"
                         },
-                        "cohort.catalogue.tsv:md5,fca1b90098ba957ec09331aa7da88540"
+                        "cohort.catalogue.tsv:md5,d2695c6f6eab75fd03a20d7441533d36"
                     ]
                 ],
                 "2": [
@@ -35,7 +35,7 @@
                     ]
                 ],
                 "4": [
-                    "versions.yml:md5,d25c26dfaf9e0c93de97a75f5690043b"
+                    "versions.yml:md5,8e0b24bd9e91050a8715f1b1b61f0805"
                 ],
                 "bed12": [
                     [
@@ -50,7 +50,7 @@
                         {
                             "id": "cohort"
                         },
-                        "cohort.catalogue.tsv:md5,fca1b90098ba957ec09331aa7da88540"
+                        "cohort.catalogue.tsv:md5,d2695c6f6eab75fd03a20d7441533d36"
                     ]
                 ],
                 "multiqc": [
@@ -70,14 +70,14 @@
                     ]
                 ],
                 "versions": [
-                    "versions.yml:md5,d25c26dfaf9e0c93de97a75f5690043b"
+                    "versions.yml:md5,8e0b24bd9e91050a8715f1b1b61f0805"
                 ]
             }
         ],
-        "timestamp": "2026-05-21T18:24:00.485642577",
+        "timestamp": "2026-06-12T13:28:01.081036",
         "meta": {
             "nf-test": "0.9.5",
-            "nextflow": "26.04.1"
+            "nextflow": "25.10.4"
         }
     }
 }
