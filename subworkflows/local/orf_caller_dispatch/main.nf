@@ -85,13 +85,17 @@ workflow ORF_CALLER_DISPATCH {
             ch_fasta_gtf_for_ribotish_extended :
             ch_fasta_gtf_for_ribotish
 
+        def ch_predict_fasta_gtf = ch_ribotish_predict_annotation.map { meta, fasta, gtf, _ref -> [ meta, fasta, gtf ] }
+        def ch_predict_ref_gtf   = ch_ribotish_predict_annotation.map { _meta, _fasta, _gtf, ref -> [ [id: 'reference'], ref ] }
+
         RIBOTISH_PREDICT_INDIVIDUAL(
             ribotish_predict_inputs.bam,
             [[:],[],[]],
-            ch_ribotish_predict_annotation,
+            ch_predict_fasta_gtf,
             [[:],[]],
             ribotish_predict_inputs.offset,
-            [[:],[]]
+            [[:],[]],
+            ch_predict_ref_gtf
         )
         ch_versions = ch_versions.mix(RIBOTISH_PREDICT_INDIVIDUAL.out.versions)
         ch_ribotish_predictions = RIBOTISH_PREDICT_INDIVIDUAL.out.predictions
@@ -99,10 +103,11 @@ workflow ORF_CALLER_DISPATCH {
         RIBOTISH_PREDICT_ALL(
             ribotish_predict_inputs.bam.map{ _meta, bam, bai -> [[id:'allsamples'], bam, bai]}.groupTuple(),
             [[:],[],[]],
-            ch_ribotish_predict_annotation,
+            ch_predict_fasta_gtf,
             [[:],[]],
             ribotish_predict_inputs.offset.map{ _meta, offset -> [[id:'allsamples'], offset]}.groupTuple(),
-            [[:],[]]
+            [[:],[]],
+            ch_predict_ref_gtf
         )
         ch_versions = ch_versions.mix(RIBOTISH_PREDICT_ALL.out.versions)
     }
