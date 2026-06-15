@@ -159,9 +159,16 @@ workflow ORF_CALLER_DISPATCH {
     if (params.run_price) {
         log.warn "PRICE is enabled via --run_price. PRICE (Erhard et al. 2018) estimates a shared cohort-level codon-position model via EM and is opt-in because its runtime at genome-wide scale is comparable to Rp-Bp. Plan compute accordingly."
 
-        def ch_price_fasta_gtf = extended_orf_active ?
-            ch_fasta_gtf_extended :
-            ch_fasta_gtf
+        // PRICE resolves overlapping ORFs and rescues multimappers with its own
+        // EM (Erhard et al. 2018), so it has no need for the one-transcript-per-gene
+        // backbone that exists to disambiguate P-site quantification. Restricting it
+        // to the canonical/hybrid annotation would only narrow ORF discovery and
+        // bias ORF-type classification to canonical CDS, so PRICE receives the full
+        // multi-isoform annotation it is normally run against.
+        def ch_price_fasta_gtf = ch_fasta
+            .combine(ch_gtf)
+            .map { fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }
+            .first()
 
         GEDI_INDEXGENOME(
             ch_price_fasta_gtf
