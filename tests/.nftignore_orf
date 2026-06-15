@@ -1,3 +1,5 @@
+# Extended-ORF analysis variant: extends .nftignore with MultiQC
+# aggregates that include non-deterministic hybrid-STAR sample data.
 .DS_Store
 alignment/star/**/*.bam.stats
 alignment/star/**/*.{bam,bam.bai}
