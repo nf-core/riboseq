@@ -3,133 +3,58 @@ nextflow_process {
     name "Test Process CUSTOM_ORFCOLLAPSE"
     script "../main.nf"
     process "CUSTOM_ORFCOLLAPSE"
-    config "./nextflow.config"
 
     tag "modules"
     tag "modules_nfcore"
     tag "custom"
     tag "custom/orfcollapse"
-    tag "custom/orfnormalise"
-    tag "custom/orfmerge"
-    tag "bedtools/getfasta"
-    tag "seqkit/translate"
-    tag "mmseqs/easycluster"
-    tag "gunzip"
 
-    setup {
-        run("GUNZIP") {
-            script "../../../gunzip/main.nf"
-            process {
-                """
-                input[0] = channel.of([
-                    [id: 'reference'],
-                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/riboseq_expression/Homo_sapiens.GRCh38.dna.chromosome.20.fa.gz', checkIfExists: true)
-                ])
-                """
-            }
-        }
-        run("CUSTOM_ORFNORMALISE", alias: "NORM_RIBOTISH") {
-            script "../../orfnormalise/main.nf"
-            process {
-                """
-                input[0] = channel.of([
-                    [id: 'sample1', caller: 'ribotish'],
-                    file('https://raw.githubusercontent.com/pinin4fjords/test-datasets/add-orf-prediction-fixtures/data/genomics/homo_sapiens/riboseq_expression/orf_predictions/sample1.ribotish.pred.txt', checkIfExists: true),
-                    'ribotish'
-                ])
-                input[1] = channel.of([
-                    [id: 'reference'],
-                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/riboseq_expression/Homo_sapiens.GRCh38.111_chr20.gtf', checkIfExists: true)
-                ])
-                """
-            }
-        }
-        run("CUSTOM_ORFNORMALISE", alias: "NORM_RIBOCODE") {
-            script "../../orfnormalise/main.nf"
-            process {
-                """
-                input[0] = channel.of([
-                    [id: 'sample1', caller: 'ribocode'],
-                    file('https://raw.githubusercontent.com/pinin4fjords/test-datasets/add-orf-prediction-fixtures/data/genomics/homo_sapiens/riboseq_expression/orf_predictions/sample1.ribocode.txt', checkIfExists: true),
-                    'ribocode'
-                ])
-                input[1] = channel.of([
-                    [id: 'reference'],
-                    file(params.modules_testdata_base_path + 'genomics/homo_sapiens/riboseq_expression/Homo_sapiens.GRCh38.111_chr20.gtf', checkIfExists: true)
-                ])
-                """
-            }
-        }
-        run("CUSTOM_ORFMERGE", alias: "ORFMERGE") {
-            script "../../orfmerge/main.nf"
-            process {
-                """
-                ch_beds = NORM_RIBOTISH.out.bed12.mix(NORM_RIBOCODE.out.bed12)
-                    .map { _meta, bed -> bed }.collect().map { beds -> [ 'cohort', beds ] }
-                ch_tsvs = NORM_RIBOTISH.out.tsv.mix(NORM_RIBOCODE.out.tsv)
-                    .map { _meta, tsv -> tsv }.collect().map { tsvs -> [ 'cohort', tsvs ] }
-                input[0] = ch_beds.combine(ch_tsvs, by: 0).map { _k, beds, tsvs -> [ [id: 'cohort'], beds, tsvs ] }
-                """
-            }
-        }
-        run("BEDTOOLS_GETFASTA", alias: "GETFASTA") {
-            script "../../../bedtools/getfasta/main.nf"
-            process {
-                """
-                input[0] = ORFMERGE.out.bed12
-                input[1] = GUNZIP.out.gunzip.map { _meta, fa -> fa }
-                """
-            }
-        }
-        run("SEQKIT_TRANSLATE", alias: "TRANSLATE") {
-            script "../../../seqkit/translate/main.nf"
-            process {
-                """
-                input[0] = GETFASTA.out.fasta
-                """
-            }
-        }
-        run("MMSEQS_EASYCLUSTER", alias: "EASYCLUSTER") {
-            script "../../../mmseqs/easycluster/main.nf"
-            process {
-                """
-                input[0] = TRANSLATE.out.fastx
-                """
-            }
-        }
-    }
-
-    test("homo_sapiens [chr20] - collapse catalogue smORFs") {
+    test("collapse identical small ORFs across loci") {
 
         when {
             process {
                 """
-                input[0] = ORFMERGE.out.bed12
-                    .join(ORFMERGE.out.catalogue_tsv)
-                    .join(ORFMERGE.out.orf_to_gene_tsv)
-                    .join(ORFMERGE.out.multiqc)
-                    .join(TRANSLATE.out.fastx)
-                    .join(EASYCLUSTER.out.tsv)
+                def dir = "\$projectDir/modules/nf-core/custom/orfcollapse/tests/fixtures"
+                input[0] = [
+                    [ id: 'cohort' ],
+                    file("\${dir}/cohort.catalogue.bed12",   checkIfExists: true),
+                    file("\${dir}/cohort.catalogue.tsv",     checkIfExists: true),
+                    file("\${dir}/cohort.orf_to_gene.tsv",   checkIfExists: true),
+                    file("\${dir}/cohort.catalogue.mqc.tsv", checkIfExists: true),
+                    file("\${dir}/cohort.catalogue.aa.fasta",checkIfExists: true),
+                    file("\${dir}/cohort_cluster.tsv",       checkIfExists: true)
+                ]
                 """
             }
         }
 
         then {
-            def merged = path(ORFMERGE.out.catalogue_tsv.get(0).get(1)).text.readLines().drop(1)
-            def out    = path(process.out.catalogue_tsv.get(0).get(1)).text.readLines()
-            def cols   = out[0].split('\t') as List
-            def rows   = out.drop(1).collect { it.split('\t') }
-            def cls    = cols.indexOf('orf_class')
-            def ids    = rows.collect { it[0] }
+            def out  = path(process.out.catalogue_tsv[0][1]).text.readLines()
+            def cols = out[0].split('\t') as List
+            def rows = out.drop(1).collect { it.split('\t') }
+            def byId = rows.collectEntries { [(it[0]): it] }
+            def aa   = path(process.out.aa_fasta[0][1]).text
+            def o2g  = path(process.out.orf_to_gene_tsv[0][1]).text.readLines().drop(1)
             assertAll(
                 { assert process.success },
                 { assert snapshot(process.out).match() },
-                // Collapse never invents ORFs: output is a subset of the merge.
-                { assert rows.size() <= merged.size() },
-                // orf_ids remain unique after collapsing.
-                { assert ids.size() == ids.toSet().size() },
-                // Non-smORF rows are preserved (count unchanged vs the merge).
-                { assert rows.count { it[cls] != 'smORF' } == merged.count { it.split('\t')[cls] != 'smORF' } }
+                // The two identical smORFs on different strands/loci collapse to one row.
+                { assert rows.size() == 3 },
+                { assert byId.containsKey('orf_00000001') },
+                { assert !byId.containsKey('orf_00000002') },
+                // The survivor unions both callers' evidence and both samples.
+                { assert byId['orf_00000001'][cols.indexOf('called_by_ribotish')] == '1' },
+                { assert byId['orf_00000001'][cols.indexOf('called_by_ribocode')] == '1' },
+                { assert byId['orf_00000001'][cols.indexOf('n_samples')] == '2' },
+                { assert byId['orf_00000001'][cols.indexOf('samples')] == 'sampleA,sampleB' },
+                // Non-smORF and unique smORF pass through.
+                { assert byId.containsKey('orf_00000003') },
+                { assert byId.containsKey('orf_00000004') },
+                // The dropped member's gene mapping is folded onto the survivor.
+                { assert o2g.any { it == 'orf_00000001\tg5\tt5' } },
+                // AA FASTA loses the dropped member and is keyed by bare orf_id.
+                { assert aa.contains('>orf_00000001') },
+                { assert !aa.contains('>orf_00000002') }
             )
         }
     }

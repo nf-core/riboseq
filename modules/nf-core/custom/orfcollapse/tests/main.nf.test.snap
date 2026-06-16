@@ -1,5 +1,5 @@
 {
-    "homo_sapiens [chr20] - ribotish + ribocode": {
+    "collapse identical small ORFs across loci": {
         "content": [
             {
                 "0": [
@@ -7,7 +7,7 @@
                         {
                             "id": "cohort"
                         },
-                        "cohort.catalogue.bed12:md5,d0de23019fbec9d96fd9302103a16278"
+                        "cohort.catalogue.bed12:md5,299daed2c7d9d03faba1340684a57fa7"
                     ]
                 ],
                 "1": [
@@ -15,7 +15,7 @@
                         {
                             "id": "cohort"
                         },
-                        "cohort.catalogue.tsv:md5,9b7e37df457221a36257c5a7772db5e7"
+                        "cohort.catalogue.tsv:md5,2ae2eb7006ab613d0d23ea5eaa959615"
                     ]
                 ],
                 "2": [
@@ -23,7 +23,7 @@
                         {
                             "id": "cohort"
                         },
-                        "cohort.orf_to_gene.tsv:md5,79699c0188eadd2aaf912a31a2c14464"
+                        "cohort.orf_to_gene.tsv:md5,7920c0714282f9cdfe809f8f9a12a511"
                     ]
                 ],
                 "3": [
@@ -31,7 +31,7 @@
                         {
                             "id": "cohort"
                         },
-                        "cohort.catalogue.aa.fasta:md5,d9b558202b43a331d98450cfbc7d15d8"
+                        "cohort.catalogue.mqc.tsv:md5,0541bc7510de3bc238145a4f913a9be9"
                     ]
                 ],
                 "4": [
@@ -39,23 +39,26 @@
                         {
                             "id": "cohort"
                         },
-                        "cohort.catalogue.mqc.tsv:md5,d8e6da169d5d0a95b9bb4332290d1dd6"
+                        "cohort.catalogue.aa.fasta:md5,fd7aac4757475b5814e192bddc2ba51b"
                     ]
                 ],
-                "catalogue_aa_fasta": [
+                "5": [
+                    "versions.yml:md5,ce260ecc8aef4b1cae023b7118f73770"
+                ],
+                "aa_fasta": [
                     [
                         {
                             "id": "cohort"
                         },
-                        "cohort.catalogue.aa.fasta:md5,d9b558202b43a331d98450cfbc7d15d8"
+                        "cohort.catalogue.aa.fasta:md5,fd7aac4757475b5814e192bddc2ba51b"
                     ]
                 ],
-                "catalogue_bed12": [
+                "bed12": [
                     [
                         {
                             "id": "cohort"
                         },
-                        "cohort.catalogue.bed12:md5,d0de23019fbec9d96fd9302103a16278"
+                        "cohort.catalogue.bed12:md5,299daed2c7d9d03faba1340684a57fa7"
                     ]
                 ],
                 "catalogue_tsv": [
@@ -63,7 +66,7 @@
                         {
                             "id": "cohort"
                         },
-                        "cohort.catalogue.tsv:md5,9b7e37df457221a36257c5a7772db5e7"
+                        "cohort.catalogue.tsv:md5,2ae2eb7006ab613d0d23ea5eaa959615"
                     ]
                 ],
                 "multiqc": [
@@ -71,7 +74,7 @@
                         {
                             "id": "cohort"
                         },
-                        "cohort.catalogue.mqc.tsv:md5,d8e6da169d5d0a95b9bb4332290d1dd6"
+                        "cohort.catalogue.mqc.tsv:md5,0541bc7510de3bc238145a4f913a9be9"
                     ]
                 ],
                 "orf_to_gene_tsv": [
@@ -79,12 +82,15 @@
                         {
                             "id": "cohort"
                         },
-                        "cohort.orf_to_gene.tsv:md5,79699c0188eadd2aaf912a31a2c14464"
+                        "cohort.orf_to_gene.tsv:md5,7920c0714282f9cdfe809f8f9a12a511"
                     ]
+                ],
+                "versions": [
+                    "versions.yml:md5,ce260ecc8aef4b1cae023b7118f73770"
                 ]
             }
         ],
-        "timestamp": "2026-06-15T22:19:33.428883724",
+        "timestamp": "2026-06-16T02:30:35.142404203",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.04.1"

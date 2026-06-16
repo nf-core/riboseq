@@ -35,6 +35,15 @@ multiqc/star/multiqc_report_data/multiqc_sources.txt
 multiqc/star/multiqc_report_data/multiqc_star.txt
 multiqc/star/multiqc_report_data/salmon_plot.txt
 multiqc/star/multiqc_report_data/sortmerna-detailed-plot.txt
+multiqc/star/multiqc_report_data/samtools-flagstat-pct-table.txt
+multiqc/star/multiqc_report_data/samtools-flagstat-table.txt
+multiqc/star/multiqc_report_data/samtools-idxstats-mapped-reads-plot_Normalised_Counts.txt
+multiqc/star/multiqc_report_data/samtools-idxstats-mapped-reads-plot_Observed_over_Expected_Counts.txt
+multiqc/star/multiqc_report_data/samtools-idxstats-mapped-reads-plot_Raw_Counts.txt
+multiqc/star/multiqc_report_data/samtools-stats-dp.txt
+multiqc/star/multiqc_report_data/samtools_alignment_plot.txt
+multiqc/star/multiqc_report_data/star_alignment_plot.txt
+multiqc/star/multiqc_report_data/star_summary_table.txt
 multiqc/star/multiqc_report_plots/{svg,pdf,png}/*.{svg,pdf,png}
 pipeline_info/*.{html,json,txt,yml}
 preprocessing/fastqc/*_fastqc.{html,zip}
