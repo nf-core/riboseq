@@ -1,15 +1,36 @@
 .DS_Store
+
+# STAR alignment: BAMs/indices are large binaries; .bam.stats and the STAR
+# *.Log.* files carry per-run timings. Genome alignment counts themselves are
+# deterministic (verified) and reach snapshots via downstream count tables.
 alignment/star/**/*.bam.stats
 alignment/star/**/*.{bam,bam.bai}
 alignment/star/deduplicated/umicollapse/*_UMICollapse.log
 alignment/star/log/*.Log.{final.out,out,progress.out}
+
+# Hybrid second-pass STAR (extended ORF analysis): non-deterministic. Aligning
+# Ribo-seq reads to the redundant canonical+novel transcriptome yields
+# thread-order-dependent multimapper assignment; verified that even Log.final.out
+# and per-transcript idxstats differ run-to-run, and STAR's fixed RNG seed does
+# not remove it. Consumed only by RiboCode (a reproducibility caveat for novel
+# ORF calling, not the default path).
 hybrid_star/log/*.Log.{final.out,out,progress.out}
 hybrid_star/log/SRX*.hybrid.SJ.out.tab
 hybrid_star/original/**
 hybrid_star/sorted/**
+
+# StringTie per-sample de novo assembly is non-deterministic (multithreaded);
+# the merged hybrid_reference.gtf it feeds IS deterministic and is snapshotted.
 stringtie/SRX*.denovo.transcripts.gtf
 stringtie/gffcompare/**
+
+# ORF-level combined counts are keyed by orf_id; ordering is deterministic once
+# orfmerge sorts the catalogue, but kept excluded pending confirmation.
 dte/orf_level/orf_combined_counts.tsv
+
+# MultiQC: reports/plots are HTML/SVG/PDF/parquet/JSON binaries or carry run
+# metadata and timestamps; the *_general_stats / data.json aggregates also fold
+# in the non-deterministic hybrid-STAR sample stats under extended analysis.
 multiqc/multiqc_plots/{svg,pdf,png}/*.{svg,pdf,png}
 multiqc/multiqc_report.html
 multiqc/star/multiqc.log
@@ -30,13 +51,20 @@ multiqc/star/multiqc_report_data/multiqc_sources.txt
 multiqc/star/multiqc_report_data/salmon_plot.txt
 multiqc/star/multiqc_report_data/sortmerna-detailed-plot.txt
 multiqc/star/multiqc_report_plots/{svg,pdf,png}/*.{svg,pdf,png}
+
+# Pipeline run reports: timestamps, durations, session ids.
 pipeline_info/*.{html,json,txt,yml}
+
+# QC/preprocessing logs and FastQC archives carry timestamps and version strings.
 preprocessing/fastqc/*_fastqc.{html,zip}
 preprocessing/fq_lint/**/*.fq_lint.txt
 preprocessing/sortmerna/*.sortmerna.log
 preprocessing/trimgalore/*.fastq.gz_trimming_report.txt
 preprocessing/trimgalore/fastqc/*_fastqc.{html,zip}
 preprocessing/umitools/*.umi_extract.log
+
+# Salmon: multithreaded EM gives run-to-run quant differences (verified quant.sf
+# / quant.genes.sf differ); .rds are binaries; logs/meta carry timestamps.
 quantification/salmon/*/aux_info/ambig_info.tsv
 quantification/salmon/*/aux_info/expected_bias.gz
 quantification/salmon/*/aux_info/fld.gz
@@ -69,13 +97,27 @@ quantification/salmon_te_pseudo/*/quant.sf
 quantification/salmon_te_pseudo/*.rds
 quantification/salmon_te_pseudo/**/*.rds
 quantification/salmon_te_pseudo/salmon.merged.te_pseudo.*.tsv
+
+# In-frame P-site gene counts: raw integer counts are deterministic (verified);
+# the normalised column carries sub-0.1% floating-point jitter from parallel
+# summation. Data is asserted in the quantify_inframe_psite_plastid module test.
 quantification/inframe_psite/*
+
+# Plot PDFs: rendering (fonts, timestamps) is non-deterministic.
 riboseq_qc/ribotish/*_qual.pdf
 psites/ribowaltz/**/*.pdf
+
+# Plastid offsets/metagene/bedgraph: data is deterministic but every file carries
+# a `## date = ...` header. Asserted (date-stripped) at module level.
 psites/plastid/*/*
+
+# anota2seq / DOTSeq: R-based fitting uses stochastic simulation (RVM, dfbetas);
+# results and .rds differ run-to-run. deltate (DESeq2) emits R session logs.
 translational_efficiency/anota2seq/**
 translational_efficiency/deltate/**
 dte/orf_level/anota2seq/**
 dte/orf_level/dotseq/**
 translational_efficiency/deltate/*.{translation,translated_mRNA,total_mRNA}.deltate.results.tsv
+
+# R session logs: package versions, timestamps.
 **/*R_sessionInfo.log

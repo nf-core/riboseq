@@ -1583,11 +1583,11 @@
                 "ribowaltz_metaprofile_start_plot.txt:md5,61c6fedd66e10824613e357837d83be9",
                 "ribowaltz_metaprofile_stop_plot.txt:md5,5145cae44078798d9e0a7b7251832db9",
                 "ribowaltz_psite_regions_plot.txt:md5,7033d2ca8092a7fff289367fecdea48a",
-                "cohort.catalogue.aa.fasta:md5,9bcf16f563dc77320e85d5a6704920c6",
-                "cohort.catalogue.bed12:md5,136b1beda880bcd3c0524cc38046f78f",
+                "cohort.catalogue.aa.fasta:md5,bfea501a20320ccf84a9c151dcc3ec13",
+                "cohort.catalogue.bed12:md5,1b9ca7a232fcf29317fc8048cd591e5e",
                 "cohort.catalogue.mqc.tsv:md5,05485f921536984f626ceac3cbe4765b",
-                "cohort.catalogue.tsv:md5,79af50707e376c4e1f43f810ad2379a2",
-                "cohort.orf_to_gene.tsv:md5,8a465e589f3d2bc0b5f23b186d35758a",
+                "cohort.catalogue.tsv:md5,6d7a253e772de20b827a2deda38da82f",
+                "cohort.orf_to_gene.tsv:md5,0d1c11aa2c23064f627787cd77e8cdfb",
                 "SRX11780885.ribotish.normalised.bed12:md5,88501cbe90ffff67868b8339008e1334",
                 "SRX11780885.ribotish.normalised.tsv:md5,1a2128ffa2008a41cff0996a6302180f",
                 "SRX11780886.ribotish.normalised.bed12:md5,1a1f68acca1f1c5256db451b1f8a7812",
@@ -1621,8 +1621,8 @@
                 "allsamples_all.txt:md5,16dec2ee613feb7517d83d4b7662a3d3",
                 "allsamples_pred.txt:md5,16dec2ee613feb7517d83d4b7662a3d3",
                 "allsamples_transprofile.py:md5,d4aba478116635320b17b67932126bd2",
-                "cohort.orf_inframe_psites.bed:md5,f009b0697831888e43a8c31278e9382f",
-                "orf_psite_counts.tsv:md5,46316e3387276602d3e3de5f7b9f9073",
+                "cohort.orf_inframe_psites.bed:md5,b642f5a4ae2930ce61b653c02f140109",
+                "orf_psite_counts.tsv:md5,bcde721efc068bb994beabd3b89af953",
                 "SRX11780885.ribowaltz.best_offset.txt:md5,8483e3a3c844284331249dfc8f520e03",
                 "SRX11780885.ribowaltz.cds_coverage_psite.tsv.gz:md5,bf66d9ba8771fc44d275f2f94eb1b9e4",
                 "SRX11780885.ribowaltz.cds_plus42nt_minus27nt_coverage_psite.tsv.gz:md5,b6b4e4e66ed831d93a9d445d70b36f0c",
@@ -1766,7 +1766,7 @@
                 "stringtie_merge.gtf:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
-        "timestamp": "2026-06-16T00:41:13.62196392",
+        "timestamp": "2026-06-16T07:48:24.147630008",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.04.1"
