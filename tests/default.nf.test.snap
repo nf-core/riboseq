@@ -32,6 +32,9 @@
                 "GTF_FILTER": {
                     "python": "3.9.5"
                 },
+                "GTF_TO_INFRAME_PSITES": {
+                    "gawk": "5.3.1"
+                },
                 "GUNZIP_FASTA": {
                     "gunzip": 1.13
                 },
@@ -47,6 +50,12 @@
                 },
                 "PLASTID_PSITE": {
                     "plastid": "0.6.1"
+                },
+                "QUANTIFY_INFRAME_PSITE_PLASTID": {
+                    "bedtools": "2.31.1"
+                },
+                "REPLACE_RIBOSEQ_COUNTS_IN_MATRIX": {
+                    "gawk": "5.3.1"
                 },
                 "RIBOTISH_PREDICT_ALL": {
                     "ribotish": "0.2.7"
@@ -1101,6 +1110,8 @@
                 "psites/ribowaltz/ribowaltz_qc/SRX11780890.ribowaltz.psite_region.pdf",
                 "psites/ribowaltz/ribowaltz_qc/SRX11780890.ribowaltz.psite_region.tsv",
                 "quantification",
+                "quantification/inframe_psite",
+                "quantification/inframe_psite/gene_counts.tsv",
                 "quantification/salmon",
                 "quantification/salmon/SRX11780879",
                 "quantification/salmon/SRX11780879/aux_info",
@@ -1651,10 +1662,10 @@
                 "SRX11780890_qual.txt:md5,0f761538ecafb2718bd781c6e1fb7dc1"
             ]
         ],
-        "timestamp": "2026-05-01T10:08:03.232237267",
         "meta": {
-            "nf-test": "0.9.5",
+            "nf-test": "0.9.3",
             "nextflow": "25.04.8"
-        }
+        },
+        "timestamp": "2026-06-17T13:51:18.079107993"
     }
 }
