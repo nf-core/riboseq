@@ -67,12 +67,12 @@
                     },
                     "custom/orfcollapse": {
                         "branch": "master",
-                        "git_sha": "ccb13a7b8bb6bf2a9dde01111136b8ab3dbf1c08",
+                        "git_sha": "b918f8d841ecc1425a4eb8115745acbb985020ea",
                         "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
                     },
                     "custom/orfmerge": {
                         "branch": "master",
-                        "git_sha": "ccb13a7b8bb6bf2a9dde01111136b8ab3dbf1c08",
+                        "git_sha": "b918f8d841ecc1425a4eb8115745acbb985020ea",
                         "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
                     },
                     "custom/orfnormalise": {
@@ -346,7 +346,7 @@
                     },
                     "seqkit/translate": {
                         "branch": "master",
-                        "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
+                        "git_sha": "d07a945f421a4a91ce4e5a22db63e0e7f8741607",
                         "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
                     },
                     "sortmerna": {
@@ -499,7 +499,7 @@
                     },
                     "orftable_fasta_gtf_buildorfcatalogue": {
                         "branch": "master",
-                        "git_sha": "ccb13a7b8bb6bf2a9dde01111136b8ab3dbf1c08",
+                        "git_sha": "b918f8d841ecc1425a4eb8115745acbb985020ea",
                         "installed_by": ["subworkflows"]
                     },
                     "quant_tximport_summarizedexperiment": {

@@ -9,10 +9,14 @@ description: |
   The coordinate-based merge in `custom/orfmerge` only groups ORFs that overlap
   on the genome, so the same micropeptide encoded at several distinct,
   non-overlapping loci (typically repetitive regions) survives as separate rows.
-  Following the GENCODE Ribo-seq ORF catalogue convention (Mudge et al. 2022,
-  Nat Biotechnol, doi:10.1038/s41587-022-01369-0), small ORFs (orf_class
-  "smORF", i.e. aa_length <= 100) are clustered by amino-acid identity upstream
-  and this module folds each multi-member cluster down to one representative.
+  This adopts the peptide-level deduplication and 0.9 amino-acid-similarity
+  threshold of the GENCODE Ribo-seq ORF consolidation (Mudge et al. 2022,
+  Nat Biotechnol, doi:10.1038/s41587-022-01369-0; gencode-riboseqORFs
+  collapse_cutoff 0.9), implemented here with MMseqs2 sequence-identity
+  clustering rather than that tool's longest-shared-string / P-site-overlap
+  metric. Small ORFs (orf_class "smORF", i.e. aa_length <= 100) are clustered by
+  amino-acid identity upstream and this module folds each multi-member cluster
+  down to one representative.
 
   Only smORF rows are collapsed; larger ORFs and transcript-anchored classes are
   passed through untouched. Among the smORF members of a cluster the
@@ -44,25 +48,19 @@ input:
     - bed12:
         type: file
         description: Merged ORF catalogue BED12 (output of `custom/orfmerge`).
-        pattern: "*.catalogue.bed12"
+        pattern: "*.bed12"
         ontologies:
           - edam: http://edamontology.org/format_3586 # BED
     - catalogue_tsv:
         type: file
         description: Merged ORF catalogue TSV (output of `custom/orfmerge`).
-        pattern: "*.catalogue.tsv"
+        pattern: "*.tsv"
         ontologies:
           - edam: http://edamontology.org/format_3475 # TSV
     - orf_to_gene_tsv:
         type: file
         description: ORF-to-gene mapping TSV (output of `custom/orfmerge`).
         pattern: "*.orf_to_gene.tsv"
-        ontologies:
-          - edam: http://edamontology.org/format_3475 # TSV
-    - mqc_tsv:
-        type: file
-        description: MultiQC custom-content per-class count TSV (output of `custom/orfmerge`).
-        pattern: "*.catalogue.mqc.tsv"
         ontologies:
           - edam: http://edamontology.org/format_3475 # TSV
     - aa_fasta:
@@ -86,20 +84,20 @@ output:
     - - meta:
           type: map
           description: Groovy Map matching the input meta.
-      - ${prefix}.catalogue.bed12:
+      - ${prefix}.bed12:
           type: file
           description: Deduplicated ORF catalogue as BED12 (genomic blocks).
-          pattern: "*.catalogue.bed12"
+          pattern: "*.bed12"
           ontologies:
             - edam: http://edamontology.org/format_3586 # BED
   catalogue_tsv:
     - - meta:
           type: map
           description: Groovy Map matching the input meta.
-      - ${prefix}.catalogue.tsv:
+      - ${prefix}.tsv:
           type: file
           description: Deduplicated per-ORF catalogue table.
-          pattern: "*.catalogue.tsv"
+          pattern: "*.tsv"
           ontologies:
             - edam: http://edamontology.org/format_3475 # TSV
   orf_to_gene_tsv:
@@ -116,20 +114,20 @@ output:
     - - meta:
           type: map
           description: Groovy Map matching the input meta.
-      - ${prefix}.catalogue.mqc.tsv:
+      - ${prefix}.mqc.tsv:
           type: file
           description: MultiQC custom-content TSV (per-class ORF counts, post-collapse).
-          pattern: "*.catalogue.mqc.tsv"
+          pattern: "*.mqc.tsv"
           ontologies:
             - edam: http://edamontology.org/format_3475 # TSV
   aa_fasta:
     - - meta:
           type: map
           description: Groovy Map matching the input meta.
-      - ${prefix}.catalogue.aa.fasta:
+      - ${prefix}.fasta:
           type: file
           description: Amino-acid FASTA of the surviving catalogue ORFs.
-          pattern: "*.catalogue.aa.fasta"
+          pattern: "*.fasta"
           ontologies:
             - edam: http://edamontology.org/format_1929 # FASTA
   versions:

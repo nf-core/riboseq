@@ -25,7 +25,9 @@
                     "python": "3.9.5"
                 },
                 "CUSTOM_ORFCOLLAPSE": {
-                    "python": "3.12.11"
+                    "pandas": "2.3.0",
+                    "python": "3.12.11",
+                    "pyyaml": "6.0.2"
                 },
                 "CUSTOM_ORFMERGE": {
                     "python": "3.12.11"
@@ -157,7 +159,7 @@
                     "samtools": "1.22.1"
                 },
                 "SEQKIT_TRANSLATE": {
-                    "seqkit": "2.9.0"
+                    "seqkit": "2.13.0"
                 },
                 "SE_GENE_UNIFIED": {
                     "bioconductor-summarizedexperiment": "1.32.0"
@@ -726,11 +728,11 @@
                 "multiqc/star/multiqc_report_plots/svg/star_alignment_plot-pct.svg",
                 "multiqc/star/multiqc_report_plots/svg/star_summary_table.svg",
                 "orf_catalogue",
-                "orf_catalogue/cohort.catalogue.aa.fasta",
                 "orf_catalogue/cohort.catalogue.bed12",
+                "orf_catalogue/cohort.catalogue.fasta",
                 "orf_catalogue/cohort.catalogue.mqc.tsv",
+                "orf_catalogue/cohort.catalogue.orf_to_gene.tsv",
                 "orf_catalogue/cohort.catalogue.tsv",
-                "orf_catalogue/cohort.orf_to_gene.tsv",
                 "orf_catalogue/normalised",
                 "orf_catalogue/normalised/SRX11780885.ribotish.normalised.bed12",
                 "orf_catalogue/normalised/SRX11780885.ribotish.normalised.tsv",
@@ -1604,11 +1606,11 @@
                 "ribowaltz_metaprofile_start_plot.txt:md5,61c6fedd66e10824613e357837d83be9",
                 "ribowaltz_metaprofile_stop_plot.txt:md5,5145cae44078798d9e0a7b7251832db9",
                 "ribowaltz_psite_regions_plot.txt:md5,7033d2ca8092a7fff289367fecdea48a",
-                "cohort.catalogue.aa.fasta:md5,bfea501a20320ccf84a9c151dcc3ec13",
-                "cohort.catalogue.bed12:md5,1b9ca7a232fcf29317fc8048cd591e5e",
+                "cohort.catalogue.bed12:md5,9534d716effe9363d00f7a6535eadd4f",
+                "cohort.catalogue.fasta:md5,22a348468d3b64259607b4f48d69a746",
                 "cohort.catalogue.mqc.tsv:md5,05485f921536984f626ceac3cbe4765b",
-                "cohort.catalogue.tsv:md5,6d7a253e772de20b827a2deda38da82f",
-                "cohort.orf_to_gene.tsv:md5,0d1c11aa2c23064f627787cd77e8cdfb",
+                "cohort.catalogue.orf_to_gene.tsv:md5,5295c27fcfcf60feb4eb46ffe5caa5fe",
+                "cohort.catalogue.tsv:md5,a52b55e6dbbe87dba3c070a059c6bcd9",
                 "SRX11780885.ribotish.normalised.bed12:md5,88501cbe90ffff67868b8339008e1334",
                 "SRX11780885.ribotish.normalised.tsv:md5,1a2128ffa2008a41cff0996a6302180f",
                 "SRX11780886.ribotish.normalised.bed12:md5,1a1f68acca1f1c5256db451b1f8a7812",
@@ -1642,8 +1644,8 @@
                 "allsamples_all.txt:md5,16dec2ee613feb7517d83d4b7662a3d3",
                 "allsamples_pred.txt:md5,16dec2ee613feb7517d83d4b7662a3d3",
                 "allsamples_transprofile.py:md5,d4aba478116635320b17b67932126bd2",
-                "cohort.orf_inframe_psites.bed:md5,b642f5a4ae2930ce61b653c02f140109",
-                "orf_psite_counts.tsv:md5,bcde721efc068bb994beabd3b89af953",
+                "cohort.orf_inframe_psites.bed:md5,0e2d90b82a66b0eafc6f3b05ffc8f69d",
+                "orf_psite_counts.tsv:md5,a1427c505f7842a01e2614949e43f6ce",
                 "SRX11780885.ribowaltz.best_offset.txt:md5,8483e3a3c844284331249dfc8f520e03",
                 "SRX11780885.ribowaltz.cds_coverage_psite.tsv.gz:md5,bf66d9ba8771fc44d275f2f94eb1b9e4",
                 "SRX11780885.ribowaltz.cds_plus42nt_minus27nt_coverage_psite.tsv.gz:md5,b6b4e4e66ed831d93a9d445d70b36f0c",
@@ -1787,7 +1789,7 @@
                 "stringtie_merge.gtf:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
-        "timestamp": "2026-06-16T08:11:39.953392567",
+        "timestamp": "2026-06-17T10:46:08.789703783",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.04.1"

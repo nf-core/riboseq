@@ -26,11 +26,11 @@ Cross-sample recurrence is recorded in two further columns:
 
 Outputs:
 
-  ${prefix}.catalogue.bed12      merged catalogue (genomic blocks).
-  ${prefix}.catalogue.tsv        per-ORF table with caller-tracking cols.
+  ${prefix}.bed12                merged catalogue (genomic blocks).
+  ${prefix}.tsv                  per-ORF table with caller-tracking cols.
   ${prefix}.orf_to_gene.tsv      one row per (orf_id, gene_id, transcript_id);
                                  an ORF can map to multiple host transcripts.
-  ${prefix}.catalogue.mqc.tsv    MultiQC custom-content sidecar
+  ${prefix}.mqc.tsv              MultiQC custom-content sidecar
                                  (per-class counts).
 """
 
@@ -111,12 +111,7 @@ def cluster_by_reciprocal_overlap(rows, frac=0.8):
             if ov <= 0:
                 continue
             rj_len = rj_end - rj_start
-            if (
-                ri_len > 0
-                and rj_len > 0
-                and ov / ri_len >= frac
-                and ov / rj_len >= frac
-            ):
+            if ri_len > 0 and rj_len > 0 and ov / ri_len >= frac and ov / rj_len >= frac:
                 cluster.append(rj)
                 assigned[j] = True
         clusters.append(cluster)
@@ -129,20 +124,10 @@ def representative(cluster):
     Preference order: canonical_cds, then uORF/dORF, then novel_u/smORF,
     then other; ties broken by longest aa_length.
     """
-    rank = {
-        "canonical_cds": 0,
-        "uORF": 1,
-        "dORF": 1,
-        "novel_u": 2,
-        "smORF": 2,
-        "other": 3,
-    }
+    rank = {"canonical_cds": 0, "uORF": 1, "dORF": 1, "novel_u": 2, "smORF": 2, "other": 3}
     return sorted(
         cluster,
-        key=lambda r: (
-            rank.get(r.get("orf_class", "other"), 3),
-            -int(r.get("aa_length") or 0),
-        ),
+        key=lambda r: (rank.get(r.get("orf_class", "other"), 3), -int(r.get("aa_length") or 0)),
     )[0]
 
 
@@ -198,23 +183,13 @@ def load_normalised(tsv_paths, bed_paths):
 
 
 def write_catalogue(prefix, clusters, bed_index):
-    cat_bed = Path(f"{prefix}.catalogue.bed12")
-    cat_tsv = Path(f"{prefix}.catalogue.tsv")
+    cat_bed = Path(f"{prefix}.bed12")
+    cat_tsv = Path(f"{prefix}.tsv")
     o2g_tsv = Path(f"{prefix}.orf_to_gene.tsv")
-    mqc_tsv = Path(f"{prefix}.catalogue.mqc.tsv")
+    mqc_tsv = Path(f"{prefix}.mqc.tsv")
 
     catalogue_cols = (
-        [
-            "orf_id",
-            "chrom",
-            "start",
-            "end",
-            "strand",
-            "gene_id",
-            "transcript_id",
-            "orf_class",
-            "aa_length",
-        ]
+        ["orf_id", "chrom", "start", "end", "strand", "gene_id", "transcript_id", "orf_class", "aa_length"]
         + [f"called_by_{c}" for c in CALLERS]
         + [f"score_{c}" for c in CALLERS]
         + ["n_samples", "samples"]
@@ -222,8 +197,8 @@ def write_catalogue(prefix, clusters, bed_index):
 
     per_class_counts = defaultdict(int)
 
-    # Stable genomic ordering so orf_id assignment is deterministic regardless of
-    # the order in which per-caller inputs were collected upstream.
+    # orf_ids are assigned in iteration order below, so sort first to make the
+    # numbering deterministic.
     def _sort_key(cluster):
         r = representative(cluster)
         return (
@@ -265,9 +240,7 @@ def write_catalogue(prefix, clusters, bed_index):
             row_out += [caller_cols[f"called_by_{c}"] for c in CALLERS]
             row_out += [caller_cols[f"score_{c}"] for c in CALLERS]
 
-            sample_ids = sorted(
-                {r.get("sample_id", "") for r in cluster if r.get("sample_id")}
-            )
+            sample_ids = sorted({r.get("sample_id", "") for r in cluster if r.get("sample_id")})
             row_out += [str(len(sample_ids)), ",".join(sample_ids)]
             th.write("\\t".join(row_out) + "\\n")
 
@@ -331,33 +304,19 @@ def main():
 
     clusters = []
     # canonical CDS: one per transcript by definition - collapse by (tid, strand).
-    clusters.extend(
-        group_by(
-            by_class.get("canonical_cds", []),
-            lambda r: (r.get("transcript_id") or "", r["strand"]),
-        )
-    )
+    clusters.extend(group_by(by_class.get("canonical_cds", []), lambda r: (r.get("transcript_id") or "", r["strand"])))
     # uORF/dORF/other: a transcript can host multiple distinct ones, so
     # additionally key on the outer span to keep them separate.
     for cls in ("uORF", "dORF", "other"):
         clusters.extend(
             group_by(
                 by_class.get(cls, []),
-                lambda r: (
-                    r.get("transcript_id") or "",
-                    r["strand"],
-                    int(r["start"]),
-                    int(r["end"]),
-                ),
+                lambda r: (r.get("transcript_id") or "", r["strand"], int(r["start"]), int(r["end"])),
             )
         )
     # novel_u / smORF: not transcript-anchored - reciprocal-overlap clustering.
     for cls in ("novel_u", "smORF"):
-        clusters.extend(
-            cluster_by_reciprocal_overlap(
-                by_class.get(cls, []), frac=args.reciprocal_overlap
-            )
-        )
+        clusters.extend(cluster_by_reciprocal_overlap(by_class.get(cls, []), frac=args.reciprocal_overlap))
 
     write_catalogue(prefix, clusters, bed_index)
     write_versions()

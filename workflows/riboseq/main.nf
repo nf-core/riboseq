@@ -444,7 +444,8 @@ workflow RIBOSEQ {
         ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE(
             ch_orf_tables,
             ch_fasta    .map { fasta -> [ [id: 'reference'], fasta ] }.first(),
-            ch_hybrid_gtf.map { gtf   -> [ [id: 'reference'], gtf   ] }.first()
+            ch_hybrid_gtf.map { gtf   -> [ [id: 'reference'], gtf   ] }.first(),
+            true
         )
         ch_multiqc_files = ch_multiqc_files.mix(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.multiqc.collect{it[1]}.ifEmpty([]))
     }

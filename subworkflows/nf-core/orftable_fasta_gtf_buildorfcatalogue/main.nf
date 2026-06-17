@@ -2,7 +2,8 @@
 // Build a multi-caller Ribo-seq ORF catalogue from per-sample, per-caller
 // ORF prediction tables. Composes the normaliser (run once per caller-tagged
 // input), the merger (one cohort-level invocation), and bedtools/getfasta +
-// seqkit/translate to produce the catalogue AA FASTA.
+// seqkit/translate to produce the catalogue AA FASTA. An optional amino-acid
+// clustering pass (controlled by `val_collapse`) folds duplicate small ORFs.
 //
 
 include { CUSTOM_ORFNORMALISE } from '../../../modules/nf-core/custom/orfnormalise/main'
@@ -22,6 +23,10 @@ workflow ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE {
     ch_fasta       // channel: [ val(meta), path(fasta) ]   - reference genome FASTA
     ch_gtf         // channel: [ val(meta), path(gtf)   ]   - reference GTF (used by
                    //          ribocode/ribotish normalisers; ignored by rpbp/price)
+    val_collapse   // boolean: cluster catalogue peptides by amino-acid identity
+                   //          and fold duplicate small ORFs to one representative
+                   //          each. When false the merged catalogue is emitted
+                   //          unchanged and the clustering modules do not run.
 
     main:
 
@@ -65,26 +70,38 @@ workflow ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE {
     BEDTOOLS_GETFASTA ( CUSTOM_ORFMERGE.out.bed12, ch_fasta.map { _meta, fa -> fa }.first() )
     SEQKIT_TRANSLATE  ( BEDTOOLS_GETFASTA.out.fasta )
 
-    // 4. The coordinate merge only collapses genomically overlapping ORFs, so
-    //    the same micropeptide encoded at distinct loci survives as separate
-    //    rows. Cluster catalogue peptides by amino-acid identity and fold the
-    //    small-ORF (aa_length <= 100) clusters down to one representative each
-    //    (GENCODE Ribo-seq ORF catalogue convention, Mudge et al. 2022).
-    MMSEQS_EASYCLUSTER ( SEQKIT_TRANSLATE.out.fastx )
-
-    ch_collapse_in = CUSTOM_ORFMERGE.out.bed12
+    // 4. Assemble the full merged catalogue (BED12 + tables + AA FASTA) on one
+    //    cohort record, then route by `val_collapse`. The coordinate merge only
+    //    collapses genomically overlapping ORFs, so the same micropeptide
+    //    encoded at distinct loci survives as separate rows; the collapse route
+    //    clusters peptides by amino-acid identity and folds the small-ORF
+    //    (aa_length <= 100) clusters to one representative each (GENCODE
+    //    Ribo-seq ORF catalogue convention, Mudge et al. 2022). The keep route
+    //    emits the merged catalogue untouched.
+    ch_routed = CUSTOM_ORFMERGE.out.bed12
         .join(CUSTOM_ORFMERGE.out.catalogue_tsv)
         .join(CUSTOM_ORFMERGE.out.orf_to_gene_tsv)
         .join(CUSTOM_ORFMERGE.out.multiqc)
         .join(SEQKIT_TRANSLATE.out.fastx)
-        .join(MMSEQS_EASYCLUSTER.out.tsv)
+        .branch { _meta, _bed, _tsv, _o2g, _mqc, _aa ->
+            collapse: val_collapse
+            keep    : true
+        }
 
-    CUSTOM_ORFCOLLAPSE ( ch_collapse_in )
+    MMSEQS_EASYCLUSTER ( ch_routed.collapse.map { meta, _bed, _tsv, _o2g, _mqc, aa -> [ meta, aa ] } )
 
+    CUSTOM_ORFCOLLAPSE (
+        ch_routed.collapse
+            .map { meta, bed, tsv, o2g, _mqc, aa -> [ meta, bed, tsv, o2g, aa ] }
+            .join(MMSEQS_EASYCLUSTER.out.tsv)
+    )
+
+    // For a given run exactly one route carries records, so `mix` yields a
+    // single catalogue per output channel.
     emit:
-    catalogue_bed12    = CUSTOM_ORFCOLLAPSE.out.bed12
-    catalogue_tsv      = CUSTOM_ORFCOLLAPSE.out.catalogue_tsv
-    orf_to_gene_tsv    = CUSTOM_ORFCOLLAPSE.out.orf_to_gene_tsv
-    catalogue_aa_fasta = CUSTOM_ORFCOLLAPSE.out.aa_fasta
-    multiqc            = CUSTOM_ORFCOLLAPSE.out.multiqc
+    catalogue_bed12    = CUSTOM_ORFCOLLAPSE.out.bed12.mix(ch_routed.keep.map { meta, bed, _tsv, _o2g, _mqc, _aa -> [ meta, bed ] })
+    catalogue_tsv      = CUSTOM_ORFCOLLAPSE.out.catalogue_tsv.mix(ch_routed.keep.map { meta, _bed, tsv, _o2g, _mqc, _aa -> [ meta, tsv ] })
+    orf_to_gene_tsv    = CUSTOM_ORFCOLLAPSE.out.orf_to_gene_tsv.mix(ch_routed.keep.map { meta, _bed, _tsv, o2g, _mqc, _aa -> [ meta, o2g ] })
+    catalogue_aa_fasta = CUSTOM_ORFCOLLAPSE.out.aa_fasta.mix(ch_routed.keep.map { meta, _bed, _tsv, _o2g, _mqc, aa -> [ meta, aa ] })
+    multiqc            = CUSTOM_ORFCOLLAPSE.out.multiqc.mix(ch_routed.keep.map { meta, _bed, _tsv, _o2g, mqc, _aa -> [ meta, mqc ] })
 }
