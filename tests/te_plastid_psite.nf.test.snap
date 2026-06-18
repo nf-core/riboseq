@@ -1476,7 +1476,6 @@
                 "multiqc_samtools_flagstat.txt:md5,14e8d04345d9da81e5cc6cb049f5d396",
                 "multiqc_samtools_idxstats.txt:md5,338c19030305e7c9293511f1d98828f7",
                 "multiqc_samtools_stats.txt:md5,bd5f60d4f043e54d738867f09d0ce1d2",
-                "multiqc_sortmerna.txt:md5,a4034f85942b95f20dfcbc598d22e165",
                 "multiqc_star.txt:md5,9bd355c06526d23fa2bb0fcd931d146c",
                 "ribotish_frame_proportions.txt:md5,2e46e5db2f71033a594d87a6e24c1e70",
                 "ribotish_read_length_line.txt:md5,514f4653673462464d74330df9dfd46d",
@@ -1491,7 +1490,6 @@
                 "samtools-idxstats-mapped-reads-plot_Raw_Counts.txt:md5,28c2f8d940cc35ff1ccd7e39b3e6a541",
                 "samtools-stats-dp.txt:md5,94624c46f237303aad44cda6bbae75e2",
                 "samtools_alignment_plot.txt:md5,c9ab0cbfe5135c14bfdb7d95a94c149c",
-                "sortmerna-detailed-plot.txt:md5,25f9e9991c37f8b715a3557a0e4865d0",
                 "star_alignment_plot.txt:md5,611cda02b21bc9f20421ce4b60da5133",
                 "star_summary_table.txt:md5,31b485526cd8c9e7d65ce27a5d9ed043",
                 "SRX11780885_all.txt:md5,96bc42211790337d7e9c90d24ebe1a32",
@@ -1672,6 +1670,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2026-06-18T18:14:00.189288879"
+        "timestamp": "2026-06-18T19:34:21.678435438"
     }
 }
