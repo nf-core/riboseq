@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#152](https://github.com/nf-core/riboseq/pull/152) - Update ribodetector module to 0.3.3 (nf-core/modules#11131) ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#154](https://github.com/nf-core/riboseq/pull/154) - Update nf-core/multiqc module to 1.34 ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#154](https://github.com/nf-core/riboseq/pull/154) - Align FastQC/SortMeRNA general-stats handling with `nf-core/rnaseq` ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#160](https://github.com/nf-core/riboseq/issues/160) - Change the default `--te_quantification_method` from `alignment` (STAR + Salmon) to `plastid_psite` (in-frame P-site counts). **Breaking:** per-gene counts are not comparable to Salmon-based runs; pass `--te_quantification_method alignment` to restore the previous behaviour. ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Parameters`
 
