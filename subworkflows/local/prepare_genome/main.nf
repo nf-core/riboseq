@@ -103,10 +103,10 @@ workflow PREPARE_GENOME {
             )
         if (filter_gtf) {
             CUSTOM_GTFFILTER (
-                ch_gtf.map   { gtf   -> [ [ id: 'reference' ], gtf   ] },
-                ch_fasta.map { fasta -> [ [ id: 'reference' ], fasta ] }
+                ch_gtf.map   { g -> [ [ id: 'reference' ], g ] },
+                ch_fasta.map { f -> [ [ id: 'reference' ], f ] }
             )
-            ch_gtf      = CUSTOM_GTFFILTER.out.gtf.map { _meta, gtf -> gtf }
+            ch_gtf      = CUSTOM_GTFFILTER.out.gtf.map { _meta, g -> g }
             ch_versions = ch_versions.mix(CUSTOM_GTFFILTER.out.versions)
         }
     }
