@@ -74,7 +74,7 @@ workflow RIBOSEQ {
     ch_versions         // channel: [ path(versions.yml) ]
     ch_fasta            // channel: path(genome.fasta)
     ch_gtf              // channel: path(genome.gtf)              - full multi-isoform, used for genome-guided alignment
-    ch_canonical_gtf    // channel: path(canonical.gtf)           - one-transcript-per-gene backbone for ORF calling, P-site calibration, DTE
+    ch_canonical_gtf    // channel: path(canonical.gtf)           - one-transcript-per-gene backbone for genome-coordinate ORF calling (Ribo-TISH, Ribotricer), plastid P-site quantification, DTE
     ch_fai              // channel: path(genome.fai)
     ch_chrom_sizes      // channel: path(genome.sizes)
     ch_transcript_fasta // channel: path(transcript.fasta)
@@ -337,9 +337,9 @@ workflow RIBOSEQ {
     // The hybrid transcriptome FASTA and hybrid STAR index are each built once
     // per pipeline run (value channels). The second STAR pass runs only on
     // Ribo-seq samples — RNA-seq and TI-seq are not consumed by RiboCode.
-    // riboWaltz stays on the canonical/reference transcriptome BAM by design:
+    // riboWaltz stays on the primary reference-transcriptome BAM by design:
     // it's a QC/calibration tool whose frame plots and metaheatmaps are driven
-    // by CDS-bearing canonical transcripts. Feeding it CDS-absent novel
+    // by annotated CDS-bearing transcripts. Feeding it CDS-absent novel
     // transcripts would degrade diagnostic plots without any ORF-discovery gain.
     // See docs/usage.md (Extended ORF discovery) for the full rationale.
     //
