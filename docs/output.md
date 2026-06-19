@@ -316,6 +316,8 @@ Read distribution metrics around annotated protein coding regions or based on al
 
 ### Ribotricer detect-orfs QC outputs
 
+Produced only when `--run_ribotricer true` is set. Ribotricer is opt-in because its ORF-score column is rank-unstable across biological replicates; its binary calls are still usable but its scores are excluded from cross-caller rank aggregation.
+
 <details markdown="1">
 <summary>Output files</summary>
 
