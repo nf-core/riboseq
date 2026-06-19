@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#142](https://github.com/nf-core/riboseq/pull/142) - Add `ribodetector_chunk_size` parameter to control RiboDetector memory usage ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#144](https://github.com/nf-core/riboseq/pull/144) - Add bigWig coverage tracks ([@suhrig](https://github.com/suhrig))
 - [#154](https://github.com/nf-core/riboseq/pull/154) - Add riboWaltz QC plots to the MultiQC report (P-site region distribution, reading-frame distribution, start/stop-codon metaprofiles) via the new MultiQC riboWaltz module ([MultiQC#3465](https://github.com/MultiQC/MultiQC/pull/3465)) ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#161](https://github.com/nf-core/riboseq/issues/161) - Add a one-transcript-per-gene canonical annotation backbone via `--canonical_gtf`, used by the genome-coordinate ORF callers, plastid P-site quantification and translational-efficiency analysis; falls back to AGAT longest-CDS isoform when not supplied ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Fixed`
 
@@ -62,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 |               | `--extra_plastid_make_wiggle_args`       |
 |               | `--skip_coverage_tracks`                 |
 |               | `--ribodetector_chunk_size`              |
+|               | `--canonical_gtf`                        |
 
 ### `Dependencies`
 
@@ -71,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | `plastid`          |             | 0.6.1       |
 | `bedtools`         |             | 2.31.1      |
 | `bedGraphToBigWig` |             | 469         |
+| `AGAT`             |             | 1.6.1       |
 
 ## v1.2.0 - 2025-12-03
 

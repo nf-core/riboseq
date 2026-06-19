@@ -5,6 +5,11 @@
         "https://github.com/nf-core/modules.git": {
             "modules": {
                 "nf-core": {
+                    "agat/spkeeplongestisoform": {
+                        "branch": "master",
+                        "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
+                        "installed_by": ["modules"]
+                    },
                     "anota2seq/anota2seqrun": {
                         "branch": "master",
                         "git_sha": "6717b61b22e414571024df38f0eaf2c6d2c4bb6c",
@@ -38,6 +43,11 @@
                     "custom/catadditionalfasta": {
                         "branch": "master",
                         "git_sha": "96c57dfd98a0641886a67bd449fe33ee2ec0e374",
+                        "installed_by": ["modules"]
+                    },
+                    "custom/gtffilter": {
+                        "branch": "master",
+                        "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
                         "installed_by": ["modules"]
                     },
                     "custom/tx2gene": {

@@ -2,6 +2,9 @@
     "-profile test --ribo_removal_tool bowtie2": {
         "content": [
             {
+                "AGAT_SPKEEPLONGESTISOFORM": {
+                    "agat": "1.6.1"
+                },
                 "ANOTA2SEQ_ANOTA2SEQRUN": {
                     "bioconductor-anota2seq": "1.24.0"
                 },
@@ -20,6 +23,9 @@
                 },
                 "BOWTIE2_BUILD": {
                     "bowtie2": "2.5.4"
+                },
+                "CUSTOM_GTFFILTER": {
+                    "python": "3.9.5"
                 },
                 "CUSTOM_TX2GENE": {
                     "python": "3.10.4"
@@ -42,8 +48,8 @@
                 "FQ_SUBSAMPLE": {
                     "fq": "0.12.0"
                 },
-                "GTF_FILTER": {
-                    "python": "3.9.5"
+                "GFFREAD_CANONICAL": {
+                    "gffread": "0.12.7"
                 },
                 "GTF_TO_INFRAME_PSITES": {
                     "gawk": "5.3.1"
@@ -871,8 +877,8 @@
                 "psites",
                 "psites/plastid",
                 "psites/plastid/metagene",
-                "psites/plastid/metagene/Homo_sapiens.GRCh38.dna.chromosome.20.filtered_rois.bed",
-                "psites/plastid/metagene/Homo_sapiens.GRCh38.dna.chromosome.20.filtered_rois.txt",
+                "psites/plastid/metagene/reference.canonical_rois.bed",
+                "psites/plastid/metagene/reference.canonical_rois.txt",
                 "psites/plastid/offsets",
                 "psites/plastid/offsets/SRX11780885_metagene_profiles.txt",
                 "psites/plastid/offsets/SRX11780885_p_offsets.png",
@@ -1515,27 +1521,27 @@
                 "samtools_alignment_plot.txt:md5,cccb8c1e2a5f40345d86b905700e492f",
                 "star_alignment_plot.txt:md5,7979af9d40975eead0497fc8390d88fd",
                 "star_summary_table.txt:md5,dcae19822c1b41d9258af767ed723959",
-                "SRX11780885_all.txt:md5,3fa23521053d110288ad69453c49920f",
-                "SRX11780885_pred.txt:md5,9931923309fc2c518f374225fd287448",
-                "SRX11780885_transprofile.py:md5,a5056727040a5fa0342be231fea287f9",
-                "SRX11780886_all.txt:md5,7be8efe7dd8f12edec40fd8ca69f77c4",
-                "SRX11780886_pred.txt:md5,a74ec6f7603afcb94692416d9ab5f399",
-                "SRX11780886_transprofile.py:md5,f9b3ac82b91565d08e58353eb159d8c5",
-                "SRX11780887_all.txt:md5,b06c6ab1c41373c0b8a000893a51eb20",
-                "SRX11780887_pred.txt:md5,86813277afcdbde15e8f8fb9a07a535f",
-                "SRX11780887_transprofile.py:md5,ce46b13d566e11c72cfb44a430274fe4",
-                "SRX11780888_all.txt:md5,74588938b1dd11d04002de5dd7f3daee",
-                "SRX11780888_pred.txt:md5,74588938b1dd11d04002de5dd7f3daee",
-                "SRX11780888_transprofile.py:md5,a17c78f915977e628ba431cc2c96a453",
-                "SRX11780889_all.txt:md5,c5fb17e22ab4499d6c9dc365479a2ec8",
-                "SRX11780889_pred.txt:md5,c5fb17e22ab4499d6c9dc365479a2ec8",
-                "SRX11780889_transprofile.py:md5,7c225d4e4dfb51cb4c33e99e7ec2b651",
-                "SRX11780890_all.txt:md5,0501a247b91bb842affb856da4092c47",
-                "SRX11780890_pred.txt:md5,0501a247b91bb842affb856da4092c47",
-                "SRX11780890_transprofile.py:md5,a747c7f9a31df12091bd8bd83b54c658",
-                "allsamples_all.txt:md5,fcdb19d5389596185db2ebce2663cd94",
-                "allsamples_pred.txt:md5,fcdb19d5389596185db2ebce2663cd94",
-                "allsamples_transprofile.py:md5,51abc67be45f2a68677a551c887ff930",
+                "SRX11780885_all.txt:md5,96bc42211790337d7e9c90d24ebe1a32",
+                "SRX11780885_pred.txt:md5,96bc42211790337d7e9c90d24ebe1a32",
+                "SRX11780885_transprofile.py:md5,03dc9aae9d0a129d51dd4faf8fa12fad",
+                "SRX11780886_all.txt:md5,99c23e7b0ae281740b115377d0df9f7c",
+                "SRX11780886_pred.txt:md5,99c23e7b0ae281740b115377d0df9f7c",
+                "SRX11780886_transprofile.py:md5,6b237fae001ec0c4501e0b82aec8a7a9",
+                "SRX11780887_all.txt:md5,952aaa52db7ae97dd2bcb862aa2566b3",
+                "SRX11780887_pred.txt:md5,952aaa52db7ae97dd2bcb862aa2566b3",
+                "SRX11780887_transprofile.py:md5,04e9415287f4d51575abc53314e471da",
+                "SRX11780888_all.txt:md5,09a614e1c0679c57084b3f6ff73945be",
+                "SRX11780888_pred.txt:md5,09a614e1c0679c57084b3f6ff73945be",
+                "SRX11780888_transprofile.py:md5,0b03329798be815cd78901e339a5b473",
+                "SRX11780889_all.txt:md5,7cba7b5d841a9448d183227093b88ea8",
+                "SRX11780889_pred.txt:md5,7cba7b5d841a9448d183227093b88ea8",
+                "SRX11780889_transprofile.py:md5,ba37a50871ab68bf108593e912c8bedc",
+                "SRX11780890_all.txt:md5,44c3ed64b62809922c48b7ef9f608694",
+                "SRX11780890_pred.txt:md5,44c3ed64b62809922c48b7ef9f608694",
+                "SRX11780890_transprofile.py:md5,bcb2d1ad4570050fb21deec72aefbb63",
+                "allsamples_all.txt:md5,8773619b2d686e3f2835b312048a6594",
+                "allsamples_pred.txt:md5,8773619b2d686e3f2835b312048a6594",
+                "allsamples_transprofile.py:md5,6552a79f8fe5a18295e8c815ef34d1f4",
                 "SRX11780879.bowtie2.log:md5,44dd58926df16decd27314e7c42ba3b9",
                 "SRX11780880.bowtie2.log:md5,69100acbfbda03335ba3ac7cbffdb16f",
                 "SRX11780881.bowtie2.log:md5,99b022d64a54c14bacb95d633554e613",
@@ -1641,70 +1647,70 @@
                 "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
-                "cmd_info.json:md5,5834ecfd45441b6db2bde251a042e7c9",
+                "cmd_info.json:md5,29bf147af2c944cefdf53557ec8de52d",
                 "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
-                "cmd_info.json:md5,c020c498b4b49942521c7e4403fbb5f4",
+                "cmd_info.json:md5,90b4afb7c77caeb02ccde3f5f4dec362",
                 "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
-                "cmd_info.json:md5,2aeeff40d2c5127e3881cade0c505553",
+                "cmd_info.json:md5,9253c3a5be90f91d08a43f16d0084ab3",
                 "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
-                "cmd_info.json:md5,f4fd39bb236fcfd3584b6616b025e560",
+                "cmd_info.json:md5,ab05e548e225761f279627b3ac0dc79e",
                 "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
-                "cmd_info.json:md5,f6929c47dd44eafb279855047c542f11",
+                "cmd_info.json:md5,c71478996983388eb4c8847baea51b43",
                 "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
-                "cmd_info.json:md5,9424d0ddf77916d7ee92f51e972fdac1",
+                "cmd_info.json:md5,fd2146759ca37753a068594b62d835c4",
                 "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
-                "cmd_info.json:md5,2494bac733aff9a59434c33512f6ef3b",
+                "cmd_info.json:md5,11a8c901cf28d93a84cbeb473b682485",
                 "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
-                "cmd_info.json:md5,90cbcea3f0d21d4bf6131bc90d4cfb48",
+                "cmd_info.json:md5,aaa5aa4c464cdcfb44cb02fc2caa118a",
                 "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
-                "cmd_info.json:md5,ab6b4aadd3c2f908bd26f735a940fe54",
+                "cmd_info.json:md5,3d25495a176ddd0a03183543772fad68",
                 "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
-                "cmd_info.json:md5,8284353e59f322ddceafb7b7e8e94f65",
+                "cmd_info.json:md5,c9e9b6e785d912b8715f27c016912b1c",
                 "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
-                "cmd_info.json:md5,9bb452c7dbdd35e9033de1964e4bb711",
+                "cmd_info.json:md5,e9d4abdab90497b1df0ca99d7f7e2dd0",
                 "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
-                "cmd_info.json:md5,8d5ca24864151d35a76f3c70cd14210e",
+                "cmd_info.json:md5,099d55cade11d0888fac9ce7f42d18ed",
                 "tx2gene.tsv:md5,ca8bc3fbff91c83c6545743011e589d7",
                 "SRX11780885.para.py:md5,eafd8adc28a00e3a1cd5d42e3b648cac",
-                "SRX11780885_qual.txt:md5,9aa8806905671583715f423bff141cbd",
+                "SRX11780885_qual.txt:md5,06e6661f9c464aba28ef4d0493d86c9f",
                 "SRX11780886.para.py:md5,14b1693f16209134253436e2346201fe",
-                "SRX11780886_qual.txt:md5,531ef97df7bc9932d86e04caa71649bc",
+                "SRX11780886_qual.txt:md5,2b985c21be76ec0d8f45fafbc936266e",
                 "SRX11780887.para.py:md5,eafd8adc28a00e3a1cd5d42e3b648cac",
-                "SRX11780887_qual.txt:md5,0ec2b657898486a56c10cd6568977708",
+                "SRX11780887_qual.txt:md5,36646b0a7cb4e8c44bee4865e591c0e4",
                 "SRX11780888.para.py:md5,98e9611ca1a2a3f7b360589d01a577d3",
-                "SRX11780888_qual.txt:md5,0a964e16bda3da3c89730fa64d7f4b79",
+                "SRX11780888_qual.txt:md5,2684e8d76a050138b7d66c6d2ffbd44d",
                 "SRX11780889.para.py:md5,61738f3e93a6fc2e6f7b6d201f6a59ba",
-                "SRX11780889_qual.txt:md5,4c567c2c47eb52bf81e514a39eb5a695",
+                "SRX11780889_qual.txt:md5,7a53ef2b68354c87c5b42036e678e2da",
                 "SRX11780890.para.py:md5,5f1696c5bf20116fa63363917e131284",
-                "SRX11780890_qual.txt:md5,0f761538ecafb2718bd781c6e1fb7dc1"
+                "SRX11780890_qual.txt:md5,9caaf68044fd714a3265f63c920e75d5"
             ]
         ],
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2026-06-17T14:20:35.391022439"
+        "timestamp": "2026-06-18T18:03:01.699539412"
     }
 }

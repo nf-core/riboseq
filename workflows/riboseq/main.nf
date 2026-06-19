@@ -83,7 +83,8 @@ workflow RIBOSEQ {
     ch_contrasts_file   // channel: path(contrasts.csv)
     ch_versions         // channel: [ path(versions.yml) ]
     ch_fasta            // channel: path(genome.fasta)
-    ch_gtf              // channel: path(genome.gtf)
+    ch_gtf              // channel: path(genome.gtf)              - full multi-isoform, used for genome-guided alignment
+    ch_canonical_gtf    // channel: path(canonical.gtf)           - one-transcript-per-gene backbone for genome-coordinate ORF calling (Ribo-TISH, Ribotricer), plastid P-site quantification, DTE
     ch_fai              // channel: path(genome.fai)
     ch_chrom_sizes      // channel: path(genome.sizes)
     ch_transcript_fasta // channel: path(transcript.fasta)
@@ -350,12 +351,16 @@ workflow RIBOSEQ {
         }
 
     ch_bams_for_analysis = ch_genome_bam_by_type.riboseq.join(ch_genome_bam_index)
-    ch_fasta_gtf = ch_fasta.combine(ch_gtf).map{ fasta, gtf -> [ [:], fasta, gtf ] }.first()
+    // Pair the canonical (one-transcript-per-gene) backbone with the genome FASTA
+    // for the genome-coordinate ORF callers (Ribo-TISH, Ribotricer). The
+    // transcriptome-coordinate tools (RiboCode, riboWaltz, Salmon) instead read the
+    // reference-transcriptome BAM and so stay on the full `ch_gtf`.
+    ch_fasta_gtf = ch_fasta.combine(ch_canonical_gtf).map{ fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }.first()
 
     if (!params.skip_ribotish){
         RIBOTISH_QUALITY_RIBOSEQ(
             ch_bams_for_analysis,
-            ch_gtf.map { [ [:], it ] }.first()
+            ch_canonical_gtf.map { [ [:], it ] }.first()
         )
         ch_versions      = ch_versions.mix(RIBOTISH_QUALITY_RIBOSEQ.out.versions)
         ch_multiqc_files = ch_multiqc_files.mix(RIBOTISH_QUALITY_RIBOSEQ.out.distribution.collect{it[1]})
@@ -468,7 +473,7 @@ workflow RIBOSEQ {
 
     if (!params.skip_plastid) {
 
-        PLASTID_METAGENE_GENERATE(ch_gtf.map { [ [:], it ] })
+        PLASTID_METAGENE_GENERATE(ch_canonical_gtf.map { [ [:], it ] })
         ch_versions = ch_versions.mix(PLASTID_METAGENE_GENERATE.out.versions)
 
         PLASTID_PSITE(
@@ -489,6 +494,8 @@ workflow RIBOSEQ {
     // SUBWORKFLOW: Count reads from BAM alignments using Salmon
     //
 
+    // Salmon transcriptome quantification uses the full GTF: tx2gene must match
+    // the transcript fasta the Salmon index was built against.
     QUANTIFY_STAR_SALMON (
         ch_samplesheet.map { [ [:], it ] },
         ch_transcriptome_bam,
@@ -540,7 +547,7 @@ workflow RIBOSEQ {
     if (params.te_quantification_method == 'plastid_psite' && !params.skip_plastid) {
         // Convert GTF CDS segments to in-frame p-site positions
         GTF_TO_INFRAME_PSITES(
-            ch_gtf.map { gtf -> [ [id: gtf.baseName, feature: 'gene'], gtf ] },
+            ch_canonical_gtf.map { gtf -> [ [id: gtf.baseName, feature: 'gene'], gtf ] },
             file("${projectDir}/bin/gtf_to_inframe_psites.awk"),
             false
         )
