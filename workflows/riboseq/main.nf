@@ -84,7 +84,7 @@ workflow RIBOSEQ {
     ch_versions         // channel: [ path(versions.yml) ]
     ch_fasta            // channel: path(genome.fasta)
     ch_gtf              // channel: path(genome.gtf)              - full multi-isoform, used for genome-guided alignment
-    ch_canonical_gtf    // channel: path(canonical.gtf)           - one-transcript-per-gene backbone for ORF calling, P-site calibration, DTE
+    ch_canonical_gtf    // channel: path(canonical.gtf)           - one-transcript-per-gene backbone for genome-coordinate ORF calling (Ribo-TISH, Ribotricer), plastid P-site quantification, DTE
     ch_fai              // channel: path(genome.fai)
     ch_chrom_sizes      // channel: path(genome.sizes)
     ch_transcript_fasta // channel: path(transcript.fasta)
@@ -351,9 +351,10 @@ workflow RIBOSEQ {
         }
 
     ch_bams_for_analysis = ch_genome_bam_by_type.riboseq.join(ch_genome_bam_index)
-    // Use the canonical (one-transcript-per-gene) annotation backbone for ORF
-    // calling, P-site calibration and DTE; the full `ch_gtf` is reserved for
-    // genome-guided alignment.
+    // Pair the canonical (one-transcript-per-gene) backbone with the genome FASTA
+    // for the genome-coordinate ORF callers (Ribo-TISH, Ribotricer). The
+    // transcriptome-coordinate tools (RiboCode, riboWaltz, Salmon) instead read the
+    // reference-transcriptome BAM and so stay on the full `ch_gtf`.
     ch_fasta_gtf = ch_fasta.combine(ch_canonical_gtf).map{ fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }.first()
 
     if (!params.skip_ribotish){

@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#142](https://github.com/nf-core/riboseq/pull/142) - Add `ribodetector_chunk_size` parameter to control RiboDetector memory usage ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#144](https://github.com/nf-core/riboseq/pull/144) - Add bigWig coverage tracks ([@suhrig](https://github.com/suhrig))
 - [#154](https://github.com/nf-core/riboseq/pull/154) - Add riboWaltz QC plots to the MultiQC report (P-site region distribution, reading-frame distribution, start/stop-codon metaprofiles) via the new MultiQC riboWaltz module ([MultiQC#3465](https://github.com/MultiQC/MultiQC/pull/3465)) ([@pinin4fjords](https://github.com/pinin4fjords))
-- [#161](https://github.com/nf-core/riboseq/issues/161) - Add a one-transcript-per-gene canonical annotation backbone via the new `--canonical_gtf` parameter, used for ORF calling, riboWaltz P-site calibration, plastid P-site quantification and the translational-efficiency analysis; falls back to AGAT longest-isoform extraction from `--gtf` when not supplied. The full `--gtf` is retained for genome-guided alignment ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#161](https://github.com/nf-core/riboseq/issues/161) - Add a one-transcript-per-gene canonical annotation backbone via `--canonical_gtf`, used by the genome-coordinate ORF callers, plastid P-site quantification and translational-efficiency analysis; falls back to AGAT longest-CDS isoform when not supplied ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Fixed`
 
