@@ -328,6 +328,12 @@ The canonical backbone constrains the gene set used by the DTE step. Just before
 
 The pipeline will by default run the [Ribo-TISH](https://github.com/zhpn1024/ribotish) [quality](https://github.com/zhpn1024/ribotish?tab=readme-ov-file#quality) and [predict](https://github.com/zhpn1024/ribotish?tab=readme-ov-file#predict) commands for QC and ORF prediction, respectively. Additional arguments can be supplied to either command via the `--extra_ribotish_quality_args` and `--extra_ribotish_predict_args` parameters.
 
+### ORF calling and cross-caller agreement
+
+By default the pipeline calls ORFs with two tools, Ribo-TISH `predict` and RiboCode, and reports an ORF as agreed only when both callers support it. This intersection is precision-weighted: the agreed set is conservative and may omit ORFs that only one caller detects.
+
+Additional callers (Ribotricer, plus the overnight Bayesian callers below) are off by default. Enabling them broadens recall and shifts agreement to a majority vote of the active caller set. Ribotricer in particular is opt-in because benchmarking (FK/NGB, May 2026; 6 biological replicates) found its ORF-score column unstable across replicates (mean Spearman 0.288) even though its binary call set is reproducible (mean Jaccard 0.770). When enabled, its binary calls count toward agreement but its score is excluded from cross-caller rank aggregation, and the pipeline warns at runtime.
+
 ### Rp-Bp (opt-in, overnight)
 
 [Rp-Bp](https://github.com/dieterich-lab/rp-bp) (Malone et al., 2017) is a Bayesian-strict ORF caller that complements RiboCode's permissive canonical-CDS calls. It is the recommended second caller when statistical rigour matters more than turnaround time. Activate with `--run_rpbp true`.
