@@ -304,7 +304,11 @@ By default, the input GTF file will be filtered to ensure that sequence names co
 
 ### Canonical annotation backbone
 
-Ribo-seq footprint reads are ~28-32 nt and cannot resolve which isoform is being translated when reads fall on exons shared between isoforms (see [Wang et al. 2016, Bioinformatics 32:1880](https://academic.oup.com/bioinformatics/article/32/12/1880/1744291) for a quantitative analysis: only ~7% of human Ribo-seq reads map uniquely against a full multi-isoform annotation). The pipeline therefore separates the annotation used for genome-guided alignment (full multi-isoform, supplied via `--gtf`) from the annotation backbone used for ORF calling, P-site calibration and translational-efficiency analysis (one-transcript-per-gene, supplied via `--canonical_gtf`).
+Ribo-seq footprint reads are ~28-32 nt and cannot resolve which isoform is being translated when reads fall on exons shared between isoforms (see [Wang et al. 2016, Bioinformatics 32:1880](https://academic.oup.com/bioinformatics/article/32/12/1880/1744291) for a quantitative analysis: only ~7% of human Ribo-seq reads map uniquely against a full multi-isoform annotation). The pipeline therefore separates the annotation used for genome-guided alignment (full multi-isoform, supplied via `--gtf`) from the annotation backbone used by the genome-coordinate ORF callers (Ribo-TISH, Ribotricer), plastid P-site quantification and the translational-efficiency analysis (one-transcript-per-gene, supplied via `--canonical_gtf`).
+
+The transcriptome-coordinate tools (RiboCode, riboWaltz and Salmon) read the reference-transcriptome alignment that STAR emits with `--quantMode TranscriptomeSAM`, which is keyed to the full multi-isoform annotation; they therefore continue to use `--gtf`, since a canonical-only annotation would not match the transcript IDs in those BAMs.
+
+`--canonical_gtf` is a recommended backbone, not a hard requirement: nothing enforces exactly one transcript per gene, so an annotation that occasionally lists more than one (e.g. MANE, which includes MANE Plus Clinical alongside MANE Select for some genes) is handled without error. Such genes simply retain a little of the shared-exon ambiguity the backbone is designed to reduce.
 
 Recommended sources for `--canonical_gtf`:
 
@@ -314,7 +318,7 @@ Recommended sources for `--canonical_gtf`:
 | Mouse, zebrafish, any Ensembl organism (release ≥104) | [Ensembl GTF](https://www.ensembl.org/info/genome/genebuild/canonical.html)                          | `grep 'tag "Ensembl_canonical"' input.gtf > canonical.gtf` |
 | Any organism (fallback)                               | full `--gtf` + [AGAT](https://agat.readthedocs.io/en/latest/tools/agat_sp_keep_longest_isoform.html) | done automatically when `--canonical_gtf` is omitted       |
 
-If `--canonical_gtf` is not supplied the pipeline runs [`agat_sp_keep_longest_isoform.pl`](https://agat.readthedocs.io/en/latest/tools/agat_sp_keep_longest_isoform.html) on the full GTF and uses the result as the backbone. AGAT operates structurally (longest isoform per gene) rather than from curation, so a curated source is strongly preferred where available.
+If `--canonical_gtf` is not supplied the pipeline runs [`agat_sp_keep_longest_isoform.pl`](https://agat.readthedocs.io/en/latest/tools/agat_sp_keep_longest_isoform.html) on the full GTF and uses the result as the backbone. AGAT operates structurally (it keeps the isoform with the longest CDS per gene, falling back to the longest concatenated exons for genes with no CDS) rather than from curation, so a curated source is strongly preferred where available.
 
 MANE Select vs `Ensembl_canonical` for non-coding genes: MANE Select covers virtually all protein-coding genes plus a growing but partial set of non-coding genes ([NCBI Insights, MANE v1.4](https://ncbiinsights.ncbi.nlm.nih.gov/2024/10/28/mane-v1-4-mane-select-non-coding-genes/)). `Ensembl_canonical` has broader biotype priority including lncRNA and other ncRNA biotypes, so users working primarily on smORFs in lncRNAs may get better transcript recall from `Ensembl_canonical`.
 
@@ -323,6 +327,12 @@ MANE Select vs `Ensembl_canonical` for non-coding genes: MANE Select covers virt
 The pipeline will by default run the [Ribo-TISH](https://github.com/zhpn1024/ribotish) [quality](https://github.com/zhpn1024/ribotish?tab=readme-ov-file#quality) and [predict](https://github.com/zhpn1024/ribotish?tab=readme-ov-file#predict) commands for QC and ORF prediction, respectively. Additional arguments can be supplied to either command via the `--extra_ribotish_quality_args` and `--extra_ribotish_predict_args` parameters.
 
 Ribo-TISH `quality` is fed the canonical annotation (`--canonical_gtf`, or the AGAT-derived longest-isoform fallback) rather than the full multi-isoform GTF. `quality` estimates P-site offsets and read-length QC against CDS-bearing canonical transcripts; mixing in CDS-absent or near-duplicate isoforms degrades that calibration without adding diagnostic signal. The `predict` step receives the same canonical input by default; the wrapper also accepts an optional secondary annotation on `-a` for novel-transcript discovery modes.
+
+### ORF calling and cross-caller agreement
+
+By default the pipeline calls ORFs with two tools, Ribo-TISH `predict` and RiboCode, and reports an ORF as agreed only when both callers support it. This intersection is precision-weighted: the agreed set is conservative and may omit ORFs that only one caller detects.
+
+Ribotricer is available as a third caller but is off by default. Enable it with `--run_ribotricer true` for broader recall, after which an ORF is agreed on a majority vote (2 of 3). It is opt-in because benchmarking (FK/NGB, May 2026; 6 biological replicates) found its ORF-score column unstable across replicates (mean Spearman 0.288) even though its binary call set is reproducible (mean Jaccard 0.770). When enabled, its binary calls count toward agreement but its score is excluded from cross-caller rank aggregation, and the pipeline warns at runtime.
 
 ## P-site identification
 
