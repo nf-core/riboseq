@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#144](https://github.com/nf-core/riboseq/pull/144) - Add bigWig coverage tracks ([@suhrig](https://github.com/suhrig))
 - [#154](https://github.com/nf-core/riboseq/pull/154) - Add riboWaltz QC plots to the MultiQC report (P-site region distribution, reading-frame distribution, start/stop-codon metaprofiles) via the new MultiQC riboWaltz module ([MultiQC#3465](https://github.com/MultiQC/MultiQC/pull/3465)) ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#161](https://github.com/nf-core/riboseq/issues/161) - Add a one-transcript-per-gene canonical annotation backbone via `--canonical_gtf`, used by the genome-coordinate ORF callers, plastid P-site quantification and translational-efficiency analysis; falls back to AGAT longest-CDS isoform when not supplied ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#179](https://github.com/nf-core/riboseq/issues/179) - Wire an optional secondary reference annotation (`-a`) through to ribotish/predict ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Fixed`
 

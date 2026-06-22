@@ -157,7 +157,7 @@
                     },
                     "ribotish/predict": {
                         "branch": "master",
-                        "git_sha": "31d9ec502b58f4fcf026de727ad23e725473c70f",
+                        "git_sha": "e832be52c6e9843c408e69c4e4cc1a327b7e3609",
                         "installed_by": ["modules"]
                     },
                     "ribotish/quality": {

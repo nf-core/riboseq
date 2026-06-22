@@ -378,9 +378,9 @@ workflow RIBOSEQ {
             ch_fasta_gtf,
             [[:],[]],
             ribotish_predict_inputs.offset,
+            [[:],[]],
             [[:],[]]
         )
-        ch_versions = ch_versions.mix(RIBOTISH_PREDICT_INDIVIDUAL.out.versions)
 
         RIBOTISH_PREDICT_ALL(
             ribotish_predict_inputs.bam.map{meta, bam, bai -> [[id:'allsamples'], bam, bai]}.groupTuple(),
@@ -388,9 +388,9 @@ workflow RIBOSEQ {
             ch_fasta_gtf,
             [[:],[]],
             ribotish_predict_inputs.offset.map{meta, offset -> [[id:'allsamples'], offset]}.groupTuple(),
+            [[:],[]],
             [[:],[]]
         )
-        ch_versions = ch_versions.mix(RIBOTISH_PREDICT_ALL.out.versions)
     }
 
     if (params.run_ribotricer){

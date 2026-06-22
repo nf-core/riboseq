@@ -55,10 +55,10 @@
                     "plastid": "0.6.1"
                 },
                 "RIBOTISH_PREDICT_ALL": {
-                    "ribotish": "0.2.7"
+                    "ribotish": "0.2.8"
                 },
                 "RIBOTISH_PREDICT_INDIVIDUAL": {
-                    "ribotish": "0.2.7"
+                    "ribotish": "0.2.8"
                 },
                 "RIBOTISH_QUALITY_RIBOSEQ": {
                     "ribotish": "0.2.7"
@@ -1484,23 +1484,23 @@
                 "SRX11780885_all.txt:md5,96bc42211790337d7e9c90d24ebe1a32",
                 "SRX11780885_pred.txt:md5,96bc42211790337d7e9c90d24ebe1a32",
                 "SRX11780885_transprofile.py:md5,03dc9aae9d0a129d51dd4faf8fa12fad",
-                "SRX11780886_all.txt:md5,99c23e7b0ae281740b115377d0df9f7c",
-                "SRX11780886_pred.txt:md5,99c23e7b0ae281740b115377d0df9f7c",
+                "SRX11780886_all.txt:md5,aef11a9444b5a51ddd850b5b201a1ec8",
+                "SRX11780886_pred.txt:md5,aef11a9444b5a51ddd850b5b201a1ec8",
                 "SRX11780886_transprofile.py:md5,6b237fae001ec0c4501e0b82aec8a7a9",
                 "SRX11780887_all.txt:md5,952aaa52db7ae97dd2bcb862aa2566b3",
                 "SRX11780887_pred.txt:md5,952aaa52db7ae97dd2bcb862aa2566b3",
                 "SRX11780887_transprofile.py:md5,04e9415287f4d51575abc53314e471da",
-                "SRX11780888_all.txt:md5,09a614e1c0679c57084b3f6ff73945be",
-                "SRX11780888_pred.txt:md5,09a614e1c0679c57084b3f6ff73945be",
+                "SRX11780888_all.txt:md5,f57c16b795f9791e44a7616438586fc8",
+                "SRX11780888_pred.txt:md5,f57c16b795f9791e44a7616438586fc8",
                 "SRX11780888_transprofile.py:md5,ec6098c852f266070aa55db34608219a",
-                "SRX11780889_all.txt:md5,7cba7b5d841a9448d183227093b88ea8",
-                "SRX11780889_pred.txt:md5,7cba7b5d841a9448d183227093b88ea8",
+                "SRX11780889_all.txt:md5,85a974d244aa92fd265117d02f2942b2",
+                "SRX11780889_pred.txt:md5,85a974d244aa92fd265117d02f2942b2",
                 "SRX11780889_transprofile.py:md5,19e26878c912c5c64158353a888685e0",
-                "SRX11780890_all.txt:md5,44c3ed64b62809922c48b7ef9f608694",
-                "SRX11780890_pred.txt:md5,44c3ed64b62809922c48b7ef9f608694",
+                "SRX11780890_all.txt:md5,c565c97c5e9b9d7a09657b59bba23347",
+                "SRX11780890_pred.txt:md5,c565c97c5e9b9d7a09657b59bba23347",
                 "SRX11780890_transprofile.py:md5,e9fa3776136dd287a1a88c29eb75cd5a",
-                "allsamples_all.txt:md5,8773619b2d686e3f2835b312048a6594",
-                "allsamples_pred.txt:md5,8773619b2d686e3f2835b312048a6594",
+                "allsamples_all.txt:md5,335934f2058f1a080eb2d870421737d1",
+                "allsamples_pred.txt:md5,335934f2058f1a080eb2d870421737d1",
                 "allsamples_transprofile.py:md5,6ae455c54cc1de1577c98c29f40ad9a0",
                 "SRX11780885.ribowaltz.best_offset.txt:md5,8483e3a3c844284331249dfc8f520e03",
                 "SRX11780885.ribowaltz.cds_coverage_psite.tsv.gz:md5,bf66d9ba8771fc44d275f2f94eb1b9e4",
@@ -1659,6 +1659,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2026-06-18T19:45:12.062693678"
+        "timestamp": "2026-06-19T17:58:22.33076134"
     }
 }
