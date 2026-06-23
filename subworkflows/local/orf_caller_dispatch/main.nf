@@ -81,6 +81,9 @@ workflow ORF_CALLER_DISPATCH {
             ch_fasta_gtf_for_ribotish_extended :
             ch_fasta_gtf_for_ribotish
 
+        // `-a` secondary annotation: canonical backbone in extended mode, empty
+        // ([]) otherwise. RIBOTISH_PREDICT guards on a truthy reference_gtf
+        // (reference_gtf ? "-a ..." : ''), so an empty payload runs without -a.
         def ch_predict_fasta_gtf = ch_ribotish_predict_annotation.map { meta, fasta, gtf, _ref -> [ meta, fasta, gtf ] }
         def ch_predict_ref_gtf   = ch_ribotish_predict_annotation.map { _meta, _fasta, _gtf, ref -> [ [id: 'reference'], ref ] }
 
