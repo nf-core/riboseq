@@ -351,6 +351,25 @@ If this step fails with `ERROR: metaplots created config file with no data`, it 
 Check the metaplots PDF output to verify that your data shows reasonable periodicity before relaxing thresholds further. The riboWaltz QC plots (frame distribution and metaprofiles) can also help you assess data quality.
 :::
 
+## Novel transcript discovery (StringTie / hybrid GTF)
+
+When `--skip_stringtie false` is set, [StringTie](https://ccb.jhu.edu/software/stringtie/) is run per sample in reference-guided mode on RNA-seq BAMs and the per-sample assemblies are merged. Alternatively, when `--novel_gtf` is supplied, StringTie is skipped and the user-supplied GTF is used as the novel-transcript source. Either source is then classified against the reference with [gffcompare](https://ccb.jhu.edu/software/stringtie/gffcompare.shtml), filtered to the user-configured class codes (`--gffcompare_class_codes`, default `u`), optionally cleaned with an rRNA/repeat blacklist (`--rrna_blacklist`), and concatenated with the canonical reference to produce a hybrid annotation.
+
+The hybrid GTF is published as a side product and exposed on the `hybrid_gtf` workflow channel. With no novel-transcript source configured, the channel equals the canonical backbone. Follow-on work in the modernisation plan wires the hybrid GTF into the genome-BAM ORF callers (Ribo-TISH `predict`, Ribotricer) under an opt-in flag.
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `stringtie/`
+  - `<SAMPLE>.denovo.transcripts.gtf`: Per-sample reference-guided assembly (only produced when StringTie ran; the `.denovo` prefix marks these as inputs to the merge step).
+  - `stringtie_merge.gtf`: Merged annotation produced by `stringtie --merge` across all per-sample assemblies. Novel transcripts appear with `MSTRG.*` IDs. Absent when `--novel_gtf` is used.
+  - `gffcompare/`: Full gffcompare output (`*.annotated.gtf`, `*.stats`, `*.tracking`, `*.loci`, etc.) classifying novel transcripts against the full reference annotation.
+  - `novel_filtered.gtf`: Novel transcripts retained after the gffcompare class-code filter (default class `u` = intergenic only).
+  - `novel_filtered.blacklisted.gtf`: Class-filtered novel transcripts after the optional rRNA/repeat blacklist intersect (only present when `--rrna_blacklist` is supplied).
+  - `hybrid_reference.gtf`: Canonical reference + filtered novel transcripts, sorted by chromosome and start coordinate. Exposed as the `hybrid_gtf` workflow emit channel.
+
+</details>
+
 ## ORF predictions
 
 ### Ribo-TISH predict

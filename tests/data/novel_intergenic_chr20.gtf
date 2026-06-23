@@ -1,0 +1,8 @@
+## Intergenic w.r.t. Ensembl GRCh38 release 111 (chr20:11380000-11420000).
+## Used by tests/novel_gtf.nf.test to drive gffcompare class-u filter ->
+## hybrid GTF -> ORF caller wiring. If the Ensembl release pinned by the
+## test profile changes, verify this interval is still intergenic or the
+## class-u filter will silently produce an empty hybrid GTF.
+20	test	transcript	11380000	11420000	.	+	.	gene_id "TEST_NOVEL_GENE_1"; transcript_id "TEST_NOVEL_TRANSCRIPT_1";
+20	test	exon	11380000	11380500	.	+	.	gene_id "TEST_NOVEL_GENE_1"; transcript_id "TEST_NOVEL_TRANSCRIPT_1"; exon_number "1";
+20	test	exon	11419500	11420000	.	+	.	gene_id "TEST_NOVEL_GENE_1"; transcript_id "TEST_NOVEL_TRANSCRIPT_1"; exon_number "2";

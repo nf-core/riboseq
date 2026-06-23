@@ -1,0 +1,49 @@
+nextflow_pipeline {
+
+    name "Test pipeline with --novel_gtf bypass"
+    script "../main.nf"
+    tag "pipeline"
+    tag "pipeline_riboseq"
+    tag "novel_gtf"
+
+    test("-profile test --novel_gtf <synthetic intergenic chr20 GTF>") {
+
+        when {
+            params {
+                outdir                  = "$outputDir"
+                novel_gtf               = "${projectDir}/tests/data/novel_intergenic_chr20.gtf"
+                skip_stringtie          = true
+            }
+        }
+
+        then {
+            // stable_name: All files + folders in ${params.outdir}/ with a stable name
+            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
+            // stable_path: All files in ${params.outdir}/ with stable content
+            def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
+
+            def hybrid_gtf            = file("${params.outdir}/stringtie/hybrid_reference.gtf")
+            def ribotish_pred_all     = file("${params.outdir}/orf_predictions/ribotish_all/allsamples_pred.txt")
+            assertAll(
+                { assert workflow.success},
+                { assert hybrid_gtf.exists() && hybrid_gtf.size() > 0 },
+                { assert ribotish_pred_all.exists() && ribotish_pred_all.size() > 0 },
+                { assert snapshot(
+                    // pipeline versions.yml file for multiqc from which Nextflow version is removed because we test pipelines on multiple Nextflow versions
+                    removeNextflowVersion("$outputDir/pipeline_info/nf_core_riboseq_software_mqc_versions.yml"),
+                    // All stable path name, with a relative path
+                    stable_name,
+                    // All files with stable contents
+                    stable_path
+                ).match() }
+            )
+        }
+
+        cleanup {
+            if (System.getenv("NFT_PROFILE")?.contains("docker")) {
+                "docker system prune -a -f --volumes".execute()
+            }
+            new File("${launchDir}").deleteDir()
+        }
+    }
+}

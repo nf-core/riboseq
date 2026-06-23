@@ -9,8 +9,9 @@
 //
 include { FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS                                                 } from '../../subworkflows/nf-core/fastq_qc_trim_filter_setstrandedness/main'
 include { FASTQ_EQUALISE_READ_LENGTHS                                                          } from '../../subworkflows/local/fastq_equalise_read_lengths'
-include { BAM_DEDUP_UMI      } from '../../subworkflows/nf-core/bam_dedup_umi'
-include { FASTQ_ALIGN_STAR   } from '../../subworkflows/nf-core/fastq_align_star'
+include { BAM_DEDUP_UMI                   } from '../../subworkflows/nf-core/bam_dedup_umi'
+include { FASTQ_ALIGN_STAR                } from '../../subworkflows/nf-core/fastq_align_star'
+include { NOVEL_TRANSCRIPT_DISCOVERY      } from '../../subworkflows/local/novel_transcript_discovery'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -349,6 +350,46 @@ workflow RIBOSEQ {
         .set{
             ch_genome_bam_by_type
         }
+
+    //
+    // SUBWORKFLOW: Novel transcript discovery and hybrid GTF construction.
+    // When neither StringTie nor a user-supplied novel GTF is configured, the
+    // hybrid GTF falls back to the canonical backbone so downstream wiring
+    // stays uniform.
+    //
+
+    ch_hybrid_gtf = ch_canonical_gtf
+
+    def run_stringtie = !params.skip_stringtie && !params.novel_gtf
+    def has_user_novel_gtf = params.novel_gtf as Boolean
+
+    if (run_stringtie) {
+        ch_genome_bam_by_type.rnaseq
+            .count()
+            .subscribe { n ->
+                if (n == 0) error "--skip_stringtie false requires RNA-seq BAMs in the samplesheet. For Ribo-seq-only runs, use --novel_gtf with a GTF assembled from a matching RNA-seq experiment."
+            }
+    }
+
+    if (run_stringtie || has_user_novel_gtf) {
+        def ch_strandedness = ch_genome_bam_by_type.rnaseq
+            .mix(ch_genome_bam_by_type.riboseq)
+            .map { meta, _bam -> meta.strandedness }
+            .first()
+
+        NOVEL_TRANSCRIPT_DISCOVERY(
+            ch_genome_bam_by_type.rnaseq,
+            ch_gtf,
+            ch_canonical_gtf,
+            has_user_novel_gtf ? params.novel_gtf : null,
+            run_stringtie,
+            params.gffcompare_class_codes,
+            params.rrna_blacklist,
+            ch_strandedness
+        )
+
+        ch_hybrid_gtf = NOVEL_TRANSCRIPT_DISCOVERY.out.hybrid_gtf
+    }
 
     ch_bams_for_analysis = ch_genome_bam_by_type.riboseq.join(ch_genome_bam_index)
     // Pair the canonical (one-transcript-per-gene) backbone with the genome FASTA
