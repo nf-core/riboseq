@@ -363,6 +363,14 @@ workflow RIBOSEQ {
     def run_stringtie = !params.skip_stringtie && !params.novel_gtf
     def has_user_novel_gtf = params.novel_gtf as Boolean
 
+    if (run_stringtie) {
+        ch_genome_bam_by_type.rnaseq
+            .count()
+            .subscribe { n ->
+                if (n == 0) error "--skip_stringtie false requires RNA-seq BAMs in the samplesheet. For Ribo-seq-only runs, use --novel_gtf with a GTF assembled from a matching RNA-seq experiment."
+            }
+    }
+
     if (run_stringtie || has_user_novel_gtf) {
         def ch_strandedness = ch_genome_bam_by_type.rnaseq
             .mix(ch_genome_bam_by_type.riboseq)
