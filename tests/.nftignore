@@ -18,8 +18,10 @@ multiqc/star/multiqc_report_data/multiqc_general_stats.txt
 multiqc/star/multiqc_report_data/multiqc_software_versions.txt
 multiqc/star/multiqc_report_data/multiqc_salmon.txt
 multiqc/star/multiqc_report_data/multiqc_salmon_salmon-1.txt
+multiqc/star/multiqc_report_data/multiqc_sortmerna.txt
 multiqc/star/multiqc_report_data/multiqc_sources.txt
 multiqc/star/multiqc_report_data/salmon_plot.txt
+multiqc/star/multiqc_report_data/sortmerna-detailed-plot.txt
 multiqc/star/multiqc_report_plots/{svg,pdf,png}/*.{svg,pdf,png}
 pipeline_info/*.{html,json,txt,yml}
 preprocessing/fastqc/*_fastqc.{html,zip}
