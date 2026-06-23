@@ -304,7 +304,11 @@ By default, the input GTF file will be filtered to ensure that sequence names co
 
 ### Canonical annotation backbone
 
-Ribo-seq footprint reads are ~28-32 nt and cannot resolve which isoform is being translated when reads fall on exons shared between isoforms (see [Wang et al. 2016, Bioinformatics 32:1880](https://academic.oup.com/bioinformatics/article/32/12/1880/1744291) for a quantitative analysis: only ~7% of human Ribo-seq reads map uniquely against a full multi-isoform annotation). The pipeline therefore separates the annotation used for genome-guided alignment (full multi-isoform, supplied via `--gtf`) from the annotation backbone used for ORF calling, P-site calibration and translational-efficiency analysis (one-transcript-per-gene, supplied via `--canonical_gtf`).
+Ribo-seq footprint reads are ~28-32 nt and cannot resolve which isoform is being translated when reads fall on exons shared between isoforms (see [Wang et al. 2016, Bioinformatics 32:1880](https://academic.oup.com/bioinformatics/article/32/12/1880/1744291) for a quantitative analysis: only ~7% of human Ribo-seq reads map uniquely against a full multi-isoform annotation). The pipeline therefore separates the annotation used for genome-guided alignment (full multi-isoform, supplied via `--gtf`) from the annotation backbone used by the genome-coordinate ORF callers (Ribo-TISH, Ribotricer), plastid P-site quantification and the translational-efficiency analysis (one-transcript-per-gene, supplied via `--canonical_gtf`).
+
+The transcriptome-coordinate tools (RiboCode, riboWaltz and Salmon) read the reference-transcriptome alignment that STAR emits with `--quantMode TranscriptomeSAM`, which is keyed to the full multi-isoform annotation; they therefore continue to use `--gtf`, since a canonical-only annotation would not match the transcript IDs in those BAMs.
+
+`--canonical_gtf` is a recommended backbone, not a hard requirement: nothing enforces exactly one transcript per gene, so an annotation that occasionally lists more than one (e.g. MANE, which includes MANE Plus Clinical alongside MANE Select for some genes) is handled without error. Such genes simply retain a little of the shared-exon ambiguity the backbone is designed to reduce.
 
 Recommended sources for `--canonical_gtf`:
 
@@ -314,7 +318,7 @@ Recommended sources for `--canonical_gtf`:
 | Mouse, zebrafish, any Ensembl organism (release ≥104) | [Ensembl GTF](https://www.ensembl.org/info/genome/genebuild/canonical.html)                          | `grep 'tag "Ensembl_canonical"' input.gtf > canonical.gtf` |
 | Any organism (fallback)                               | full `--gtf` + [AGAT](https://agat.readthedocs.io/en/latest/tools/agat_sp_keep_longest_isoform.html) | done automatically when `--canonical_gtf` is omitted       |
 
-If `--canonical_gtf` is not supplied the pipeline runs [`agat_sp_keep_longest_isoform.pl`](https://agat.readthedocs.io/en/latest/tools/agat_sp_keep_longest_isoform.html) on the full GTF and uses the result as the backbone. AGAT operates structurally (longest isoform per gene) rather than from curation, so a curated source is strongly preferred where available.
+If `--canonical_gtf` is not supplied the pipeline runs [`agat_sp_keep_longest_isoform.pl`](https://agat.readthedocs.io/en/latest/tools/agat_sp_keep_longest_isoform.html) on the full GTF and uses the result as the backbone. AGAT operates structurally (it keeps the isoform with the longest CDS per gene, falling back to the longest concatenated exons for genes with no CDS) rather than from curation, so a curated source is strongly preferred where available.
 
 MANE Select vs `Ensembl_canonical` for non-coding genes: MANE Select covers virtually all protein-coding genes plus a growing but partial set of non-coding genes ([NCBI Insights, MANE v1.4](https://ncbiinsights.ncbi.nlm.nih.gov/2024/10/28/mane-v1-4-mane-select-non-coding-genes/)). `Ensembl_canonical` has broader biotype priority including lncRNA and other ncRNA biotypes, so users working primarily on smORFs in lncRNAs may get better transcript recall from `Ensembl_canonical`.
 
@@ -322,7 +326,11 @@ MANE Select vs `Ensembl_canonical` for non-coding genes: MANE Select covers virt
 
 The pipeline will by default run the [Ribo-TISH](https://github.com/zhpn1024/ribotish) [quality](https://github.com/zhpn1024/ribotish?tab=readme-ov-file#quality) and [predict](https://github.com/zhpn1024/ribotish?tab=readme-ov-file#predict) commands for QC and ORF prediction, respectively. Additional arguments can be supplied to either command via the `--extra_ribotish_quality_args` and `--extra_ribotish_predict_args` parameters.
 
-Ribo-TISH `quality` is fed the canonical annotation (`--canonical_gtf`, or the AGAT-derived longest-isoform fallback) rather than the full multi-isoform GTF. `quality` estimates P-site offsets and read-length QC against CDS-bearing canonical transcripts; mixing in CDS-absent or near-duplicate isoforms degrades that calibration without adding diagnostic signal. The `predict` step receives the same canonical input by default; the wrapper also accepts an optional secondary annotation on `-a` for novel-transcript discovery modes.
+### ORF calling and cross-caller agreement
+
+By default the pipeline calls ORFs with two tools, Ribo-TISH `predict` and RiboCode, and reports an ORF as agreed only when both callers support it. This intersection is precision-weighted: the agreed set is conservative and may omit ORFs that only one caller detects.
+
+Ribotricer is available as a third caller but is off by default. Enable it with `--run_ribotricer true` for broader recall, after which an ORF is agreed on a majority vote (2 of 3). It is opt-in because benchmarking (FK/NGB, May 2026; 6 biological replicates) found its ORF-score column unstable across replicates (mean Spearman 0.288) even though its binary call set is reproducible (mean Jaccard 0.770). When enabled, its binary calls count toward agreement but its score is excluded from cross-caller rank aggregation, and the pipeline warns at runtime.
 
 ## P-site identification
 
@@ -459,9 +467,7 @@ The pipeline can extend the canonical reference annotation with novel intergenic
 
 ### Source 1: StringTie assembly
 
-Set `--skip_stringtie false` to enable assembly. The pipeline prefers RNA-seq BAMs (which is what every published microprotein / novel-ORF discovery workflow uses) and falls back to Ribo-seq BAMs with tightened defaults if no RNA-seq is available, emitting a warning.
-
-When the Ribo-seq fallback is active, StringTie is invoked with `--stringtie_ribo_fallback_args` (default `-m 100 -c 5 -j 3 -f 0.05 -g 100`). These are first-pass empirical defaults extrapolated from RNA-seq parameter rationale and general Ribo-seq coverage properties; they are not literature-validated. Treat fallback assemblies with care. If `--extra_stringtie_args` is set, it overrides the fallback defaults verbatim - the warning will still fire but the tightening is no longer in force, so review the assembly output before trusting it.
+Set `--skip_stringtie false` to enable assembly. StringTie requires RNA-seq BAMs; if your samplesheet contains only Ribo-seq samples, use `--novel_gtf` with a GTF produced from a separate RNA-seq run instead.
 
 Per-sample StringTie GTFs are merged with `stringtie --merge` into a unified annotation.
 
@@ -471,9 +477,9 @@ Pass `--novel_gtf path/to/curated.gtf` to skip StringTie entirely and feed your 
 
 ### Filtering: gffcompare class codes
 
-The novel GTF is classified against the full reference with [gffcompare](https://ccb.jhu.edu/software/stringtie/gffcompare.shtml) and filtered to entries whose `class_code` is in `--stringtie_class_codes` (default `"u"`, intergenic only).
+The novel GTF is classified against the full reference with [gffcompare](https://ccb.jhu.edu/software/stringtie/gffcompare.shtml) and filtered to entries whose `class_code` is in `--gffcompare_class_codes` (default `"u"`, intergenic only).
 
-Stranded users (stranded RNA-seq and stranded Ribo-seq libraries) can extend the filter to `--stringtie_class_codes "u,x"` to recover translated antisense transcripts (class `x` = antisense overlap with a known locus). The default remains `u`-only because antisense classification is unreliable for non-stranded or partially-stranded protocols.
+Stranded users (stranded RNA-seq and stranded Ribo-seq libraries) can extend the filter to `--gffcompare_class_codes "u,x"` to recover translated antisense transcripts (class `x` = antisense overlap with a known locus). The default remains `u`-only because antisense classification is unreliable for non-stranded or partially-stranded protocols.
 
 ### Optional rRNA / repeat blacklist
 
@@ -481,26 +487,30 @@ Supply `--rrna_blacklist path/to/blacklist.bed` to drop novel transcripts overla
 
 ### Knobs
 
-- `--skip_stringtie` - default `true`. Set to `false` to run StringTie assembly.
+- `--skip_stringtie` - default `true`. Set to `false` to run StringTie assembly (requires RNA-seq BAMs in the samplesheet).
 - `--novel_gtf` - user-supplied novel GTF (bypasses StringTie when set).
 - `--extra_stringtie_args` - extra args passed to per-sample StringTie.
 - `--extra_stringtie_merge_args` - extra args passed to `stringtie --merge` (e.g. `'-T 1 -f 0.1'` for stricter TPM and isoform-fraction cutoffs); see the [StringTie manual](https://ccb.jhu.edu/software/stringtie/index.shtml?t=manual) for the full set of merge flags.
-- `--stringtie_ribo_fallback_args` - args used when no RNA-seq BAMs are available (default `-m 100 -c 5 -j 3 -f 0.05 -g 100`).
-- `--stringtie_class_codes` - comma-separated gffcompare class codes to retain (default `u`).
+- `--gffcompare_class_codes` - comma-separated gffcompare class codes to retain (default `u`).
 - `--rrna_blacklist` - optional BED of rRNA / repeat regions to exclude.
 
-The hybrid GTF is exposed as the `hybrid_gtf` workflow channel. With the default settings (no novel-transcript source configured) it equals the canonical backbone, so downstream wiring stays uniform.
+The hybrid GTF is exposed as a workflow channel (`hybrid_gtf` emit) and is wired into the genome-BAM ORF callers (Ribo-TISH `predict`, Ribotricer) when `--extended_orf_analysis true` is set; see [Extended ORF discovery](#extended-orf-discovery) below.
 
 ## Extended ORF discovery
 
 By default, all ORF callers run against the canonical backbone GTF so the pipeline produces well-characterised annotated-ORF calls. To discover novel ORFs in the novel intergenic transcripts produced by StringTie or supplied via `--novel_gtf`, set `--extended_orf_analysis true`. This routes the hybrid GTF (`<outdir>/stringtie/hybrid_reference.gtf`) into the genome-BAM ORF callers:
 
-- **Ribo-TISH `predict`**: hybrid GTF on `-g` (discovery target). The Ribo-TISH wrapper accepts an optional secondary GTF on `-a` for background calibration, but the extended path leaves it empty to skirt a known Ribo-TISH bug ([zhpn1024/ribotish#33](https://github.com/zhpn1024/ribotish/issues/33), [#24](https://github.com/zhpn1024/ribotish/issues/24)) hit when the hybrid and secondary annotations share CDS rows. The hybrid GTF preserves canonical CDS records so background calibration is intact.
-- **Ribotricer `prepare-orfs`**: hybrid GTF directly. Ribotricer has no secondary-annotation concept; CDS-absent novel transcripts are auto-labelled `novel` in its `ORF_type` column.
+- **Ribo-TISH `predict`**: hybrid GTF on `-g` (discovery target); canonical backbone on `-a` (background and ORF classification).
+- **Ribotricer `prepare-orfs`**: hybrid GTF directly (Ribotricer has no secondary-annotation concept; CDS-absent novel transcripts are auto-labelled `novel`).
+- **RiboCode**: stays on the canonical reference transcriptome. RiboCode is a transcriptome-coordinate caller and needs a transcriptome BAM keyed to the annotation used at alignment time; bringing it online for novel transcripts needs a second STAR pass against a hybrid transcriptome (follow-on work, issue #171).
 
-RiboCode, riboWaltz, plastid and Salmon-based quantification continue to use the canonical backbone GTF regardless of `--extended_orf_analysis`. RiboCode in particular requires a transcriptome-BAM keyed to the annotation used at alignment time; bringing RiboCode online for novel transcripts needs a second STAR pass against a hybrid transcriptome (follow-on work, issue #171).
+A novel-transcript source must be configured — `--skip_stringtie false` or `--novel_gtf <path>`. If `--extended_orf_analysis true` is set without one of those, the pipeline warns and falls back to the canonical GTF (the flag is a no-op rather than an error so users can compose flags incrementally).
 
-A novel-transcript source must be configured: `--skip_stringtie false` or `--novel_gtf <path>`. If `--extended_orf_analysis true` is set without one of those, the pipeline warns and falls back to the canonical GTF (the flag is a no-op rather than an error so users can compose flags incrementally).
+**riboWaltz stays on the primary reference-transcriptome BAM by design.** riboWaltz is a QC/calibration tool and its CDS-dependent plots (frame distribution, start/stop metaprofiles) are driven by annotated CDS-bearing transcripts. Routing CDS-absent novel transcripts through riboWaltz would dilute its diagnostic plots without contributing to ORF discovery (riboWaltz does not call ORFs). Salmon likewise stays on the primary reference transcriptome, and plastid P-site quantification on the canonical backbone, regardless of `--extended_orf_analysis`.
+
+**Ribo-TISH `quality` stays on the canonical backbone.** The `quality` step estimates P-site offsets and read-length QC against CDS-bearing canonical transcripts. Feeding it the hybrid GTF would mix in CDS-absent novel transcripts that the P-site model cannot interpret. The Ribo-TISH `predict` step (which actually calls ORFs) is the one that consumes the hybrid GTF on `-g` plus the canonical backbone on `-a`. Empirical confirmation that canonical-only is the correct choice for `quality` is pending full-scale validation; the default reflects the spec recommendation in issue #162.
+
+The default `--extended_orf_analysis false` keeps the pre-#165 behaviour unchanged: the primary STAR pass is the only alignment and every ORF caller runs against the canonical backbone.
 
 ## Running the pipeline
 

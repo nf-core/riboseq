@@ -1,0 +1,65 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "orf_caller_dispatch"
+description: |
+  Conditional dispatch of ORF callers (Ribo-TISH, Ribotricer, RiboCode) based
+  on params.skip_* / params.run_* flags. Routes the genome-BAM callers
+  (Ribo-TISH predict, Ribotricer) to the hybrid GTF when extended-ORF analysis
+  is active, otherwise to the canonical backbone. Emits one prediction channel
+  per caller (empty when that caller is disabled).
+keywords:
+  - riboseq
+  - orf calling
+  - ribotish
+  - ribocode
+  - ribotricer
+components:
+  - ribotish/quality
+  - ribotish/predict
+  - ribotricer/prepareorfs
+  - ribotricer/detectorfs
+  - ribocode/gtfupdate
+  - ribocode/prepare
+  - ribocode/metaplots
+  - ribocode/ribocode
+input:
+  - ch_bams_for_analysis:
+      description: Per-sample Ribo-seq genome BAM + BAI
+      pattern: "*.bam"
+  - ch_transcriptome_bam:
+      description: Canonical transcriptome BAMs (all sample types - subworkflow filters to riboseq for RiboCode)
+      pattern: "*.bam"
+  - ch_fasta:
+      description: Genome FASTA
+      pattern: "*.fasta"
+  - ch_canonical_gtf:
+      description: Canonical (one-transcript-per-gene) GTF backbone
+      pattern: "*.gtf"
+  - ch_hybrid_gtf:
+      description: Canonical + filtered novel hybrid GTF (equals canonical when no novel source configured)
+      pattern: "*.gtf"
+  - ch_gtf:
+      description: Full multi-isoform reference GTF (used by RiboCode)
+      pattern: "*.gtf"
+  - extended_orf_active:
+      description: Whether to route the genome-BAM callers to the hybrid annotation
+output:
+  - ribotish_predictions:
+      description: Per-sample Ribo-TISH predictions (empty when --skip_ribotish)
+      pattern: "*.txt"
+  - ribocode_predictions:
+      description: Per-sample RiboCode ORF table (empty when --skip_ribocode)
+      pattern: "*.txt"
+  - ribotricer_predictions:
+      description: Per-sample Ribotricer ORF calls (empty unless --run_ribotricer)
+      pattern: "*.tsv"
+  - multiqc_files:
+      description: MultiQC-facing files (e.g. Ribo-TISH quality distributions)
+      pattern: "*"
+  - versions:
+      description: Software versions file
+      pattern: "versions.yml"
+authors:
+  - "@pinin4fjords"
+maintainers:
+  - "@pinin4fjords"
