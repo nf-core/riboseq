@@ -584,7 +584,7 @@
                 "extra_stringtie_merge_args": {
                     "type": "string",
                     "description": "Extra arguments to pass to StringTie --merge (e.g. `-T 1 -f 0.1` to tighten the merged annotation)."
-                },
+                }
             }
         },
         "optional_outputs": {
