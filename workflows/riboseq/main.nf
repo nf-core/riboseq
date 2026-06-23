@@ -310,17 +310,29 @@ workflow RIBOSEQ {
     def run_stringtie = !params.skip_stringtie && !params.novel_gtf
     def has_user_novel_gtf = params.novel_gtf as Boolean
 
+    if (run_stringtie) {
+        ch_genome_bam_by_type.rnaseq
+            .count()
+            .subscribe { n ->
+                if (n == 0) error "--skip_stringtie false requires RNA-seq BAMs in the samplesheet. For Ribo-seq-only runs, use --novel_gtf with a GTF assembled from a matching RNA-seq experiment."
+            }
+    }
+
     if (run_stringtie || has_user_novel_gtf) {
+        def ch_strandedness = ch_genome_bam_by_type.rnaseq
+            .mix(ch_genome_bam_by_type.riboseq)
+            .map { meta, _bam -> meta.strandedness }
+            .first()
+
         NOVEL_TRANSCRIPT_DISCOVERY(
             ch_genome_bam_by_type.rnaseq,
-            ch_genome_bam_by_type.riboseq,
             ch_gtf,
             ch_canonical_gtf,
             has_user_novel_gtf ? params.novel_gtf : null,
             run_stringtie,
-            params.stringtie_class_codes,
+            params.gffcompare_class_codes,
             params.rrna_blacklist,
-            params.extra_stringtie_args ?: params.stringtie_ribo_fallback_args
+            ch_strandedness
         )
 
         ch_hybrid_gtf = NOVEL_TRANSCRIPT_DISCOVERY.out.hybrid_gtf

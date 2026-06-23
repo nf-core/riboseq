@@ -2,11 +2,11 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "novel_transcript_discovery"
 description: |
-  Discover novel transcripts (StringTie on RNA-seq BAMs, with a Ribo-seq
-  fallback) or accept a user-supplied novel GTF, then classify against the
-  full reference, drop unwanted class codes, optionally subtract a
-  strand-aware rRNA/repeat blacklist, and concatenate with the canonical
-  backbone to produce a hybrid GTF for downstream alignment and ORF calling.
+  Discover novel transcripts (StringTie on RNA-seq BAMs) or accept a
+  user-supplied novel GTF, then classify against the full reference, drop
+  unwanted class codes, optionally subtract a strand-aware rRNA/repeat
+  blacklist, and concatenate with the canonical backbone to produce a hybrid
+  GTF for downstream alignment and ORF calling.
 keywords:
   - stringtie
   - novel transcripts
@@ -18,10 +18,7 @@ components:
   - gtf_hybridmerge_gffcompare
 input:
   - ch_rnaseq_bam:
-      description: Genome BAMs flagged as RNA-seq (preferred StringTie input)
-      pattern: "*.bam"
-  - ch_riboseq_bam:
-      description: Genome BAMs flagged as Ribo-seq (StringTie fallback when no RNA-seq present)
+      description: Genome BAMs flagged as RNA-seq (StringTie input)
       pattern: "*.bam"
   - ch_gtf:
       description: Full multi-isoform reference GTF (for gffcompare class-code annotation)
@@ -34,13 +31,13 @@ input:
       pattern: "*.gtf"
   - run_stringtie:
       description: Whether to run StringTie (false when --skip_stringtie or --novel_gtf is set)
-  - stringtie_class_codes:
-      description: gffcompare class codes to retain (--stringtie_class_codes)
+  - gffcompare_class_codes:
+      description: gffcompare class codes to retain (--gffcompare_class_codes)
   - rrna_blacklist:
       description: Optional BED of rRNA/repeat regions to subtract from the novel set
       pattern: "*.bed"
-  - ribo_fallback_args:
-      description: StringTie args used for the Ribo-seq fallback (for the warning message)
+  - ch_strandedness:
+      description: Library strandedness (forward/reverse/unstranded) for strand-aware blacklist filtering
 output:
   - hybrid_gtf:
       description: Canonical + filtered novel transcripts (no meta)
