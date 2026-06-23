@@ -399,7 +399,6 @@ workflow RIBOSEQ {
     ch_enabled_orf_callers      = Channel.value(enabled_orf_callers)
     ch_rank_aggregation_callers = Channel.value(rank_aggregation_callers)
 
-
     //
     // Get P-sites and P-site diagnostics with riboWaltz
     //

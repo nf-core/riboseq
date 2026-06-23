@@ -330,7 +330,7 @@ The pipeline will by default run the [Ribo-TISH](https://github.com/zhpn1024/rib
 
 By default the pipeline calls ORFs with two tools, Ribo-TISH `predict` and RiboCode, and reports an ORF as agreed only when both callers support it. This intersection is precision-weighted: the agreed set is conservative and may omit ORFs that only one caller detects.
 
-Ribotricer is available as a third caller but is off by default. Enable it with `--run_ribotricer true` for broader recall, after which an ORF is agreed on a majority vote (2 of 3). It is opt-in because benchmarking (FK/NGB, May 2026; 6 biological replicates) found its ORF-score column unstable across replicates (mean Spearman 0.288) even though its binary call set is reproducible (mean Jaccard 0.770). When enabled, its binary calls count toward agreement but its score is excluded from cross-caller rank aggregation, and the pipeline warns at runtime.
+Ribotricer is available as a third caller but is off by default. Enable it with `--run_ribotricer true` for broader recall, after which an ORF is agreed on a majority vote (2 of 3). It is opt-in because its ORF-score column is unstable across biological replicates even though its binary call set is reproducible. When enabled, its binary calls count toward agreement but its score is excluded from cross-caller rank aggregation, and the pipeline warns at runtime.
 
 ## P-site identification
 
@@ -502,7 +502,7 @@ By default, all ORF callers run against the canonical backbone GTF so the pipeli
 
 - **Ribo-TISH `predict`**: hybrid GTF on `-g` (discovery target); canonical backbone on `-a` (background and ORF classification).
 - **Ribotricer `prepare-orfs`**: hybrid GTF directly (Ribotricer has no secondary-annotation concept; CDS-absent novel transcripts are auto-labelled `novel`).
-- **RiboCode**: stays on the canonical reference transcriptome. RiboCode is a transcriptome-coordinate caller and needs a transcriptome BAM keyed to the annotation used at alignment time; bringing it online for novel transcripts needs a second STAR pass against a hybrid transcriptome (follow-on work, issue #171).
+- **RiboCode**: stays on the reference transcriptome. RiboCode is a transcriptome-coordinate caller and needs a transcriptome BAM keyed to the annotation used at alignment time; bringing it online for novel transcripts needs a second STAR pass against a hybrid transcriptome (follow-on work, issue #171).
 
 A novel-transcript source must be configured — `--skip_stringtie false` or `--novel_gtf <path>`. If `--extended_orf_analysis true` is set without one of those, the pipeline warns and falls back to the canonical GTF (the flag is a no-op rather than an error so users can compose flags incrementally).
 

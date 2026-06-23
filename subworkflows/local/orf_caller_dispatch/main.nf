@@ -111,7 +111,7 @@ workflow ORF_CALLER_DISPATCH {
     //
     ch_ribotricer_predictions = Channel.empty()
     if (params.run_ribotricer) {
-        log.warn "Ribotricer is enabled via --run_ribotricer. Benchmark data (FK/NGB, May 2026) found its ORF-score column is rank-unstable across biological replicates (mean Spearman 0.288 vs Jaccard 0.770). Its binary calls are usable, but do not rely on its scores as the primary ranking source; the cross-caller rank aggregation will exclude them."
+        log.warn "Ribotricer is enabled via --run_ribotricer. Its per-ORF scores are unstable across biological replicates, so its binary calls contribute to cross-caller agreement but its scores are excluded from the rank aggregation."
 
         def ch_ribotricer_annotation = extended_orf_active ?
             ch_fasta_gtf_extended :
@@ -137,7 +137,7 @@ workflow ORF_CALLER_DISPATCH {
     if (!params.skip_ribocode) {
         // RiboCode requires transcriptome-coordinate BAMs keyed to the
         // reference transcriptome FASTA used at alignment time, so it stays on
-        // the canonical wiring regardless of --extended_orf_analysis.
+        // the reference-transcriptome wiring regardless of --extended_orf_analysis.
         ch_transcriptome_bams_for_ribocode = ch_transcriptome_bam
             .branch { meta, bam ->
                 riboseq: meta.sample_type == 'riboseq'
