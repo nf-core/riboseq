@@ -585,12 +585,6 @@
                     "type": "string",
                     "description": "Extra arguments to pass to StringTie --merge (e.g. `-T 1 -f 0.1` to tighten the merged annotation)."
                 },
-                "stringtie_ribo_fallback_args": {
-                    "type": "string",
-                    "default": "-m 100 -c 5 -j 3 -f 0.05 -g 100",
-                    "description": "StringTie arguments used when no RNA-seq BAMs are available and the pipeline falls back to Ribo-seq BAMs for assembly.",
-                    "help_text": "These tightened defaults reduce false-positive single-exon transcripts driven by P-site pileups in Ribo-seq data: `-m 100` (min transcript length, vs default 200 - retains sORF transcripts), `-c 5` (min coverage), `-j 3` (min junction reads), `-f 0.05` (min isoform fraction), `-g 100` (max gap). Empirical first-pass defaults; tune per dataset. Ignored when RNA-seq BAMs are available or when `--extra_stringtie_args` is set."
-                }
             }
         },
         "optional_outputs": {
@@ -745,7 +739,7 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Skip StringTie reference-guided transcript assembly and merge.",
-                    "help_text": "When `false`, the pipeline runs StringTie per sample (reference-guided) then merges per-sample GTFs into a unified annotation. RNA-seq BAMs are preferred for assembly; if absent, the pipeline falls back to Ribo-seq BAMs with tightened parameters (see `--stringtie_ribo_fallback_args`). Merged transcripts are classified with gffcompare and filtered to class codes set by `--stringtie_class_codes`. The filtered novel GTF is concatenated with `--canonical_gtf` to produce `<outdir>/stringtie/hybrid_reference.gtf`. Ignored when `--novel_gtf` is supplied.",
+                    "help_text": "When `false`, the pipeline runs StringTie per sample (reference-guided) then merges per-sample GTFs into a unified annotation. RNA-seq BAMs are used for assembly. Merged transcripts are classified with gffcompare and filtered to class codes set by `--gffcompare_class_codes`. The filtered novel GTF is concatenated with `--canonical_gtf` to produce `<outdir>/stringtie/hybrid_reference.gtf`. Ignored when `--novel_gtf` is supplied.",
                     "fa_icon": "fas fa-fast-forward"
                 },
                 "novel_gtf": {
@@ -755,14 +749,14 @@
                     "mimetype": "text/plain",
                     "pattern": "^\\S+\\.gtf(\\.gz)?$",
                     "description": "Optional user-supplied novel-transcript GTF. When provided, StringTie assembly is skipped and this GTF is used directly as the source of novel transcripts.",
-                    "help_text": "Useful when you already have a curated cell-type-specific annotation (e.g. from long-read RNA-seq or a published ORF catalogue). The supplied GTF is still passed through the gffcompare class-code filter (`--stringtie_class_codes`, default `u` = intergenic only) so users can submit annotations containing any class of transcript and have the pipeline retain only the intergenic ones.",
+                    "help_text": "Useful when you already have a curated cell-type-specific annotation (e.g. from long-read RNA-seq or a published ORF catalogue). The supplied GTF is still passed through the gffcompare class-code filter (`--gffcompare_class_codes`, default `u` = intergenic only) so users can submit annotations containing any class of transcript and have the pipeline retain only the intergenic ones.",
                     "fa_icon": "fas fa-file-import"
                 },
-                "stringtie_class_codes": {
+                "gffcompare_class_codes": {
                     "type": "string",
                     "default": "u",
                     "description": "Comma-separated gffcompare class codes to retain when filtering novel transcripts.",
-                    "help_text": "Default `u` keeps only unambiguously intergenic transcripts. Stranded users may add `x` (antisense overlap with a known locus) via `--stringtie_class_codes 'u,x'` to recover translated antisense transcripts; this is unsafe for non-stranded or partially-stranded protocols. See https://ccb.jhu.edu/software/stringtie/gffcompare.shtml for the full class-code list.",
+                    "help_text": "Default `u` keeps only unambiguously intergenic transcripts. Stranded users may add `x` (antisense overlap with a known locus) via `--gffcompare_class_codes 'u,x'` to recover translated antisense transcripts; this is unsafe for non-stranded or partially-stranded protocols. See https://ccb.jhu.edu/software/stringtie/gffcompare.shtml for the full class-code list.",
                     "fa_icon": "fas fa-filter"
                 },
                 "rrna_blacklist": {

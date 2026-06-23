@@ -71,11 +71,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 |                     | `--canonical_gtf`                        |
 |                     | `--skip_stringtie`                       |
 |                     | `--novel_gtf`                            |
-|                     | `--stringtie_class_codes`                |
+|                     | `--gffcompare_class_codes`               |
 |                     | `--rrna_blacklist`                       |
 |                     | `--extra_stringtie_args`                 |
 |                     | `--extra_stringtie_merge_args`           |
-|                     | `--stringtie_ribo_fallback_args`         |
 
 ### `Dependencies`
 

@@ -364,16 +364,20 @@ workflow RIBOSEQ {
     def has_user_novel_gtf = params.novel_gtf as Boolean
 
     if (run_stringtie || has_user_novel_gtf) {
+        def ch_strandedness = ch_genome_bam_by_type.rnaseq
+            .mix(ch_genome_bam_by_type.riboseq)
+            .map { meta, _bam -> meta.strandedness }
+            .first()
+
         NOVEL_TRANSCRIPT_DISCOVERY(
             ch_genome_bam_by_type.rnaseq,
-            ch_genome_bam_by_type.riboseq,
             ch_gtf,
             ch_canonical_gtf,
             has_user_novel_gtf ? params.novel_gtf : null,
             run_stringtie,
-            params.stringtie_class_codes,
+            params.gffcompare_class_codes,
             params.rrna_blacklist,
-            params.extra_stringtie_args ?: params.stringtie_ribo_fallback_args
+            ch_strandedness
         )
 
         ch_hybrid_gtf = NOVEL_TRANSCRIPT_DISCOVERY.out.hybrid_gtf
