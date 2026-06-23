@@ -1350,7 +1350,7 @@
                 "stringtie/gffcompare/stringtie_merge.stats",
                 "stringtie/gffcompare/stringtie_merge.tracking",
                 "stringtie/hybrid_reference.gtf",
-                "stringtie/stringtie_merge.gtf",
+                "stringtie/novel_gtf.gtf",
                 "translational_efficiency",
                 "translational_efficiency/anota2seq",
                 "translational_efficiency/anota2seq/treated_vs_control.Anota2seqDataSet.rds",
@@ -1690,7 +1690,7 @@
                 "stringtie_merge.stats:md5,01e0ea0a4cf9ff2c88e6da5a2f0ca016",
                 "stringtie_merge.tracking:md5,f9540696d80798b2805764d8385da0c6",
                 "hybrid_reference.gtf:md5,fb1c85fee3d7341e5f50c1ecca543e0a",
-                "stringtie_merge.gtf:md5,d41d8cd98f00b204e9800998ecf8427e"
+                "novel_gtf.gtf:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
         "meta": {
