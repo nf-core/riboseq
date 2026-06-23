@@ -332,7 +332,7 @@ The pipeline will by default run the [Ribo-TISH](https://github.com/zhpn1024/rib
 
 By default the pipeline calls ORFs with two tools, Ribo-TISH `predict` and RiboCode, and reports an ORF as agreed only when both callers support it. This intersection is precision-weighted: the agreed set is conservative and may omit ORFs that only one caller detects.
 
-Additional callers (Ribotricer, plus the overnight Bayesian callers below) are off by default. Enabling them broadens recall and shifts agreement to a majority vote of the active caller set. Ribotricer in particular is opt-in because benchmarking (FK/NGB, May 2026; 6 biological replicates) found its ORF-score column unstable across replicates (mean Spearman 0.288) even though its binary call set is reproducible (mean Jaccard 0.770). When enabled, its binary calls count toward agreement but its score is excluded from cross-caller rank aggregation, and the pipeline warns at runtime.
+Additional callers (Ribotricer, plus the overnight Bayesian callers below) are off by default. Enabling them broadens recall and shifts agreement to a majority vote of the active caller set. Ribotricer in particular is opt-in because its ORF-score column is unstable across biological replicates even though its binary call set is reproducible. When enabled, its binary calls count toward agreement but its score is excluded from cross-caller rank aggregation, and the pipeline warns at runtime.
 
 ### Rp-Bp (opt-in, overnight)
 
@@ -340,7 +340,7 @@ Additional callers (Ribotricer, plus the overnight Bayesian callers below) are o
 
 > :warning: **Runtime cost.** Rp-Bp's Bayesian MCMC fit dominates wall-clock and takes roughly **20-24 hours per replicate** at genome-wide scale. The pipeline emits a runtime warning when `--run_rpbp` is set. Plan compute time, queue limits and instance lifetimes accordingly.
 
-Benchmark data (FK/NGB, May 2026; 6 biological replicates, genome-wide) places Rp-Bp at Tier-1 for both rank concordance (mean Spearman 0.893) and set overlap (mean Jaccard 0.673). Its score column (Bayes factor) is stable and is retained in the cross-caller rank-aggregation set alongside RiboCode and Ribo-TISH; Ribotricer's score column is excluded due to known instability but Rp-Bp's is not.
+Rp-Bp's score column (Bayes factor) is stable and is retained in the cross-caller rank-aggregation set alongside RiboCode and Ribo-TISH; Ribotricer's score column is excluded due to known instability but Rp-Bp's is not.
 
 Rp-Bp runs through the upstream `nf-core/rpbp/*` modules driven by the `FASTA_GTF_BAM_RPBP` nf-core subworkflow, which orchestrates `prepare-rpbp-genome`, `extract-metagene-profiles`, `estimate-metagene-profile-bayes-factors`, `select-periodic-offsets`, `get-all-read-filtering-counts`, `extract-orf-profiles`, `estimate-orf-bayes-factors` and `select-final-prediction-set` from your `--fasta` / `--gtf` inputs without you having to author a YAML config. Tool CLI overrides are exposed via `--extra_rpbp_preparegenome_args` and `--extra_rpbp_predictorfs_args`.
 

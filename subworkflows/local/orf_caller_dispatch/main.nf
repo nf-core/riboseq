@@ -115,7 +115,7 @@ workflow ORF_CALLER_DISPATCH {
     //
     ch_ribotricer_predictions = Channel.empty()
     if (params.run_ribotricer) {
-        log.warn "Ribotricer is enabled via --run_ribotricer. Benchmark data (FK/NGB, May 2026) found its ORF-score column is rank-unstable across biological replicates (mean Spearman 0.288 vs Jaccard 0.770). Its binary calls are usable, but do not rely on its scores as the primary ranking source; the cross-caller rank aggregation will exclude them."
+        log.warn "Ribotricer is enabled via --run_ribotricer. Its per-ORF scores are unstable across biological replicates, so its binary calls contribute to cross-caller agreement but its scores are excluded from the rank aggregation."
 
         def ch_ribotricer_annotation = extended_orf_active ?
             ch_fasta_gtf_extended :
@@ -139,7 +139,7 @@ workflow ORF_CALLER_DISPATCH {
     //
     ch_rpbp_predictions = Channel.empty()
     if (params.run_rpbp) {
-        log.warn "Rp-Bp is enabled via --run_rpbp. Benchmark data (FK/NGB, May 2026) places it at Tier-1 for both rank concordance (mean Spearman 0.893) and set overlap (mean Jaccard 0.673), but expect ~20-24h per replicate at genome-wide scale because the Bayesian MCMC fit dominates. Plan compute accordingly."
+        log.warn "Rp-Bp is enabled via --run_rpbp. Expect roughly 20-24h per replicate at genome-wide scale because the Bayesian MCMC fit dominates; plan compute accordingly. Its score column (Bayes factor) is stable and is retained in the cross-caller rank aggregation."
 
         def ch_rpbp_annotation = extended_orf_active ?
             ch_fasta_gtf_extended :
@@ -196,7 +196,7 @@ workflow ORF_CALLER_DISPATCH {
         // analysis is active (#171), swap in the hybrid transcriptome BAM
         // (second STAR pass against the hybrid GTF, Ribo-seq only) plus the
         // hybrid GTF as the annotation source so novel intergenic transcripts
-        // are visible to RiboCode. Otherwise keep the canonical wiring.
+        // are visible to RiboCode. Otherwise keep the reference-transcriptome wiring.
         ch_ribocode_transcriptome_bam_source = extended_orf_active ?
             ch_hybrid_transcriptome_bam :
             ch_transcriptome_bam

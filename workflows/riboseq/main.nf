@@ -428,7 +428,7 @@ workflow RIBOSEQ {
 
     // Ribotricer contributes binary calls only; its scores are excluded from
     // the cross-caller rank aggregation due to known rank instability. Rp-Bp's
-    // Bayes factor is stable (Spearman 0.893) and is retained for ranking.
+    // Bayes factor is stable and is retained for ranking.
     def rank_aggregation_callers  = enabled_orf_callers - 'ribotricer'
     // Strict-majority of enabled callers (floor(N/2)+1): N=2 -> 2 (both must
     // agree), N=3 -> 2 (majority). Adapts as the caller set grows.
