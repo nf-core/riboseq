@@ -597,8 +597,6 @@
                 }
             }
         },
-            }
-        },
         "optional_outputs": {
             "title": "Optional outputs",
             "type": "object",
