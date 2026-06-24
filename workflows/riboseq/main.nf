@@ -111,7 +111,7 @@ workflow RIBOSEQ {
         ch_ribo_db = file(params.ribo_database_manifest)
         if (ch_ribo_db.isEmpty()) {exit 1, "File provided with --ribo_database_manifest is empty: ${ch_ribo_db.getName()}!"}
     } else {
-        ch_ribo_db = Channel.empty()
+        ch_ribo_db = channel.empty()
     }
 
     // Check if file with list of fastas is provided when running BBSplit
@@ -126,12 +126,12 @@ workflow RIBOSEQ {
     if (params.remove_ribo_rna) { prepareToolIndices << 'sortmerna' }
     if (!params.skip_alignment) { prepareToolIndices << params.aligner }
 
-    ch_multiqc_files = Channel.empty()
+    ch_multiqc_files = channel.empty()
 
     //
     // Create input channel from input file provided through params.input
     //
-    Channel
+    channel
         .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
         .map {
             meta, fastq_1, fastq_2 ->
@@ -331,8 +331,8 @@ workflow RIBOSEQ {
     }
 
     //
-    // Extended ORF discovery: second STAR pass against a hybrid transcriptome
-    // (issue #171). RiboCode requires a transcriptome-coordinate BAM keyed to
+    // Extended ORF discovery: second STAR pass against a hybrid transcriptome.
+    // RiboCode requires a transcriptome-coordinate BAM keyed to
     // whichever transcriptome FASTA was used at alignment time. To bring novel
     // intergenic transcripts into RiboCode, we rebuild the transcriptome FASTA
     // from the hybrid GTF and re-align Ribo-seq reads against it.
@@ -350,7 +350,7 @@ workflow RIBOSEQ {
     def novel_source_configured = !params.skip_stringtie || params.novel_gtf
     def extended_orf_active = params.extended_orf_analysis && novel_source_configured
 
-    ch_hybrid_transcriptome_bam = Channel.empty()
+    ch_hybrid_transcriptome_bam = channel.empty()
 
     if (extended_orf_active) {
         EXTENDED_ORF_SECOND_PASS_ALIGN(
@@ -416,8 +416,8 @@ workflow RIBOSEQ {
     def orf_agreement_min_callers = enabled_orf_callers
         ? enabled_orf_callers.size().intdiv(2) + 1
         : 0
-    ch_enabled_orf_callers      = Channel.value(enabled_orf_callers)
-    ch_rank_aggregation_callers = Channel.value(rank_aggregation_callers)
+    ch_enabled_orf_callers      = channel.value(enabled_orf_callers)
+    ch_rank_aggregation_callers = channel.value(rank_aggregation_callers)
 
     //
     // Get P-sites and P-site diagnostics with riboWaltz
@@ -601,9 +601,9 @@ workflow RIBOSEQ {
     //
     if (!params.skip_multiqc) {
         summary_params                        = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
-        ch_workflow_summary                   = Channel.value(paramsSummaryMultiqc(summary_params))
+        ch_workflow_summary                   = channel.value(paramsSummaryMultiqc(summary_params))
         ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
-        ch_methods_description                = Channel.value(methodsDescriptionText(ch_multiqc_custom_methods_description))
+        ch_methods_description                = channel.value(methodsDescriptionText(ch_multiqc_custom_methods_description))
         ch_multiqc_files                      = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
         ch_multiqc_files                      = ch_multiqc_files.mix(ch_collated_versions)
         ch_multiqc_files                      = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml', sort: true))
@@ -645,7 +645,7 @@ workflow RIBOSEQ {
         )
     ch_multiqc_report = MULTIQC.out.report.map { _meta, report -> [report] }.toList()
     } else {
-        ch_multiqc_report = Channel.empty()
+        ch_multiqc_report = channel.empty()
     }
 
     emit:

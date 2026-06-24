@@ -2,7 +2,7 @@
 // Conditional ORF-caller dispatch for the riboseq pipeline.
 //
 // Runs each enabled caller against the appropriate annotation: when extended
-// ORF analysis is active (issues #165 + #171), the genome-BAM callers (Ribo-TISH
+// ORF analysis is active, the genome-BAM callers (Ribo-TISH
 // predict, Ribotricer) receive the hybrid GTF and RiboCode receives the hybrid
 // transcriptome BAM + hybrid GTF. Otherwise everything stays on the canonical
 // backbone. Ribo-TISH additionally takes the canonical backbone via -a for
@@ -38,8 +38,8 @@ workflow ORF_CALLER_DISPATCH {
 
     main:
 
-    ch_versions      = Channel.empty()
-    ch_multiqc_files = Channel.empty()
+    ch_versions      = channel.empty()
+    ch_multiqc_files = channel.empty()
 
     // Annotation channels. Canonical for ORF calling / P-site / DTE; the full
     // ch_gtf is reserved for genome-guided alignment elsewhere in the pipeline.
@@ -61,7 +61,7 @@ workflow ORF_CALLER_DISPATCH {
     //
     // Ribo-TISH
     //
-    ch_ribotish_predictions = Channel.empty()
+    ch_ribotish_predictions = channel.empty()
     if (!params.skip_ribotish) {
         RIBOTISH_QUALITY_RIBOSEQ(
             ch_bams_for_analysis,
@@ -112,7 +112,7 @@ workflow ORF_CALLER_DISPATCH {
     //
     // Ribotricer
     //
-    ch_ribotricer_predictions = Channel.empty()
+    ch_ribotricer_predictions = channel.empty()
     if (params.run_ribotricer) {
         log.warn "Ribotricer is enabled via --run_ribotricer. Its per-ORF scores are unstable across biological replicates, so its binary calls contribute to cross-caller agreement but its scores are excluded from the rank aggregation."
 
@@ -136,10 +136,10 @@ workflow ORF_CALLER_DISPATCH {
     //
     // RiboCode
     //
-    ch_ribocode_predictions = Channel.empty()
+    ch_ribocode_predictions = channel.empty()
     if (!params.skip_ribocode) {
         // RiboCode requires transcriptome-coordinate BAMs. When extended-ORF
-        // analysis is active (#171), swap in the hybrid transcriptome BAM
+        // analysis is active, swap in the hybrid transcriptome BAM
         // (second STAR pass against the hybrid GTF, Ribo-seq only) plus the
         // hybrid GTF as the annotation source so novel intergenic transcripts
         // are visible to RiboCode. Otherwise keep the reference-transcriptome wiring.
