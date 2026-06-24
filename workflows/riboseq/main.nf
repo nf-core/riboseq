@@ -339,8 +339,8 @@ workflow RIBOSEQ {
     }
 
     //
-    // Extended ORF discovery: second STAR pass against a hybrid transcriptome
-    // (issue #171). RiboCode requires a transcriptome-coordinate BAM keyed to
+    // Extended ORF discovery: second STAR pass against a hybrid transcriptome.
+    // RiboCode requires a transcriptome-coordinate BAM keyed to
     // whichever transcriptome FASTA was used at alignment time. To bring novel
     // intergenic transcripts into RiboCode, we rebuild the transcriptome FASTA
     // from the hybrid GTF and re-align Ribo-seq reads against it.

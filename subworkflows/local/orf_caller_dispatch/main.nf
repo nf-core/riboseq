@@ -2,7 +2,7 @@
 // Conditional ORF-caller dispatch for the riboseq pipeline.
 //
 // Runs each enabled caller against the appropriate annotation: when extended
-// ORF analysis is active (issues #165 + #171), genome-BAM callers (Ribo-TISH
+// ORF analysis is active, genome-BAM callers (Ribo-TISH
 // predict, Ribotricer, Rp-Bp, PRICE) receive the hybrid GTF and RiboCode
 // receives the hybrid transcriptome BAM + hybrid GTF. Otherwise everything
 // stays on the canonical backbone. Ribo-TISH additionally takes the canonical
@@ -196,7 +196,7 @@ workflow ORF_CALLER_DISPATCH {
     ch_ribocode_predictions = Channel.empty()
     if (!params.skip_ribocode) {
         // RiboCode requires transcriptome-coordinate BAMs. When extended-ORF
-        // analysis is active (#171), swap in the hybrid transcriptome BAM
+        // analysis is active, swap in the hybrid transcriptome BAM
         // (second STAR pass against the hybrid GTF, Ribo-seq only) plus the
         // hybrid GTF as the annotation source so novel intergenic transcripts
         // are visible to RiboCode. Otherwise keep the reference-transcriptome wiring.
