@@ -181,6 +181,17 @@ workflow PIPELINE_COMPLETION {
 def validateInputParameters() {
     genomeExistsError()
     dotseqPrerequisitesError()
+
+    // --extended_orf_analysis is a no-op without a novel-transcript source
+    // (StringTie or a user-supplied --novel_gtf); warn rather than error so
+    // flags can be composed incrementally.
+    def novel_source_configured = !params.skip_stringtie || params.novel_gtf
+    if (params.extended_orf_analysis && !novel_source_configured) {
+        log.warn "--extended_orf_analysis is enabled but no novel-transcript source is configured (--skip_stringtie is true and --novel_gtf is unset). The flag has no effect; ORF callers will run against the canonical GTF as usual."
+    }
+    if (params.extended_orf_analysis && novel_source_configured && params.skip_plastid) {
+        log.warn "--extended_orf_analysis is enabled but --skip_plastid is true. ORF-level P-site quantification needs the plastid wiggle tracks and will be skipped; the ORF catalogue will still be built."
+    }
 }
 
 //
