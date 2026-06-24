@@ -160,7 +160,7 @@ workflow ORF_CALLER_DISPATCH {
     //
     ch_price_predictions = Channel.empty()
     if (params.run_price) {
-        log.warn "PRICE is enabled via --run_price. PRICE (Erhard et al. 2018) estimates a shared cohort-level codon-position model via EM and is opt-in because its runtime at genome-wide scale is comparable to Rp-Bp. Plan compute accordingly."
+        log.warn "PRICE is enabled via --run_price. PRICE (Erhard et al. 2018) estimates a shared cohort-level codon-position model via EM and is opt-in because its genome-wide runtime is substantial. Plan compute accordingly."
 
         // PRICE resolves overlapping ORFs and rescues multimappers with its own
         // EM (Erhard et al. 2018), so it has no need for the one-transcript-per-gene

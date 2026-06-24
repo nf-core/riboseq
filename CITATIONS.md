@@ -32,6 +32,10 @@
 
 > Ewels P, Magnusson M, Lundin S, Käller M. MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics. 2016 Oct 1;32(19):3047-8. doi: 10.1093/bioinformatics/btw354. Epub 2016 Jun 16. PubMed PMID: 27312411; PubMed Central PMCID: PMC5039924.
 
+- [PRICE / Gedi](https://pubmed.ncbi.nlm.nih.gov/29529017/)
+
+  > Erhard F, Halenius A, Zimmermann C, L'Hernault A, Kowalewski DJ, Weekes MP, Stevanovic S, Zimmer R, Dölken L. Improved Ribo-seq enables identification of cryptic translation events. Nat Methods. 2018 Apr;15(4):363-366. doi: 10.1038/nmeth.4631. PMID: 29529017.
+
 - [Ribo-TISH](https://pubmed.ncbi.nlm.nih.gov/29170441/)
 
   > Zhang P, He D, Xu Y, Hou J, Pan BF, Wang Y, Liu T, Davis CM, Ehli EA, Tan L, Zhou F, Hu J, Yu Y, Chen X, Nguyen TM, Rosen JM, Hawke DH, Ji Z, Chen Y. Genome-wide identification and differential analysis of translational initiation. Nat Commun. 2017 Nov 23;8(1):1749. doi: 10.1038/s41467-017-01981-8. PMID: 29170441; PMCID: PMC5701008.
