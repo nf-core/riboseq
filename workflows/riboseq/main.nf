@@ -12,6 +12,7 @@ include { FASTQ_EQUALISE_READ_LENGTHS                                           
 include { BAM_DEDUP_UMI                   } from '../../subworkflows/nf-core/bam_dedup_umi'
 include { FASTQ_ALIGN_STAR                } from '../../subworkflows/nf-core/fastq_align_star'
 include { NOVEL_TRANSCRIPT_DISCOVERY      } from '../../subworkflows/local/novel_transcript_discovery'
+include { EXTENDED_ORF_SECOND_PASS_ALIGN  } from '../../subworkflows/local/extended_orf_second_pass_align'
 include { ORF_CALLER_DISPATCH             } from '../../subworkflows/local/orf_caller_dispatch'
 include { COVERAGE_TRACKS                 } from '../../subworkflows/local/coverage_tracks'
 
@@ -330,6 +331,40 @@ workflow RIBOSEQ {
     }
 
     //
+    // Extended ORF discovery: second STAR pass against a hybrid transcriptome
+    // (issue #171). RiboCode requires a transcriptome-coordinate BAM keyed to
+    // whichever transcriptome FASTA was used at alignment time. To bring novel
+    // intergenic transcripts into RiboCode, we rebuild the transcriptome FASTA
+    // from the hybrid GTF and re-align Ribo-seq reads against it.
+    //
+    // Compute cost: roughly doubles STAR alignment work for Ribo-seq samples.
+    // The hybrid transcriptome FASTA and hybrid STAR index are each built once
+    // per pipeline run (value channels). The second STAR pass runs only on
+    // Ribo-seq samples — RNA-seq and TI-seq are not consumed by RiboCode.
+    // riboWaltz stays on the primary reference-transcriptome BAM by design:
+    // it's a QC/calibration tool whose frame plots and metaheatmaps are driven
+    // by annotated CDS-bearing transcripts. Feeding it CDS-absent novel
+    // transcripts would degrade diagnostic plots without any ORF-discovery gain.
+    // See docs/usage.md (Extended ORF discovery) for the full rationale.
+    //
+    def novel_source_configured = !params.skip_stringtie || params.novel_gtf
+    def extended_orf_active = params.extended_orf_analysis && novel_source_configured
+
+    ch_hybrid_transcriptome_bam = Channel.empty()
+
+    if (extended_orf_active) {
+        EXTENDED_ORF_SECOND_PASS_ALIGN(
+            ch_hybrid_gtf,
+            ch_fasta,
+            ch_reads_for_alignment,
+            params.star_ignore_sjdbgtf
+        )
+
+        ch_hybrid_transcriptome_bam = EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcriptome_bam
+        ch_multiqc_files            = ch_multiqc_files.mix(EXTENDED_ORF_SECOND_PASS_ALIGN.out.multiqc_files)
+    }
+
+    //
     // SUBWORKFLOW: Generate strand-aware genome coverage tracks (bigWig).
     //
 
@@ -342,18 +377,6 @@ workflow RIBOSEQ {
     }
 
     //
-    // Extended ORF discovery: when --extended_orf_analysis is on and a
-    // novel-transcript source is configured, route the genome-BAM ORF callers
-    // (Ribo-TISH predict, Ribotricer prepare-orfs) to the hybrid GTF so that
-    // novel intergenic ORFs are within scope. RiboCode, riboWaltz, plastid and
-    // Salmon-based quantification continue on the canonical backbone
-    // (transcriptome-BAM consumers need an annotation matching the BAM they
-    // were built against).
-    //
-    def novel_source_configured = !params.skip_stringtie || params.novel_gtf
-    def extended_orf_active = params.extended_orf_analysis && novel_source_configured
-
-    //
     // SUBWORKFLOW: Conditional ORF-caller dispatch (Ribo-TISH, Ribotricer,
     // RiboCode). Routes the genome-BAM callers to the hybrid annotation when
     // extended-ORF analysis is active, canonical otherwise.
@@ -364,6 +387,7 @@ workflow RIBOSEQ {
     ORF_CALLER_DISPATCH(
         ch_bams_for_analysis,
         ch_transcriptome_bam,
+        ch_hybrid_transcriptome_bam,
         ch_fasta,
         ch_canonical_gtf,
         ch_hybrid_gtf,

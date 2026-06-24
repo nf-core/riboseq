@@ -1,5 +1,5 @@
 //
-// Extended-ORF second STAR pass against the hybrid transcriptome.
+// Extended-ORF second STAR pass against the hybrid transcriptome (issue #171).
 //
 // RiboCode requires a transcriptome-coordinate BAM keyed to whichever
 // transcriptome FASTA was used at alignment time. To bring novel intergenic
