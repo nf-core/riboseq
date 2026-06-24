@@ -190,9 +190,9 @@ workflow ORF_CALLER_DISPATCH {
             .filter { _meta, _bam, config -> config != null }
 
         RIBOCODE_RIBOCODE(
-            ch_ribocode_inputs.map { meta, bam, _config  -> [ meta, bam ] },
+            ch_ribocode_inputs.map { meta, bam, _config -> [ meta, bam ] },
             RIBOCODE_PREPARE.out.annotation,
-            ch_ribocode_inputs.map { meta, _bam, config  -> [ meta, config ] }
+            ch_ribocode_inputs.map { meta, _bam, config -> [ meta, config ] }
         )
         ch_ribocode_predictions = RIBOCODE_RIBOCODE.out.orf_txt
     }

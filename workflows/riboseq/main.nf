@@ -10,6 +10,7 @@
 include { FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS                                                 } from '../../subworkflows/nf-core/fastq_qc_trim_filter_setstrandedness/main'
 include { FASTQ_EQUALISE_READ_LENGTHS                                                          } from '../../subworkflows/local/fastq_equalise_read_lengths'
 include { BAM_DEDUP_UMI                   } from '../../subworkflows/nf-core/bam_dedup_umi'
+include { BAM_DEDUP_UMI as BAM_DEDUP_UMI_HYBRID } from '../../subworkflows/nf-core/bam_dedup_umi'
 include { FASTQ_ALIGN_STAR                } from '../../subworkflows/nf-core/fastq_align_star'
 include { NOVEL_TRANSCRIPT_DISCOVERY      } from '../../subworkflows/local/novel_transcript_discovery'
 include { EXTENDED_ORF_SECOND_PASS_ALIGN  } from '../../subworkflows/local/extended_orf_second_pass_align'
@@ -362,6 +363,25 @@ workflow RIBOSEQ {
 
         ch_hybrid_transcriptome_bam = EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcriptome_bam
         ch_multiqc_files            = ch_multiqc_files.mix(EXTENDED_ORF_SECOND_PASS_ALIGN.out.multiqc_files)
+
+        // Deduplicate the hybrid transcriptome BAM with the same UMI subworkflow
+        // the primary path uses, so RiboCode sees unique molecules rather than
+        // PCR duplicates on both annotations. Only the transcriptome BAM is
+        // consumed downstream; the genome dedup is run to keep accounting
+        // identical to the primary path.
+        if (params.with_umi) {
+            BAM_DEDUP_UMI_HYBRID(
+                EXTENDED_ORF_SECOND_PASS_ALIGN.out.genome_bam.join(EXTENDED_ORF_SECOND_PASS_ALIGN.out.genome_bai, by: [0]),
+                ch_fasta.map { [ [:], it ] },
+                params.umi_dedup_tool,
+                params.umitools_dedup_stats,
+                params.bam_csi_index,
+                EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcriptome_bam,
+                EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcript_fasta.map { [ [:], it ] },
+                params.umitools_dedup_primary_only
+            )
+            ch_hybrid_transcriptome_bam = BAM_DEDUP_UMI_HYBRID.out.transcriptome_bam
+        }
     }
 
     //
