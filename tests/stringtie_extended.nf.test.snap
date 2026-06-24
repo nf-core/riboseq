@@ -47,6 +47,9 @@
                 "GFFREAD_CANONICAL": {
                     "gffread": "0.12.7"
                 },
+                "GFFREAD_HYBRID_TRANSCRIPTOME": {
+                    "gffread": "0.12.7"
+                },
                 "GTF_TO_INFRAME_PSITES": {
                     "gawk": "5.3.1"
                 },
@@ -132,6 +135,11 @@
                     "star": "2.7.11b"
                 },
                 "STAR_GENOMEGENERATE": {
+                    "gawk": "5.1.0",
+                    "samtools": 1.21,
+                    "star": "2.7.11b"
+                },
+                "STAR_GENOMEGENERATE_HYBRID": {
                     "gawk": "5.1.0",
                     "samtools": 1.21,
                     "star": "2.7.11b"
@@ -377,6 +385,7 @@
                 "genome",
                 "genome/index",
                 "genome/sortmerna",
+                "hybrid_star",
                 "multiqc",
                 "multiqc/star",
                 "multiqc/star/multiqc_report.html",
@@ -1678,6 +1687,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2026-06-23T20:14:31.290556323"
+        "timestamp": "2026-06-24T11:22:46.851285351"
     }
 }

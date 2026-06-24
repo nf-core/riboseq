@@ -2,12 +2,11 @@
 // Conditional ORF-caller dispatch for the riboseq pipeline.
 //
 // Runs each enabled caller against the appropriate annotation: when extended
-// ORF analysis is active (issue #165), the genome-BAM callers (Ribo-TISH
-// predict, Ribotricer) receive the hybrid GTF so that novel intergenic ORFs
-// are within scope. Otherwise everything stays on the canonical backbone.
-// Ribo-TISH additionally takes the canonical backbone via -a for background +
-// classification. RiboCode is a transcriptome-coordinate caller and stays on
-// the canonical wiring here.
+// ORF analysis is active, the genome-BAM callers (Ribo-TISH
+// predict, Ribotricer) receive the hybrid GTF and RiboCode receives the hybrid
+// transcriptome BAM + hybrid GTF. Otherwise everything stays on the canonical
+// backbone. Ribo-TISH additionally takes the canonical backbone via -a for
+// background + classification.
 //
 // Per-caller gating (params.skip_ribotish / params.run_ribotricer) lives here.
 //
@@ -30,16 +29,17 @@ workflow ORF_CALLER_DISPATCH {
     take:
     ch_bams_for_analysis     // channel: [ val(meta), path(bam), path(bai) ] - riboseq genome BAMs
     ch_transcriptome_bam     // channel: [ val(meta), path(bam) ] - all sample types, canonical transcriptome
+    ch_hybrid_transcriptome_bam // channel: [ val(meta), path(bam) ] - riboseq only, hybrid transcriptome (or empty)
     ch_fasta                 // channel: path(genome.fasta)
     ch_canonical_gtf         // channel: path(canonical.gtf)
     ch_hybrid_gtf            // channel: path(hybrid.gtf)        - equals canonical when no novel source
-    ch_gtf                   // channel: path(genome.gtf)        - full multi-isoform, used by RiboCode
+    ch_gtf                   // channel: path(genome.gtf)        - full multi-isoform, used by RiboCode when not extended
     extended_orf_active      // val: bool
 
     main:
 
-    ch_versions      = Channel.empty()
-    ch_multiqc_files = Channel.empty()
+    ch_versions      = channel.empty()
+    ch_multiqc_files = channel.empty()
 
     // Annotation channels. Canonical for ORF calling / P-site / DTE; the full
     // ch_gtf is reserved for genome-guided alignment elsewhere in the pipeline.
@@ -61,7 +61,7 @@ workflow ORF_CALLER_DISPATCH {
     //
     // Ribo-TISH
     //
-    ch_ribotish_predictions = Channel.empty()
+    ch_ribotish_predictions = channel.empty()
     if (!params.skip_ribotish) {
         RIBOTISH_QUALITY_RIBOSEQ(
             ch_bams_for_analysis,
@@ -112,7 +112,7 @@ workflow ORF_CALLER_DISPATCH {
     //
     // Ribotricer
     //
-    ch_ribotricer_predictions = Channel.empty()
+    ch_ribotricer_predictions = channel.empty()
     if (params.run_ribotricer) {
         log.warn "Ribotricer is enabled via --run_ribotricer. Its per-ORF scores are unstable across biological replicates, so its binary calls contribute to cross-caller agreement but its scores are excluded from the rank aggregation."
 
@@ -136,21 +136,32 @@ workflow ORF_CALLER_DISPATCH {
     //
     // RiboCode
     //
-    ch_ribocode_predictions = Channel.empty()
+    ch_ribocode_predictions = channel.empty()
     if (!params.skip_ribocode) {
-        // RiboCode requires transcriptome-coordinate BAMs keyed to the
-        // reference transcriptome FASTA used at alignment time, so it stays on
-        // the reference-transcriptome wiring regardless of --extended_orf_analysis.
-        ch_transcriptome_bams_for_ribocode = ch_transcriptome_bam
+        // RiboCode requires transcriptome-coordinate BAMs. When extended-ORF
+        // analysis is active, swap in the hybrid transcriptome BAM
+        // (second STAR pass against the hybrid GTF, Ribo-seq only) plus the
+        // hybrid GTF as the annotation source so novel intergenic transcripts
+        // are visible to RiboCode. Otherwise keep the reference-transcriptome wiring.
+        ch_ribocode_transcriptome_bam_source = extended_orf_active ?
+            ch_hybrid_transcriptome_bam :
+            ch_transcriptome_bam
+
+        ch_transcriptome_bams_for_ribocode = ch_ribocode_transcriptome_bam_source
             .branch { meta, bam ->
                 riboseq: meta.sample_type == 'riboseq'
                     return [ meta, bam ]
             }
             .riboseq
 
+        def ch_ribocode_gtf_source = extended_orf_active ?
+            ch_hybrid_gtf :
+            ch_gtf
+
         // Step 1: Update GTF annotation
+        def ribocode_gtf_meta_id = extended_orf_active ? 'hybrid_reference' : 'reference'
         RIBOCODE_GTFUPDATE(
-            ch_gtf.map { [ [id: 'reference'], it ] }.first()
+            ch_ribocode_gtf_source.map { [ [id: ribocode_gtf_meta_id], it ] }.first()
         )
 
         // Step 2: Prepare annotation files
@@ -166,8 +177,17 @@ workflow ORF_CALLER_DISPATCH {
         )
 
         // Step 4: Run RiboCode ORF detection
-        ch_ribocode_inputs = ch_transcriptome_bams_for_ribocode
-            .join(RIBOCODE_METAPLOTS.out.config)
+        ch_ribocode_with_config = ch_transcriptome_bams_for_ribocode
+            .join(RIBOCODE_METAPLOTS.out.config, remainder: true)
+
+        ch_ribocode_with_config
+            .filter { _meta, _bam, config -> config == null }
+            .subscribe { meta, _bam, _config ->
+                log.warn "Skipping ${meta.id} for RiboCode: RIBOCODE_METAPLOTS produced no config (likely sparse periodicity data)."
+            }
+
+        ch_ribocode_inputs = ch_ribocode_with_config
+            .filter { _meta, _bam, config -> config != null }
 
         RIBOCODE_RIBOCODE(
             ch_ribocode_inputs.map { meta, bam, _config -> [ meta, bam ] },

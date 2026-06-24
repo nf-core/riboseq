@@ -10,8 +10,10 @@
 include { FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS                                                 } from '../../subworkflows/nf-core/fastq_qc_trim_filter_setstrandedness/main'
 include { FASTQ_EQUALISE_READ_LENGTHS                                                          } from '../../subworkflows/local/fastq_equalise_read_lengths'
 include { BAM_DEDUP_UMI                   } from '../../subworkflows/nf-core/bam_dedup_umi'
+include { BAM_DEDUP_UMI as BAM_DEDUP_UMI_HYBRID } from '../../subworkflows/nf-core/bam_dedup_umi'
 include { FASTQ_ALIGN_STAR                } from '../../subworkflows/nf-core/fastq_align_star'
 include { NOVEL_TRANSCRIPT_DISCOVERY      } from '../../subworkflows/local/novel_transcript_discovery'
+include { EXTENDED_ORF_SECOND_PASS_ALIGN  } from '../../subworkflows/local/extended_orf_second_pass_align'
 include { ORF_CALLER_DISPATCH             } from '../../subworkflows/local/orf_caller_dispatch'
 include { COVERAGE_TRACKS                 } from '../../subworkflows/local/coverage_tracks'
 
@@ -110,7 +112,7 @@ workflow RIBOSEQ {
         ch_ribo_db = file(params.ribo_database_manifest)
         if (ch_ribo_db.isEmpty()) {exit 1, "File provided with --ribo_database_manifest is empty: ${ch_ribo_db.getName()}!"}
     } else {
-        ch_ribo_db = Channel.empty()
+        ch_ribo_db = channel.empty()
     }
 
     // Check if file with list of fastas is provided when running BBSplit
@@ -125,12 +127,12 @@ workflow RIBOSEQ {
     if (params.remove_ribo_rna) { prepareToolIndices << 'sortmerna' }
     if (!params.skip_alignment) { prepareToolIndices << params.aligner }
 
-    ch_multiqc_files = Channel.empty()
+    ch_multiqc_files = channel.empty()
 
     //
     // Create input channel from input file provided through params.input
     //
-    Channel
+    channel
         .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
         .map {
             meta, fastq_1, fastq_2 ->
@@ -330,6 +332,59 @@ workflow RIBOSEQ {
     }
 
     //
+    // Extended ORF discovery: second STAR pass against a hybrid transcriptome.
+    // RiboCode requires a transcriptome-coordinate BAM keyed to
+    // whichever transcriptome FASTA was used at alignment time. To bring novel
+    // intergenic transcripts into RiboCode, we rebuild the transcriptome FASTA
+    // from the hybrid GTF and re-align Ribo-seq reads against it.
+    //
+    // Compute cost: roughly doubles STAR alignment work for Ribo-seq samples.
+    // The hybrid transcriptome FASTA and hybrid STAR index are each built once
+    // per pipeline run (value channels). The second STAR pass runs only on
+    // Ribo-seq samples — RNA-seq and TI-seq are not consumed by RiboCode.
+    // riboWaltz stays on the primary reference-transcriptome BAM by design:
+    // it's a QC/calibration tool whose frame plots and metaheatmaps are driven
+    // by annotated CDS-bearing transcripts. Feeding it CDS-absent novel
+    // transcripts would degrade diagnostic plots without any ORF-discovery gain.
+    // See docs/usage.md (Extended ORF discovery) for the full rationale.
+    //
+    def novel_source_configured = !params.skip_stringtie || params.novel_gtf
+    def extended_orf_active = params.extended_orf_analysis && novel_source_configured
+
+    ch_hybrid_transcriptome_bam = channel.empty()
+
+    if (extended_orf_active) {
+        EXTENDED_ORF_SECOND_PASS_ALIGN(
+            ch_hybrid_gtf,
+            ch_fasta,
+            ch_reads_for_alignment,
+            params.star_ignore_sjdbgtf
+        )
+
+        ch_hybrid_transcriptome_bam = EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcriptome_bam
+        ch_multiqc_files            = ch_multiqc_files.mix(EXTENDED_ORF_SECOND_PASS_ALIGN.out.multiqc_files)
+
+        // Deduplicate the hybrid transcriptome BAM with the same UMI subworkflow
+        // the primary path uses, so RiboCode sees unique molecules rather than
+        // PCR duplicates on both annotations. Only the transcriptome BAM is
+        // consumed downstream; the genome dedup is run to keep accounting
+        // identical to the primary path.
+        if (params.with_umi) {
+            BAM_DEDUP_UMI_HYBRID(
+                EXTENDED_ORF_SECOND_PASS_ALIGN.out.genome_bam.join(EXTENDED_ORF_SECOND_PASS_ALIGN.out.genome_bai, by: [0]),
+                ch_fasta.map { [ [:], it ] },
+                params.umi_dedup_tool,
+                params.umitools_dedup_stats,
+                params.bam_csi_index,
+                EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcriptome_bam,
+                EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcript_fasta.map { [ [:], it ] },
+                params.umitools_dedup_primary_only
+            )
+            ch_hybrid_transcriptome_bam = BAM_DEDUP_UMI_HYBRID.out.transcriptome_bam
+        }
+    }
+
+    //
     // SUBWORKFLOW: Generate strand-aware genome coverage tracks (bigWig).
     //
 
@@ -342,18 +397,6 @@ workflow RIBOSEQ {
     }
 
     //
-    // Extended ORF discovery: when --extended_orf_analysis is on and a
-    // novel-transcript source is configured, route the genome-BAM ORF callers
-    // (Ribo-TISH predict, Ribotricer prepare-orfs) to the hybrid GTF so that
-    // novel intergenic ORFs are within scope. RiboCode, riboWaltz, plastid and
-    // Salmon-based quantification continue on the canonical backbone
-    // (transcriptome-BAM consumers need an annotation matching the BAM they
-    // were built against).
-    //
-    def novel_source_configured = !params.skip_stringtie || params.novel_gtf
-    def extended_orf_active = params.extended_orf_analysis && novel_source_configured
-
-    //
     // SUBWORKFLOW: Conditional ORF-caller dispatch (Ribo-TISH, Ribotricer,
     // RiboCode). Routes the genome-BAM callers to the hybrid annotation when
     // extended-ORF analysis is active, canonical otherwise.
@@ -364,6 +407,7 @@ workflow RIBOSEQ {
     ORF_CALLER_DISPATCH(
         ch_bams_for_analysis,
         ch_transcriptome_bam,
+        ch_hybrid_transcriptome_bam,
         ch_fasta,
         ch_canonical_gtf,
         ch_hybrid_gtf,
@@ -392,8 +436,8 @@ workflow RIBOSEQ {
     def orf_agreement_min_callers = enabled_orf_callers
         ? enabled_orf_callers.size().intdiv(2) + 1
         : 0
-    ch_enabled_orf_callers      = Channel.value(enabled_orf_callers)
-    ch_rank_aggregation_callers = Channel.value(rank_aggregation_callers)
+    ch_enabled_orf_callers      = channel.value(enabled_orf_callers)
+    ch_rank_aggregation_callers = channel.value(rank_aggregation_callers)
 
     //
     // Get P-sites and P-site diagnostics with riboWaltz
@@ -577,9 +621,9 @@ workflow RIBOSEQ {
     //
     if (!params.skip_multiqc) {
         summary_params                        = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
-        ch_workflow_summary                   = Channel.value(paramsSummaryMultiqc(summary_params))
+        ch_workflow_summary                   = channel.value(paramsSummaryMultiqc(summary_params))
         ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
-        ch_methods_description                = Channel.value(methodsDescriptionText(ch_multiqc_custom_methods_description))
+        ch_methods_description                = channel.value(methodsDescriptionText(ch_multiqc_custom_methods_description))
         ch_multiqc_files                      = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
         ch_multiqc_files                      = ch_multiqc_files.mix(ch_collated_versions)
         ch_multiqc_files                      = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml', sort: true))
@@ -621,7 +665,7 @@ workflow RIBOSEQ {
         )
     ch_multiqc_report = MULTIQC.out.report.map { _meta, report -> [report] }.toList()
     } else {
-        ch_multiqc_report = Channel.empty()
+        ch_multiqc_report = channel.empty()
     }
 
     emit:
