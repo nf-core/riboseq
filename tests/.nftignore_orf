@@ -1,8 +1,17 @@
+# Extended-ORF analysis variant: extends .nftignore with MultiQC
+# aggregates that include non-deterministic hybrid-STAR sample data.
 .DS_Store
 alignment/star/**/*.bam.stats
 alignment/star/**/*.{bam,bam.bai}
 alignment/star/deduplicated/umicollapse/*_UMICollapse.log
 alignment/star/log/*.Log.{final.out,out,progress.out}
+hybrid_star/log/*.Log.{final.out,out,progress.out}
+hybrid_star/log/SRX*.hybrid.SJ.out.tab
+hybrid_star/original/**
+hybrid_star/sorted/**
+stringtie/SRX*.denovo.transcripts.gtf
+stringtie/gffcompare/**
+dte/orf_level/orf_combined_counts.tsv
 multiqc/multiqc_plots/{svg,pdf,png}/*.{svg,pdf,png}
 multiqc/multiqc_report.html
 multiqc/star/multiqc.log
@@ -15,13 +24,26 @@ multiqc/star/multiqc_report_data/multiqc.log
 multiqc/star/multiqc_report_data/multiqc.parquet
 multiqc/star/multiqc_report_data/multiqc_data.json
 multiqc/star/multiqc_report_data/multiqc_general_stats.txt
+multiqc/star/multiqc_report_data/multiqc_samtools_flagstat.txt
+multiqc/star/multiqc_report_data/multiqc_samtools_idxstats.txt
+multiqc/star/multiqc_report_data/multiqc_samtools_stats.txt
 multiqc/star/multiqc_report_data/multiqc_software_versions.txt
 multiqc/star/multiqc_report_data/multiqc_salmon.txt
 multiqc/star/multiqc_report_data/multiqc_salmon_salmon-1.txt
 multiqc/star/multiqc_report_data/multiqc_sortmerna.txt
 multiqc/star/multiqc_report_data/multiqc_sources.txt
+multiqc/star/multiqc_report_data/multiqc_star.txt
 multiqc/star/multiqc_report_data/salmon_plot.txt
 multiqc/star/multiqc_report_data/sortmerna-detailed-plot.txt
+multiqc/star/multiqc_report_data/samtools-flagstat-pct-table.txt
+multiqc/star/multiqc_report_data/samtools-flagstat-table.txt
+multiqc/star/multiqc_report_data/samtools-idxstats-mapped-reads-plot_Normalised_Counts.txt
+multiqc/star/multiqc_report_data/samtools-idxstats-mapped-reads-plot_Observed_over_Expected_Counts.txt
+multiqc/star/multiqc_report_data/samtools-idxstats-mapped-reads-plot_Raw_Counts.txt
+multiqc/star/multiqc_report_data/samtools-stats-dp.txt
+multiqc/star/multiqc_report_data/samtools_alignment_plot.txt
+multiqc/star/multiqc_report_data/star_alignment_plot.txt
+multiqc/star/multiqc_report_data/star_summary_table.txt
 multiqc/star/multiqc_report_plots/{svg,pdf,png}/*.{svg,pdf,png}
 pipeline_info/*.{html,json,txt,yml}
 preprocessing/fastqc/*_fastqc.{html,zip}
@@ -31,6 +53,7 @@ preprocessing/trimgalore/*.fastq.gz_trimming_report.txt
 preprocessing/trimgalore/fastqc/*_fastqc.{html,zip}
 preprocessing/umitools/*.umi_extract.log
 quantification/salmon/*/aux_info/ambig_info.tsv
+quantification/salmon/*/aux_info/expected_bias.gz
 quantification/salmon/*/aux_info/fld.gz
 quantification/salmon/*/aux_info/meta_info.json
 quantification/salmon/*/libParams/flenDist.txt
@@ -51,6 +74,7 @@ quantification/salmon/salmon.merged.transcript.SummarizedExperiment.rds
 quantification/salmon/salmon.merged.transcript_counts.tsv
 quantification/salmon/salmon.merged.transcript_lengths.tsv
 quantification/salmon/salmon.merged.transcript_tpm.tsv
+quantification/salmon_te_pseudo/*/aux_info/expected_bias.gz
 quantification/salmon_te_pseudo/*/aux_info/fld.gz
 quantification/salmon_te_pseudo/*/aux_info/meta_info.json
 quantification/salmon_te_pseudo/*/libParams/flenDist.txt
@@ -64,7 +88,9 @@ quantification/inframe_psite/*
 riboseq_qc/ribotish/*_qual.pdf
 psites/ribowaltz/**/*.pdf
 psites/plastid/*/*
-translational_efficiency/anota2seq/*.{buffering,total_mRNA,translated_mRNA,translation}.anota2seq.results.tsv
-translational_efficiency/*/*.{jpeg,jpg,png,pdf,rds,tsv}
+translational_efficiency/anota2seq/**
+translational_efficiency/deltate/**
+dte/orf_level/anota2seq/**
+dte/orf_level/dotseq/**
 translational_efficiency/deltate/*.{translation,translated_mRNA,total_mRNA}.deltate.results.tsv
 **/*R_sessionInfo.log
