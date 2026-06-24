@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#161](https://github.com/nf-core/riboseq/issues/161) - Add a one-transcript-per-gene canonical annotation backbone via `--canonical_gtf`, used by the genome-coordinate ORF callers, plastid P-site quantification and translational-efficiency analysis; falls back to AGAT longest-CDS isoform when not supplied ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#179](https://github.com/nf-core/riboseq/issues/179) - Wire an optional secondary reference annotation (`-a`) through to ribotish/predict ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#164](https://github.com/nf-core/riboseq/issues/164) - Novel transcript discovery: StringTie reference-guided assembly on RNA-seq BAMs, or user-supplied GTF via `--novel_gtf`. Output passes through gffcompare class-code filter (`--gffcompare_class_codes`, default `u` intergenic only), optional strand-aware rRNA/repeat blacklist (`--rrna_blacklist`), and is concatenated with the canonical backbone into `<outdir>/stringtie/hybrid_reference.gtf`. The hybrid GTF is exposed on the `hybrid_gtf` workflow channel (equals canonical when no novel source is configured). `--skip_stringtie false` requires RNA-seq BAMs in the samplesheet; Ribo-seq-only runs should use `--novel_gtf` instead ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#165](https://github.com/nf-core/riboseq/issues/165) - Add `--extended_orf_analysis` (default `false`) which routes the hybrid GTF into the genome-BAM ORF callers (Ribo-TISH `predict`, Ribotricer `prepare-orfs`) so novel intergenic ORFs are within scope. RiboCode and transcriptome-BAM consumers stay on the canonical backbone. When the flag is set without a novel-transcript source, the pipeline warns and falls back to canonical ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Fixed`
 
@@ -75,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 |                     | `--rrna_blacklist`                       |
 |                     | `--extra_stringtie_args`                 |
 |                     | `--extra_stringtie_merge_args`           |
+|                     | `--extended_orf_analysis`                |
 
 ### `Dependencies`
 

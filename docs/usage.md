@@ -326,13 +326,11 @@ MANE Select vs `Ensembl_canonical` for non-coding genes: MANE Select covers virt
 
 The pipeline will by default run the [Ribo-TISH](https://github.com/zhpn1024/ribotish) [quality](https://github.com/zhpn1024/ribotish?tab=readme-ov-file#quality) and [predict](https://github.com/zhpn1024/ribotish?tab=readme-ov-file#predict) commands for QC and ORF prediction, respectively. Additional arguments can be supplied to either command via the `--extra_ribotish_quality_args` and `--extra_ribotish_predict_args` parameters.
 
-Ribo-TISH `quality` is fed the canonical annotation (`--canonical_gtf`, or the AGAT-derived longest-isoform fallback) rather than the full multi-isoform GTF. `quality` estimates P-site offsets and read-length QC against CDS-bearing canonical transcripts; mixing in CDS-absent or near-duplicate isoforms degrades that calibration without adding diagnostic signal. The `predict` step receives the same canonical input by default; the wrapper also accepts an optional secondary annotation on `-a` for novel-transcript discovery modes.
-
 ### ORF calling and cross-caller agreement
 
 By default the pipeline calls ORFs with two tools, Ribo-TISH `predict` and RiboCode, and reports an ORF as agreed only when both callers support it. This intersection is precision-weighted: the agreed set is conservative and may omit ORFs that only one caller detects.
 
-Ribotricer is available as a third caller but is off by default. Enable it with `--run_ribotricer true` for broader recall, after which an ORF is agreed on a majority vote (2 of 3). It is opt-in because benchmarking (FK/NGB, May 2026; 6 biological replicates) found its ORF-score column unstable across replicates (mean Spearman 0.288) even though its binary call set is reproducible (mean Jaccard 0.770). When enabled, its binary calls count toward agreement but its score is excluded from cross-caller rank aggregation, and the pipeline warns at runtime.
+Ribotricer is available as a third caller but is off by default. Enable it with `--run_ribotricer true` for broader recall, after which an ORF is agreed on a majority vote (2 of 3). It is opt-in because its ORF-score column is unstable across biological replicates even though its binary call set is reproducible. When enabled, its binary calls count toward agreement but its score is excluded from cross-caller rank aggregation, and the pipeline warns at runtime.
 
 ## P-site identification
 
@@ -496,7 +494,23 @@ Supply `--rrna_blacklist path/to/blacklist.bed` to drop novel transcripts overla
 - `--gffcompare_class_codes` - comma-separated gffcompare class codes to retain (default `u`).
 - `--rrna_blacklist` - optional BED of rRNA / repeat regions to exclude.
 
-The hybrid GTF is exposed as the `hybrid_gtf` workflow channel. With the default settings (no novel-transcript source configured) it equals the canonical backbone, so downstream wiring stays uniform. Follow-on work in the modernisation plan wires the hybrid GTF into the genome-BAM ORF callers (Ribo-TISH `predict`, Ribotricer) under an opt-in flag.
+The hybrid GTF is exposed as a workflow channel (`hybrid_gtf` emit) and is wired into the genome-BAM ORF callers (Ribo-TISH `predict`, Ribotricer) when `--extended_orf_analysis true` is set; see [Extended ORF discovery](#extended-orf-discovery) below.
+
+## Extended ORF discovery
+
+By default, all ORF callers run against the canonical backbone GTF so the pipeline produces well-characterised annotated-ORF calls. To discover novel ORFs in the novel intergenic transcripts produced by StringTie or supplied via `--novel_gtf`, set `--extended_orf_analysis true`. This routes the hybrid GTF (`<outdir>/stringtie/hybrid_reference.gtf`) into the genome-BAM ORF callers:
+
+- **Ribo-TISH `predict`**: hybrid GTF on `-g` (discovery target); canonical backbone on `-a` (background and ORF classification).
+- **Ribotricer `prepare-orfs`**: hybrid GTF directly (Ribotricer has no secondary-annotation concept; CDS-absent novel transcripts are auto-labelled `novel`).
+- **RiboCode**: stays on the reference transcriptome. RiboCode is a transcriptome-coordinate caller and needs a transcriptome BAM keyed to the annotation used at alignment time; bringing it online for novel transcripts needs a second STAR pass against a hybrid transcriptome (follow-on work, issue #171).
+
+A novel-transcript source must be configured — `--skip_stringtie false` or `--novel_gtf <path>`. If `--extended_orf_analysis true` is set without one of those, the pipeline warns and falls back to the canonical GTF (the flag is a no-op rather than an error so users can compose flags incrementally).
+
+**riboWaltz stays on the primary reference-transcriptome BAM by design.** riboWaltz is a QC/calibration tool and its CDS-dependent plots (frame distribution, start/stop metaprofiles) are driven by annotated CDS-bearing transcripts. Routing CDS-absent novel transcripts through riboWaltz would dilute its diagnostic plots without contributing to ORF discovery (riboWaltz does not call ORFs). Salmon likewise stays on the primary reference transcriptome, and plastid P-site quantification on the canonical backbone, regardless of `--extended_orf_analysis`.
+
+**Ribo-TISH `quality` stays on the canonical backbone.** The `quality` step estimates P-site offsets and read-length QC against CDS-bearing canonical transcripts. Feeding it the hybrid GTF would mix in CDS-absent novel transcripts that the P-site model cannot interpret. The Ribo-TISH `predict` step (which actually calls ORFs) is the one that consumes the hybrid GTF on `-g` plus the canonical backbone on `-a`. Empirical confirmation that canonical-only is the correct choice for `quality` is pending full-scale validation; the default reflects the spec recommendation in issue #162.
+
+The default `--extended_orf_analysis false` keeps the pre-#165 behaviour unchanged: the primary STAR pass is the only alignment and every ORF caller runs against the canonical backbone.
 
 ## Running the pipeline
 

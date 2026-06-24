@@ -387,6 +387,8 @@ The hybrid GTF is published as a side product and exposed on the `hybrid_gtf` wo
   - `allsamples_transprofile.py` RPF P-site profile for each transcript from Ribo-TISH ran over all samples at once
   </details>
 
+When `--extended_orf_analysis true` is set (and a novel-transcript source is configured), Ribo-TISH `predict` runs against the hybrid GTF with the canonical backbone supplied as the secondary annotation (`-a`). The output tables then include rows for novel intergenic ORFs alongside annotated ORFs; novel calls are reported with `TisType=Novel` and classified against the canonical backbone. See [Extended ORF discovery in usage.md](usage.md#extended-orf-discovery).
+
 ### Ribotricer detect-orfs
 
 <details markdown="1">
@@ -396,6 +398,8 @@ The hybrid GTF is published as a side product and exposed on the `hybrid_gtf` wo
   - `*_translating_ORFs.tsv` TSV with ORFs assessed as translating in the assocciated BAM file
   - `*_psite_offsets.txt`: If the P-site offsets are not provided, txt file containing the derived relative offsets
   </details>
+
+When `--extended_orf_analysis true` is set (and a novel-transcript source is configured), Ribotricer `prepare-orfs` runs against the hybrid GTF. The translating-ORFs TSV then includes novel intergenic ORFs (Ribotricer auto-labels CDS-absent transcripts as `novel` ORF type). See [Extended ORF discovery in usage.md](usage.md#extended-orf-discovery).
 
 ### RiboCode
 
