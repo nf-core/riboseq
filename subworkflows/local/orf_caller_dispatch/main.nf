@@ -2,13 +2,14 @@
 // Conditional ORF-caller dispatch for the riboseq pipeline.
 //
 // Runs each enabled caller against the appropriate annotation: when extended
-// ORF analysis is active, the genome-BAM callers (Ribo-TISH
-// predict, Ribotricer) receive the hybrid GTF and RiboCode receives the hybrid
-// transcriptome BAM + hybrid GTF. Otherwise everything stays on the canonical
-// backbone. Ribo-TISH additionally takes the canonical backbone via -a for
-// background + classification.
+// ORF analysis is active, genome-BAM callers (Ribo-TISH predict, Ribotricer,
+// PRICE) receive the hybrid GTF and RiboCode receives the hybrid transcriptome
+// BAM + hybrid GTF. Otherwise everything stays on the canonical backbone.
+// Ribo-TISH additionally takes the canonical backbone via -a for background +
+// classification.
 //
-// Per-caller gating (params.skip_ribotish / params.run_ribotricer) lives here.
+// Per-caller gating (params.skip_ribotish / params.run_ribotricer /
+// params.run_price) lives here.
 //
 // Emits one prediction channel per caller plus collected versions and
 // multiqc files. Predictions are empty channels for callers that did not run.
@@ -23,6 +24,8 @@ include { RIBOCODE_GTFUPDATE                              } from '../../../modul
 include { RIBOCODE_PREPARE                                } from '../../../modules/nf-core/ribocode/prepare'
 include { RIBOCODE_METAPLOTS                              } from '../../../modules/nf-core/ribocode/metaplots'
 include { RIBOCODE_RIBOCODE                               } from '../../../modules/nf-core/ribocode/ribocode'
+include { GEDI_INDEXGENOME                                } from '../../../modules/nf-core/gedi/indexgenome/main'
+include { GEDI_PRICE                                      } from '../../../modules/nf-core/gedi/price/main'
 
 workflow ORF_CALLER_DISPATCH {
 
@@ -134,6 +137,41 @@ workflow ORF_CALLER_DISPATCH {
     }
 
     //
+    // PRICE
+    //
+    ch_price_predictions = channel.empty()
+    if (params.run_price) {
+        log.warn "PRICE is enabled via --run_price. PRICE (Erhard et al. 2018) estimates a shared cohort-level codon-position model via EM and is opt-in because its genome-wide runtime is substantial. Plan compute accordingly."
+
+        // PRICE resolves overlapping ORFs and rescues multimappers with its own
+        // EM (Erhard et al. 2018), so it has no need for the one-transcript-per-gene
+        // backbone that exists to disambiguate P-site quantification. Restricting it
+        // to the canonical/hybrid annotation would only narrow ORF discovery and
+        // bias ORF-type classification to canonical CDS, so PRICE receives the full
+        // multi-isoform annotation it is normally run against.
+        def ch_price_fasta_gtf = ch_fasta
+            .combine(ch_gtf)
+            .map { fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }
+            .first()
+
+        GEDI_INDEXGENOME(
+            ch_price_fasta_gtf
+        )
+
+        // PRICE estimates the codon-position model from the riboseq cohort
+        // as a whole, so feed all riboseq BAMs into a single PRICE call.
+        ch_price_inputs = ch_bams_for_analysis
+            .map { _meta, bam, bai -> [ [id: 'allsamples'], bam, bai ] }
+            .groupTuple()
+
+        GEDI_PRICE(
+            ch_price_inputs,
+            GEDI_INDEXGENOME.out.index.first()
+        )
+        ch_price_predictions = GEDI_PRICE.out.orfs_tsv
+    }
+
+    //
     // RiboCode
     //
     ch_ribocode_predictions = channel.empty()
@@ -201,6 +239,7 @@ workflow ORF_CALLER_DISPATCH {
     ribotish_predictions   = ch_ribotish_predictions   // [ meta, predictions.txt ] or empty
     ribocode_predictions   = ch_ribocode_predictions   // [ meta, orf.txt          ] or empty
     ribotricer_predictions = ch_ribotricer_predictions // [ meta, orfs             ] or empty
+    price_predictions      = ch_price_predictions      // [ meta, orfs.tsv         ] or empty
     multiqc_files          = ch_multiqc_files
     versions               = ch_versions
 }
