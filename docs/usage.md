@@ -562,10 +562,12 @@ When `--extended_orf_analysis true` is set and at least one ORF caller is enable
 
 - annotated multi-exon CDS are collapsed by `transcript_id` to preserve intron-chain identity;
 - single-exon novel intergenic ORFs are clustered by 80% reciprocal overlap on the outer genomic span;
-- smORFs (≤ 100 aa) are clustered by 80% reciprocal overlap as a coordinate seed - the published `orf_catalogue.faa` is the input for any subsequent sequence-level dedup;
+- smORFs (≤ 100 aa) are clustered by 80% reciprocal overlap, then peptide-level deduplicated: the catalogue amino-acid FASTA is clustered with MMseqs2 (`--min-seq-id 0.9 -c 0.8`) and each multi-member smORF cluster is folded to one representative, following the GENCODE Ribo-seq ORF catalogue convention (Mudge et al. 2022). Pass `--skip_orf_collapse` to publish the coordinate-merged catalogue without this sequence-level collapse;
 - cross-caller consensus is recorded in `called_by_<caller>` binary columns plus `score_<caller>` columns for Ribo-TISH / RiboCode / Rp-Bp / PRICE (Ribotricer scores are excluded from rank aggregation per #163).
 
 The catalogue runs once per pipeline invocation (cohort-level, not per sample) and gates on `--extended_orf_analysis true` plus a non-empty enabled-caller set. The default-off path keeps the pre-#167 behaviour unchanged.
+
+Alongside the full catalogue, a consensus view is published under `<outdir>/orf_catalogue/consensus/` containing only ORFs supported by at least `--orf_min_callers` distinct callers and recurring in at least `--orf_min_samples` samples (both default 1, so the consensus view equals the full catalogue out of the box). Raise either threshold (e.g. `--orf_min_callers 2`) for a higher-confidence catalogue that tames downstream ORF-level multiple testing; the full unfiltered catalogue is always published regardless. The consensus filter is applied at merge time on cross-caller / cross-sample evidence, so it reflects the coordinate-merged catalogue prior to the peptide-level smORF collapse.
 
 See [ORF catalogue (cross-sample)](output.md#orf-catalogue-cross-sample) in the output docs for the full list of published files.
 

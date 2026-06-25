@@ -485,6 +485,8 @@ Produced only when `--run_price true` is set. PRICE is invoked once across the r
   - `*.orf_to_gene.tsv`: ORF-to-gene mapping. An ORF that maps to multiple host transcripts/genes gets multiple rows here; downstream gene-level aggregation collapses by `gene_id`.
   - `*.catalogue.aa.fasta`: amino-acid FASTA of every catalogue ORF, keyed by `orf_NNNNNNNN`. Produced by `bedtools getfasta` on the merged BED12 followed by `seqkit translate`.
   - `*.catalogue.mqc.tsv`: per-class ORF counts surfaced as a MultiQC custom-content table.
+- `orf_catalogue/consensus/`
+  - `*.consensus.bed12`, `*.consensus.tsv`, `*.consensus.orf_to_gene.tsv`: the catalogue filtered to ORFs supported by at least `--orf_min_callers` distinct callers and recurring in at least `--orf_min_samples` samples. Identical to the full catalogue at the defaults (1/1); raise either for a higher-confidence subset. The full catalogue above is always published regardless.
 
 </details>
 
@@ -492,7 +494,7 @@ Produced only when `--extended_orf_analysis true` is set and at least one ORF ca
 
 - **Annotated multi-exon CDS** are collapsed by `transcript_id` so that different intron chains aren't accidentally merged into a single entry.
 - **Single-exon novel intergenic ORFs** (class code `u`) are clustered by 80% reciprocal overlap on the outer genomic span.
-- **smORFs** (amino-acid length ≤ 100) are clustered by 80% reciprocal overlap; the `*.catalogue.aa.fasta` from `bedtools getfasta` + `seqkit translate` is the input for any subsequent sequence-level dedup.
+- **smORFs** (amino-acid length ≤ 100) are clustered by 80% reciprocal overlap and then peptide-level deduplicated with MMseqs2 (`--min-seq-id 0.9 -c 0.8`) on the `*.catalogue.aa.fasta` (from `bedtools getfasta` + `seqkit translate`), folding each multi-member cluster to one representative (GENCODE convention, Mudge et al. 2022). `--skip_orf_collapse` publishes the coordinate-merged catalogue without this step.
 - **Cross-caller consensus** is recorded by setting `called_by_<caller> = 1` for every caller that contributed a member of the cluster, plus a per-caller score column.
 
 The catalogue uses the hybrid GTF (canonical + filtered novel intergenic) as its coordinate-validation reference, matching the GTF that the underlying ORF callers consumed when `--extended_orf_analysis true`.

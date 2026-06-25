@@ -806,6 +806,28 @@
                     "type": "string",
                     "description": "Extra CLI arguments passed to `select-final-prediction-set`.",
                     "fa_icon": "fas fa-terminal"
+                },
+                "skip_orf_collapse": {
+                    "type": "boolean",
+                    "description": "Skip the peptide-level smORF deduplication of the cross-sample ORF catalogue.",
+                    "help_text": "By default the catalogue clusters its amino-acid sequences with MMseqs2 (`--min-seq-id 0.9 -c 0.8`) and folds each multi-member smORF (aa_length <= 100) cluster down to one representative, following the GENCODE Ribo-seq ORF catalogue convention (Mudge et al. 2022). Set true to publish the coordinate-merged catalogue without this sequence-level collapse, e.g. when you want to inspect every redundant copy. Has no effect unless `--extended_orf_analysis true`.",
+                    "fa_icon": "fas fa-layer-group"
+                },
+                "orf_min_callers": {
+                    "type": "integer",
+                    "default": 1,
+                    "minimum": 1,
+                    "description": "Minimum number of ORF callers that must agree for an ORF to enter the consensus catalogue view.",
+                    "help_text": "The full catalogue is an unfiltered cross-caller/cross-sample union and is always published. In addition, a consensus view (`orf_catalogue/consensus/`) is published containing only ORFs supported by at least this many distinct callers (and at least `--orf_min_samples` samples). Default 1 applies no caller filter, so the consensus view equals the full merged catalogue. Set 2 or higher for a higher-confidence catalogue that tames downstream ORF-level multiple testing.",
+                    "fa_icon": "fas fa-users"
+                },
+                "orf_min_samples": {
+                    "type": "integer",
+                    "default": 1,
+                    "minimum": 1,
+                    "description": "Minimum number of samples an ORF must recur in to enter the consensus catalogue view.",
+                    "help_text": "Companion to `--orf_min_callers`. The consensus view (`orf_catalogue/consensus/`) retains only ORFs seen in at least this many distinct samples. Default 1 applies no recurrence filter.",
+                    "fa_icon": "fas fa-vials"
                 }
             }
         },
