@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#165](https://github.com/nf-core/riboseq/issues/165) - Add `--extended_orf_analysis` (default `false`) which routes the hybrid GTF into the genome-BAM ORF callers (Ribo-TISH `predict`, Ribotricer `prepare-orfs`) so novel intergenic ORFs are within scope. RiboCode and transcriptome-BAM consumers stay on the canonical backbone. When the flag is set without a novel-transcript source, the pipeline warns and falls back to canonical ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#171](https://github.com/nf-core/riboseq/issues/171) - Under `--extended_orf_analysis true`, run a second STAR pass for Ribo-seq samples against the hybrid transcriptome so RiboCode can call ORFs on novel transcripts; RiboCode then consumes the hybrid transcriptome BAM and hybrid GTF. Outputs land under `<outdir>/hybrid_star/`; the default-off path is unchanged ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#170](https://github.com/nf-core/riboseq/issues/170) - Add PRICE (Erhard et al. 2018) as an opt-in ORF caller via `--run_price` (default `false`). Invoked one-shot across the riboseq cohort (`gedi -e IndexGenome` + `gedi -e Price`); calls flow into the cross-caller ORF catalogue. Container via `bioconda::gedi=1.0.6a` ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#169](https://github.com/nf-core/riboseq/issues/169) - Add Rp-Bp (Malone et al. 2017) as an opt-in ORF caller via `--run_rpbp`. Implemented via the upstream `fasta_gtf_bam_rpbp` subworkflow (per-tool processes for extract-metagene-profiles, estimate-metagene-profile-bayes-factors, select-periodic-offsets, extract-orf-profiles, estimate-orf-bayes-factors, select-final-prediction-set, plus a shared prepare-genome). Honours `--extended_orf_analysis` by feeding the hybrid GTF when active. Per-sample predicted-ORF BED + DNA + protein FASTA under `<outdir>/orf_predictions/rpbp/`. Expect ~20-24h per replicate at genome-wide scale; pipeline emits a runtime warning when enabled ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Fixed`
 
@@ -82,6 +83,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 |                     | `--run_price`                            |
 |                     | `--extra_price_indexgenome_args`         |
 |                     | `--extra_price_price_args`               |
+|                     | `--run_rpbp`                             |
+|                     | `--extra_rpbp_preparegenome_args`        |
+|                     | `--extra_rpbp_predictorfs_args`          |
 
 ### `Dependencies`
 

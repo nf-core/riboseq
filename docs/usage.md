@@ -334,6 +334,22 @@ By default the pipeline calls ORFs with two tools, Ribo-TISH `predict` and RiboC
 
 Ribotricer is available as a third caller but is off by default. Enable it with `--run_ribotricer true` for broader recall, after which an ORF is agreed on a majority vote (2 of 3). It is opt-in because its ORF-score column is unstable across biological replicates even though its binary call set is reproducible. When enabled, its binary calls count toward agreement but its score is excluded from cross-caller rank aggregation, and the pipeline warns at runtime.
 
+### Rp-Bp (opt-in, overnight)
+
+[Rp-Bp](https://github.com/dieterich-lab/rp-bp) (Malone et al., 2017) is a Bayesian-strict ORF caller that complements RiboCode's permissive canonical-CDS calls. It is the recommended second caller when statistical rigour matters more than turnaround time. Activate with `--run_rpbp true`.
+
+> :warning: **Runtime cost.** Rp-Bp's Bayesian MCMC fit dominates wall-clock and takes roughly **20-24 hours per replicate** at genome-wide scale. The pipeline emits a runtime warning when `--run_rpbp` is set. Plan compute time, queue limits and instance lifetimes accordingly.
+
+Rp-Bp's score column (Bayes factor) is stable and is retained in the cross-caller rank-aggregation set alongside RiboCode and Ribo-TISH; Ribotricer's score column is excluded due to known instability but Rp-Bp's is not.
+
+Rp-Bp runs through the upstream `nf-core/rpbp/*` modules driven by the `FASTA_GTF_BAM_RPBP` nf-core subworkflow, which orchestrates `prepare-rpbp-genome`, `extract-metagene-profiles`, `estimate-metagene-profile-bayes-factors`, `select-periodic-offsets`, `get-periodic-lengths-offsets`, `extract-orf-profiles`, `estimate-orf-bayes-factors` and `select-final-prediction-set` from your `--fasta` / `--gtf` inputs without you having to author a YAML config. Tool CLI overrides are exposed via `--extra_rpbp_preparegenome_args` and `--extra_rpbp_predictorfs_args`.
+
+Per-sample final-prediction outputs - filtered BED of predicted ORFs (with Bayes factor in column 5), plus matched nucleotide and protein FASTAs - are published under `<outdir>/orf_predictions/rpbp/`.
+
+**Annotation.** Rp-Bp is given the full multi-isoform `--gtf` annotation, not the one-transcript-per-gene canonical backbone that the pipeline uses elsewhere to disambiguate P-site quantification. Rp-Bp enumerates candidate ORFs across every transcript isoform (deduplicating identical ORFs by genomic coordinate) and then resolves redundant and overlapping ORFs itself - the longest ORF per stop codon, then the highest Bayes factor among overlaps. Collapsing the annotation to one isoform per gene would silently remove ORFs that exist only on non-canonical isoforms (alternative-5'UTR uORFs, isoform-specific N-terminal extensions or truncations, retained-intron and alternative-exon ORFs) and bias the reported ORF types toward canonical CDS, with no compensating benefit; PRICE is handled the same way and for the same reason ([Malone et al., 2017](https://academic.oup.com/nar/article/45/6/2960/2953491)). Under `--extended_orf_analysis true` Rp-Bp instead receives the hybrid GTF, so novel transcripts are within discovery scope in the same way as Ribo-TISH `predict` and Ribotricer.
+
+> :information_source: **STAR alignment params vs upstream rpbp.** rpbp's own pipeline runs STAR with Ribo-seq-tuned settings (`outFilterMismatchNmax 1`, `outFilterMismatchNoverLmax 0.04`, `outFilterType BySJout`, `sjdbOverhang 33`, `winAnchorMultimapNmax 100`, `seedSearchStartLmaxOverLread 0.5`). We use the pipeline's standard STAR alignment (shared with the RNA-seq side of paired runs), which is more permissive. Practical impact: rpbp processes whatever alignments it gets, but periodicity / Bayes-factor distributions will differ from a standalone rpbp run on the same FASTQs. If you need bit-identical-to-standalone-rpbp output, override with `--extra_star_align_args '--outFilterMismatchNmax 1 --outFilterMismatchNoverLmax 0.04 --outFilterType BySJout --winAnchorMultimapNmax 100 --seedSearchStartLmaxOverLread 0.5'`. Note that `sjdbOverhang` is baked into the STAR index and cannot be changed post-hoc - it would require regenerating the index with `--sjdbOverhang 33`, and that change would only be appropriate for a Ribo-seq-only run (RNA-seq reads are too long for that setting). Tracked for future work: [#173](https://github.com/nf-core/riboseq/issues/173).
+
 ### PRICE (opt-in)
 
 [PRICE](https://github.com/erhard-lab/gedi/wiki/Price) (Erhard et al., 2018) is a Bayesian ORF caller distributed as part of the [Gedi](https://github.com/erhard-lab/gedi) Java framework. Unlike the per-sample callers, PRICE estimates a shared codon-position model across the riboseq cohort by EM and is invoked one-shot rather than per-sample. Activate with `--run_price true`.
@@ -341,6 +357,8 @@ Ribotricer is available as a third caller but is off by default. Enable it with 
 > :warning: **Runtime cost.** PRICE's EM fit is comparable in wall-clock to other heavy ORF callers at genome-wide scale. The pipeline emits a runtime warning when `--run_price` is set. Plan compute accordingly.
 
 The pipeline builds a binary `.oml` genome index via `gedi -e IndexGenome` once per run, then calls PRICE once across the cohort with the index plus the riboseq BAMs. PRICE's primary output is `${prefix}.orfs.tsv`, a table of all called ORFs with start-codon score, range score, p-value (uncorrected) and per-condition / total read counts. Tool CLI arguments can be appended via `--extra_price_indexgenome_args` and `--extra_price_price_args`.
+
+**Annotation.** Like Rp-Bp, PRICE is given the full multi-isoform `--gtf` annotation rather than the one-transcript-per-gene canonical backbone: it resolves overlapping ORFs and rescues multimappers with its own EM, so restricting it to a single isoform per gene would only narrow ORF discovery and bias ORF-type classification toward canonical CDS.
 
 When `--extended_orf_analysis true` is set, PRICE's IndexGenome receives the hybrid GTF so ORFs on novel intergenic transcripts are within its discovery scope.
 

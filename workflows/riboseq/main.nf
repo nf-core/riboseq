@@ -421,16 +421,18 @@ workflow RIBOSEQ {
     // Dynamic ORF-caller set for cross-caller agreement.
     // The enabled list reflects which callers ran at runtime; the agreement
     // threshold and rank-aggregation set are derived from it so the logic
-    // works whether 2 (default) or 3 callers are active.
+    // works whether 2 (default) or 3+ callers are active.
     //
     def enabled_orf_callers = []
     if (!params.skip_ribotish)   { enabled_orf_callers << 'ribotish' }
     if (!params.skip_ribocode)   { enabled_orf_callers << 'ribocode' }
     if ( params.run_ribotricer)  { enabled_orf_callers << 'ribotricer' }
+    if ( params.run_rpbp)        { enabled_orf_callers << 'rpbp' }
     if ( params.run_price)       { enabled_orf_callers << 'price' }
 
     // Ribotricer contributes binary calls only; its scores are excluded from
-    // the cross-caller rank aggregation due to known rank instability.
+    // the cross-caller rank aggregation due to known rank instability. Rp-Bp's
+    // Bayes factor is stable and is retained for ranking.
     def rank_aggregation_callers  = enabled_orf_callers - 'ribotricer'
     // Strict-majority of enabled callers (floor(N/2)+1): N=2 -> 2 (both must
     // agree), N=3 -> 2 (majority). Adapts as the caller set grows.

@@ -2,14 +2,14 @@
 // Conditional ORF-caller dispatch for the riboseq pipeline.
 //
 // Runs each enabled caller against the appropriate annotation: when extended
-// ORF analysis is active, genome-BAM callers (Ribo-TISH predict, Ribotricer,
-// PRICE) receive the hybrid GTF and RiboCode receives the hybrid transcriptome
-// BAM + hybrid GTF. Otherwise everything stays on the canonical backbone.
-// Ribo-TISH additionally takes the canonical backbone via -a for background +
-// classification.
+// ORF analysis is active, genome-BAM callers (Ribo-TISH
+// predict, Ribotricer, Rp-Bp, PRICE) receive the hybrid GTF and RiboCode
+// receives the hybrid transcriptome BAM + hybrid GTF. Otherwise everything
+// stays on the canonical backbone. Ribo-TISH additionally takes the canonical
+// backbone via -a for background + classification.
 //
-// Per-caller gating (params.skip_ribotish / params.run_ribotricer /
-// params.run_price) lives here.
+// Per-caller gating (params.skip_ribotish / params.run_*) lives here; the
+// downstream catalogue gating still lives at the call site.
 //
 // Emits one prediction channel per caller plus collected versions and
 // multiqc files. Predictions are empty channels for callers that did not run.
@@ -24,6 +24,7 @@ include { RIBOCODE_GTFUPDATE                              } from '../../../modul
 include { RIBOCODE_PREPARE                                } from '../../../modules/nf-core/ribocode/prepare'
 include { RIBOCODE_METAPLOTS                              } from '../../../modules/nf-core/ribocode/metaplots'
 include { RIBOCODE_RIBOCODE                               } from '../../../modules/nf-core/ribocode/ribocode'
+include { FASTA_GTF_BAM_RPBP                              } from '../../nf-core/fasta_gtf_bam_rpbp/main'
 include { GEDI_INDEXGENOME                                } from '../../../modules/nf-core/gedi/indexgenome/main'
 include { GEDI_PRICE                                      } from '../../../modules/nf-core/gedi/price/main'
 
@@ -41,8 +42,8 @@ workflow ORF_CALLER_DISPATCH {
 
     main:
 
-    ch_versions      = channel.empty()
-    ch_multiqc_files = channel.empty()
+    ch_versions      = Channel.empty()
+    ch_multiqc_files = Channel.empty()
 
     // Annotation channels. Canonical for ORF calling / P-site / DTE; the full
     // ch_gtf is reserved for genome-guided alignment elsewhere in the pipeline.
@@ -64,7 +65,7 @@ workflow ORF_CALLER_DISPATCH {
     //
     // Ribo-TISH
     //
-    ch_ribotish_predictions = channel.empty()
+    ch_ribotish_predictions = Channel.empty()
     if (!params.skip_ribotish) {
         RIBOTISH_QUALITY_RIBOSEQ(
             ch_bams_for_analysis,
@@ -115,7 +116,7 @@ workflow ORF_CALLER_DISPATCH {
     //
     // Ribotricer
     //
-    ch_ribotricer_predictions = channel.empty()
+    ch_ribotricer_predictions = Channel.empty()
     if (params.run_ribotricer) {
         log.warn "Ribotricer is enabled via --run_ribotricer. Its per-ORF scores are unstable across biological replicates, so its binary calls contribute to cross-caller agreement but its scores are excluded from the rank aggregation."
 
@@ -137,9 +138,35 @@ workflow ORF_CALLER_DISPATCH {
     }
 
     //
+    // Rp-Bp
+    //
+    ch_rpbp_predictions = Channel.empty()
+    if (params.run_rpbp) {
+        log.warn "Rp-Bp is enabled via --run_rpbp. Expect roughly 20-24h per replicate at genome-wide scale because the Bayesian MCMC fit dominates; plan compute accordingly. Its score column (Bayes factor) is stable and is retained in the cross-caller rank aggregation."
+
+        // Rp-Bp enumerates candidate ORFs per transcript isoform and resolves
+        // redundancy/overlaps itself (longest-per-stop, best Bayes factor per
+        // overlap; Malone et al. 2017), so it takes the full multi-isoform
+        // annotation rather than the one-transcript-per-gene backbone, which
+        // exists to disambiguate P-site quantification. Restricting it to
+        // canonical would drop isoform-specific ORFs and bias ORF-type
+        // classification to canonical CDS. In extended mode it takes the hybrid
+        // GTF to bring novel transcripts into scope.
+        def ch_rpbp_annotation = extended_orf_active ?
+            ch_fasta_gtf_extended :
+            ch_fasta.combine(ch_gtf).map { fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }.first()
+
+        FASTA_GTF_BAM_RPBP(
+            ch_bams_for_analysis,
+            ch_rpbp_annotation
+        )
+        ch_rpbp_predictions = FASTA_GTF_BAM_RPBP.out.predicted
+    }
+
+    //
     // PRICE
     //
-    ch_price_predictions = channel.empty()
+    ch_price_predictions = Channel.empty()
     if (params.run_price) {
         log.warn "PRICE is enabled via --run_price. PRICE (Erhard et al. 2018) estimates a shared cohort-level codon-position model via EM and is opt-in because its genome-wide runtime is substantial. Plan compute accordingly."
 
@@ -174,7 +201,7 @@ workflow ORF_CALLER_DISPATCH {
     //
     // RiboCode
     //
-    ch_ribocode_predictions = channel.empty()
+    ch_ribocode_predictions = Channel.empty()
     if (!params.skip_ribocode) {
         // RiboCode requires transcriptome-coordinate BAMs. When extended-ORF
         // analysis is active, swap in the hybrid transcriptome BAM
@@ -239,6 +266,7 @@ workflow ORF_CALLER_DISPATCH {
     ribotish_predictions   = ch_ribotish_predictions   // [ meta, predictions.txt ] or empty
     ribocode_predictions   = ch_ribocode_predictions   // [ meta, orf.txt          ] or empty
     ribotricer_predictions = ch_ribotricer_predictions // [ meta, orfs             ] or empty
+    rpbp_predictions       = ch_rpbp_predictions       // [ meta, predicted        ] or empty
     price_predictions      = ch_price_predictions      // [ meta, orfs.tsv         ] or empty
     multiqc_files          = ch_multiqc_files
     versions               = ch_versions

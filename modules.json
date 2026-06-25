@@ -200,6 +200,46 @@
                         "git_sha": "b59f74e059a49fce82f19fbf684e2876da85ee39",
                         "installed_by": ["modules"]
                     },
+                    "rpbp/estimatemetagenebayesfactors": {
+                        "branch": "master",
+                        "git_sha": "617c552da369f63371648679983483736e52f3b8",
+                        "installed_by": ["fasta_gtf_bam_rpbp", "modules"]
+                    },
+                    "rpbp/estimateorfbayesfactors": {
+                        "branch": "master",
+                        "git_sha": "bbd642353cae3464d405ab6ae7366532648164e7",
+                        "installed_by": ["fasta_gtf_bam_rpbp", "modules"]
+                    },
+                    "rpbp/extractmetageneprofiles": {
+                        "branch": "master",
+                        "git_sha": "df05573454925ff87ff6ea6c4afaef70c64b7248",
+                        "installed_by": ["fasta_gtf_bam_rpbp", "modules"]
+                    },
+                    "rpbp/extractorfprofiles": {
+                        "branch": "master",
+                        "git_sha": "ad585e77451e4638e876bcf895185f0ac7f85fae",
+                        "installed_by": ["fasta_gtf_bam_rpbp", "modules"]
+                    },
+                    "rpbp/getperiodiclengthsoffsets": {
+                        "branch": "master",
+                        "git_sha": "caba7d6afa153b377581449609109fcd43775cab",
+                        "installed_by": ["fasta_gtf_bam_rpbp", "modules"]
+                    },
+                    "rpbp/preparegenome": {
+                        "branch": "master",
+                        "git_sha": "50b83e9601f411ef670b67b205db78e707a88f01",
+                        "installed_by": ["fasta_gtf_bam_rpbp", "modules"]
+                    },
+                    "rpbp/selectfinalpredictionset": {
+                        "branch": "master",
+                        "git_sha": "c2b3bb2252858a79872a27c7918cdb4b2a43f778",
+                        "installed_by": ["fasta_gtf_bam_rpbp", "modules"]
+                    },
+                    "rpbp/selectperiodicoffsets": {
+                        "branch": "master",
+                        "git_sha": "2f2f5662c0719221637811c6a6e443ec3414e0df",
+                        "installed_by": ["fasta_gtf_bam_rpbp", "modules"]
+                    },
                     "rsem/preparereference": {
                         "branch": "master",
                         "git_sha": "004e773fc35ebd24063ca4cbef057c94a24208aa",
@@ -375,6 +415,11 @@
                     "bam_stringtie_merge": {
                         "branch": "master",
                         "git_sha": "2fc6aef2691483864904e31973ccafd2ed68fd56",
+                        "installed_by": ["subworkflows"]
+                    },
+                    "fasta_gtf_bam_rpbp": {
+                        "branch": "master",
+                        "git_sha": "2111854cad9111c2b8057a6e050e0656d41acf32",
                         "installed_by": ["subworkflows"]
                     },
                     "fastq_align_star": {

@@ -37,6 +37,8 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
     - [Ribo-TISH predict](#ribo-tish-predict)
     - [Ribotricer detect-orfs](#ribotricer-detect-orfs)
     - [RiboCode](#ribocode)
+    - [Rp-Bp](#rp-bp)
+    - [PRICE](#price)
   - [P-site identification](#p-site-identification)
     - [riboWaltz](#ribowaltz)
     - [plastid](#plastid)
@@ -440,6 +442,20 @@ The `-f0_percent`, `-pv1`, and `-pv2` parameters belong to the **metaplots** ste
 :::
 
 If RiboCode is not needed for your analysis, you can skip it entirely with `--skip_ribocode`.
+
+### Rp-Bp
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `orf_predictions/rpbp/`
+  - `*.predicted-orfs.bed.gz`: per-sample predicted-ORF BED with Bayes factor scores (column 5) after the final-prediction-set filter (`--select-longest-by-stop --select-best-overlapping`).
+  - `*.predicted-orfs.dna.fa`: per-sample predicted-ORF nucleotide FASTA matching the BED.
+  - `*.predicted-orfs.protein.fa`: per-sample predicted-ORF protein FASTA matching the BED.
+
+</details>
+
+Produced only when `--run_rpbp true` is set. Rp-Bp's Bayesian fit is slow (~20-24h per replicate at genome-wide scale); see [Rp-Bp in usage.md](usage.md#rp-bp-opt-in-overnight). Rp-Bp's Bayes factor is stable across replicates and is retained in the cross-caller rank-aggregation set. When `--extended_orf_analysis true` is set, Rp-Bp consumes the hybrid GTF and so reports novel intergenic ORFs alongside annotated ones.
 
 ### PRICE
 

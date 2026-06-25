@@ -790,6 +790,22 @@
                     "description": "Opt in to running PRICE as an additional ORF caller (Bayesian, slow).",
                     "help_text": "PRICE (Probabilistic inference of codon activities, Erhard et al. 2018) is a Bayesian ORF caller distributed as part of the Gedi Java framework (`gedi -e Price`). It is opt-in because the EM fit dominates runtime at full scale. PRICE is invoked once across the riboseq cohort (it estimates a shared codon-position model) so the whole BAM cohort is staged into a single task; expect higher disk I/O than per-sample callers on local executors. PRICE joins the cross-caller ORF catalogue alongside Ribo-TISH, RiboCode and Ribotricer.",
                     "fa_icon": "fas fa-fast-forward"
+                },
+                "run_rpbp": {
+                    "type": "boolean",
+                    "description": "Opt in to running Rp-Bp as an additional ORF caller (Bayesian, slow).",
+                    "help_text": "Rp-Bp (Malone et al. 2017) is a Bayesian-strict ORF caller that complements RiboCode's permissive canonical-CDS calls. Runtime is on the order of 20-24h per replicate at genome-wide scale because the MCMC fit dominates, hence it is opt-in. Plan accordingly. Rp-Bp's score column (Bayes factor) participates in the cross-caller rank aggregation alongside RiboCode and Ribo-TISH.",
+                    "fa_icon": "fas fa-fast-forward"
+                },
+                "extra_rpbp_preparegenome_args": {
+                    "type": "string",
+                    "description": "Extra CLI arguments passed to `prepare-rpbp-genome`.",
+                    "fa_icon": "fas fa-terminal"
+                },
+                "extra_rpbp_predictorfs_args": {
+                    "type": "string",
+                    "description": "Extra CLI arguments passed to `select-final-prediction-set`.",
+                    "fa_icon": "fas fa-terminal"
                 }
             }
         },
