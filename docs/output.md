@@ -441,6 +441,20 @@ The `-f0_percent`, `-pv1`, and `-pv2` parameters belong to the **metaplots** ste
 
 If RiboCode is not needed for your analysis, you can skip it entirely with `--skip_ribocode`.
 
+### PRICE
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `price/index/`: Gedi `.oml` genome index plus binary sidecar files (built once per reference by `gedi -e IndexGenome`).
+- `price/`
+  - `${prefix}.orfs.tsv`: cohort-level PRICE ORF table (Gene, Id, Location, Type, Start, Range, p value, per-condition + Total counts).
+  - `${prefix}.orfs.cit`, `${prefix}.orfs.cit.metadata.json`, `${prefix}.signal.tsv`, `${prefix}.param`: PRICE companion artefacts (CIT index, signal-to-noise data, parameter log).
+
+</details>
+
+Produced only when `--run_price true` is set. PRICE is invoked once across the riboseq cohort (it estimates a shared codon-position model by EM). When `--extended_orf_analysis true` is set, the IndexGenome step builds the index from the hybrid GTF so PRICE can discover ORFs on novel intergenic transcripts.
+
 ## P-site identification
 
 ### riboWaltz

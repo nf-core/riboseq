@@ -326,11 +326,27 @@ MANE Select vs `Ensembl_canonical` for non-coding genes: MANE Select covers virt
 
 The pipeline will by default run the [Ribo-TISH](https://github.com/zhpn1024/ribotish) [quality](https://github.com/zhpn1024/ribotish?tab=readme-ov-file#quality) and [predict](https://github.com/zhpn1024/ribotish?tab=readme-ov-file#predict) commands for QC and ORF prediction, respectively. Additional arguments can be supplied to either command via the `--extra_ribotish_quality_args` and `--extra_ribotish_predict_args` parameters.
 
+Ribo-TISH `quality` is fed the canonical annotation (`--canonical_gtf`, or the AGAT-derived longest-isoform fallback) rather than the full multi-isoform GTF. `quality` estimates P-site offsets and read-length QC against CDS-bearing canonical transcripts; mixing in CDS-absent or near-duplicate isoforms degrades that calibration without adding diagnostic signal. The `predict` step receives the same canonical input by default; the wrapper also accepts an optional secondary annotation on `-a` for novel-transcript discovery modes.
+
 ### ORF calling and cross-caller agreement
 
 By default the pipeline calls ORFs with two tools, Ribo-TISH `predict` and RiboCode, and reports an ORF as agreed only when both callers support it. This intersection is precision-weighted: the agreed set is conservative and may omit ORFs that only one caller detects.
 
 Ribotricer is available as a third caller but is off by default. Enable it with `--run_ribotricer true` for broader recall, after which an ORF is agreed on a majority vote (2 of 3). It is opt-in because its ORF-score column is unstable across biological replicates even though its binary call set is reproducible. When enabled, its binary calls count toward agreement but its score is excluded from cross-caller rank aggregation, and the pipeline warns at runtime.
+
+### PRICE (opt-in)
+
+[PRICE](https://github.com/erhard-lab/gedi/wiki/Price) (Erhard et al., 2018) is a Bayesian ORF caller distributed as part of the [Gedi](https://github.com/erhard-lab/gedi) Java framework. Unlike the per-sample callers, PRICE estimates a shared codon-position model across the riboseq cohort by EM and is invoked one-shot rather than per-sample. Activate with `--run_price true`.
+
+> :warning: **Runtime cost.** PRICE's EM fit is comparable in wall-clock to other heavy ORF callers at genome-wide scale. The pipeline emits a runtime warning when `--run_price` is set. Plan compute accordingly.
+
+The pipeline builds a binary `.oml` genome index via `gedi -e IndexGenome` once per run, then calls PRICE once across the cohort with the index plus the riboseq BAMs. PRICE's primary output is `${prefix}.orfs.tsv`, a table of all called ORFs with start-codon score, range score, p-value (uncorrected) and per-condition / total read counts. Tool CLI arguments can be appended via `--extra_price_indexgenome_args` and `--extra_price_price_args`.
+
+When `--extended_orf_analysis true` is set, PRICE's IndexGenome receives the hybrid GTF so ORFs on novel intergenic transcripts are within its discovery scope.
+
+PRICE's CLI banner reports `Price version 1.0.4` while the Bioconda package is `gedi 1.0.6a` (Price is one tool inside the Gedi umbrella). The pipeline captures the package version via `gedi -e Version` for `versions.yml`.
+
+> :information_source: **Data scale.** PRICE's ORF inference step (`PriceOrfInference`) requires more candidate ORFs than the chr20-only `-profile test` data provides; on small test inputs it fails late in the pipeline with `Index out of bounds`. End-to-end PRICE validation needs realistic Ribo-seq depth and is exercised on the full-scale Platform iteration, not in the chr20 CI test set.
 
 ## P-site identification
 

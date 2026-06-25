@@ -584,6 +584,16 @@
                 "extra_stringtie_merge_args": {
                     "type": "string",
                     "description": "Extra arguments to pass to StringTie --merge (e.g. `-T 1 -f 0.1` to tighten the merged annotation)."
+                },
+                "extra_price_indexgenome_args": {
+                    "type": "string",
+                    "description": "Extra CLI arguments passed to `gedi -e IndexGenome`.",
+                    "fa_icon": "fas fa-terminal"
+                },
+                "extra_price_price_args": {
+                    "type": "string",
+                    "description": "Extra CLI arguments passed to `gedi -e Price`.",
+                    "fa_icon": "fas fa-terminal"
                 }
             }
         },
@@ -774,6 +784,12 @@
                     "description": "Discover novel ORFs in novel intergenic transcripts (from StringTie or user-supplied --novel_gtf) by feeding the hybrid GTF to genome-BAM ORF callers (Ribo-TISH predict, Ribotricer). Requires --skip_stringtie false or --novel_gtf <path>. Default false for backward compatibility.",
                     "help_text": "When true and a novel-transcript source is enabled (--skip_stringtie false or --novel_gtf), the hybrid GTF (<outdir>/stringtie/hybrid_reference.gtf) is passed to Ribo-TISH predict (-g) and Ribotricer prepare-orfs so that novel intergenic ORFs are within scope. RiboCode, riboWaltz and Salmon continue to read the reference transcriptome, and plastid P-site quantification the canonical backbone, regardless of this flag (RiboCode's transcriptome-coordinate BAM is keyed to the reference transcriptome FASTA used at alignment time). When true but no novel-transcript source is configured, the flag is a no-op and a warning is emitted.",
                     "fa_icon": "fas fa-expand-arrows-alt"
+                },
+                "run_price": {
+                    "type": "boolean",
+                    "description": "Opt in to running PRICE as an additional ORF caller (Bayesian, slow).",
+                    "help_text": "PRICE (Probabilistic inference of codon activities, Erhard et al. 2018) is a Bayesian ORF caller distributed as part of the Gedi Java framework (`gedi -e Price`). It is opt-in because the EM fit dominates runtime at full scale. PRICE is invoked once across the riboseq cohort (it estimates a shared codon-position model) so the whole BAM cohort is staged into a single task; expect higher disk I/O than per-sample callers on local executors. PRICE joins the cross-caller ORF catalogue alongside Ribo-TISH, RiboCode and Ribotricer.",
+                    "fa_icon": "fas fa-fast-forward"
                 }
             }
         },

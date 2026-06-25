@@ -427,6 +427,7 @@ workflow RIBOSEQ {
     if (!params.skip_ribotish)   { enabled_orf_callers << 'ribotish' }
     if (!params.skip_ribocode)   { enabled_orf_callers << 'ribocode' }
     if ( params.run_ribotricer)  { enabled_orf_callers << 'ribotricer' }
+    if ( params.run_price)       { enabled_orf_callers << 'price' }
 
     // Ribotricer contributes binary calls only; its scores are excluded from
     // the cross-caller rank aggregation due to known rank instability.
