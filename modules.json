@@ -62,12 +62,12 @@
                     },
                     "custom/orfcollapse": {
                         "branch": "master",
-                        "git_sha": "b918f8d841ecc1425a4eb8115745acbb985020ea",
+                        "git_sha": "76e959312e636388810442416972071734c4144a",
                         "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
                     },
                     "custom/orfmerge": {
                         "branch": "master",
-                        "git_sha": "b918f8d841ecc1425a4eb8115745acbb985020ea",
+                        "git_sha": "76e959312e636388810442416972071734c4144a",
                         "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
                     },
                     "custom/orfnormalise": {
@@ -489,7 +489,7 @@
                     },
                     "orftable_fasta_gtf_buildorfcatalogue": {
                         "branch": "master",
-                        "git_sha": "b918f8d841ecc1425a4eb8115745acbb985020ea",
+                        "git_sha": "76e959312e636388810442416972071734c4144a",
                         "installed_by": ["subworkflows"]
                     },
                     "quant_tximport_summarizedexperiment": {
