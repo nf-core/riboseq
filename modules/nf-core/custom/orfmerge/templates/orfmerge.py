@@ -19,13 +19,18 @@ catalogue TSV:
                           minimised; Bayes factors / phase scores are
                           maximised).
 
+Cross-sample recurrence is recorded in two further columns:
+
+  - `n_samples`: number of distinct samples contributing to the cluster.
+  - `samples`:   sorted, comma-separated list of those sample ids.
+
 Outputs:
 
-  ${prefix}.catalogue.bed12      merged catalogue (genomic blocks).
-  ${prefix}.catalogue.tsv        per-ORF table with caller-tracking cols.
+  ${prefix}.bed12                merged catalogue (genomic blocks).
+  ${prefix}.tsv                  per-ORF table with caller-tracking cols.
   ${prefix}.orf_to_gene.tsv      one row per (orf_id, gene_id, transcript_id);
                                  an ORF can map to multiple host transcripts.
-  ${prefix}.catalogue.mqc.tsv    MultiQC custom-content sidecar
+  ${prefix}.mqc.tsv              MultiQC custom-content sidecar
                                  (per-class counts).
 """
 
@@ -33,11 +38,11 @@ import argparse
 import csv
 import glob
 import platform
+import shlex
 import sys
 from collections import defaultdict
 from pathlib import Path
 
-import pandas as pd
 import yaml
 
 CALLERS = ("ribotish", "ribocode", "ribotricer", "rpbp", "price")
@@ -57,32 +62,12 @@ SCORE_DIRECTIONS = {
 CLASS_ORDER = ("canonical_cds", "uORF", "dORF", "novel_u", "smORF", "other")
 
 
-def cluster_by_transcript(rows):
-    """Collapse by (transcript_id, strand). Correct for canonical CDS
-    (one CDS per transcript by definition), wrong for classes where a
-    transcript can host multiple distinct ORFs (uORF/dORF/other) - use
-    cluster_by_transcript_position for those.
-    """
-    by_tid = defaultdict(list)
+def group_by(rows, keyfn):
+    """Group rows into clusters keyed by ``keyfn(row)``, preserving first-seen order."""
+    groups = defaultdict(list)
     for r in rows:
-        tid = r.get("transcript_id") or ""
-        by_tid[(tid, r["strand"])].append(r)
-    return list(by_tid.values())
-
-
-def cluster_by_transcript_position(rows):
-    """Collapse by (transcript_id, strand, start, end). A single transcript
-    can host multiple distinct uORFs / dORFs / internal ORFs; keying on
-    the outer span keeps them in separate clusters while still merging
-    cross-caller calls of the same biological ORF (which agree on
-    transcript_id and exact coordinates).
-    """
-    by_key = defaultdict(list)
-    for r in rows:
-        tid = r.get("transcript_id") or ""
-        key = (tid, r["strand"], int(r["start"]), int(r["end"]))
-        by_key[key].append(r)
-    return list(by_key.values())
+        groups[keyfn(r)].append(r)
+    return list(groups.values())
 
 
 def cluster_by_reciprocal_overlap(rows, frac=0.8):
@@ -180,14 +165,9 @@ def load_normalised(tsv_paths, bed_paths):
     for p in tsv_paths:
         if not p.exists() or p.stat().st_size == 0:
             continue
-        with open(p) as fh:
-            # Skip `#`-prefixed comment lines (e.g. the `# parser_columns: ...`
-            # provenance header that custom/orfnormalise writes at the top
-            # of the normalised TSV).
-            uncommented = (line for line in fh if not line.startswith("#"))
-            reader = csv.DictReader(uncommented, delimiter="\\t")
-            for row in reader:
-                rows.append(row)
+        with open(p, newline="") as fh:
+            data = (line for line in fh if not line.startswith("#"))
+            rows.extend(csv.DictReader(data, delimiter="\\t"))
     for p in bed_paths:
         if not p.exists() or p.stat().st_size == 0:
             continue
@@ -203,18 +183,35 @@ def load_normalised(tsv_paths, bed_paths):
 
 
 def write_catalogue(prefix, clusters, bed_index):
-    cat_bed = Path(f"{prefix}.catalogue.bed12")
-    cat_tsv = Path(f"{prefix}.catalogue.tsv")
+    cat_bed = Path(f"{prefix}.bed12")
+    cat_tsv = Path(f"{prefix}.tsv")
     o2g_tsv = Path(f"{prefix}.orf_to_gene.tsv")
-    mqc_tsv = Path(f"{prefix}.catalogue.mqc.tsv")
+    mqc_tsv = Path(f"{prefix}.mqc.tsv")
 
     catalogue_cols = (
         ["orf_id", "chrom", "start", "end", "strand", "gene_id", "transcript_id", "orf_class", "aa_length"]
         + [f"called_by_{c}" for c in CALLERS]
         + [f"score_{c}" for c in CALLERS]
+        + ["n_samples", "samples"]
     )
 
     per_class_counts = defaultdict(int)
+
+    # orf_ids are assigned in iteration order below, so sort first to make the
+    # numbering deterministic.
+    def _sort_key(cluster):
+        r = representative(cluster)
+        return (
+            r.get("chrom", ""),
+            int(r.get("start") or 0),
+            int(r.get("end") or 0),
+            r.get("strand", ""),
+            r.get("gene_id") or "",
+            r.get("transcript_id") or "",
+            r.get("orf_class", ""),
+        )
+
+    clusters = sorted(clusters, key=_sort_key)
 
     with open(cat_bed, "w") as bh, open(cat_tsv, "w") as th, open(o2g_tsv, "w") as oh:
         th.write("\\t".join(catalogue_cols) + "\\n")
@@ -242,6 +239,9 @@ def write_catalogue(prefix, clusters, bed_index):
             ]
             row_out += [caller_cols[f"called_by_{c}"] for c in CALLERS]
             row_out += [caller_cols[f"score_{c}"] for c in CALLERS]
+
+            sample_ids = sorted({r.get("sample_id", "") for r in cluster if r.get("sample_id")})
+            row_out += [str(len(sample_ids)), ",".join(sample_ids)]
             th.write("\\t".join(row_out) + "\\n")
 
             per_class_counts[rep.get("orf_class", "other")] += 1
@@ -270,12 +270,7 @@ def write_catalogue(prefix, clusters, bed_index):
 def write_versions():
     with open("versions.yml", "w") as fh:
         yaml.safe_dump(
-            {
-                "${task.process}": {
-                    "python": platform.python_version(),
-                    "pandas": pd.__version__,
-                }
-            },
+            {"${task.process}": {"python": platform.python_version()}},
             fh,
             default_flow_style=False,
             sort_keys=False,
@@ -290,8 +285,7 @@ def main():
         default=0.8,
         help="Reciprocal-overlap fraction for novel_u/smORF clustering (default: 0.8)",
     )
-    raw_args = "${args}".split() if "${args}".strip() else []
-    parsed_args = parser.parse_args(raw_args)
+    args = parser.parse_args(shlex.split("${args}"))
 
     bed_paths = sorted(Path(p) for p in glob.glob("beds/*"))
     tsv_paths = sorted(Path(p) for p in glob.glob("tsvs/*"))
@@ -309,15 +303,20 @@ def main():
         by_class[r.get("orf_class", "other")].append(r)
 
     clusters = []
-    # canonical CDS: one per transcript by definition - collapse by tid.
-    clusters.extend(cluster_by_transcript(by_class.get("canonical_cds", [])))
+    # canonical CDS: one per transcript by definition - collapse by (tid, strand).
+    clusters.extend(group_by(by_class.get("canonical_cds", []), lambda r: (r.get("transcript_id") or "", r["strand"])))
     # uORF/dORF/other: a transcript can host multiple distinct ones, so
     # additionally key on the outer span to keep them separate.
     for cls in ("uORF", "dORF", "other"):
-        clusters.extend(cluster_by_transcript_position(by_class.get(cls, [])))
+        clusters.extend(
+            group_by(
+                by_class.get(cls, []),
+                lambda r: (r.get("transcript_id") or "", r["strand"], int(r["start"]), int(r["end"])),
+            )
+        )
     # novel_u / smORF: not transcript-anchored - reciprocal-overlap clustering.
     for cls in ("novel_u", "smORF"):
-        clusters.extend(cluster_by_reciprocal_overlap(by_class.get(cls, []), frac=parsed_args.reciprocal_overlap))
+        clusters.extend(cluster_by_reciprocal_overlap(by_class.get(cls, []), frac=args.reciprocal_overlap))
 
     write_catalogue(prefix, clusters, bed_index)
     write_versions()

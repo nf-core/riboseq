@@ -7,7 +7,7 @@
                         {
                             "id": "cohort"
                         },
-                        "cohort.catalogue.bed12:md5,d0de23019fbec9d96fd9302103a16278"
+                        "cohort.catalogue.bed12:md5,59b9b0c4ceb890b58b8bcde4fecb2ac7"
                     ]
                 ],
                 "1": [
@@ -15,7 +15,7 @@
                         {
                             "id": "cohort"
                         },
-                        "cohort.catalogue.tsv:md5,fca1b90098ba957ec09331aa7da88540"
+                        "cohort.catalogue.tsv:md5,d6af31aac0548c8ce0f447be02d06397"
                     ]
                 ],
                 "2": [
@@ -23,7 +23,7 @@
                         {
                             "id": "cohort"
                         },
-                        "cohort.orf_to_gene.tsv:md5,79699c0188eadd2aaf912a31a2c14464"
+                        "cohort.catalogue.orf_to_gene.tsv:md5,eebb86a1c52a7418ee9dc68c53bd9866"
                     ]
                 ],
                 "3": [
@@ -35,14 +35,14 @@
                     ]
                 ],
                 "4": [
-                    "versions.yml:md5,d25c26dfaf9e0c93de97a75f5690043b"
+                    "versions.yml:md5,8e0b24bd9e91050a8715f1b1b61f0805"
                 ],
                 "bed12": [
                     [
                         {
                             "id": "cohort"
                         },
-                        "cohort.catalogue.bed12:md5,d0de23019fbec9d96fd9302103a16278"
+                        "cohort.catalogue.bed12:md5,59b9b0c4ceb890b58b8bcde4fecb2ac7"
                     ]
                 ],
                 "catalogue_tsv": [
@@ -50,7 +50,7 @@
                         {
                             "id": "cohort"
                         },
-                        "cohort.catalogue.tsv:md5,fca1b90098ba957ec09331aa7da88540"
+                        "cohort.catalogue.tsv:md5,d6af31aac0548c8ce0f447be02d06397"
                     ]
                 ],
                 "multiqc": [
@@ -66,15 +66,15 @@
                         {
                             "id": "cohort"
                         },
-                        "cohort.orf_to_gene.tsv:md5,79699c0188eadd2aaf912a31a2c14464"
+                        "cohort.catalogue.orf_to_gene.tsv:md5,eebb86a1c52a7418ee9dc68c53bd9866"
                     ]
                 ],
                 "versions": [
-                    "versions.yml:md5,d25c26dfaf9e0c93de97a75f5690043b"
+                    "versions.yml:md5,8e0b24bd9e91050a8715f1b1b61f0805"
                 ]
             }
         ],
-        "timestamp": "2026-05-21T18:24:00.485642577",
+        "timestamp": "2026-06-16T11:49:30.349632545",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.04.1"
