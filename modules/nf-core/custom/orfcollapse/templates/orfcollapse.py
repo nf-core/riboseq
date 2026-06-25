@@ -6,15 +6,24 @@
 The coordinate-based merge in custom/orfmerge groups ORFs that overlap on the
 genome, but the same micropeptide is frequently encoded at several distinct,
 non-overlapping genomic loci (typically repetitive regions), and those copies
-survive as separate catalogue rows. This adopts the peptide-level deduplication
-and 0.9 amino-acid-similarity threshold of the GENCODE Ribo-seq ORF
-consolidation (Mudge et al. 2022, Nat Biotechnol,
-doi:10.1038/s41587-022-01369-0; gencode-riboseqORFs collapse_cutoff 0.9),
-implemented here with MMseqs2 sequence-identity clustering (--min-seq-id 0.9)
-rather than that tool's longest-shared-string / P-site-overlap metric. Small
-ORFs (orf_class == "smORF", i.e. aa_length <= 100) are clustered by amino-acid
-identity upstream (mmseqs/easycluster) and this module folds each multi-member
-cluster down to one representative.
+survive as separate catalogue rows. This peptide-level deduplication is inspired
+by the GENCODE Ribo-seq ORF consolidation (Mudge et al. 2022, Nat Biotechnol,
+doi:10.1038/s41587-022-01369-0; gencode-riboseqORFs collapse_cutoff 0.9), with
+two deliberate departures from that reference:
+
+  - GENCODE collapses overlapping ORFs of any size within a shared locus;
+    this restricts collapsing to small ORFs (orf_class == "smORF", i.e.
+    aa_length <= 100) and clusters them locus-agnostically across the whole
+    catalogue, since the target case is one micropeptide recurring at several
+    non-overlapping loci. The smORF-only restriction is this pipeline's choice,
+    not a GENCODE property.
+  - similarity is MMseqs2 global sequence identity (--min-seq-id 0.9,
+    mmseqs/easycluster upstream) rather than GENCODE's longest-shared-substring
+    / P-site-overlap metric, so the 0.9 here approximates rather than
+    reproduces collapse_cutoff 0.9.
+
+Small ORFs are clustered by amino-acid identity upstream (mmseqs/easycluster)
+and this module folds each multi-member cluster down to one representative.
 
 Only smORF rows are collapsed; larger ORFs and transcript-anchored classes pass
 through untouched, preserving the deterministic coordinate/transcript merge from
