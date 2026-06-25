@@ -2,7 +2,8 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "extended_orf_second_pass_align"
 description: |
-  Second STAR pass against the hybrid transcriptome for extended-ORF discovery. Rebuilds a transcriptome FASTA from the hybrid GTF (gffread),
+  Second STAR pass against the hybrid transcriptome for extended-ORF discovery.
+  Rebuilds a transcriptome FASTA from the hybrid GTF (gffread),
   rebuilds a STAR index, then aligns Ribo-seq reads only, producing a hybrid
   transcriptome BAM keyed to the hybrid annotation for RiboCode.
 keywords:

@@ -149,9 +149,9 @@
                     "exists": true,
                     "mimetype": "text/plain",
                     "pattern": "^\\S+\\.gtf(\\.gz)?$",
-                    "description": "Optional one-transcript-per-gene canonical GTF used as the annotation backbone for ORF calling, P-site calibration and DTE.",
+                    "description": "Optional one-transcript-per-gene canonical GTF used as the annotation backbone for the genome-coordinate ORF callers (Ribo-TISH, Ribotricer), plastid P-site quantification and DTE.",
                     "fa_icon": "fas fa-code-branch",
-                    "help_text": "When supplied, this GTF replaces the full multi-isoform `--gtf` as the annotation backbone for ORF callers (RiboCode, Ribo-TISH, Ribotricer), riboWaltz P-site calibration, plastid P-site quantification and the translational-efficiency analysis. The full `--gtf` is still used for genome-guided alignment (STAR/Salmon). When omitted, the pipeline falls back to AGAT longest-isoform extraction from the full GTF; if that is unavailable, the full GTF is used as the backbone (with a multi-isoform ambiguity warning). Recommended sources: MANE Select for human (https://ftp.ncbi.nlm.nih.gov/refseq/MANE/MANE_human/current/), or `grep 'tag \"Ensembl_canonical\"' input.gtf > canonical.gtf` for any Ensembl organism at release \u2265104."
+                    "help_text": "When supplied, this GTF replaces the full multi-isoform `--gtf` as the annotation backbone for the genome-coordinate ORF callers (Ribo-TISH, Ribotricer), plastid P-site quantification and the translational-efficiency analysis. The full `--gtf` is retained both for genome-guided alignment (STAR/Salmon) and for the transcriptome-coordinate tools (RiboCode, riboWaltz, Salmon), whose input is the reference-transcriptome BAM and so must match the full multi-isoform transcript set. When omitted, the pipeline falls back to AGAT longest-CDS-isoform extraction from the full GTF; if that is unavailable, the full GTF is used as the backbone (with a multi-isoform ambiguity warning). Recommended sources: MANE Select for human (https://ftp.ncbi.nlm.nih.gov/refseq/MANE/MANE_human/current/), or `grep 'tag \"Ensembl_canonical\"' input.gtf > canonical.gtf` for any Ensembl organism at release ≥104."
                 },
                 "igenomes_ignore": {
                     "type": "boolean",
@@ -585,12 +585,6 @@
                     "type": "string",
                     "description": "Extra arguments to pass to StringTie --merge (e.g. `-T 1 -f 0.1` to tighten the merged annotation)."
                 },
-                "stringtie_ribo_fallback_args": {
-                    "type": "string",
-                    "default": "-m 100 -c 5 -j 3 -f 0.05 -g 100",
-                    "description": "StringTie arguments used when no RNA-seq BAMs are available and the pipeline falls back to Ribo-seq BAMs for assembly.",
-                    "help_text": "These tightened defaults reduce false-positive single-exon transcripts driven by P-site pileups in Ribo-seq data: `-m 100` (min transcript length, vs default 200 - retains sORF transcripts), `-c 5` (min coverage), `-j 3` (min junction reads), `-f 0.05` (min isoform fraction), `-g 100` (max gap). Empirical first-pass defaults; tune per dataset. Ignored when RNA-seq BAMs are available or when `--extra_stringtie_args` is set."
-                },
                 "extra_price_indexgenome_args": {
                     "type": "string",
                     "description": "Extra CLI arguments passed to `gedi -e IndexGenome`.",
@@ -755,7 +749,7 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Skip StringTie reference-guided transcript assembly and merge.",
-                    "help_text": "When `false`, the pipeline runs StringTie per sample (reference-guided) then merges per-sample GTFs into a unified annotation. RNA-seq BAMs are preferred for assembly; if absent, the pipeline falls back to Ribo-seq BAMs with tightened parameters (see `--stringtie_ribo_fallback_args`). Merged transcripts are classified with gffcompare and filtered to class codes set by `--stringtie_class_codes`. The filtered novel GTF is concatenated with `--canonical_gtf` to produce `<outdir>/stringtie/hybrid_reference.gtf`. Ignored when `--novel_gtf` is supplied.",
+                    "help_text": "When `false`, the pipeline runs StringTie per sample (reference-guided) then merges per-sample GTFs into a unified annotation. RNA-seq BAMs are used for assembly. Merged transcripts are classified with gffcompare and filtered to class codes set by `--gffcompare_class_codes`. The filtered novel GTF is concatenated with `--canonical_gtf` to produce `<outdir>/stringtie/hybrid_reference.gtf`. Ignored when `--novel_gtf` is supplied.",
                     "fa_icon": "fas fa-fast-forward"
                 },
                 "novel_gtf": {
@@ -765,14 +759,14 @@
                     "mimetype": "text/plain",
                     "pattern": "^\\S+\\.gtf(\\.gz)?$",
                     "description": "Optional user-supplied novel-transcript GTF. When provided, StringTie assembly is skipped and this GTF is used directly as the source of novel transcripts.",
-                    "help_text": "Useful when you already have a curated cell-type-specific annotation (e.g. from long-read RNA-seq or a published ORF catalogue). The supplied GTF is still passed through the gffcompare class-code filter (`--stringtie_class_codes`, default `u` = intergenic only) so users can submit annotations containing any class of transcript and have the pipeline retain only the intergenic ones.",
+                    "help_text": "Useful when you already have a curated cell-type-specific annotation (e.g. from long-read RNA-seq or a published ORF catalogue). The supplied GTF is still passed through the gffcompare class-code filter (`--gffcompare_class_codes`, default `u` = intergenic only) so users can submit annotations containing any class of transcript and have the pipeline retain only the intergenic ones.",
                     "fa_icon": "fas fa-file-import"
                 },
-                "stringtie_class_codes": {
+                "gffcompare_class_codes": {
                     "type": "string",
                     "default": "u",
                     "description": "Comma-separated gffcompare class codes to retain when filtering novel transcripts.",
-                    "help_text": "Default `u` keeps only unambiguously intergenic transcripts. Stranded users may add `x` (antisense overlap with a known locus) via `--stringtie_class_codes 'u,x'` to recover translated antisense transcripts; this is unsafe for non-stranded or partially-stranded protocols. See https://ccb.jhu.edu/software/stringtie/gffcompare.shtml for the full class-code list.",
+                    "help_text": "Default `u` keeps only unambiguously intergenic transcripts. Stranded users may add `x` (antisense overlap with a known locus) via `--gffcompare_class_codes 'u,x'` to recover translated antisense transcripts; this is unsafe for non-stranded or partially-stranded protocols. See https://ccb.jhu.edu/software/stringtie/gffcompare.shtml for the full class-code list.",
                     "fa_icon": "fas fa-filter"
                 },
                 "rrna_blacklist": {
@@ -788,13 +782,13 @@
                 "extended_orf_analysis": {
                     "type": "boolean",
                     "description": "Discover novel ORFs in novel intergenic transcripts (from StringTie or user-supplied --novel_gtf) by feeding the hybrid GTF to genome-BAM ORF callers (Ribo-TISH predict, Ribotricer). Requires --skip_stringtie false or --novel_gtf <path>. Default false for backward compatibility.",
-                    "help_text": "When true and a novel-transcript source is enabled (--skip_stringtie false or --novel_gtf), the hybrid GTF (<outdir>/stringtie/hybrid_reference.gtf) is passed to Ribo-TISH predict (-g) and Ribotricer prepare-orfs so that novel intergenic ORFs are within scope. RiboCode, riboWaltz, plastid and Salmon-based quantification continue to use the canonical backbone GTF regardless of this flag, due to the transcriptome-BAM architectural constraint. When true but no novel-transcript source is configured, the flag is a no-op and a warning is emitted.",
+                    "help_text": "When true and a novel-transcript source is enabled (--skip_stringtie false or --novel_gtf), the hybrid GTF (<outdir>/stringtie/hybrid_reference.gtf) is passed to Ribo-TISH predict (-g) and Ribotricer prepare-orfs so that novel intergenic ORFs are within scope. RiboCode, riboWaltz and Salmon continue to read the reference transcriptome, and plastid P-site quantification the canonical backbone, regardless of this flag (RiboCode's transcriptome-coordinate BAM is keyed to the reference transcriptome FASTA used at alignment time). When true but no novel-transcript source is configured, the flag is a no-op and a warning is emitted.",
                     "fa_icon": "fas fa-expand-arrows-alt"
                 },
                 "run_price": {
                     "type": "boolean",
                     "description": "Opt in to running PRICE as an additional ORF caller (Bayesian, slow).",
-                    "help_text": "PRICE (Probabilistic inference of codon activities, Erhard et al. 2018) is a Bayesian ORF caller distributed as part of the Gedi Java framework (`gedi -e Price`). Like Rp-Bp it is opt-in because the EM fit dominates runtime at full scale. PRICE is invoked once across the riboseq cohort (it estimates a shared codon-position model) so the whole BAM cohort is staged into a single task; expect higher disk I/O than per-sample callers on local executors. PRICE joins the cross-caller ORF catalogue alongside Ribo-TISH, RiboCode, Ribotricer and Rp-Bp.",
+                    "help_text": "PRICE (Probabilistic inference of codon activities, Erhard et al. 2018) is a Bayesian ORF caller distributed as part of the Gedi Java framework (`gedi -e Price`). It is opt-in because the EM fit dominates runtime at full scale. PRICE is invoked once across the riboseq cohort (it estimates a shared codon-position model) so the whole BAM cohort is staged into a single task; expect higher disk I/O than per-sample callers on local executors. PRICE joins the cross-caller ORF catalogue alongside Ribo-TISH, RiboCode and Ribotricer.",
                     "fa_icon": "fas fa-fast-forward"
                 },
                 "run_rpbp": {

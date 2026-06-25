@@ -37,6 +37,8 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
     - [Ribo-TISH predict](#ribo-tish-predict)
     - [Ribotricer detect-orfs](#ribotricer-detect-orfs)
     - [RiboCode](#ribocode)
+    - [Rp-Bp](#rp-bp)
+    - [PRICE](#price)
   - [P-site identification](#p-site-identification)
     - [riboWaltz](#ribowaltz)
     - [plastid](#plastid)
@@ -353,9 +355,9 @@ Check the metaplots PDF output to verify that your data shows reasonable periodi
 
 ## Novel transcript discovery (StringTie / hybrid GTF)
 
-When `--skip_stringtie false` is set, [StringTie](https://ccb.jhu.edu/software/stringtie/) is run per sample in reference-guided mode (preferring RNA-seq BAMs, falling back to Ribo-seq with tightened parameters) and the per-sample assemblies are merged. Alternatively, when `--novel_gtf` is supplied, StringTie is skipped and the user-supplied GTF is used as the novel-transcript source. Either source is then classified against the reference with [gffcompare](https://ccb.jhu.edu/software/stringtie/gffcompare.shtml), filtered to the user-configured class codes (`--stringtie_class_codes`, default `u`), optionally cleaned with an rRNA/repeat blacklist (`--rrna_blacklist`), and concatenated with the canonical reference to produce a hybrid annotation.
+When `--skip_stringtie false` is set, [StringTie](https://ccb.jhu.edu/software/stringtie/) is run per sample in reference-guided mode on RNA-seq BAMs and the per-sample assemblies are merged. Alternatively, when `--novel_gtf` is supplied, StringTie is skipped and the user-supplied GTF is used as the novel-transcript source. Either source is then classified against the reference with [gffcompare](https://ccb.jhu.edu/software/stringtie/gffcompare.shtml), filtered to the user-configured class codes (`--gffcompare_class_codes`, default `u`), optionally cleaned with an rRNA/repeat blacklist (`--rrna_blacklist`), and concatenated with the canonical reference to produce a hybrid annotation.
 
-The hybrid GTF is published as a side product and exposed on the `hybrid_gtf` workflow channel. With no novel-transcript source configured, the channel equals the canonical backbone. Follow-on work in the modernisation plan wires the hybrid GTF into the genome-BAM ORF callers (Ribo-TISH `predict`, Ribotricer) under an opt-in flag.
+The hybrid GTF is published as a side product and exposed on the `hybrid_gtf` workflow channel. With no novel-transcript source configured, the channel equals the canonical backbone. When `--extended_orf_analysis true` is set, the genome-BAM ORF callers (Ribo-TISH `predict`, Ribotricer) and RiboCode consume the hybrid GTF; RiboCode additionally consumes a hybrid transcriptome BAM from a second STAR pass (see [Hybrid STAR alignment](#hybrid-star-alignment) below).
 
 <details markdown="1">
 <summary>Output files</summary>
@@ -367,6 +369,26 @@ The hybrid GTF is published as a side product and exposed on the `hybrid_gtf` wo
   - `novel_filtered.gtf`: Novel transcripts retained after the gffcompare class-code filter (default class `u` = intergenic only).
   - `novel_filtered.blacklisted.gtf`: Class-filtered novel transcripts after the optional rRNA/repeat blacklist intersect (only present when `--rrna_blacklist` is supplied).
   - `hybrid_reference.gtf`: Canonical reference + filtered novel transcripts, sorted by chromosome and start coordinate. Exposed as the `hybrid_gtf` workflow emit channel.
+
+</details>
+
+## Hybrid STAR alignment
+
+When `--extended_orf_analysis true` is set (and a novel-transcript source is configured), the pipeline runs a second STAR pass against a hybrid transcriptome so RiboCode can see novel intergenic transcripts. The hybrid transcriptome FASTA is extracted from the hybrid GTF with `gffread -w`, a hybrid STAR index is built against the original genome FASTA with the hybrid GTF as `--sjdbGTFfile`, and the Ribo-seq reads are re-aligned against that index. See [Extended ORF discovery in usage.md](usage.md#extended-orf-discovery) for the rationale and cost trade-off.
+
+The second pass runs only on Ribo-seq samples (RNA-seq and TI-seq do not feed RiboCode). riboWaltz and Salmon continue to read the primary reference-transcriptome BAM, and plastid P-site quantification the canonical backbone, regardless of `--extended_orf_analysis`.
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `hybrid_star/`
+  - `hybrid_transcriptome.fasta`: Spliced transcript sequences extracted from the hybrid GTF (only published when `--save_reference` is set).
+  - `index/star/`: Hybrid STAR index (only published when `--save_reference` is set).
+  - `original/`: Original (unsorted) hybrid genome and transcriptome BAMs from STAR (only published when `--save_align_intermeds` is set).
+  - `sorted/`: Coordinate-sorted hybrid BAMs and their indices (only published when `--save_align_intermeds` is set).
+  - `sorted/samtools_stats/`: `samtools stats`, `flagstat`, `idxstats` for the hybrid alignments.
+  - `log/`: STAR log files (`*.Log.final.out`, `*.Log.out`, `*.Log.progress.out`, `*.SJ.out.tab`) for the hybrid pass.
+  - `unmapped/`: Unmapped reads from the hybrid pass (only published when `--save_unaligned` is set).
 
 </details>
 
@@ -387,6 +409,8 @@ The hybrid GTF is published as a side product and exposed on the `hybrid_gtf` wo
   - `allsamples_transprofile.py` RPF P-site profile for each transcript from Ribo-TISH ran over all samples at once
   </details>
 
+When `--extended_orf_analysis true` is set (and a novel-transcript source is configured), Ribo-TISH `predict` runs against the hybrid GTF with the canonical backbone supplied as the secondary annotation (`-a`). The output tables then include rows for novel intergenic ORFs alongside annotated ORFs; novel calls are reported with `TisType=Novel` and classified against the canonical backbone. See [Extended ORF discovery in usage.md](usage.md#extended-orf-discovery).
+
 ### Ribotricer detect-orfs
 
 <details markdown="1">
@@ -396,6 +420,8 @@ The hybrid GTF is published as a side product and exposed on the `hybrid_gtf` wo
   - `*_translating_ORFs.tsv` TSV with ORFs assessed as translating in the assocciated BAM file
   - `*_psite_offsets.txt`: If the P-site offsets are not provided, txt file containing the derived relative offsets
   </details>
+
+When `--extended_orf_analysis true` is set (and a novel-transcript source is configured), Ribotricer `prepare-orfs` runs against the hybrid GTF. The translating-ORFs TSV then includes novel intergenic ORFs (Ribotricer auto-labels CDS-absent transcripts as `novel` ORF type). See [Extended ORF discovery in usage.md](usage.md#extended-orf-discovery).
 
 ### RiboCode
 
@@ -409,11 +435,27 @@ The hybrid GTF is published as a side product and exposed on the `hybrid_gtf` wo
 
 RiboCode uses the P-site offsets from the metaplots step to identify translated ORFs. If RiboCode fails with `Error, can not determine the P-site locations`, this means the metaplots config file had no valid entries. See the [metaplots troubleshooting note above](#ribocode-metaplots) for how to address this.
 
+When `--extended_orf_analysis true` is set (and a novel-transcript source is configured), RiboCode is fed the hybrid GTF as its annotation source and the hybrid transcriptome BAM from the [second STAR pass](#hybrid-star-alignment). The ORF prediction tables then include rows for novel intergenic transcripts alongside annotated ORFs. See [Extended ORF discovery in usage.md](usage.md#extended-orf-discovery).
+
 :::warning
 The `-f0_percent`, `-pv1`, and `-pv2` parameters belong to the **metaplots** step, not to RiboCode itself. Pass them via `--extra_ribocode_metaplots_args`, not via RiboCode's own ext.args.
 :::
 
 If RiboCode is not needed for your analysis, you can skip it entirely with `--skip_ribocode`.
+
+### Rp-Bp
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `orf_predictions/rpbp/`
+  - `*.predicted-orfs.bed.gz`: per-sample predicted-ORF BED with Bayes factor scores (column 5) after the final-prediction-set filter (`--select-longest-by-stop --select-best-overlapping`).
+  - `*.predicted-orfs.dna.fa`: per-sample predicted-ORF nucleotide FASTA matching the BED.
+  - `*.predicted-orfs.protein.fa`: per-sample predicted-ORF protein FASTA matching the BED.
+
+</details>
+
+Produced only when `--run_rpbp true` is set. Rp-Bp's Bayesian fit is slow (~20-24h per replicate at genome-wide scale); see [Rp-Bp in usage.md](usage.md#rp-bp-opt-in-overnight). Rp-Bp's Bayes factor is stable across replicates and is retained in the cross-caller rank-aggregation set. When `--extended_orf_analysis true` is set, Rp-Bp consumes the hybrid GTF and so reports novel intergenic ORFs alongside annotated ones.
 
 ### PRICE
 
@@ -710,7 +752,7 @@ Results generated by MultiQC collate pipeline QC from supported tools i.e. FastQ
 
 - `genome/`
   - `*.fa`, `*.gtf`, `*.gff`, `*.bed`, `.tsv`: If the `--save_reference` parameter is provided then all of the genome reference files will be placed in this directory.
-  - `*.canonical_agat.longest.gff`, `*.canonical.gtf`: The canonical (one-transcript-per-gene) annotation backbone used by the ORF callers, riboWaltz, plastid P-site quantification and the translational-efficiency analysis. Only present when `--save_reference` is set and a `--canonical_gtf` was not supplied directly (i.e. derived via AGAT longest-isoform extraction from `--gtf`).
+  - `*.canonical_agat.longest.gff`, `*.canonical.gtf`: The canonical (one-transcript-per-gene) annotation backbone used by the genome-coordinate ORF callers (Ribo-TISH, Ribotricer), plastid P-site quantification and the translational-efficiency analysis. Only present when `--save_reference` is set and a `--canonical_gtf` was not supplied directly (i.e. derived via AGAT longest-CDS-isoform extraction from `--gtf`).
 - `genome/index/`
   - `star/`: Directory containing STAR indices.
   - `hisat2/`: Directory containing HISAT2 indices.
