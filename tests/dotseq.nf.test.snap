@@ -728,6 +728,10 @@
                 "orf_catalogue/cohort.catalogue.mqc.tsv",
                 "orf_catalogue/cohort.catalogue.orf_to_gene.tsv",
                 "orf_catalogue/cohort.catalogue.tsv",
+                "orf_catalogue/consensus",
+                "orf_catalogue/consensus/cohort.catalogue.consensus.bed12",
+                "orf_catalogue/consensus/cohort.catalogue.consensus.orf_to_gene.tsv",
+                "orf_catalogue/consensus/cohort.catalogue.consensus.tsv",
                 "orf_catalogue/normalised",
                 "orf_catalogue/normalised/SRX11780885.ribotish.normalised.bed12",
                 "orf_catalogue/normalised/SRX11780885.ribotish.normalised.tsv",
@@ -1590,6 +1594,9 @@
                 "cohort.catalogue.mqc.tsv:md5,05485f921536984f626ceac3cbe4765b",
                 "cohort.catalogue.orf_to_gene.tsv:md5,5295c27fcfcf60feb4eb46ffe5caa5fe",
                 "cohort.catalogue.tsv:md5,a52b55e6dbbe87dba3c070a059c6bcd9",
+                "cohort.catalogue.consensus.bed12:md5,dc3e8ab8ae6f4781fc0400ca49d9bf9f",
+                "cohort.catalogue.consensus.orf_to_gene.tsv:md5,caa1595ba3426e3e9b0482a707da8124",
+                "cohort.catalogue.consensus.tsv:md5,bd971a9436e365a6f0d229d6bc7ea087",
                 "SRX11780885.ribotish.normalised.bed12:md5,88501cbe90ffff67868b8339008e1334",
                 "SRX11780885.ribotish.normalised.tsv:md5,1a2128ffa2008a41cff0996a6302180f",
                 "SRX11780886.ribotish.normalised.bed12:md5,1a1f68acca1f1c5256db451b1f8a7812",
@@ -1768,10 +1775,10 @@
                 "stringtie_merge.gtf:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
-        "timestamp": "2026-06-17T11:09:05.180124067",
         "meta": {
-            "nf-test": "0.9.5",
-            "nextflow": "26.04.1"
-        }
+            "nf-test": "0.9.3",
+            "nextflow": "25.04.8"
+        },
+        "timestamp": "2026-06-25T14:35:45.111258161"
     }
 }
