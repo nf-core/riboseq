@@ -25,6 +25,13 @@ two deliberate departures from that reference:
 Small ORFs are clustered by amino-acid identity upstream (mmseqs/easycluster)
 and this module folds each multi-member cluster down to one representative.
 
+Alongside the collapsed catalogue it emits a consensus view (`*.consensus.*`)
+filtered to ORFs supported by at least `--min-callers` distinct callers and
+recurring in at least `--min-samples` samples (both default 1, i.e. no
+filtering). The filter is applied after the collapse, so the consensus is the
+high-confidence subset of the de-redundified catalogue and a folded
+micropeptide is judged on its combined cross-caller / cross-sample evidence.
+
 Only smORF rows are collapsed; larger ORFs and transcript-anchored classes pass
 through untouched, preserving the deterministic coordinate/transcript merge from
 upstream. Among the smORF members of a cluster the representative is chosen here
@@ -110,15 +117,9 @@ def merge_members(members):
     rep = sorted(members, key=lambda r: (-int(r.get("aa_length") or 0), r["orf_id"]))[0]
     out = dict(rep)
     for c in CALLERS:
-        out[f"called_by_{c}"] = (
-            "1" if any(r.get(f"called_by_{c}") == "1" for r in members) else "0"
-        )
-        out[f"score_{c}"] = best_score(
-            [r.get(f"score_{c}", "") for r in members], SCORE_DIRECTIONS[c]
-        )
-    samples = sorted(
-        {s for r in members for s in (r.get("samples") or "").split(",") if s}
-    )
+        out[f"called_by_{c}"] = "1" if any(r.get(f"called_by_{c}") == "1" for r in members) else "0"
+        out[f"score_{c}"] = best_score([r.get(f"score_{c}", "") for r in members], SCORE_DIRECTIONS[c])
+    samples = sorted({s for r in members for s in (r.get("samples") or "").split(",") if s})
     out["n_samples"] = str(len(samples))
     out["samples"] = ",".join(samples)
     return rep["orf_id"], out
@@ -126,13 +127,23 @@ def merge_members(members):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.parse_args(shlex.split("${args}"))
+    parser.add_argument(
+        "--min-callers",
+        type=int,
+        default=1,
+        help="Minimum distinct callers for an ORF to enter the consensus view (default: 1)",
+    )
+    parser.add_argument(
+        "--min-samples",
+        type=int,
+        default=1,
+        help="Minimum distinct samples for an ORF to enter the consensus view (default: 1)",
+    )
+    args = parser.parse_args(shlex.split("${args}"))
 
     prefix = "${prefix}"
 
-    catalogue = pd.read_csv(
-        "${catalogue_tsv}", sep="\\t", comment="#", dtype=str, keep_default_na=False
-    )
+    catalogue = pd.read_csv("${catalogue_tsv}", sep="\\t", comment="#", dtype=str, keep_default_na=False)
     header = list(catalogue.columns)
     rows = catalogue.to_dict("records")
 
@@ -164,21 +175,34 @@ def main():
 
     kept = [merged_rows.get(r["orf_id"], r) for r in rows if r["orf_id"] not in dropped]
     out = pd.DataFrame(kept, columns=header)
-    out.to_csv(f"{prefix}.tsv", sep="\\t", index=False)
-
-    with (
-        open(f"{prefix}.bed12", "w") as bh,
-        open(f"{prefix}.fasta", "w") as ah,
-    ):
-        for oid in out["orf_id"]:
-            if oid in bed_index:
-                bh.write(bed_index[oid] + "\\n")
-            if oid in aa:
-                ah.write(f">{oid}\\n{aa[oid]}\\n")
 
     o2g = pd.read_csv("${orf_to_gene_tsv}", sep="\\t", dtype=str, keep_default_na=False)
     o2g["orf_id"] = o2g["orf_id"].map(lambda o: remap.get(o, o))
-    o2g.drop_duplicates().to_csv(f"{prefix}.orf_to_gene.tsv", sep="\\t", index=False)
+    o2g = o2g.drop_duplicates()
+
+    def write_view(out_prefix, df):
+        """Write the catalogue TSV, BED12 and ORF-to-gene mapping for `df`."""
+        df.to_csv(f"{out_prefix}.tsv", sep="\\t", index=False)
+        with open(f"{out_prefix}.bed12", "w") as bh:
+            for oid in df["orf_id"]:
+                if oid in bed_index:
+                    bh.write(bed_index[oid] + "\\n")
+        o2g[o2g["orf_id"].isin(set(df["orf_id"]))].to_csv(f"{out_prefix}.orf_to_gene.tsv", sep="\\t", index=False)
+
+    # Full collapsed catalogue (+ amino-acid FASTA).
+    write_view(prefix, out)
+    with open(f"{prefix}.fasta", "w") as ah:
+        for oid in out["orf_id"]:
+            if oid in aa:
+                ah.write(f">{oid}\\n{aa[oid]}\\n")
+
+    # Consensus view: high-confidence subset of the collapsed catalogue, so a
+    # folded micropeptide is judged on its combined cross-caller / cross-sample
+    # evidence. At the default thresholds (1, 1) it equals the full catalogue.
+    n_callers = sum((out[f"called_by_{c}"] == "1").astype(int) for c in CALLERS)
+    n_samples = pd.to_numeric(out["n_samples"], errors="coerce").fillna(0).astype(int)
+    consensus = out[(n_callers >= args.min_callers) & (n_samples >= args.min_samples)]
+    write_view(f"{prefix}.consensus", consensus)
 
     counts = out["orf_class"].value_counts()
     with open(f"{prefix}.mqc.tsv", "w") as mh:
