@@ -144,9 +144,17 @@ workflow ORF_CALLER_DISPATCH {
     if (params.run_rpbp) {
         log.warn "Rp-Bp is enabled via --run_rpbp. Expect roughly 20-24h per replicate at genome-wide scale because the Bayesian MCMC fit dominates; plan compute accordingly. Its score column (Bayes factor) is stable and is retained in the cross-caller rank aggregation."
 
+        // Rp-Bp enumerates candidate ORFs per transcript isoform and resolves
+        // redundancy/overlaps itself (longest-per-stop, best Bayes factor per
+        // overlap; Malone et al. 2017), so it takes the full multi-isoform
+        // annotation rather than the one-transcript-per-gene backbone, which
+        // exists to disambiguate P-site quantification. Restricting it to
+        // canonical would drop isoform-specific ORFs and bias ORF-type
+        // classification to canonical CDS. In extended mode it takes the hybrid
+        // GTF to bring novel transcripts into scope.
         def ch_rpbp_annotation = extended_orf_active ?
             ch_fasta_gtf_extended :
-            ch_fasta_gtf
+            ch_fasta.combine(ch_gtf).map { fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }.first()
 
         FASTA_GTF_BAM_RPBP(
             ch_bams_for_analysis,
