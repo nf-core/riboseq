@@ -1594,9 +1594,9 @@
                 "cohort.catalogue.mqc.tsv:md5,05485f921536984f626ceac3cbe4765b",
                 "cohort.catalogue.orf_to_gene.tsv:md5,5295c27fcfcf60feb4eb46ffe5caa5fe",
                 "cohort.catalogue.tsv:md5,a52b55e6dbbe87dba3c070a059c6bcd9",
-                "cohort.catalogue.consensus.bed12:md5,dc3e8ab8ae6f4781fc0400ca49d9bf9f",
-                "cohort.catalogue.consensus.orf_to_gene.tsv:md5,caa1595ba3426e3e9b0482a707da8124",
-                "cohort.catalogue.consensus.tsv:md5,bd971a9436e365a6f0d229d6bc7ea087",
+                "cohort.catalogue.consensus.bed12:md5,9534d716effe9363d00f7a6535eadd4f",
+                "cohort.catalogue.consensus.orf_to_gene.tsv:md5,5295c27fcfcf60feb4eb46ffe5caa5fe",
+                "cohort.catalogue.consensus.tsv:md5,a52b55e6dbbe87dba3c070a059c6bcd9",
                 "SRX11780885.ribotish.normalised.bed12:md5,88501cbe90ffff67868b8339008e1334",
                 "SRX11780885.ribotish.normalised.tsv:md5,1a2128ffa2008a41cff0996a6302180f",
                 "SRX11780886.ribotish.normalised.bed12:md5,1a1f68acca1f1c5256db451b1f8a7812",
@@ -1779,6 +1779,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2026-06-25T14:35:45.111258161"
+        "timestamp": "2026-06-25T21:05:58.380283326"
     }
 }
