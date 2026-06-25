@@ -334,7 +334,7 @@ By default the pipeline calls ORFs with two tools, Ribo-TISH `predict` and RiboC
 
 Ribotricer is available as a third caller but is off by default. Enable it with `--run_ribotricer true` for broader recall, after which an ORF is agreed on a majority vote (2 of 3). It is opt-in because its ORF-score column is unstable across biological replicates even though its binary call set is reproducible. When enabled, its binary calls count toward agreement but its score is excluded from cross-caller rank aggregation, and the pipeline warns at runtime.
 
-### PRICE (opt-in, overnight)
+### PRICE (opt-in)
 
 [PRICE](https://github.com/erhard-lab/gedi/wiki/Price) (Erhard et al., 2018) is a Bayesian ORF caller distributed as part of the [Gedi](https://github.com/erhard-lab/gedi) Java framework. Unlike the per-sample callers, PRICE estimates a shared codon-position model across the riboseq cohort by EM and is invoked one-shot rather than per-sample. Activate with `--run_price true`.
 
