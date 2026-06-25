@@ -449,9 +449,9 @@ If RiboCode is not needed for your analysis, you can skip it entirely with `--sk
 <summary>Output files</summary>
 
 - `orf_predictions/rpbp/`
-  - `*.predicted-orfs.filtered.bed.gz`: per-sample predicted-ORF BED with Bayes factor scores (column 5) after the final-prediction-set filter (`--select-longest-by-stop --select-best-overlapping`).
-  - `*.predicted-orfs.filtered.dna.fa`: per-sample predicted-ORF nucleotide FASTA matching the filtered BED.
-  - `*.predicted-orfs.filtered.protein.fa`: per-sample predicted-ORF protein FASTA matching the filtered BED.
+  - `*.predicted-orfs.bed.gz`: per-sample predicted-ORF BED with Bayes factor scores (column 5) after the final-prediction-set filter (`--select-longest-by-stop --select-best-overlapping`).
+  - `*.predicted-orfs.dna.fa`: per-sample predicted-ORF nucleotide FASTA matching the BED.
+  - `*.predicted-orfs.protein.fa`: per-sample predicted-ORF protein FASTA matching the BED.
 
 </details>
 
