@@ -16,6 +16,7 @@ include { NOVEL_TRANSCRIPT_DISCOVERY      } from '../../subworkflows/local/novel
 include { EXTENDED_ORF_SECOND_PASS_ALIGN  } from '../../subworkflows/local/extended_orf_second_pass_align'
 include { ORF_CALLER_DISPATCH             } from '../../subworkflows/local/orf_caller_dispatch'
 include { COVERAGE_TRACKS                 } from '../../subworkflows/local/coverage_tracks'
+include { ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE } from '../../subworkflows/nf-core/orftable_fasta_gtf_buildorfcatalogue/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -441,6 +442,30 @@ workflow RIBOSEQ {
         : 0
     ch_enabled_orf_callers      = channel.value(enabled_orf_callers)
     ch_rank_aggregation_callers = channel.value(rank_aggregation_callers)
+
+    //
+    // Cross-sample ORF catalogue (issue #167). Built once per pipeline run
+    // when extended-ORF analysis is enabled AND at least one ORF caller ran.
+    // The catalogue normalises each caller's per-sample output into a unified
+    // BED12, merges with class-aware collapse (transcript-ID for canonical
+    // CDS, reciprocal overlap for novel intergenic / smORFs), and emits the
+    // merged BED12 + sidecar TSV + ORF-to-gene mapping + AA FASTA.
+    //
+    if (extended_orf_active && enabled_orf_callers) {
+        ch_orf_tables = ORF_CALLER_DISPATCH.out.ribotish_predictions  .map { meta, f -> [ meta, f, 'ribotish'   ] }
+            .mix(ORF_CALLER_DISPATCH.out.ribocode_predictions         .map { meta, f -> [ meta, f, 'ribocode'   ] })
+            .mix(ORF_CALLER_DISPATCH.out.ribotricer_predictions       .map { meta, f -> [ meta, f, 'ribotricer' ] })
+            .mix(ORF_CALLER_DISPATCH.out.rpbp_predictions             .map { meta, f -> [ meta, f, 'rpbp'       ] })
+            .mix(ORF_CALLER_DISPATCH.out.price_predictions            .map { meta, f -> [ meta, f, 'price'      ] })
+
+        ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE(
+            ch_orf_tables,
+            ch_fasta    .map { fasta -> [ [id: 'reference'], fasta ] }.first(),
+            ch_hybrid_gtf.map { gtf   -> [ [id: 'reference'], gtf   ] }.first(),
+            !params.skip_orf_collapse
+        )
+        ch_multiqc_files = ch_multiqc_files.mix(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.multiqc.collect{it[1]}.ifEmpty([]))
+    }
 
     //
     // Get P-sites and P-site diagnostics with riboWaltz

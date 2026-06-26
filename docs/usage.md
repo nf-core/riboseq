@@ -556,6 +556,21 @@ The second pass roughly doubles STAR alignment compute for Ribo-seq samples and 
 
 The default `--extended_orf_analysis false` keeps the pre-#165 behaviour unchanged: the primary STAR pass is the only alignment and every ORF caller runs against the canonical backbone.
 
+### Cross-sample ORF catalogue
+
+When `--extended_orf_analysis true` is set and at least one ORF caller is enabled, the pipeline produces a cohort-level ORF catalogue under `<outdir>/orf_catalogue/`. The catalogue normalises each per-sample, per-caller output into a unified BED12 (genomic blocks, multi-exon-aware), then merges across samples and callers with a class-aware strategy:
+
+- annotated multi-exon CDS are collapsed by `transcript_id` to preserve intron-chain identity;
+- single-exon novel intergenic ORFs are clustered by 80% reciprocal overlap on the outer genomic span;
+- smORFs (≤ 100 aa) are clustered by 80% reciprocal overlap, then peptide-level deduplicated: the catalogue amino-acid FASTA is clustered with MMseqs2 (`--min-seq-id 0.9 -c 0.8`) and each multi-member smORF cluster is folded to one representative, following the GENCODE Ribo-seq ORF catalogue convention (Mudge et al. 2022). Pass `--skip_orf_collapse` to publish the coordinate-merged catalogue without this sequence-level collapse;
+- cross-caller consensus is recorded in `called_by_<caller>` binary columns plus `score_<caller>` columns for Ribo-TISH / RiboCode / Rp-Bp / PRICE (Ribotricer scores are excluded from rank aggregation per #163).
+
+The catalogue runs once per pipeline invocation (cohort-level, not per sample) and gates on `--extended_orf_analysis true` plus a non-empty enabled-caller set. The default-off path keeps the pre-#167 behaviour unchanged.
+
+Alongside the full catalogue, a consensus view is published under `<outdir>/orf_catalogue/consensus/` containing only ORFs supported by at least `--orf_min_callers` distinct callers and recurring in at least `--orf_min_samples` samples (both default 1, so the consensus view equals the full catalogue out of the box). Raise either threshold (e.g. `--orf_min_callers 2`) for a higher-confidence catalogue that tames downstream ORF-level multiple testing; the full unfiltered catalogue is always published regardless. The threshold is applied after the smORF collapse, so the consensus is the high-confidence subset of the de-redundified catalogue and a micropeptide folded across several loci is judged on its combined cross-caller / cross-sample evidence (when `--skip_orf_collapse` is set it comes from the merged catalogue instead).
+
+See [ORF catalogue (cross-sample)](output.md#orf-catalogue-cross-sample) in the output docs for the full list of published files.
+
 ## Running the pipeline
 
 The typical command for running the pipeline is as follows:

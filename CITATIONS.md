@@ -52,6 +52,12 @@
 
   > Lauria F, Tebaldi T, Bernabò P, Groen EJN, Gillingwater TH, Viero G. riboWaltz: Optimization of ribosome P-site positioning in ribosome profiling data. PLoS Comput Biol. 2018 Aug 13;14(8):e1006169. doi: 10.1371/journal.pcbi.1006169. PMID: 30102689; PMCID: PMC6112680.
 
+- [MMseqs2](https://pubmed.ncbi.nlm.nih.gov/29035372/)
+
+  > Steinegger M, Söding J. MMseqs2 enables sensitive protein sequence searching for the analysis of massive data sets. Nat Biotechnol. 2017 Nov;35(11):1026-1028. doi: 10.1038/nbt.3988. PMID: 29035372.
+
+  > Used to cluster catalogue micropeptides by amino-acid identity. Small-ORF amino-acid deduplication follows the GENCODE Ribo-seq ORF catalogue convention: Mudge JM, Ruiz-Orera J, Prensner JR, et al. Standardized annotation of translated open reading frames. Nat Biotechnol. 2022 Jul;40(7):994-999. doi: 10.1038/s41587-022-01369-0. PMID: 35831657.
+
 - [SortMeRNA](https://pubmed.ncbi.nlm.nih.gov/23071270/)
 
   > Kopylova E, Noé L, Touzet H. SortMeRNA: fast and accurate filtering of ribosomal RNAs in metatranscriptomic data Bioinformatics. 2012 Dec 15;28(24):3211-7. doi: 10.1093/bioinformatics/bts611. Epub 2012 Oct 15. PubMed PMID: 23071270.

@@ -25,6 +25,11 @@
                         "git_sha": "88d43dad73a675e66bff49ebb57fe657a5909018",
                         "installed_by": ["modules"]
                     },
+                    "bedtools/getfasta": {
+                        "branch": "master",
+                        "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
+                        "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
+                    },
                     "bedtools/intersect": {
                         "branch": "master",
                         "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
@@ -54,6 +59,21 @@
                         "branch": "master",
                         "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
                         "installed_by": ["modules"]
+                    },
+                    "custom/orfcollapse": {
+                        "branch": "master",
+                        "git_sha": "76e959312e636388810442416972071734c4144a",
+                        "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
+                    },
+                    "custom/orfmerge": {
+                        "branch": "master",
+                        "git_sha": "76e959312e636388810442416972071734c4144a",
+                        "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
+                    },
+                    "custom/orfnormalise": {
+                        "branch": "master",
+                        "git_sha": "ccb13a7b8bb6bf2a9dde01111136b8ab3dbf1c08",
+                        "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
                     },
                     "custom/tx2gene": {
                         "branch": "master",
@@ -129,6 +149,11 @@
                         "branch": "master",
                         "git_sha": "77b38f082c32cf86d870802c5dc96b51062c926e",
                         "installed_by": ["quantify_pseudo_alignment"]
+                    },
+                    "mmseqs/easycluster": {
+                        "branch": "master",
+                        "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
+                        "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
                     },
                     "multiqc": {
                         "branch": "master",
@@ -309,6 +334,11 @@
                         "git_sha": "28935b89b7e1f19e835f8c6e4c8322d4b505dded",
                         "installed_by": ["fastq_remove_rrna"]
                     },
+                    "seqkit/translate": {
+                        "branch": "master",
+                        "git_sha": "d07a945f421a4a91ce4e5a22db63e0e7f8741607",
+                        "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
+                    },
                     "sortmerna": {
                         "branch": "master",
                         "git_sha": "6d1d4b987af3ee5852d852abf99f8883028cea9c",
@@ -455,6 +485,11 @@
                     "gtf_hybridmerge_gffcompare": {
                         "branch": "master",
                         "git_sha": "bf60969a3abb40d294cffd5105f574637bfa6260",
+                        "installed_by": ["subworkflows"]
+                    },
+                    "orftable_fasta_gtf_buildorfcatalogue": {
+                        "branch": "master",
+                        "git_sha": "76e959312e636388810442416972071734c4144a",
                         "installed_by": ["subworkflows"]
                     },
                     "quant_tximport_summarizedexperiment": {
