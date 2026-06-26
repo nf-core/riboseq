@@ -38,12 +38,12 @@ nextflow_process {
                 input[2] = GUNZIP.out.gunzip.map{[
                     [id:'homo_sapiens_chr20'],
                     it[1],
-                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/Homo_sapiens.GRCh38.111_chr20.gtf", checkIfExists: true),
-                    []
+                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/Homo_sapiens.GRCh38.111_chr20.gtf", checkIfExists: true)
                 ]}
                 input[3] = Channel.of([[],[]])
                 input[4] = Channel.of([[],[]])
                 input[5] = Channel.of([[],[]])
+                input[6] = Channel.of([[],[]])
                 """
             }
         }
@@ -53,8 +53,10 @@ nextflow_process {
                 { assert process.success },
                 { assert path(process.out.predictions[0][1]).getText().contains("ENSG00000132640\tENST00000254977\tBTBD3\tprotein_coding\t20:11890767-11923666:+\tATG\t45\t1743\tExtended\t0\t0\tNone\t0.013377070461772932\tT\tNone\tNone\t0.02118962148347") },
                 { assert path(process.out.all[0][1]).getText().contains("ENSG00000132640\tENST00000254977\tBTBD3\tprotein_coding\t20:11890767-11923666:+\tATG\t45\t1743\tExtended\t0\t0\tNone\t0.013377070461772932\tT\tNone\tNone\t0.02118962148347") },
-                { assert snapshot(process.out.transprofile).match("transprofile_single_end_single_ribo_bam") },
-                { assert snapshot(process.out.versions).match("versions_single_end_single_ribo_bam") }
+                { assert snapshot(
+                    process.out.transprofile,
+                    process.out.findAll { key, val -> key.startsWith('versions') }
+                ).match() }
             )
         }
     }
@@ -75,12 +77,12 @@ nextflow_process {
                 input[2] = GUNZIP.out.gunzip.map{[
                     [id:'homo_sapiens_chr20'],
                     it[1],
-                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/Homo_sapiens.GRCh38.111_chr20.gtf", checkIfExists: true),
-                    []
+                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/Homo_sapiens.GRCh38.111_chr20.gtf", checkIfExists: true)
                 ]}
                 input[3] = Channel.of([[],[]])
                 input[4] = Channel.of([[],[]])
                 input[5] = Channel.of([[],[]])
+                input[6] = Channel.of([[],[]])
                 """
             }
         }
@@ -88,10 +90,12 @@ nextflow_process {
         then {
             assertAll(
                 { assert process.success },
-                { assert snapshot(process.out.predictions).match("predictions_single_end_single_ribo_bam_stub") },
-                { assert snapshot(process.out.all).match("all_single_end_single_ribo_bam_stub") },
-                { assert snapshot(process.out.transprofile).match("transprofile_single_end_single_ribo_bam_stub") },
-                { assert snapshot(process.out.versions).match("versions_single_end_single_ribo_bam_stub") }
+                { assert snapshot(
+                    process.out.predictions,
+                    process.out.all,
+                    process.out.transprofile,
+                    process.out.findAll { key, val -> key.startsWith('versions') }
+                ).match() }
             )
         }
     }
@@ -116,12 +120,12 @@ nextflow_process {
                 input[2] = GUNZIP.out.gunzip.map{[
                     [id:'homo_sapiens_chr20'],
                     it[1],
-                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/Homo_sapiens.GRCh38.111_chr20.gtf", checkIfExists: true),
-                    []
+                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/Homo_sapiens.GRCh38.111_chr20.gtf", checkIfExists: true)
                 ]}
                 input[3] = Channel.of([[],[]])
                 input[4] = Channel.of([[],[]])
                 input[5] = Channel.of([[],[]])
+                input[6] = Channel.of([[],[]])
                 """
             }
         }
@@ -131,8 +135,10 @@ nextflow_process {
                 { assert process.success },
                 { assert path(process.out.predictions[0][1]).getText().contains("ENSG00000284776\tENST00000618693\t\tprotein_coding\t20:18567478-18744216:+\tATG\t26\t695\tAnnotated\t0\t0\tNone\t0.0006123183014212") },
                 { assert path(process.out.all[0][1]).getText().contains("ENSG00000284776\tENST00000618693\t\tprotein_coding\t20:18567478-18744216:+\tATG\t26\t695\tAnnotated\t0\t0\tNone\t0.0006123183014212") },
-                { assert snapshot(process.out.transprofile).match("transprofile_single_end_multi_ribo_bam") },
-                { assert snapshot(process.out.versions).match("versions_single_end_multi_ribo_bam") }
+                { assert snapshot(
+                    process.out.transprofile,
+                    process.out.findAll { key, val -> key.startsWith('versions') }
+                ).match() }
             )
         }
     }
@@ -159,47 +165,12 @@ nextflow_process {
                 input[2] = GUNZIP.out.gunzip.map{[
                     [id:'homo_sapiens_chr20'],
                     it[1],
-                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/Homo_sapiens.GRCh38.111_chr20.gtf", checkIfExists: true),
-                    []
-                ]}
-                input[3] = Channel.of([[],[]])
-                input[4] = Channel.of([[],[]])
-                input[5] = Channel.of([[],[]])
-                """
-            }
-        }
-
-        then {
-            assertAll(
-                { assert process.success },
-                { assert snapshot(process.out.predictions).match("predictions_single_end_multi_ribo_bam_stub") },
-                { assert snapshot(process.out.all).match("all_single_end_multi_ribo_bam_stub") },
-                { assert snapshot(process.out.transprofile).match("transprofile_single_end_multi_ribo_bam_stub") },
-                { assert snapshot(process.out.versions).match("versions_single_end_multi_ribo_bam_stub") }
-            )
-        }
-    }
-
-    test("sarscov2 [bam] - single_end - single ribo bam - secondary reference gtf") {
-
-        when {
-            process {
-                """
-                input[0] = [
-                    [ id:'test', single_end:true, strandedness:'forward' ], // meta map
-                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/aligned_reads/SRX11780888_chr20.bam", checkIfExists: true),
-                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/aligned_reads/SRX11780888_chr20.bam.bai", checkIfExists: true)
-                ]
-                input[1] = Channel.of([[],[],[]])
-                input[2] = GUNZIP.out.gunzip.map{[
-                    [id:'homo_sapiens_chr20'],
-                    it[1],
-                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/Homo_sapiens.GRCh38.111_chr20.gtf", checkIfExists: true),
                     file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/Homo_sapiens.GRCh38.111_chr20.gtf", checkIfExists: true)
                 ]}
                 input[3] = Channel.of([[],[]])
                 input[4] = Channel.of([[],[]])
                 input[5] = Channel.of([[],[]])
+                input[6] = Channel.of([[],[]])
                 """
             }
         }
@@ -207,46 +178,12 @@ nextflow_process {
         then {
             assertAll(
                 { assert process.success },
-                { assert path(process.out.predictions[0][1]).exists() },
-                { assert path(process.out.all[0][1]).exists() },
-                { assert snapshot(process.out.versions).match("versions_single_end_single_ribo_bam_reference_gtf") }
-            )
-        }
-    }
-
-    test("sarscov2 [bam] - single_end - single ribo bam - secondary reference gtf - stub") {
-
-        options '-stub'
-
-        when {
-            process {
-                """
-                input[0] = [
-                    [ id:'test', single_end:true, strandedness:'forward' ], // meta map
-                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/aligned_reads/SRX11780888_chr20.bam", checkIfExists: true),
-                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/aligned_reads/SRX11780888_chr20.bam.bai", checkIfExists: true)
-                ]
-                input[1] = Channel.of([[],[],[]])
-                input[2] = GUNZIP.out.gunzip.map{[
-                    [id:'homo_sapiens_chr20'],
-                    it[1],
-                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/Homo_sapiens.GRCh38.111_chr20.gtf", checkIfExists: true),
-                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/Homo_sapiens.GRCh38.111_chr20.gtf", checkIfExists: true)
-                ]}
-                input[3] = Channel.of([[],[]])
-                input[4] = Channel.of([[],[]])
-                input[5] = Channel.of([[],[]])
-                """
-            }
-        }
-
-        then {
-            assertAll(
-                { assert process.success },
-                { assert snapshot(process.out.predictions).match("predictions_single_end_single_ribo_bam_reference_gtf_stub") },
-                { assert snapshot(process.out.all).match("all_single_end_single_ribo_bam_reference_gtf_stub") },
-                { assert snapshot(process.out.transprofile).match("transprofile_single_end_single_ribo_bam_reference_gtf_stub") },
-                { assert snapshot(process.out.versions).match("versions_single_end_single_ribo_bam_reference_gtf_stub") }
+                { assert snapshot(
+                    process.out.predictions,
+                    process.out.all,
+                    process.out.transprofile,
+                    process.out.findAll { key, val -> key.startsWith('versions') }
+                ).match() }
             )
         }
     }

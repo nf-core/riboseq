@@ -3,7 +3,7 @@ name: quantify_inframe_psite_orf
 description: |
   Count plastid wiggle-track P-sites per ORF by intersecting per-sample
   forward+reverse bedgraphs with the codon-start positions emitted by
-  `ORF_INFRAME_PSITES`. Per-sample output is one row per ORF.
+  `CUSTOM_BED12CODONPOSITIONS`. Per-sample output is one row per ORF.
 keywords:
   - riboseq
   - orf
@@ -47,16 +47,20 @@ output:
           description: Per-sample metadata
       - "*.orf_inframe_psite_counts.tsv":
           type: file
-          description: Per-sample two-column `(orf_id, count)` TSV
+          description: Per-sample three-column `(sample_id, orf_id, count)` TSV
           pattern: "*.orf_inframe_psite_counts.tsv"
           ontologies: []
+topics:
   versions:
-    - versions.yml:
-        type: file
-        description: File containing software versions
-        pattern: "versions.yml"
-        ontologies:
-          - edam: http://edamontology.org/format_3750
+    - - "${task.process}":
+          type: string
+          description: The name of the process
+      - bedtools:
+          type: string
+          description: The name of the tool
+      - bedtools --version | cut -f2 -dv:
+          type: string
+          description: The version of the tool
 authors:
   - "@pinin4fjords"
 maintainers:

@@ -1,5 +1,5 @@
 //
-// ORF-level in-frame P-site quantification.
+// ORF-level in-frame P-site quantification (issue #166).
 //
 // Chains:
 //   1. CUSTOM_BED12CODONPOSITIONS: expand the BED12 catalogue into codon-start BED6.
@@ -11,7 +11,7 @@
 // Gating is done at the call site in workflows/riboseq/main.nf:
 //   --extended_orf_analysis = true  AND  catalogue exists  AND  plastid is enabled.
 //
-// The matrix is the input for the future DTE step. This
+// The matrix is the input for the future DTE step in issue #168. This
 // subworkflow does not run DTE itself.
 
 include { CUSTOM_BED12CODONPOSITIONS } from '../../../modules/nf-core/custom/bed12codonpositions/main'

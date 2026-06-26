@@ -304,7 +304,11 @@ By default, the input GTF file will be filtered to ensure that sequence names co
 
 ### Canonical annotation backbone
 
-Ribo-seq footprint reads are ~28-32 nt and cannot resolve which isoform is being translated when reads fall on exons shared between isoforms (see [Wang et al. 2016, Bioinformatics 32:1880](https://academic.oup.com/bioinformatics/article/32/12/1880/1744291) for a quantitative analysis: only ~7% of human Ribo-seq reads map uniquely against a full multi-isoform annotation). The pipeline therefore separates the annotation used for genome-guided alignment (full multi-isoform, supplied via `--gtf`) from the annotation backbone used for ORF calling, P-site calibration and translational-efficiency analysis (one-transcript-per-gene, supplied via `--canonical_gtf`).
+Ribo-seq footprint reads are ~28-32 nt and cannot resolve which isoform is being translated when reads fall on exons shared between isoforms (see [Wang et al. 2016, Bioinformatics 32:1880](https://academic.oup.com/bioinformatics/article/32/12/1880/1744291) for a quantitative analysis: only ~7% of human Ribo-seq reads map uniquely against a full multi-isoform annotation). The pipeline therefore separates the annotation used for genome-guided alignment (full multi-isoform, supplied via `--gtf`) from the annotation backbone used by the genome-coordinate ORF callers (Ribo-TISH, Ribotricer), plastid P-site quantification and the translational-efficiency analysis (one-transcript-per-gene, supplied via `--canonical_gtf`).
+
+The transcriptome-coordinate tools (RiboCode, riboWaltz and Salmon) read the reference-transcriptome alignment that STAR emits with `--quantMode TranscriptomeSAM`, which is keyed to the full multi-isoform annotation; they therefore continue to use `--gtf`, since a canonical-only annotation would not match the transcript IDs in those BAMs.
+
+`--canonical_gtf` is a recommended backbone, not a hard requirement: nothing enforces exactly one transcript per gene, so an annotation that occasionally lists more than one (e.g. MANE, which includes MANE Plus Clinical alongside MANE Select for some genes) is handled without error. Such genes simply retain a little of the shared-exon ambiguity the backbone is designed to reduce.
 
 Recommended sources for `--canonical_gtf`:
 
@@ -314,7 +318,7 @@ Recommended sources for `--canonical_gtf`:
 | Mouse, zebrafish, any Ensembl organism (release ≥104) | [Ensembl GTF](https://www.ensembl.org/info/genome/genebuild/canonical.html)                          | `grep 'tag "Ensembl_canonical"' input.gtf > canonical.gtf` |
 | Any organism (fallback)                               | full `--gtf` + [AGAT](https://agat.readthedocs.io/en/latest/tools/agat_sp_keep_longest_isoform.html) | done automatically when `--canonical_gtf` is omitted       |
 
-If `--canonical_gtf` is not supplied the pipeline runs [`agat_sp_keep_longest_isoform.pl`](https://agat.readthedocs.io/en/latest/tools/agat_sp_keep_longest_isoform.html) on the full GTF and uses the result as the backbone. AGAT operates structurally (longest isoform per gene) rather than from curation, so a curated source is strongly preferred where available.
+If `--canonical_gtf` is not supplied the pipeline runs [`agat_sp_keep_longest_isoform.pl`](https://agat.readthedocs.io/en/latest/tools/agat_sp_keep_longest_isoform.html) on the full GTF and uses the result as the backbone. AGAT operates structurally (it keeps the isoform with the longest CDS per gene, falling back to the longest concatenated exons for genes with no CDS) rather than from curation, so a curated source is strongly preferred where available.
 
 MANE Select vs `Ensembl_canonical` for non-coding genes: MANE Select covers virtually all protein-coding genes plus a growing but partial set of non-coding genes ([NCBI Insights, MANE v1.4](https://ncbiinsights.ncbi.nlm.nih.gov/2024/10/28/mane-v1-4-mane-select-non-coding-genes/)). `Ensembl_canonical` has broader biotype priority including lncRNA and other ncRNA biotypes, so users working primarily on smORFs in lncRNAs may get better transcript recall from `Ensembl_canonical`.
 
@@ -324,7 +328,29 @@ The pipeline will by default run the [Ribo-TISH](https://github.com/zhpn1024/rib
 
 Ribo-TISH `quality` is fed the canonical annotation (`--canonical_gtf`, or the AGAT-derived longest-isoform fallback) rather than the full multi-isoform GTF. `quality` estimates P-site offsets and read-length QC against CDS-bearing canonical transcripts; mixing in CDS-absent or near-duplicate isoforms degrades that calibration without adding diagnostic signal. The `predict` step receives the same canonical input by default; the wrapper also accepts an optional secondary annotation on `-a` for novel-transcript discovery modes.
 
-### PRICE (opt-in, overnight)
+### ORF calling and cross-caller agreement
+
+By default the pipeline calls ORFs with two tools, Ribo-TISH `predict` and RiboCode, and reports an ORF as agreed only when both callers support it. This intersection is precision-weighted: the agreed set is conservative and may omit ORFs that only one caller detects.
+
+Ribotricer is available as a third caller but is off by default. Enable it with `--run_ribotricer true` for broader recall, after which an ORF is agreed on a majority vote (2 of 3). It is opt-in because its ORF-score column is unstable across biological replicates even though its binary call set is reproducible. When enabled, its binary calls count toward agreement but its score is excluded from cross-caller rank aggregation, and the pipeline warns at runtime.
+
+### Rp-Bp (opt-in, overnight)
+
+[Rp-Bp](https://github.com/dieterich-lab/rp-bp) (Malone et al., 2017) is a Bayesian-strict ORF caller that complements RiboCode's permissive canonical-CDS calls. It is the recommended second caller when statistical rigour matters more than turnaround time. Activate with `--run_rpbp true`.
+
+> :warning: **Runtime cost.** Rp-Bp's Bayesian MCMC fit dominates wall-clock and takes roughly **20-24 hours per replicate** at genome-wide scale. The pipeline emits a runtime warning when `--run_rpbp` is set. Plan compute time, queue limits and instance lifetimes accordingly.
+
+Rp-Bp's score column (Bayes factor) is stable and is retained in the cross-caller rank-aggregation set alongside RiboCode and Ribo-TISH; Ribotricer's score column is excluded due to known instability but Rp-Bp's is not.
+
+Rp-Bp runs through the upstream `nf-core/rpbp/*` modules driven by the `FASTA_GTF_BAM_RPBP` nf-core subworkflow, which orchestrates `prepare-rpbp-genome`, `extract-metagene-profiles`, `estimate-metagene-profile-bayes-factors`, `select-periodic-offsets`, `get-periodic-lengths-offsets`, `extract-orf-profiles`, `estimate-orf-bayes-factors` and `select-final-prediction-set` from your `--fasta` / `--gtf` inputs without you having to author a YAML config. Tool CLI overrides are exposed via `--extra_rpbp_preparegenome_args` and `--extra_rpbp_predictorfs_args`.
+
+Per-sample final-prediction outputs - filtered BED of predicted ORFs (with Bayes factor in column 5), plus matched nucleotide and protein FASTAs - are published under `<outdir>/orf_predictions/rpbp/`.
+
+**Annotation.** Rp-Bp is given the full multi-isoform `--gtf` annotation, not the one-transcript-per-gene canonical backbone that the pipeline uses elsewhere to disambiguate P-site quantification. Rp-Bp enumerates candidate ORFs across every transcript isoform (deduplicating identical ORFs by genomic coordinate) and then resolves redundant and overlapping ORFs itself - the longest ORF per stop codon, then the highest Bayes factor among overlaps. Collapsing the annotation to one isoform per gene would silently remove ORFs that exist only on non-canonical isoforms (alternative-5'UTR uORFs, isoform-specific N-terminal extensions or truncations, retained-intron and alternative-exon ORFs) and bias the reported ORF types toward canonical CDS, with no compensating benefit; PRICE is handled the same way and for the same reason ([Malone et al., 2017](https://academic.oup.com/nar/article/45/6/2960/2953491)). Under `--extended_orf_analysis true` Rp-Bp instead receives the hybrid GTF, so novel transcripts are within discovery scope in the same way as Ribo-TISH `predict` and Ribotricer.
+
+> :information_source: **STAR alignment params vs upstream rpbp.** rpbp's own pipeline runs STAR with Ribo-seq-tuned settings (`outFilterMismatchNmax 1`, `outFilterMismatchNoverLmax 0.04`, `outFilterType BySJout`, `sjdbOverhang 33`, `winAnchorMultimapNmax 100`, `seedSearchStartLmaxOverLread 0.5`). We use the pipeline's standard STAR alignment (shared with the RNA-seq side of paired runs), which is more permissive. Practical impact: rpbp processes whatever alignments it gets, but periodicity / Bayes-factor distributions will differ from a standalone rpbp run on the same FASTQs. If you need bit-identical-to-standalone-rpbp output, override with `--extra_star_align_args '--outFilterMismatchNmax 1 --outFilterMismatchNoverLmax 0.04 --outFilterType BySJout --winAnchorMultimapNmax 100 --seedSearchStartLmaxOverLread 0.5'`. Note that `sjdbOverhang` is baked into the STAR index and cannot be changed post-hoc - it would require regenerating the index with `--sjdbOverhang 33`, and that change would only be appropriate for a Ribo-seq-only run (RNA-seq reads are too long for that setting). Tracked for future work: [#173](https://github.com/nf-core/riboseq/issues/173).
+
+### PRICE (opt-in)
 
 [PRICE](https://github.com/erhard-lab/gedi/wiki/Price) (Erhard et al., 2018) is a Bayesian ORF caller distributed as part of the [Gedi](https://github.com/erhard-lab/gedi) Java framework. Unlike the per-sample callers, PRICE estimates a shared codon-position model across the riboseq cohort by EM and is invoked one-shot rather than per-sample. Activate with `--run_price true`.
 
@@ -332,27 +358,13 @@ Ribo-TISH `quality` is fed the canonical annotation (`--canonical_gtf`, or the A
 
 The pipeline builds a binary `.oml` genome index via `gedi -e IndexGenome` once per run, then calls PRICE once across the cohort with the index plus the riboseq BAMs. PRICE's primary output is `${prefix}.orfs.tsv`, a table of all called ORFs with start-codon score, range score, p-value (uncorrected) and per-condition / total read counts. Tool CLI arguments can be appended via `--extra_price_indexgenome_args` and `--extra_price_price_args`.
 
+**Annotation.** Like Rp-Bp, PRICE is given the full multi-isoform `--gtf` annotation rather than the one-transcript-per-gene canonical backbone: it resolves overlapping ORFs and rescues multimappers with its own EM, so restricting it to a single isoform per gene would only narrow ORF discovery and bias ORF-type classification toward canonical CDS.
+
 When `--extended_orf_analysis true` is set, PRICE's IndexGenome receives the hybrid GTF so ORFs on novel intergenic transcripts are within its discovery scope.
 
 PRICE's CLI banner reports `Price version 1.0.4` while the Bioconda package is `gedi 1.0.6a` (Price is one tool inside the Gedi umbrella). The pipeline captures the package version via `gedi -e Version` for `versions.yml`.
 
 > :information_source: **Data scale.** PRICE's ORF inference step (`PriceOrfInference`) requires more candidate ORFs than the chr20-only `-profile test` data provides; on small test inputs it fails late in the pipeline with `Index out of bounds`. End-to-end PRICE validation needs realistic Ribo-seq depth and is exercised on the full-scale Platform iteration, not in the chr20 CI test set.
-
-### Rp-Bp (opt-in, overnight)
-
-[Rp-Bp](https://github.com/dieterich-lab/rp-bp) (Malone et al. 2017) is a Bayesian ORF caller using Stan MCMC. Activate with `--run_rpbp true`.
-
-> :warning: **Runtime cost.** Rp-Bp's Bayesian MCMC fit takes roughly 20-24 hours per replicate at genome-wide scale. The pipeline emits a runtime warning when `--run_rpbp` is set; plan compute accordingly (the `RPBP_ESTIMATEMETAGENEBAYESFACTORS` / `RPBP_ESTIMATEORFBAYESFACTORS` blocks request 30h per attempt as headroom).
-
-The implementation uses the upstream `fasta_gtf_bam_rpbp` subworkflow (nf-core/modules#11695): six per-tool processes (`extract-metagene-profiles`, `estimate-metagene-profile-bayes-factors`, `select-periodic-offsets`, `extract-orf-profiles`, `estimate-orf-bayes-factors`, `select-final-prediction-set`) plus a shared `prepare-genome`. The split avoids re-running flexbar/bowtie/STAR inside Rp-Bp - the pipeline's standard STAR alignment is used - and lets each step cache independently on resume.
-
-Tool CLI arguments can be appended via `--extra_rpbp_preparegenome_args` and `--extra_rpbp_predictorfs_args`. The final prediction step is invoked with `--select-longest-by-stop --select-best-overlapping` by default; pass extra flags via `--extra_rpbp_predictorfs_args`.
-
-When `--extended_orf_analysis true` is set, Rp-Bp consumes the hybrid GTF so novel intergenic ORFs are within its discovery scope.
-
-Per-sample predicted-ORF outputs land under `<outdir>/orf_predictions/rpbp/`. Pattern: `*.predicted-orfs.filtered.{bed.gz,dna.fa,protein.fa}`.
-
-> :information_source: **STAR alignment params vs upstream Rp-Bp.** Upstream Rp-Bp's own pipeline runs STAR with Ribo-seq-tuned settings (`outFilterMismatchNmax 1`, `outFilterMismatchNoverLmax 0.04`, `outFilterType BySJout`, `sjdbOverhang 33`, `winAnchorMultimapNmax 100`, `seedSearchStartLmaxOverLread 0.5`). The riboseq pipeline uses its standard STAR alignment (shared with the RNA-seq side of paired runs), which is more permissive. Practical impact: Rp-Bp processes whatever alignments it gets, but periodicity / Bayes-factor distributions will differ from a standalone Rp-Bp run on the same FASTQs. If you need bit-identical-to-standalone-Rp-Bp output, override with `--extra_star_align_args` matching those flags. Note that `sjdbOverhang` is baked into the STAR index and would require regenerating the index. Tracked for future work: [#173](https://github.com/nf-core/riboseq/issues/173).
 
 ## P-site identification
 
@@ -489,9 +501,7 @@ The pipeline can extend the canonical reference annotation with novel intergenic
 
 ### Source 1: StringTie assembly
 
-Set `--skip_stringtie false` to enable assembly. The pipeline prefers RNA-seq BAMs (which is what every published microprotein / novel-ORF discovery workflow uses) and falls back to Ribo-seq BAMs with tightened defaults if no RNA-seq is available, emitting a warning.
-
-When the Ribo-seq fallback is active, StringTie is invoked with `--stringtie_ribo_fallback_args` (default `-m 100 -c 5 -j 3 -f 0.05 -g 100`). These are first-pass empirical defaults extrapolated from RNA-seq parameter rationale and general Ribo-seq coverage properties; they are not literature-validated. Treat fallback assemblies with care. If `--extra_stringtie_args` is set, it overrides the fallback defaults verbatim - the warning will still fire but the tightening is no longer in force, so review the assembly output before trusting it.
+Set `--skip_stringtie false` to enable assembly. StringTie requires RNA-seq BAMs; if your samplesheet contains only Ribo-seq samples, use `--novel_gtf` with a GTF produced from a separate RNA-seq run instead.
 
 Per-sample StringTie GTFs are merged with `stringtie --merge` into a unified annotation.
 
@@ -501,9 +511,9 @@ Pass `--novel_gtf path/to/curated.gtf` to skip StringTie entirely and feed your 
 
 ### Filtering: gffcompare class codes
 
-The novel GTF is classified against the full reference with [gffcompare](https://ccb.jhu.edu/software/stringtie/gffcompare.shtml) and filtered to entries whose `class_code` is in `--stringtie_class_codes` (default `"u"`, intergenic only).
+The novel GTF is classified against the full reference with [gffcompare](https://ccb.jhu.edu/software/stringtie/gffcompare.shtml) and filtered to entries whose `class_code` is in `--gffcompare_class_codes` (default `"u"`, intergenic only).
 
-Stranded users (stranded RNA-seq and stranded Ribo-seq libraries) can extend the filter to `--stringtie_class_codes "u,x"` to recover translated antisense transcripts (class `x` = antisense overlap with a known locus). The default remains `u`-only because antisense classification is unreliable for non-stranded or partially-stranded protocols.
+Stranded users (stranded RNA-seq and stranded Ribo-seq libraries) can extend the filter to `--gffcompare_class_codes "u,x"` to recover translated antisense transcripts (class `x` = antisense overlap with a known locus). The default remains `u`-only because antisense classification is unreliable for non-stranded or partially-stranded protocols.
 
 ### Optional rRNA / repeat blacklist
 
@@ -511,28 +521,61 @@ Supply `--rrna_blacklist path/to/blacklist.bed` to drop novel transcripts overla
 
 ### Knobs
 
-- `--skip_stringtie` - default `true`. Set to `false` to run StringTie assembly.
+- `--skip_stringtie` - default `true`. Set to `false` to run StringTie assembly (requires RNA-seq BAMs in the samplesheet).
 - `--novel_gtf` - user-supplied novel GTF (bypasses StringTie when set).
 - `--extra_stringtie_args` - extra args passed to per-sample StringTie.
 - `--extra_stringtie_merge_args` - extra args passed to `stringtie --merge` (e.g. `'-T 1 -f 0.1'` for stricter TPM and isoform-fraction cutoffs); see the [StringTie manual](https://ccb.jhu.edu/software/stringtie/index.shtml?t=manual) for the full set of merge flags.
-- `--stringtie_ribo_fallback_args` - args used when no RNA-seq BAMs are available (default `-m 100 -c 5 -j 3 -f 0.05 -g 100`).
-- `--stringtie_class_codes` - comma-separated gffcompare class codes to retain (default `u`).
+- `--gffcompare_class_codes` - comma-separated gffcompare class codes to retain (default `u`).
 - `--rrna_blacklist` - optional BED of rRNA / repeat regions to exclude.
 
-The hybrid GTF is exposed as the `hybrid_gtf` workflow channel. With the default settings (no novel-transcript source configured) it equals the canonical backbone, so downstream wiring stays uniform.
+The hybrid GTF is exposed as a workflow channel (`hybrid_gtf` emit) and is wired into the genome-BAM ORF callers (Ribo-TISH `predict`, Ribotricer) when `--extended_orf_analysis true` is set; see [Extended ORF discovery](#extended-orf-discovery) below.
 
 ## Extended ORF discovery
 
-By default, all ORF callers run against the canonical backbone GTF so the pipeline produces well-characterised annotated-ORF calls. To discover novel ORFs in the novel intergenic transcripts produced by StringTie or supplied via `--novel_gtf`, set `--extended_orf_analysis true`. This routes the hybrid GTF (`<outdir>/stringtie/hybrid_reference.gtf`) into the genome-BAM ORF callers:
+By default, all ORF callers run against the canonical backbone GTF so the pipeline produces well-characterised annotated-ORF calls. To discover novel ORFs in the novel intergenic transcripts produced by StringTie or supplied via `--novel_gtf`, set `--extended_orf_analysis true`. This routes the hybrid GTF (`<outdir>/stringtie/hybrid_reference.gtf`) into the ORF callers:
 
-- **Ribo-TISH `predict`**: hybrid GTF on `-g` (discovery target). The Ribo-TISH wrapper accepts an optional secondary GTF on `-a` for background calibration, but the extended path leaves it empty to skirt a known Ribo-TISH bug ([zhpn1024/ribotish#33](https://github.com/zhpn1024/ribotish/issues/33), [#24](https://github.com/zhpn1024/ribotish/issues/24)) hit when the hybrid and secondary annotations share CDS rows. The hybrid GTF preserves canonical CDS records so background calibration is intact.
-- **Ribotricer `prepare-orfs`**: hybrid GTF directly. Ribotricer has no secondary-annotation concept; CDS-absent novel transcripts are auto-labelled `novel` in its `ORF_type` column.
+- **Ribo-TISH `predict`**: hybrid GTF on `-g` (discovery target); canonical backbone on `-a` (background and ORF classification).
+- **Ribotricer `prepare-orfs`**: hybrid GTF directly (Ribotricer has no secondary-annotation concept; CDS-absent novel transcripts are auto-labelled `novel`).
+- **RiboCode**: hybrid GTF as the annotation source plus a hybrid transcriptome BAM produced by a second STAR alignment pass (see below).
 
-RiboCode also moves to the hybrid annotation under `--extended_orf_analysis true`, but it requires a transcriptome-coordinate BAM keyed to the annotation at alignment time. A second STAR pass therefore runs against a hybrid transcriptome (canonical + filtered novel transcripts, extracted from `hybrid_reference.gtf` via `gffread -w`), Ribo-seq samples only. The hybrid transcriptome BAM and hybrid GTF then feed `RIBOCODE_GTFUPDATE` / `RIBOCODE_PREPARE` / `RIBOCODE_RIBOCODE` in place of the canonical wiring. Compute cost roughly doubles STAR alignment work for Ribo-seq samples. Outputs land under `<outdir>/hybrid_star/`.
+A novel-transcript source must be configured — `--skip_stringtie false` or `--novel_gtf <path>`. If `--extended_orf_analysis true` is set without one of those, the pipeline warns and falls back to the canonical GTF (the flag is a no-op rather than an error so users can compose flags incrementally).
 
-riboWaltz, plastid and Salmon-based quantification continue to use the canonical reference BAM regardless of the flag. riboWaltz is calibration-focused and depends on CDS-bearing canonical transcripts; mixing in CDS-absent novel transcripts would degrade its diagnostic plots without contributing to ORF discovery. Plastid and Salmon-based TE quantification likewise stay on the canonical/reference annotation by design.
+### Second STAR pass for RiboCode
 
-A novel-transcript source must be configured: `--skip_stringtie false` or `--novel_gtf <path>`. If `--extended_orf_analysis true` is set without one of those, the pipeline warns and falls back to the canonical GTF (the flag is a no-op rather than an error so users can compose flags incrementally).
+RiboCode (and STAR `--quantMode TranscriptomeSAM` in general) needs a transcriptome-coordinate BAM keyed to whichever transcriptome FASTA was supplied at alignment time. The primary STAR pass is built against the reference transcriptome, so novel StringTie transcripts are invisible to it. When `--extended_orf_analysis true` is set, the pipeline therefore:
+
+1. Extracts spliced transcript sequences from the hybrid GTF with `gffread -w` to produce a hybrid transcriptome FASTA (canonical + novel).
+2. Rebuilds a STAR index against the original genome FASTA, using the hybrid GTF as `--sjdbGTFfile`.
+3. Re-aligns the Ribo-seq reads against that hybrid index to obtain a hybrid transcriptome BAM, which is then fed to RiboCode in place of the reference transcriptome BAM.
+
+The second pass roughly doubles STAR alignment compute for Ribo-seq samples and consumes additional disk for the hybrid index and BAMs. It runs only when `--extended_orf_analysis true` and a novel-transcript source are configured, and is restricted to Ribo-seq samples (RNA-seq and TI-seq do not feed RiboCode). The hybrid transcriptome FASTA and hybrid STAR index are each built once per pipeline run. Outputs are published under `<outdir>/hybrid_star/`.
+
+**riboWaltz stays on the primary reference-transcriptome BAM by design.** riboWaltz is a QC/calibration tool and its CDS-dependent plots (frame distribution, start/stop metaprofiles) are driven by annotated CDS-bearing transcripts. Routing CDS-absent novel transcripts through riboWaltz would dilute its diagnostic plots without contributing to ORF discovery (riboWaltz does not call ORFs). Salmon likewise stays on the primary reference transcriptome, and plastid P-site quantification on the canonical backbone, regardless of `--extended_orf_analysis`.
+
+**Ribo-TISH `quality` stays on the canonical backbone.** The `quality` step estimates P-site offsets and read-length QC against CDS-bearing canonical transcripts. Feeding it the hybrid GTF would mix in CDS-absent novel transcripts that the P-site model cannot interpret. The Ribo-TISH `predict` step (which actually calls ORFs) is the one that consumes the hybrid GTF on `-g` plus the canonical backbone on `-a`. Empirical confirmation that canonical-only is the correct choice for `quality` is pending full-scale validation; the default reflects the spec recommendation in issue #162.
+
+The default `--extended_orf_analysis false` keeps the pre-#165 behaviour unchanged: the primary STAR pass is the only alignment and every ORF caller runs against the canonical backbone.
+
+### Cross-sample ORF catalogue
+
+When `--extended_orf_analysis true` is set and at least one ORF caller is enabled, the pipeline produces a cohort-level ORF catalogue under `<outdir>/orf_catalogue/`. The catalogue normalises each per-sample, per-caller output into a unified BED12 (genomic blocks, multi-exon-aware), then merges across samples and callers with a class-aware strategy:
+
+- annotated multi-exon CDS are collapsed by `transcript_id` to preserve intron-chain identity;
+- single-exon novel intergenic ORFs are clustered by 80% reciprocal overlap on the outer genomic span;
+- smORFs (≤ 100 aa) are clustered by 80% reciprocal overlap, then peptide-level deduplicated: the catalogue amino-acid FASTA is clustered with MMseqs2 (`--min-seq-id 0.9 -c 0.8`) and each multi-member smORF cluster is folded to one representative, following the GENCODE Ribo-seq ORF catalogue convention (Mudge et al. 2022). Pass `--skip_orf_collapse` to publish the coordinate-merged catalogue without this sequence-level collapse;
+- cross-caller consensus is recorded in `called_by_<caller>` binary columns plus `score_<caller>` columns for Ribo-TISH / RiboCode / Rp-Bp / PRICE (Ribotricer scores are excluded from rank aggregation per #163).
+
+The catalogue runs once per pipeline invocation (cohort-level, not per sample) and gates on `--extended_orf_analysis true` plus a non-empty enabled-caller set. The default-off path keeps the pre-#167 behaviour unchanged.
+
+Alongside the full catalogue, a consensus view is published under `<outdir>/orf_catalogue/consensus/` containing only ORFs supported by at least `--orf_min_callers` distinct callers and recurring in at least `--orf_min_samples` samples (both default 1, so the consensus view equals the full catalogue out of the box). Raise either threshold (e.g. `--orf_min_callers 2`) for a higher-confidence catalogue that tames downstream ORF-level multiple testing; the full unfiltered catalogue is always published regardless. The threshold is applied after the smORF collapse, so the consensus is the high-confidence subset of the de-redundified catalogue and a micropeptide folded across several loci is judged on its combined cross-caller / cross-sample evidence (when `--skip_orf_collapse` is set it comes from the merged catalogue instead).
+
+See [ORF catalogue (cross-sample)](output.md#orf-catalogue-cross-sample) in the output docs for the full list of published files.
+
+### Per-ORF P-site quantification
+
+When the cohort catalogue is built and plastid is enabled (`--skip_plastid false`, the default), the pipeline also produces a per-ORF in-frame P-site count matrix at `<outdir>/orf_quantification/orf_psite_counts.tsv`. This is an ORF x sample matrix of raw integer counts, complementing the gene-level matrix at `<outdir>/quantification/inframe_psite/gene_counts.tsv`. Frames for catalogue ORFs are defined by each ORF's own start codon (ATG = frame 0), not by the GTF `phase` field, so novel transcripts and non-canonical starts are handled correctly. The matrix is the input for the per-ORF translational-efficiency analysis tracked in #168; gene-level DTE is unchanged by this addition.
+
+When `--skip_plastid true` is set together with `--extended_orf_analysis true`, the catalogue is still built but the per-ORF count matrix is skipped (the plastid wiggle tracks are not available), and a runtime warning is emitted.
 
 ## Running the pipeline
 
