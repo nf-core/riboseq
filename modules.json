@@ -72,7 +72,7 @@
                     },
                     "custom/orfnormalise": {
                         "branch": "master",
-                        "git_sha": "ccb13a7b8bb6bf2a9dde01111136b8ab3dbf1c08",
+                        "git_sha": "edbcc72a8def5a4439106a26e554056121facaf1",
                         "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
                     },
                     "custom/tx2gene": {
@@ -489,7 +489,7 @@
                     },
                     "orftable_fasta_gtf_buildorfcatalogue": {
                         "branch": "master",
-                        "git_sha": "76e959312e636388810442416972071734c4144a",
+                        "git_sha": "edbcc72a8def5a4439106a26e554056121facaf1",
                         "installed_by": ["subworkflows"]
                     },
                     "quant_tximport_summarizedexperiment": {
