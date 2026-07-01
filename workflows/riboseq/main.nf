@@ -512,7 +512,7 @@ workflow RIBOSEQ {
         ch_versions = ch_versions.mix(PLASTID_MAKE_WIGGLE.out.versions)
 
         //
-        // Per-ORF P-site quantification (issue #166). Runs additively to the
+        // Per-ORF P-site quantification. Runs additively to the
         // gene-level QUANTIFY_INFRAME_PSITE_PLASTID path. Gated on the same
         // predicate as ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE so it only fires when the
         // catalogue exists.
