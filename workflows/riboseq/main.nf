@@ -502,7 +502,7 @@ workflow RIBOSEQ {
     }
 
     // ORF-level count matrix; populated below when extended ORF analysis is
-    // active and plastid is enabled. Consumed by issue #168 (DTE).
+    // active and plastid is enabled. Consumed by the downstream DTE step.
     ch_orf_count_matrix = Channel.empty()
 
     if (!params.skip_plastid) {
@@ -523,7 +523,7 @@ workflow RIBOSEQ {
         ch_versions = ch_versions.mix(PLASTID_MAKE_WIGGLE.out.versions)
 
         //
-        // Per-ORF P-site quantification (issue #166). Runs additively to the
+        // Per-ORF P-site quantification. Runs additively to the
         // gene-level QUANTIFY_INFRAME_PSITE_PLASTID path. Gated on the same
         // predicate as ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE so it only fires when the
         // catalogue exists.
@@ -805,7 +805,7 @@ workflow RIBOSEQ {
     multiqc_report   = ch_multiqc_report   // channel: /path/to/multiqc_report.html
     versions         = ch_versions         // channel: [ path(versions.yml) ]
     hybrid_gtf       = ch_hybrid_gtf       // channel: path(hybrid_reference.gtf) - canonical + filtered novel; equals canonical when no novel source is configured
-    orf_count_matrix = ch_orf_count_matrix // channel: [ meta, orf_psite_counts.tsv ] - per-ORF P-site count matrix (issue #166); empty unless extended-ORF + plastid both active
+    orf_count_matrix = ch_orf_count_matrix // channel: [ meta, orf_psite_counts.tsv ] - per-ORF P-site count matrix; empty unless extended-ORF + plastid both active
 }
 
 /*
