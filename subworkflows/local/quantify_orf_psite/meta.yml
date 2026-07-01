@@ -12,7 +12,7 @@ keywords:
   - quantification
 components:
   - custom/bed12codonpositions
-  - quantify_inframe_psite_orf
+  - quantify_inframe_psite_plastid
   - orf_count_matrix
 input:
   - ch_catalogue_bed:
