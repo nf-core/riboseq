@@ -107,9 +107,6 @@
                 "PLASTID_PSITE": {
                     "plastid": "0.6.1"
                 },
-                "QUANTIFY_INFRAME_PSITE_ORF": {
-                    "bedtools": "2.31.1"
-                },
                 "QUANTIFY_INFRAME_PSITE_PLASTID": {
                     "bedtools": "2.31.1"
                 },
@@ -1779,6 +1776,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2026-07-01T13:42:22.028249041"
+        "timestamp": "2026-07-02T09:09:09.424120884"
     }
 }
