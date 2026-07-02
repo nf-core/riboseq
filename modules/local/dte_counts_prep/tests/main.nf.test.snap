@@ -1,4 +1,21 @@
 {
+    "join replicates the host gene RNA across its ORFs and drops unmatched ORFs": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "cohort"
+                    },
+                    "orf_combined_counts.tsv:md5,1cf3007dd83e704b5aeb9e5c52447aa5"
+                ]
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.04.8"
+        },
+        "timestamp": "2026-07-02T11:43:51.849883199"
+    },
     "stub": {
         "content": [
             {
