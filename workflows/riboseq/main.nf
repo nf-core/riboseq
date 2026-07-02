@@ -22,7 +22,6 @@ include { DTE_COUNTS_PREP          } from '../../modules/local/dte_counts_prep'
 include { DESEQ2_DELTATE as DESEQ2_DELTATE_ORF } from '../../modules/local/deseq2/deltate'
 include { ANOTA2SEQ_ANOTA2SEQRUN as ANOTA2SEQ_ANOTA2SEQRUN_ORF } from '../../modules/nf-core/anota2seq/anota2seqrun'
 include { DOTSEQ_DOTSEQ as DOTSEQ_DOTSEQ_ORF } from '../../modules/nf-core/dotseq/dotseq'
-include { ORF_TO_GENE_CDS_COUNTS   } from '../../modules/local/orf_to_gene_cds_counts'
 include { GAWK as FILTER_COUNTS_CANONICAL                      } from '../../modules/nf-core/gawk'
 
 /*
@@ -451,7 +450,7 @@ workflow RIBOSEQ {
     ch_rank_aggregation_callers = channel.value(rank_aggregation_callers)
 
     //
-    // Cross-sample ORF catalogue (issue #167). Built once per pipeline run
+    // Cross-sample ORF catalogue. Built once per pipeline run
     // when extended-ORF analysis is enabled AND at least one ORF caller ran.
     // The catalogue normalises each caller's per-sample output into a unified
     // BED12, merges with class-aware collapse (transcript-ID for canonical
@@ -618,22 +617,6 @@ workflow RIBOSEQ {
         ch_psite_counts_merged = QUANTIFY_INFRAME_PSITE_PLASTID.out.counts
             .collectFile(name: 'gene_inframe_psite_counts.tsv') { meta, file -> file }
             .map { file -> [ [:], file ] }
-
-        // Issue #168 Tier 1: when extended ORF analysis is active and a
-        // cohort ORF P-site matrix exists, replace the plastid-derived
-        // gene-CDS p-site counts with a re-aggregation that sums ONLY
-        // canonical_cds ORFs from the catalogue. This keeps the gene-level
-        // TE numerator clean of uORF/dORF dynamics, which are picked up
-        // separately in the Tier 2 ORF-level DTE below.
-        if (extended_orf_active && enabled_orf_callers) {
-            ORF_TO_GENE_CDS_COUNTS(
-                ch_orf_count_matrix
-                    .combine(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.orf_to_gene_tsv.map { _meta, tsv -> tsv })
-                    .combine(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.catalogue_tsv.map { _meta, tsv -> tsv })
-                    .map { meta, orf_counts, o2g, cat_tsv -> [meta, orf_counts, o2g, cat_tsv] }
-            )
-            ch_psite_counts_merged = ORF_TO_GENE_CDS_COUNTS.out.gene_counts
-        }
 
         REPLACE_RIBOSEQ_COUNTS_IN_MATRIX(
             ch_psite_counts_merged

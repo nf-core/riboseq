@@ -512,7 +512,7 @@
                 },
                 "extra_orf_dte_args": {
                     "type": "string",
-                    "description": "Extra arguments forwarded to the deltaTE DESeq2 module for the Tier 2 ORF-level call (issue #168). Accepts the same options as the gene-level deltaTE module.",
+                    "description": "Extra arguments forwarded to the deltaTE DESeq2 module for the ORF-level call. Accepts the same options as the gene-level deltaTE module.",
                     "help_text": "The Tier 2 ORF-level analysis runs the same deltaTE DESeq2 module as the gene-level path after a join step expands the gene-level RNA-seq matrix onto ORF rows via `orf_to_gene.tsv`. ORFs whose host gene is absent from the RNA-seq matrix, and novel intergenic ORFs with no host gene, are dropped at the join step."
                 },
                 "extra_dotseq_args": {

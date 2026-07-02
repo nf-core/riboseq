@@ -390,11 +390,7 @@ Both methods analyze differences between conditions for RNA-seq and Ribo-seq sam
 
 ### ORF-level differential translation
 
-When `--extended_orf_analysis true` is set with `--te_quantification_method plastid_psite` (the default), at least one ORF caller is enabled, and `--contrasts` is supplied, the pipeline runs ORF-level differential translation analysis additively to the gene-level DTE above. Two tiers are defined: Tier 1 re-aggregates per-ORF P-site counts back to a cleaner gene-level Ribo-seq numerator for the existing gene-level DTE; Tier 2 fits DTE at ORF resolution using the same method selector as the gene-level path.
-
-**Tier 1: re-aggregate ORF counts to a cleaner gene-level numerator.** The existing gene-level anota2seq / deltaTE TE Ribo-seq numerator is replaced with a re-aggregation that sums per-ORF P-site counts ONLY for ORFs in the `canonical_cds` class. uORF, dORF, novel intergenic (`novel_u`), smORF, and `other` ORFs are excluded from the gene-level sum, so a repressed uORF cannot inflate the gene-level Ribo-seq column. The RNA-seq denominator continues to come from Salmon at gene level. The aggregated gene matrix is published under `<outdir>/dte/gene_level_cds_aggregated/`. Gene-level anota2seq / deltaTE then runs on this cleaner input.
-
-**Tier 2: per-ORF DTE.** The pipeline reuses the same DTE method selector as the gene-level path (controlled by `--translational_efficiency_method`) but at ORF resolution. Three methods are available:
+When `--extended_orf_analysis true` is set with `--te_quantification_method plastid_psite` (the default), at least one ORF caller is enabled, and `--contrasts` is supplied, the pipeline runs differential translation at ORF resolution, additively to the gene-level DTE above and using the same method selector (`--translational_efficiency_method`). Three methods are available:
 
 - `anota2seq` (default, gene-level + ORF-level): APV + RVM regression of Ribo on RNA per identifier.
 - `deltate`: DESeq2 with a `~ condition + seq_type + condition:seq_type` interaction model.
@@ -402,7 +398,7 @@ When `--extended_orf_analysis true` is set with `--te_quantification_method plas
 
 A pre-processing step joins the per-ORF P-site count matrix (`<outdir>/orf_quantification/orf_psite_counts.tsv`) with the gene-level Salmon RNA-seq matrix via `orf_to_gene.tsv` from the catalogue, producing one combined count table whose rows are ORFs and whose RNA columns hold the host gene's count replicated across all ORFs sharing that gene. The selected method is then fitted, treating each ORF row as a feature. Results land under `<outdir>/dte/orf_level/<method>/`, alongside the shared combined input matrix (`<outdir>/dte/orf_level/orf_combined_counts.tsv`).
 
-Two caveats apply to Tier 2:
+Two caveats apply:
 
 - **Row independence.** Multiple ORFs from the same gene share a single gene-level RNA-seq denominator row (sibling ORFs sit on the same mRNA, so there is no separately measurable per-ORF RNA level). After the join, those rows are perfectly correlated, and both anota2seq's per-identifier APV regression and deltaTE's per-row DESeq2 fit treat each ORF as an independent observation. Treat p-values for ORFs sharing a host gene as a ranking, not strict significance.
 - **Low-count ORFs.** uORFs, smORFs and low-abundance novel ORFs frequently have sparse P-site counts. DESeq2 dispersion estimation and anota2seq's RVM are both unreliable on rows with too many zeros. Pass method-side options via `--extra_orf_dte_args` (deltaTE), `--extra_anota2seq_run_args` (anota2seq) or `--extra_dotseq_args` (DOTSeq); inspect the diagnostic plots before interpreting results.
