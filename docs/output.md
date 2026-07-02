@@ -670,8 +670,6 @@ When `--extended_orf_analysis true` is set with `--te_quantification_method plas
 <details markdown="1">
 <summary>Output files</summary>
 
-- `dte/gene_level_cds_aggregated/`
-  - `gene_cds_psite_counts.tsv`: Tier 1 gene-level Ribo-seq count matrix re-aggregated from the per-ORF P-site catalogue, summing ONLY `canonical_cds` ORFs. Long-format `sample<TAB>gene_id<TAB>count`. This file is the replacement input for the existing gene-level TE Ribo-seq counts; gene-level anota2seq / deltaTE in `<outdir>/translational_efficiency/` is run on this re-aggregation.
 - `dte/orf_level/`
   - `orf_combined_counts.tsv`: Combined ORF x sample count matrix produced by the join step. Rows are ORFs; columns are Ribo-seq samples (per-ORF P-site counts) followed by RNA-seq samples (host gene's count replicated across all ORFs mapping to that gene). This is the input fed to the selected DTE method (`--translational_efficiency_method`) for the Tier 2 ORF-level fit.
 - `dte/orf_level/deltate/` (when `--translational_efficiency_method deltate`):

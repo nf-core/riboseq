@@ -32,4 +32,44 @@ nextflow_process {
             )
         }
     }
+
+    test("join replicates the host gene RNA across its ORFs and drops unmatched ORFs") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'cohort' ],
+                    file("\${projectDir}/modules/local/dte_counts_prep/tests/dte_primary.tsv", checkIfExists: true),
+                    file("\${projectDir}/modules/local/dte_counts_prep/tests/dte_secondary.tsv", checkIfExists: true),
+                    file("\${projectDir}/modules/local/dte_counts_prep/tests/dte_mapping.tsv", checkIfExists: true),
+                ]
+                """
+            }
+        }
+
+        then {
+            def lines = path(process.out.counts[0][1]).readLines()
+            assertAll(
+                { assert process.success },
+                // Column order is primary (Ribo) then surviving secondary (RNA); the
+                // secondary `gene_name` label column and the `ribo1` column that
+                // overlaps the primary sample set are both dropped.
+                { assert lines[0] == 'orf_id\tribo1\tribo2\trna1\trna2' },
+                // orfA and orfB both map to geneX, so geneX's RNA counts (100, 200)
+                // are replicated onto both ORF rows; orfC maps to geneY (30, 40).
+                { assert lines.contains('orfA\t10\t20\t100\t200') },
+                { assert lines.contains('orfB\t5\t7\t100\t200') },
+                { assert lines.contains('orfC\t3\t4\t30\t40') },
+                // orfD maps to geneZ (absent from the RNA matrix) and orfF has no
+                // mapping row, so both are dropped: header + 3 kept ORFs only.
+                { assert lines.size() == 4 },
+                { assert !lines.any { it.startsWith('orfD\t') } },
+                { assert !lines.any { it.startsWith('orfF\t') } },
+                // The duplicate orfC->geneW mapping row is ignored (first gene wins),
+                // so orfC takes geneY's RNA, not geneW's.
+                { assert snapshot(process.out.counts).match() }
+            )
+        }
+    }
 }
