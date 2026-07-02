@@ -481,7 +481,7 @@ Produced only when `--run_price true` is set. PRICE is invoked once across the r
   - `*.normalised.tsv`: matching sidecar with caller, sample id, ORF class (`canonical_cds`, `uORF`, `dORF`, `novel_u`, `smORF`, `other`), amino-acid length and the caller's score.
 - `orf_catalogue/`
   - `*.catalogue.bed12`: merged, deduplicated ORF catalogue (BED12, stable `orf_NNNNNNNN` ids in column 4).
-  - `*.catalogue.tsv`: per-ORF table with `called_by_<caller>` binary columns for every caller in the runtime-enabled set and `score_<caller>` columns for Ribo-TISH / RiboCode / Rp-Bp / PRICE (Ribotricer scores are excluded per issue #163). Includes `orf_class`, `aa_length`, host `gene_id` and `transcript_id`.
+  - `*.catalogue.tsv`: per-ORF table with `called_by_<caller>` binary columns for every caller in the runtime-enabled set and `score_<caller>` columns for Ribo-TISH / RiboCode / Rp-Bp / PRICE (Ribotricer scores are excluded). Includes `orf_class`, `aa_length`, host `gene_id` and `transcript_id`.
   - `*.orf_to_gene.tsv`: ORF-to-gene mapping. An ORF that maps to multiple host transcripts/genes gets multiple rows here; downstream gene-level aggregation collapses by `gene_id`.
   - `*.catalogue.aa.fasta`: amino-acid FASTA of every catalogue ORF, keyed by `orf_NNNNNNNN`. Produced by `bedtools getfasta` on the merged BED12 followed by `seqkit translate`.
   - `*.catalogue.mqc.tsv`: per-class ORF counts surfaced as a MultiQC custom-content table.
@@ -663,9 +663,9 @@ When using `--translational_efficiency_method deltate`, the pipeline produces th
 
 </details>
 
-### ORF-level DTE outputs (issue #168)
+### ORF-level DTE outputs
 
-When `--extended_orf_analysis true` is set with `--te_quantification_method plastid_psite`, the pipeline produces two additional output directories alongside the gene-level anota2seq / deltaTE results. See [Translational efficiency / ORF-level differential translation](usage.md#orf-level-differential-translation-issue-168) for the analysis rationale and the row-independence caveat.
+When `--extended_orf_analysis true` is set with `--te_quantification_method plastid_psite`, the pipeline produces two additional output directories alongside the gene-level anota2seq / deltaTE results. See [Translational efficiency / ORF-level differential translation](usage.md#orf-level-differential-translation) for the analysis rationale and the row-independence caveat.
 
 <details markdown="1">
 <summary>Output files</summary>
