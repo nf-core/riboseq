@@ -14,6 +14,10 @@
                 "BEDTOOLS_GETFASTA": {
                     "bedtools": "2.31.1"
                 },
+                "CUSTOM_BED12CODONPOSITIONS": {
+                    "pandas": "2.3.0",
+                    "python": "3.12.11"
+                },
                 "CUSTOM_GTFFILTER": {
                     "python": "3.9.5"
                 },
@@ -76,6 +80,10 @@
                 },
                 "MMSEQS_EASYCLUSTER": {
                     "mmseqs": "18.8cc5c"
+                },
+                "ORF_COUNT_MATRIX": {
+                    "pandas": "2.2.3",
+                    "python": "3.11.15"
                 },
                 "PLASTID_MAKE_WIGGLE": {
                     "plastid": "0.6.1"
@@ -730,6 +738,9 @@
                 "orf_predictions/ribotish_all/allsamples_all.txt",
                 "orf_predictions/ribotish_all/allsamples_pred.txt",
                 "orf_predictions/ribotish_all/allsamples_transprofile.py",
+                "orf_quantification",
+                "orf_quantification/cohort.orf_inframe_psites.bed",
+                "orf_quantification/orf_psite_counts.tsv",
                 "pipeline_info",
                 "pipeline_info/nf_core_riboseq_software_mqc_versions.yml",
                 "preprocessing",
@@ -1603,6 +1614,8 @@
                 "allsamples_all.txt:md5,16dec2ee613feb7517d83d4b7662a3d3",
                 "allsamples_pred.txt:md5,16dec2ee613feb7517d83d4b7662a3d3",
                 "allsamples_transprofile.py:md5,d4aba478116635320b17b67932126bd2",
+                "cohort.orf_inframe_psites.bed:md5,1fdc02a64fba8c08aea8dd8ffadc963d",
+                "orf_psite_counts.tsv:md5,6dff42ca3cdb0f348ac10935e6cbf531",
                 "SRX11780885.ribowaltz.best_offset.txt:md5,8483e3a3c844284331249dfc8f520e03",
                 "SRX11780885.ribowaltz.cds_coverage_psite.tsv.gz:md5,bf66d9ba8771fc44d275f2f94eb1b9e4",
                 "SRX11780885.ribowaltz.cds_plus42nt_minus27nt_coverage_psite.tsv.gz:md5,b6b4e4e66ed831d93a9d445d70b36f0c",
@@ -1750,6 +1763,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2026-07-01T11:23:01.814097468"
+        "timestamp": "2026-07-01T22:31:14.16036153"
     }
 }

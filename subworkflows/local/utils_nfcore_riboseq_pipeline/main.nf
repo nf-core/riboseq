@@ -188,6 +188,9 @@ def validateInputParameters() {
     if (params.extended_orf_analysis && !novel_source_configured) {
         log.warn "--extended_orf_analysis is enabled but no novel-transcript source is configured (--skip_stringtie is true and --novel_gtf is unset). The flag has no effect; ORF callers will run against the canonical GTF as usual."
     }
+    if (params.extended_orf_analysis && novel_source_configured && params.skip_plastid) {
+        log.warn "--extended_orf_analysis is enabled but --skip_plastid is true. ORF-level P-site quantification needs the plastid wiggle tracks and will be skipped; the ORF catalogue will still be built."
+    }
 }
 
 //

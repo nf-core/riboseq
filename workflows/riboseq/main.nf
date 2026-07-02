@@ -17,6 +17,7 @@ include { EXTENDED_ORF_SECOND_PASS_ALIGN  } from '../../subworkflows/local/exten
 include { ORF_CALLER_DISPATCH             } from '../../subworkflows/local/orf_caller_dispatch'
 include { COVERAGE_TRACKS                 } from '../../subworkflows/local/coverage_tracks'
 include { ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE } from '../../subworkflows/nf-core/orftable_fasta_gtf_buildorfcatalogue/main'
+include { QUANTIFY_ORF_PSITE              } from '../../subworkflows/local/quantify_orf_psite'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -509,6 +510,23 @@ workflow RIBOSEQ {
             "fiveprime_variable"
         )
         ch_versions = ch_versions.mix(PLASTID_MAKE_WIGGLE.out.versions)
+
+        //
+        // Per-ORF P-site quantification. Runs additively to the
+        // gene-level QUANTIFY_INFRAME_PSITE_PLASTID path. Gated on the same
+        // predicate as ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE so it only fires when the
+        // catalogue exists.
+        //
+        if (extended_orf_active && enabled_orf_callers) {
+            ch_orf_psite_tracks = PLASTID_MAKE_WIGGLE.out.tracks
+                .map { meta, tracks -> [ meta, tracks[0], tracks[1] ] }
+
+            QUANTIFY_ORF_PSITE (
+                ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.catalogue_bed12,
+                ch_orf_psite_tracks
+            )
+            ch_versions = ch_versions.mix(QUANTIFY_ORF_PSITE.out.versions)
+        }
 
     }
 

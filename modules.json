@@ -50,6 +50,11 @@
                         "git_sha": "5d28ea7cfaebcfae6f74d1067ea766d8ff19dff3",
                         "installed_by": ["fastq_qc_trim_filter_setstrandedness"]
                     },
+                    "custom/bed12codonpositions": {
+                        "branch": "master",
+                        "git_sha": "3f616a1dfa699fcd112c5cebd9147fef95e08b07",
+                        "installed_by": ["modules"]
+                    },
                     "custom/catadditionalfasta": {
                         "branch": "master",
                         "git_sha": "96c57dfd98a0641886a67bd449fe33ee2ec0e374",
