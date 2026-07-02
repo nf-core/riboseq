@@ -31,7 +31,7 @@ process DESEQ2_DELTATE {
     tuple val(meta), path("*.heatmap.png"), path("*.heatmap_zscores.tsv"), path("*.heatmap_annotations.tsv") , emit: heatmap  , optional: true
     tuple val(meta), path("*.DESeqDataSet.rds")                 , emit: rdata
     tuple val(meta), path("*.R_sessionInfo.log")                , emit: session_info
-    path "versions.yml"                                         , emit: versions
+    path "versions.yml"                                         , emit: versions, topic: versions
 
     when:
     task.ext.when == null || task.ext.when

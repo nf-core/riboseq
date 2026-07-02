@@ -672,7 +672,6 @@ workflow RIBOSEQ {
                 ch_contrasts,
                 ch_samplesheet_matrix
             )
-            ch_versions = ch_versions.mix(DESEQ2_DELTATE.out.versions)
         }
 
         if (extended_orf_active && enabled_orf_callers && !params.skip_plastid) {
@@ -682,7 +681,6 @@ workflow RIBOSEQ {
                     .combine(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.orf_to_gene_tsv.map { _meta, tsv -> tsv })
                     .map { meta, ribo, rna, o2g -> [ meta, ribo, rna, o2g ] }
             )
-            ch_versions = ch_versions.mix(DTE_COUNTS_PREP.out.versions)
 
             ch_orf_samplesheet_matrix = DTE_COUNTS_PREP.out.counts
                 .combine(ch_samplesheet)
@@ -702,7 +700,6 @@ workflow RIBOSEQ {
                     ch_contrasts,
                     ch_orf_samplesheet_matrix
                 )
-                ch_versions = ch_versions.mix(DESEQ2_DELTATE_ORF.out.versions)
             }
 
             if (params.translational_efficiency_method == 'dotseq') {
@@ -716,7 +713,6 @@ workflow RIBOSEQ {
                     ch_contrasts,
                     ch_dotseq_input
                 )
-                ch_versions = ch_versions.mix(DOTSEQ_DOTSEQ_ORF.out.versions)
             }
         }
     }
