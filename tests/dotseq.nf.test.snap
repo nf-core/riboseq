@@ -95,9 +95,6 @@
                     "pandas": "2.2.3",
                     "python": "3.11.15"
                 },
-                "ORF_TO_GENE_CDS_COUNTS": {
-                    "python": "3.12.11"
-                },
                 "PLASTID_MAKE_WIGGLE": {
                     "plastid": "0.6.1"
                 },
@@ -424,8 +421,6 @@
                 "coverage/SRX11780890.forward.bigWig",
                 "coverage/SRX11780890.reverse.bigWig",
                 "dte",
-                "dte/gene_level_cds_aggregated",
-                "dte/gene_level_cds_aggregated/allsamples.gene_cds_psite_counts.tsv",
                 "dte/orf_level",
                 "dte/orf_level/dotseq",
                 "dte/orf_level/dotseq/treated_vs_control.DOTSeqDataSets.rds",
@@ -1534,7 +1529,6 @@
                 "SRX11780889.reverse.bigWig:md5,236bda3b53b6a2d3cc937d03ce402e83",
                 "SRX11780890.forward.bigWig:md5,9833a547a9c4b00cc3bb82aa15ebd2a9",
                 "SRX11780890.reverse.bigWig:md5,c37d1a7ccb3a3581d7b29b0f9221b81d",
-                "allsamples.gene_cds_psite_counts.tsv:md5,dd497eebb6443323f7e402c3a1306d42",
                 "cutadapt_filtered_reads_plot.txt:md5,ff95c965185e62ff5914a5c60e7a268f",
                 "cutadapt_trimmed_sequences_plot_3_Counts.txt:md5,319e9bb90c170c4b0207d644926bf69a",
                 "cutadapt_trimmed_sequences_plot_3_Obs_Exp.txt:md5,6ed5bbd0961572352d1614cc1f25f29d",
@@ -1776,6 +1770,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2026-07-02T09:09:09.424120884"
+        "timestamp": "2026-07-02T12:27:33.180310343"
     }
 }
