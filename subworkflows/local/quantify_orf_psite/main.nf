@@ -3,20 +3,20 @@
 //
 // Chains:
 //   1. CUSTOM_BED12CODONPOSITIONS: expand the BED12 catalogue into codon-start BED6.
-//   2. QUANTIFY_INFRAME_PSITE_ORF: per-sample bedtools intersect + groupby
-//      against plastid wiggle tracks.
+//   2. QUANTIFY_INFRAME_PSITE_PLASTID: per-sample bedtools intersect + groupby
+//      against plastid wiggle tracks (shared with the gene-level path).
 //   3. ORF_COUNT_MATRIX: assemble per-sample TSVs into one ORF x sample
 //      count matrix, zero-filled for ORFs absent from a sample.
 //
 // Gating is done at the call site in workflows/riboseq/main.nf:
 //   --extended_orf_analysis = true  AND  catalogue exists  AND  plastid is enabled.
 //
-// The matrix is the input for the future DTE step. This
+// The matrix is the input for the downstream DTE step. This
 // subworkflow does not run DTE itself.
 
-include { CUSTOM_BED12CODONPOSITIONS } from '../../../modules/nf-core/custom/bed12codonpositions/main'
-include { QUANTIFY_INFRAME_PSITE_ORF } from '../../../modules/local/quantify_inframe_psite_orf'
-include { ORF_COUNT_MATRIX           } from '../../../modules/local/orf_count_matrix'
+include { CUSTOM_BED12CODONPOSITIONS     } from '../../../modules/nf-core/custom/bed12codonpositions/main'
+include { QUANTIFY_INFRAME_PSITE_PLASTID } from '../../../modules/local/quantify_inframe_psite_plastid'
+include { ORF_COUNT_MATRIX               } from '../../../modules/local/orf_count_matrix'
 
 workflow QUANTIFY_ORF_PSITE {
 
@@ -32,16 +32,20 @@ workflow QUANTIFY_ORF_PSITE {
     CUSTOM_BED12CODONPOSITIONS ( ch_catalogue_bed )
     ch_versions = ch_versions.mix(CUSTOM_BED12CODONPOSITIONS.out.versions)
 
-    ch_inframe_psites = CUSTOM_BED12CODONPOSITIONS.out.bed.first()
+    // `feature: 'orf'` sets the output-filename suffix in the shared counter.
+    ch_inframe_psites = CUSTOM_BED12CODONPOSITIONS.out.bed
+        .map { meta, bed -> [ meta + [feature: 'orf'], bed ] }
+        .first()
 
-    // 2. Per-sample P-site counting.
-    QUANTIFY_INFRAME_PSITE_ORF ( ch_psite_tracks, ch_inframe_psites )
+    // 2. Per-sample P-site counting (shared module with the gene-level path).
+    QUANTIFY_INFRAME_PSITE_PLASTID ( ch_psite_tracks, ch_inframe_psites )
+    ch_versions = ch_versions.mix(QUANTIFY_INFRAME_PSITE_PLASTID.out.versions)
 
     // 3. Collect all per-sample TSVs into one list, then pair with the
     //    cohort-level catalogue BED. `ch_catalogue_bed.first()` reduces a
     //    queue channel to a value channel so the pairing is deterministic
     //    even when `.collect()` has not yet emitted.
-    ch_tsvs_collected = QUANTIFY_INFRAME_PSITE_ORF.out.counts
+    ch_tsvs_collected = QUANTIFY_INFRAME_PSITE_PLASTID.out.counts
         .map { _meta, tsv -> tsv }
         .collect()
         .map { tsvs -> [ 'allsamples', tsvs ] }

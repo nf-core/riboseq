@@ -27,7 +27,7 @@ input:
         type: file
         description: |
           Per-sample TSVs of `(sample_id, orf_id, count)` rows from
-          `QUANTIFY_INFRAME_PSITE_ORF`. Staged under `counts/`.
+          `QUANTIFY_INFRAME_PSITE_PLASTID`. Staged under `counts/`.
         pattern: "*.tsv"
         ontologies: []
     - orf_catalogue_bed12:

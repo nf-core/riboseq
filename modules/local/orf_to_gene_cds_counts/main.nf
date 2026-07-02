@@ -1,9 +1,10 @@
-// Re-aggregate per-ORF P-site counts to gene level using ONLY canonical_cds
-// ORFs. Output is long-format `sample<TAB>gene_id<TAB>count`, matching the
-// shape of the per-sample plastid `gene_inframe_psite_counts.tsv` so the
-// REPLACE_RIBOSEQ_COUNTS_IN_MATRIX awk substitution step consumes it without
-// changes. uORF / dORF / novel_u / smORF / other ORFs are excluded from the
-// sum to keep the translational numerator clean.
+// Tier 1 of issue #168: re-aggregate per-ORF P-site counts to gene
+// level using ONLY canonical_cds ORFs. The output is long-format
+// `sample<TAB>gene_id<TAB>count`, matching the shape of the per-sample
+// plastid `gene_inframe_psite_counts.tsv` files, so the same
+// REPLACE_RIBOSEQ_COUNTS_IN_MATRIX awk substitution step can consume
+// it without changes. uORF / dORF / novel_u / smORF / other ORFs are
+// excluded from the sum to keep the translational numerator clean.
 
 process ORF_TO_GENE_CDS_COUNTS {
     tag "$meta.id"

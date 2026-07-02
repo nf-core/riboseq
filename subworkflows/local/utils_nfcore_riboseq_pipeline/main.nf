@@ -180,6 +180,39 @@ workflow PIPELINE_COMPLETION {
 //
 def validateInputParameters() {
     genomeExistsError()
+    dotseqPrerequisitesError()
+
+    // --extended_orf_analysis is a no-op without a novel-transcript source
+    // (StringTie or a user-supplied --novel_gtf); warn rather than error so
+    // flags can be composed incrementally.
+    def novel_source_configured = !params.skip_stringtie || params.novel_gtf
+    if (params.extended_orf_analysis && !novel_source_configured) {
+        log.warn "--extended_orf_analysis is enabled but no novel-transcript source is configured (--skip_stringtie is true and --novel_gtf is unset). The flag has no effect; ORF callers will run against the canonical GTF as usual."
+    }
+    if (params.extended_orf_analysis && novel_source_configured && params.skip_plastid) {
+        log.warn "--extended_orf_analysis is enabled but --skip_plastid is true. ORF-level P-site quantification needs the plastid wiggle tracks and will be skipped; the ORF catalogue will still be built."
+    }
+}
+
+//
+// Exit pipeline if --translational_efficiency_method dotseq is selected
+// without the ORF-level prerequisites that DOTSeq needs.
+//
+def dotseqPrerequisitesError() {
+    if (params.translational_efficiency_method != 'dotseq') return
+
+    def novel_source_configured = !params.skip_stringtie || params.novel_gtf
+    def extended_orf_active     = params.extended_orf_analysis && novel_source_configured
+    def any_caller_enabled      = !params.skip_ribotish || !params.skip_ribocode || params.run_ribotricer || params.run_rpbp || params.run_price
+
+    if (!extended_orf_active || !any_caller_enabled || params.skip_plastid) {
+        def missing = []
+        if (!params.extended_orf_analysis) missing << "--extended_orf_analysis true"
+        else if (!novel_source_configured) missing << "a novel-transcript source (set --novel_gtf or leave --skip_stringtie false)"
+        if (!any_caller_enabled)           missing << "at least one ORF caller (do not skip both ribocode and ribotish, or opt into ribotricer / rpbp / price)"
+        if (params.skip_plastid)           missing << "--skip_plastid false"
+        error("--translational_efficiency_method dotseq runs only at the ORF level and requires: ${missing.join('; ')}. Pick anota2seq or deltate for the gene-level path, or wire up the ORF prerequisites.")
+    }
 }
 
 //

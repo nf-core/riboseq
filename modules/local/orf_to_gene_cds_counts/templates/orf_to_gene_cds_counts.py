@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 """Aggregate per-ORF P-site counts to gene level using ONLY canonical CDS ORFs.
 
-Produces a long-format `sample<TAB>gene_id<TAB>count` table matching the
-shape of the per-sample `gene_inframe_psite_counts.tsv` files emitted by
+Tier 1 of issue #168. Produces a long-format
+`sample<TAB>gene_id<TAB>count` table matching the shape of the
+per-sample `gene_inframe_psite_counts.tsv` files emitted by
 `QUANTIFY_INFRAME_PSITE_PLASTID`, so the downstream
-`REPLACE_RIBOSEQ_COUNTS_IN_MATRIX` awk substitution consumes it unchanged.
-uORF / dORF / novel_u / smORF / other ORFs are excluded so the
-translational numerator stays clean.
+`REPLACE_RIBOSEQ_COUNTS_IN_MATRIX` awk substitution consumes it
+unchanged. uORF / dORF / novel_u / smORF / other ORFs are excluded so
+the translational numerator stays clean.
 
 Inputs (positional, via the Nextflow template):
-  ${orf_count_matrix}   ORF x sample matrix.
+  ${orf_count_matrix}   ORF x sample matrix from issue #166.
                         First column `orf_id`, remaining columns are
                         sample ids, integer counts.
-  ${orf_to_gene_tsv}    ORF id -> gene id mapping.
+  ${orf_to_gene_tsv}    ORF id -> gene id mapping from issue #167.
                         Three columns: orf_id, gene_id, transcript_id.
                         First gene_id wins per ORF (deterministic by
                         file order) so an ORF's counts are never
