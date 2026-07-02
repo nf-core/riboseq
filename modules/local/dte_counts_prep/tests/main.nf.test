@@ -57,7 +57,8 @@ nextflow_process {
                 // overlaps the primary sample set are both dropped.
                 { assert lines[0] == 'orf_id\tribo1\tribo2\trna1\trna2' },
                 // orfA and orfB both map to geneX, so geneX's RNA counts (100, 200)
-                // are replicated onto both ORF rows; orfC maps to geneY (30, 40).
+                // are replicated onto both ORF rows; orfC maps to geneY (30, 40)
+                // (the duplicate orfC->geneW mapping row is ignored: first gene wins).
                 { assert lines.contains('orfA\t10\t20\t100\t200') },
                 { assert lines.contains('orfB\t5\t7\t100\t200') },
                 { assert lines.contains('orfC\t3\t4\t30\t40') },
@@ -65,10 +66,7 @@ nextflow_process {
                 // mapping row, so both are dropped: header + 3 kept ORFs only.
                 { assert lines.size() == 4 },
                 { assert !lines.any { it.startsWith('orfD\t') } },
-                { assert !lines.any { it.startsWith('orfF\t') } },
-                // The duplicate orfC->geneW mapping row is ignored (first gene wins),
-                // so orfC takes geneY's RNA, not geneW's.
-                { assert snapshot(process.out.counts).match() }
+                { assert !lines.any { it.startsWith('orfF\t') } }
             )
         }
     }

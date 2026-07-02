@@ -671,7 +671,7 @@ When `--extended_orf_analysis true` is set with `--te_quantification_method plas
 <summary>Output files</summary>
 
 - `dte/orf_level/`
-  - `orf_combined_counts.tsv`: Combined ORF x sample count matrix produced by the join step. Rows are ORFs; columns are Ribo-seq samples (per-ORF P-site counts) followed by RNA-seq samples (host gene's count replicated across all ORFs mapping to that gene). This is the input fed to the selected DTE method (`--translational_efficiency_method`) for the Tier 2 ORF-level fit.
+  - `orf_combined_counts.tsv`: Combined ORF x sample count matrix produced by the join step. Rows are ORFs; columns are Ribo-seq samples (per-ORF P-site counts) followed by RNA-seq samples (host gene's count replicated across all ORFs mapping to that gene). This is the input fed to the selected DTE method (`--translational_efficiency_method`) for the ORF-level fit.
 - `dte/orf_level/deltate/` (when `--translational_efficiency_method deltate`):
   - `*.translation.deltate.results.tsv`, `*.translated_mRNA.deltate.results.tsv`, `*.total_mRNA.deltate.results.tsv`: deltaTE result tables at ORF resolution (one set per contrast). The first column header is `gene_id` for compatibility with the gene-level path but the rows are ORF ids.
   - `*.dtegs.deltate.genes.tsv` and the four classified ORF lists (`*.mRNA_abundance`, `*.translation`, `*.intensified`, `*.buffering`): ORF ids assigned to each deltaTE category.
