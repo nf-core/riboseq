@@ -57,14 +57,18 @@ nextflow_process {
                 // overlaps the primary sample set are both dropped.
                 { assert lines[0] == 'orf_id\tribo1\tribo2\trna1\trna2' },
                 // orfA and orfB both map to geneX, so geneX's RNA counts (100, 200)
-                // are replicated onto both ORF rows; orfC maps to geneY (30, 40)
-                // (the duplicate orfC->geneW mapping row is ignored: first gene wins).
+                // are replicated onto both ORF rows.
                 { assert lines.contains('orfA\t10\t20\t100\t200') },
                 { assert lines.contains('orfB\t5\t7\t100\t200') },
+                // orfC maps to geneY and geneW; geneW is absent from the RNA matrix,
+                // so geneY (30, 40) is used.
                 { assert lines.contains('orfC\t3\t4\t30\t40') },
-                // orfD maps to geneZ (absent from the RNA matrix) and orfF has no
-                // mapping row, so both are dropped: header + 3 kept ORFs only.
-                { assert lines.size() == 4 },
+                // orfG maps to geneL then geneH, both present; the higher-total-count
+                // gene (geneH, 3000 > geneL, 3) is chosen over file order.
+                { assert lines.contains('orfG\t6\t7\t1000\t2000') },
+                // orfD maps only to geneZ (absent from the RNA matrix) and orfF has
+                // no mapping row, so both are dropped: header + 4 kept ORFs.
+                { assert lines.size() == 5 },
                 { assert !lines.any { it.startsWith('orfD\t') } },
                 { assert !lines.any { it.startsWith('orfF\t') } }
             )

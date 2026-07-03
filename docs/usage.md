@@ -401,7 +401,7 @@ A pre-processing step joins the per-ORF P-site count matrix (`<outdir>/orf_quant
 Two caveats apply:
 
 - **Row independence.** Multiple ORFs from the same gene share a single gene-level RNA-seq denominator row (sibling ORFs sit on the same mRNA, so there is no separately measurable per-ORF RNA level). After the join, those rows are perfectly correlated, and both anota2seq's per-identifier APV regression and deltaTE's per-row DESeq2 fit treat each ORF as an independent observation. Treat p-values for ORFs sharing a host gene as a ranking, not strict significance.
-- **Low-count ORFs.** uORFs, smORFs and low-abundance novel ORFs frequently have sparse P-site counts. DESeq2 dispersion estimation and anota2seq's RVM are both unreliable on rows with too many zeros. Pass method-side options via `--extra_orf_dte_args` (deltaTE), `--extra_anota2seq_run_args` (anota2seq) or `--extra_dotseq_args` (DOTSeq); inspect the diagnostic plots before interpreting results.
+- **Low-count ORFs.** uORFs, smORFs and low-abundance novel ORFs frequently have sparse P-site counts. DESeq2 dispersion estimation and anota2seq's RVM are both unreliable on rows with too many zeros. Pass method-side options via `--extra_orf_deltate_args` (deltaTE), `--extra_orf_anota2seq_run_args` (anota2seq) or `--extra_dotseq_args` (DOTSeq); inspect the diagnostic plots before interpreting results.
 - **Multiple-testing scale.** Per-ORF runs typically have 5-50x more rows than per-gene runs, so BH-adjusted p-values are more conservative by construction. This is expected and applies identically to both methods.
 
 ### Method comparison

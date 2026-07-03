@@ -90,7 +90,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 |                     | `--run_rpbp`                             |
 |                     | `--extra_rpbp_preparegenome_args`        |
 |                     | `--extra_rpbp_predictorfs_args`          |
-|                     | `--extra_orf_dte_args`                   |
+|                     | `--extra_orf_deltate_args`               |
+|                     | `--extra_orf_anota2seq_run_args`         |
 |                     | `--extra_dotseq_args`                    |
 
 ### `Dependencies`
