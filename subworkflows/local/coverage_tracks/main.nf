@@ -44,7 +44,8 @@ workflow COVERAGE_TRACKS {
                 }
             },
         [[], [], []],  // No reference fasta/fai
-        [],            // No qname file
+        [[], []],      // No qname file
+        [[], []],      // No region BED
         []             // No index format
     )
 

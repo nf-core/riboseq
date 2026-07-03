@@ -54,8 +54,8 @@ workflow EXTENDED_ORF_SECOND_PASS_ALIGN {
         ch_hybrid_star_index.map { [ [:], it ] },
         ch_hybrid_gtf.map { [ [:], it ] },
         star_ignore_sjdbgtf,
-        ch_fasta.map { [ [:], it ] },
-        ch_hybrid_transcriptome_fasta.map { [ [:], it ] }
+        ch_fasta.map { [ [:], it, [] ] },
+        ch_hybrid_transcriptome_fasta.map { [ [:], it, [] ] }
     )
 
     ch_multiqc_files = FASTQ_ALIGN_STAR_HYBRID.out.stats.collect{it[1]}
@@ -66,7 +66,7 @@ workflow EXTENDED_ORF_SECOND_PASS_ALIGN {
     emit:
     transcriptome_bam = FASTQ_ALIGN_STAR_HYBRID.out.orig_bam_transcript // [ meta, bam ]
     genome_bam        = FASTQ_ALIGN_STAR_HYBRID.out.bam                  // [ meta, bam ] - coordinate-sorted
-    genome_bai        = FASTQ_ALIGN_STAR_HYBRID.out.bai                  // [ meta, bai ]
+    genome_bai        = FASTQ_ALIGN_STAR_HYBRID.out.index                // [ meta, bai ]
     transcript_fasta  = ch_hybrid_transcriptome_fasta                   // channel: path(fasta)
     multiqc_files     = ch_multiqc_files                                // channel: path(file)
 }

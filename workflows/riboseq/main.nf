@@ -235,19 +235,22 @@ workflow RIBOSEQ {
     // alignments and run BAM_SORT_STATS_SAMTOOLS for each
     //
 
+    ch_fasta_fai            = ch_fasta.combine(ch_fai).map { fasta, fai -> [ [:], fasta, fai ] }
+    ch_transcript_fasta_fai = ch_transcript_fasta.map { [ [:], it, [] ] }
+
     FASTQ_ALIGN_STAR(
         ch_reads_for_alignment,
         ch_star_index.map { [ [:], it ] },
         ch_gtf.map { [ [:], it ] },
         params.star_ignore_sjdbgtf,
-        ch_fasta.map { [ [:], it ] },
-        ch_transcript_fasta.map { [ [:], it ] }
+        ch_fasta_fai,
+        ch_transcript_fasta_fai
     )
 
     ch_genome_bam              = FASTQ_ALIGN_STAR.out.bam
-    ch_genome_bam_index        = FASTQ_ALIGN_STAR.out.bai
+    ch_genome_bam_index        = FASTQ_ALIGN_STAR.out.index
     ch_transcriptome_bam       = FASTQ_ALIGN_STAR.out.orig_bam_transcript
-    ch_transcriptome_bai       = FASTQ_ALIGN_STAR.out.bai_transcript
+    ch_transcriptome_bai       = FASTQ_ALIGN_STAR.out.index_transcript
 
     ch_multiqc_files = ch_multiqc_files
         .mix(FASTQ_ALIGN_STAR.out.stats.collect{it[1]})
@@ -263,18 +266,17 @@ workflow RIBOSEQ {
 
         BAM_DEDUP_UMI(
             ch_genome_bam.join(ch_genome_bam_index, by: [0]),
-            ch_fasta.map { [ [:], it ] },
+            ch_fasta_fai,
             params.umi_dedup_tool,
             params.umitools_dedup_stats,
-            params.bam_csi_index,
             ch_transcriptome_bam,
-            ch_transcript_fasta.map { [ [:], it ] },
+            ch_transcript_fasta_fai,
             params.umitools_dedup_primary_only
         )
 
         ch_genome_bam        = BAM_DEDUP_UMI.out.bam
         ch_transcriptome_bam = BAM_DEDUP_UMI.out.transcriptome_bam
-        ch_genome_bam_index  = BAM_DEDUP_UMI.out.bai
+        ch_genome_bam_index  = BAM_DEDUP_UMI.out.index
 
         ch_multiqc_files = ch_multiqc_files
             .mix(BAM_DEDUP_UMI.out.multiqc_files)
@@ -379,12 +381,11 @@ workflow RIBOSEQ {
         if (params.with_umi) {
             BAM_DEDUP_UMI_HYBRID(
                 EXTENDED_ORF_SECOND_PASS_ALIGN.out.genome_bam.join(EXTENDED_ORF_SECOND_PASS_ALIGN.out.genome_bai, by: [0]),
-                ch_fasta.map { [ [:], it ] },
+                ch_fasta_fai,
                 params.umi_dedup_tool,
                 params.umitools_dedup_stats,
-                params.bam_csi_index,
                 EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcriptome_bam,
-                EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcript_fasta.map { [ [:], it ] },
+                EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcript_fasta.map { [ [:], it, [] ] },
                 params.umitools_dedup_primary_only
             )
             ch_hybrid_transcriptome_bam = BAM_DEDUP_UMI_HYBRID.out.transcriptome_bam
@@ -558,9 +559,9 @@ workflow RIBOSEQ {
         true,
         params.salmon_quant_libtype ?: '',
         null,
-        null
+        null,
+        false
     )
-    ch_versions = ch_versions.mix(QUANTIFY_STAR_SALMON.out.versions)
     ch_multiqc_files = ch_multiqc_files.mix(QUANTIFY_STAR_SALMON.out.multiqc.collect{it[1]}.ifEmpty([]))
 
     //
@@ -587,9 +588,9 @@ workflow RIBOSEQ {
             false,  // alignment_mode = false (pseudo-alignment from reads)
             params.salmon_quant_libtype ?: '',
             null,
-            null
+            null,
+            false
         )
-        ch_versions = ch_versions.mix(QUANTIFY_PSEUDO_TE.out.versions)
         ch_multiqc_files = ch_multiqc_files.mix(QUANTIFY_PSEUDO_TE.out.multiqc.collect{it[1]}.ifEmpty([]))
         ch_te_counts = QUANTIFY_PSEUDO_TE.out.counts_gene_length_scaled
     }
@@ -668,7 +669,6 @@ workflow RIBOSEQ {
                 ch_contrasts,
                 ch_samplesheet_matrix
             )
-            ch_versions = ch_versions.mix(ANOTA2SEQ_ANOTA2SEQRUN.out.versions)
         }
 
         if ('deltate' in te_methods) {
@@ -696,7 +696,6 @@ workflow RIBOSEQ {
                     ch_contrasts,
                     ch_orf_samplesheet_matrix
                 )
-                ch_versions = ch_versions.mix(ANOTA2SEQ_ANOTA2SEQRUN_ORF.out.versions)
             }
 
             if ('deltate' in te_methods) {
