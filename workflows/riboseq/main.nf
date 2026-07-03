@@ -235,8 +235,8 @@ workflow RIBOSEQ {
     // alignments and run BAM_SORT_STATS_SAMTOOLS for each
     //
 
-    ch_fasta_fai            = ch_fasta.combine(ch_fai).map { fasta, fai -> [ [:], fasta, fai ] }
-    ch_transcript_fasta_fai = ch_transcript_fasta.map { [ [:], it, [] ] }
+    ch_fasta_fai            = ch_fasta.combine(ch_fai).map { fasta, fai -> [ [:], fasta, fai ] }.first()
+    ch_transcript_fasta_fai = ch_transcript_fasta.map { [ [:], it, [] ] }.first()
 
     FASTQ_ALIGN_STAR(
         ch_reads_for_alignment,
