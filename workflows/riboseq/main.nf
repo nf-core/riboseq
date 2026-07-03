@@ -199,7 +199,7 @@ workflow RIBOSEQ {
         params.unstranded_threshold                 // unstranded_threshold
     )
 
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS.out.multiqc_files)
+    ch_multiqc_files = ch_multiqc_files.mix(FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS.out.multiqc_files.map { _meta, file -> file })
 
     //
     // SUBWORKFLOW: Equalise RNA-seq read lengths to match Ribo-seq read lengths
