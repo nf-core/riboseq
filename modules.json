@@ -90,6 +90,11 @@
                         "git_sha": "624977dfaf562211e68a8a868ca80acc8461f1ac",
                         "installed_by": ["modules"]
                     },
+                    "dotseq/dotseq": {
+                        "branch": "master",
+                        "git_sha": "277d34e22a51a99cc697310c4e3c38bca49422b8",
+                        "installed_by": ["modules"]
+                    },
                     "fastp": {
                         "branch": "master",
                         "git_sha": "a331ecfd1aa48b2b2298aab23bb4516c800e410b",

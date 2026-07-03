@@ -36,6 +36,9 @@
                 "FASTQC_FILTERED": {
                     "fastqc": "0.12.1"
                 },
+                "FILTER_COUNTS_CANONICAL": {
+                    "gawk": "5.3.1"
+                },
                 "FQ_LINT": {
                     "fq": "0.12.0"
                 },
@@ -2007,6 +2010,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2026-06-19T18:19:04.341879751"
+        "timestamp": "2026-07-02T14:03:31.862306923"
     }
 }

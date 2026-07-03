@@ -481,7 +481,7 @@ Produced only when `--run_price true` is set. PRICE is invoked once across the r
   - `*.normalised.tsv`: matching sidecar with caller, sample id, ORF class (`canonical_cds`, `uORF`, `dORF`, `novel_u`, `smORF`, `other`), amino-acid length and the caller's score.
 - `orf_catalogue/`
   - `*.catalogue.bed12`: merged, deduplicated ORF catalogue (BED12, stable `orf_NNNNNNNN` ids in column 4).
-  - `*.catalogue.tsv`: per-ORF table with `called_by_<caller>` binary columns for every caller in the runtime-enabled set and `score_<caller>` columns for Ribo-TISH / RiboCode / Rp-Bp / PRICE (Ribotricer scores are excluded per issue #163). Includes `orf_class`, `aa_length`, host `gene_id` and `transcript_id`.
+  - `*.catalogue.tsv`: per-ORF table with `called_by_<caller>` binary columns for every caller in the runtime-enabled set and `score_<caller>` columns for Ribo-TISH / RiboCode / Rp-Bp / PRICE (Ribotricer scores are excluded). Includes `orf_class`, `aa_length`, host `gene_id` and `transcript_id`.
   - `*.orf_to_gene.tsv`: ORF-to-gene mapping. An ORF that maps to multiple host transcripts/genes gets multiple rows here; downstream gene-level aggregation collapses by `gene_id`.
   - `*.catalogue.aa.fasta`: amino-acid FASTA of every catalogue ORF, keyed by `orf_NNNNNNNN`. Produced by `bedtools getfasta` on the merged BED12 followed by `seqkit translate`.
   - `*.catalogue.mqc.tsv`: per-class ORF counts surfaced as a MultiQC custom-content table.
@@ -659,6 +659,37 @@ When using `--translational_efficiency_method deltate`, the pipeline produces th
   - `*.pca_rna.png`: PCA plot for RNA-seq samples.
   - `*.heatmap.png`: Heatmap of top differentially translated genes (DTEGs).
   - `*.DESeqDataSet.rds`: Serialised DESeqDataSet object containing analysis results.
+  - `*.R_sessionInfo.log`: R session information for reproducibility.
+
+</details>
+
+### ORF-level DTE outputs
+
+When `--extended_orf_analysis true` is set with `--te_quantification_method plastid_psite`, the pipeline produces two additional output directories alongside the gene-level anota2seq / deltaTE results. See [Translational efficiency / ORF-level differential translation](usage.md#orf-level-differential-translation) for the analysis rationale and the row-independence caveat.
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `dte/orf_level/`
+  - `orf_combined_counts.tsv`: Combined ORF x sample count matrix produced by the join step. Rows are ORFs; columns are Ribo-seq samples (per-ORF P-site counts) followed by RNA-seq samples (host gene's count replicated across all ORFs mapping to that gene). This is the input fed to the selected DTE method (`--translational_efficiency_method`) for the ORF-level fit.
+- `dte/orf_level/deltate/` (when `--translational_efficiency_method deltate`):
+  - `*.translation.deltate.results.tsv`, `*.translated_mRNA.deltate.results.tsv`, `*.total_mRNA.deltate.results.tsv`: deltaTE result tables at ORF resolution (one set per contrast). The first column header is `gene_id` for compatibility with the gene-level path but the rows are ORF ids.
+  - `*.dtegs.deltate.genes.tsv` and the four classified ORF lists (`*.mRNA_abundance`, `*.translation`, `*.intensified`, `*.buffering`): ORF ids assigned to each deltaTE category.
+  - `*.fold_change.png`, `*.interaction_p_distribution.png`, `*.pca_ribo.png`, `*.pca_rna.png`, `*.heatmap.png` (plus their `.tsv` underlying data files): the same deltaTE diagnostic plots as the gene-level path, computed at ORF resolution.
+  - `*.DESeqDataSet.rds`: serialised DESeq2 objects for downstream inspection.
+  - `*.R_sessionInfo.log`: R session information for reproducibility.
+- `dte/orf_level/anota2seq/` (when `--translational_efficiency_method anota2seq`, the default):
+  - `*.translated_mRNA.anota2seq.results.tsv`, `*.total_mRNA.anota2seq.results.tsv`, `*.translation.anota2seq.results.tsv`, `*.buffering.anota2seq.results.tsv`, `*.mRNA_abundance.anota2seq.results.tsv`: anota2seq result tables at ORF resolution (one set per contrast); rows are ORF ids.
+  - `*.fold_change.png`, `*.interaction_p_distribution.pdf`, `*.residual_distribution_summary.jpeg`, `*.residual_vs_fitted.jpeg`, `*.rvm_fit_for_*.jpg`, `*.simulated_vs_obt_dfbetas_without_interaction.pdf`: anota2seq diagnostic plots, computed at ORF resolution. Inspect the residual and RVM fit plots before interpreting results: per-ORF inputs typically have more sparse rows than per-gene inputs and the QC plots surface any failure of the APV / RVM assumptions.
+  - `*.Anota2seqDataSet.rds`: serialised Anota2seqDataSet object.
+  - `*.R_sessionInfo.log`: R session information for reproducibility.
+- `dte/orf_level/dotseq/` (when `--translational_efficiency_method dotseq`):
+  - `*.translation.dotseq.results.tsv`: per-ORF differential translation efficiency from DOTSeq's DTE interaction term (DESeq2 + ashr shrinkage); rows are ORF ids. Same biological quantity as the anota2seq / deltate `translation` table at gene resolution.
+  - `*.dou.dotseq.results.tsv`: per-ORF Differential ORF Usage (DOU) results, DOTSeq's per-gene beta-binomial GLM modelling changes in Ribo / RNA proportion across an ORF and its sibling ORFs (shrunk with ashr). DOU has no anota2seq / deltate counterpart and answers a different question to DTE: not "does this ORF's translation change?" but "does this ORF gain or lose share of its parent gene's ribosome occupancy?".
+  - `*.dou_strategy.dotseq.results.tsv`, `*.dte_strategy.dotseq.results.tsv`: per-condition Ribo-vs-RNA strategy contrasts, when DOTSeq emits them.
+  - `*.volcano.png`, `*.composite.png`, `*.venn.png`, `*.heatmap.png`: DOTSeq `plotDOT()` outputs visualising the DOU + DTE joint result space.
+  - `*.interaction_p_distribution.png`: histogram of the DTE adjusted p-values.
+  - `*.DOTSeqDataSets.rds`: serialised DOTSeqDataSets object containing both DOU and DTE fits.
   - `*.R_sessionInfo.log`: R session information for reproducibility.
 
 </details>

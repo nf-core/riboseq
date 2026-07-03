@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#169](https://github.com/nf-core/riboseq/issues/169) - Add Rp-Bp as an opt-in ORF caller via `--run_rpbp` ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#167](https://github.com/nf-core/riboseq/issues/167) - Add a cross-caller cohort ORF catalogue under `--extended_orf_analysis`, with smORF peptide collapse (`--skip_orf_collapse`) and a consensus view (`--orf_min_callers`/`--orf_min_samples`) ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#166](https://github.com/nf-core/riboseq/issues/166) - Add per-ORF in-frame P-site quantification, emitting an ORF x sample count matrix ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#168](https://github.com/nf-core/riboseq/issues/168) - Add ORF-level differential translation analysis (anota2seq / deltaTE / DOTSeq) on top of the gene-level DTE ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Fixed`
 
@@ -89,6 +90,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 |                     | `--run_rpbp`                             |
 |                     | `--extra_rpbp_preparegenome_args`        |
 |                     | `--extra_rpbp_predictorfs_args`          |
+|                     | `--extra_orf_deltate_args`               |
+|                     | `--extra_orf_anota2seq_run_args`         |
+|                     | `--extra_dotseq_args`                    |
 
 ### `Dependencies`
 

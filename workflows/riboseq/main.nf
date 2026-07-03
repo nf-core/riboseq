@@ -18,6 +18,11 @@ include { ORF_CALLER_DISPATCH             } from '../../subworkflows/local/orf_c
 include { COVERAGE_TRACKS                 } from '../../subworkflows/local/coverage_tracks'
 include { ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE } from '../../subworkflows/nf-core/orftable_fasta_gtf_buildorfcatalogue/main'
 include { QUANTIFY_ORF_PSITE              } from '../../subworkflows/local/quantify_orf_psite'
+include { DTE_COUNTS_PREP          } from '../../modules/local/dte_counts_prep'
+include { DESEQ2_DELTATE as DESEQ2_DELTATE_ORF } from '../../modules/local/deseq2/deltate'
+include { ANOTA2SEQ_ANOTA2SEQRUN as ANOTA2SEQ_ANOTA2SEQRUN_ORF } from '../../modules/nf-core/anota2seq/anota2seqrun'
+include { DOTSEQ_DOTSEQ as DOTSEQ_DOTSEQ_ORF } from '../../modules/nf-core/dotseq/dotseq'
+include { GAWK as FILTER_COUNTS_CANONICAL                      } from '../../modules/nf-core/gawk'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -445,7 +450,7 @@ workflow RIBOSEQ {
     ch_rank_aggregation_callers = channel.value(rank_aggregation_callers)
 
     //
-    // Cross-sample ORF catalogue (issue #167). Built once per pipeline run
+    // Cross-sample ORF catalogue. Built once per pipeline run
     // when extended-ORF analysis is enabled AND at least one ORF caller ran.
     // The catalogue normalises each caller's per-sample output into a unified
     // BED12, merges with class-aware collapse (transcript-ID for canonical
@@ -494,6 +499,10 @@ workflow RIBOSEQ {
         ch_multiqc_files = ch_multiqc_files.mix(RIBOWALTZ.out.ribowaltz_qc_data.collect{it[1]}.ifEmpty([]))
     }
 
+    // ORF-level count matrix; populated below when extended ORF analysis is
+    // active and plastid is enabled. Consumed by the downstream DTE step.
+    ch_orf_count_matrix = Channel.empty()
+
     if (!params.skip_plastid) {
 
         PLASTID_METAGENE_GENERATE(ch_canonical_gtf.map { [ [:], it ] })
@@ -525,7 +534,8 @@ workflow RIBOSEQ {
                 ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.catalogue_bed12,
                 ch_orf_psite_tracks
             )
-            ch_versions = ch_versions.mix(QUANTIFY_ORF_PSITE.out.versions)
+            ch_versions         = ch_versions.mix(QUANTIFY_ORF_PSITE.out.versions)
+            ch_orf_count_matrix = QUANTIFY_ORF_PSITE.out.orf_count_matrix
         }
 
     }
@@ -625,6 +635,20 @@ workflow RIBOSEQ {
 
     if (ch_contrasts_file){
 
+        // GTF first, counts second: the awk script uses the FNR==NR idiom
+        // to build the gene_id keep-set from the first file (the GTF) before
+        // streaming the second (the counts TSV) and emitting matched rows.
+        ch_filter_counts_in = ch_te_counts
+            .combine(ch_canonical_gtf)
+            .map { meta, counts, gtf -> [ meta, [ gtf, counts ] ] }
+
+        FILTER_COUNTS_CANONICAL(
+            ch_filter_counts_in,
+            file("${projectDir}/assets/filter_counts_canonical.awk"),
+            false
+        )
+        ch_te_counts = FILTER_COUNTS_CANONICAL.out.output
+
         ch_contrasts = ch_contrasts_file
             .splitCsv ( header:true, sep:',' )
             .map{[it, it.variable, it.reference, it.target]}
@@ -634,7 +658,12 @@ workflow RIBOSEQ {
             .map{[it[0], it[2], it[1]]}
             .first()
 
-        if (params.translational_efficiency_method == 'anota2seq') {
+        // --translational_efficiency_method accepts a comma-separated list; each
+        // selected method runs independently (outputs are disambiguated by
+        // subfolder and file name), so several can be produced in one run.
+        def te_methods = params.translational_efficiency_method.tokenize(',')*.trim()
+
+        if ('anota2seq' in te_methods) {
             ANOTA2SEQ_ANOTA2SEQRUN(
                 ch_contrasts,
                 ch_samplesheet_matrix
@@ -642,12 +671,53 @@ workflow RIBOSEQ {
             ch_versions = ch_versions.mix(ANOTA2SEQ_ANOTA2SEQRUN.out.versions)
         }
 
-        if (params.translational_efficiency_method == 'deltate') {
+        if ('deltate' in te_methods) {
             DESEQ2_DELTATE(
                 ch_contrasts,
                 ch_samplesheet_matrix
             )
-            ch_versions = ch_versions.mix(DESEQ2_DELTATE.out.versions)
+        }
+
+        if (extended_orf_active && enabled_orf_callers && !params.skip_plastid) {
+            DTE_COUNTS_PREP(
+                ch_orf_count_matrix
+                    .combine(QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled.map { _meta, counts -> counts })
+                    .combine(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.orf_to_gene_tsv.map { _meta, tsv -> tsv })
+                    .map { meta, ribo, rna, o2g -> [ meta, ribo, rna, o2g ] }
+            )
+
+            ch_orf_samplesheet_matrix = DTE_COUNTS_PREP.out.counts
+                .combine(ch_samplesheet)
+                .map { meta, counts, samplesheet -> [ meta, samplesheet, counts ] }
+                .first()
+
+            if ('anota2seq' in te_methods) {
+                ANOTA2SEQ_ANOTA2SEQRUN_ORF(
+                    ch_contrasts,
+                    ch_orf_samplesheet_matrix
+                )
+                ch_versions = ch_versions.mix(ANOTA2SEQ_ANOTA2SEQRUN_ORF.out.versions)
+            }
+
+            if ('deltate' in te_methods) {
+                DESEQ2_DELTATE_ORF(
+                    ch_contrasts,
+                    ch_orf_samplesheet_matrix
+                )
+            }
+
+            if ('dotseq' in te_methods) {
+                ch_dotseq_input = DTE_COUNTS_PREP.out.counts
+                    .combine(ch_samplesheet)
+                    .combine(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.catalogue_tsv.map { _meta, tsv -> tsv })
+                    .map { meta, counts, samplesheet, annotation -> [ meta, samplesheet, counts, annotation ] }
+                    .first()
+
+                DOTSEQ_DOTSEQ_ORF(
+                    ch_contrasts,
+                    ch_dotseq_input
+                )
+            }
         }
     }
 
@@ -715,8 +785,10 @@ workflow RIBOSEQ {
     }
 
     emit:
-    multiqc_report = ch_multiqc_report   // channel: /path/to/multiqc_report.html
-    versions       = ch_versions         // channel: [ path(versions.yml) ]
+    multiqc_report   = ch_multiqc_report   // channel: /path/to/multiqc_report.html
+    versions         = ch_versions         // channel: [ path(versions.yml) ]
+    hybrid_gtf       = ch_hybrid_gtf       // channel: path(hybrid_reference.gtf) - canonical + filtered novel; equals canonical when no novel source is configured
+    orf_count_matrix = ch_orf_count_matrix // channel: [ meta, orf_psite_counts.tsv ] - per-ORF P-site count matrix; empty unless extended-ORF + plastid both active
 }
 
 /*

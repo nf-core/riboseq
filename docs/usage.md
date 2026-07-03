@@ -388,6 +388,22 @@ Alternatively, you can use the deltaTE method by specifying `--translational_eff
 
 Both methods analyze differences between conditions for RNA-seq and Ribo-seq samples, but use different statistical frameworks to identify translational regulation.
 
+### ORF-level differential translation
+
+When `--extended_orf_analysis true` is set with `--te_quantification_method plastid_psite` (the default), at least one ORF caller is enabled, and `--contrasts` is supplied, the pipeline runs differential translation at ORF resolution, additively to the gene-level DTE above and using the same method selector (`--translational_efficiency_method`). Three methods are available:
+
+- `anota2seq` (default, gene-level + ORF-level): APV + RVM regression of Ribo on RNA per identifier.
+- `deltate`: DESeq2 with a `~ condition + seq_type + condition:seq_type` interaction model.
+- `dotseq` (ORF-level only): DOTSeq's ORF-level differential translation efficiency (DESeq2 + ashr) AND its DOTSeq-specific DOU contrast - a per-gene beta-binomial GLM modelling whether each ORF gains or loses a share of its parent gene's ribosome occupancy across conditions (the question "is this ORF gaining ribosomes at the expense of its siblings?", which DTE alone can't answer). Selecting `dotseq` requires `--extended_orf_analysis true` and an enabled ORF caller; the gene-level fit is skipped.
+
+A pre-processing step joins the per-ORF P-site count matrix (`<outdir>/orf_quantification/orf_psite_counts.tsv`) with the gene-level Salmon RNA-seq matrix via `orf_to_gene.tsv` from the catalogue, producing one combined count table whose rows are ORFs and whose RNA columns hold the host gene's count replicated across all ORFs sharing that gene. The selected method is then fitted, treating each ORF row as a feature. Results land under `<outdir>/dte/orf_level/<method>/`, alongside the shared combined input matrix (`<outdir>/dte/orf_level/orf_combined_counts.tsv`).
+
+Two caveats apply:
+
+- **Row independence.** Multiple ORFs from the same gene share a single gene-level RNA-seq denominator row (sibling ORFs sit on the same mRNA, so there is no separately measurable per-ORF RNA level). After the join, those rows are perfectly correlated, and both anota2seq's per-identifier APV regression and deltaTE's per-row DESeq2 fit treat each ORF as an independent observation. Treat p-values for ORFs sharing a host gene as a ranking, not strict significance.
+- **Low-count ORFs.** uORFs, smORFs and low-abundance novel ORFs frequently have sparse P-site counts. DESeq2 dispersion estimation and anota2seq's RVM are both unreliable on rows with too many zeros. Pass method-side options via `--extra_orf_deltate_args` (deltaTE), `--extra_orf_anota2seq_run_args` (anota2seq) or `--extra_dotseq_args` (DOTSeq); inspect the diagnostic plots before interpreting results.
+- **Multiple-testing scale.** Per-ORF runs typically have 5-50x more rows than per-gene runs, so BH-adjusted p-values are more conservative by construction. This is expected and applies identically to both methods.
+
 ### Method comparison
 
 **anota2seq** studies differences between conditions for both RNA-seq and Ribo-seq samples. It also assesses combined results from two measures as they relate to one another:
@@ -552,7 +568,7 @@ The second pass roughly doubles STAR alignment compute for Ribo-seq samples and 
 
 **riboWaltz stays on the primary reference-transcriptome BAM by design.** riboWaltz is a QC/calibration tool and its CDS-dependent plots (frame distribution, start/stop metaprofiles) are driven by annotated CDS-bearing transcripts. Routing CDS-absent novel transcripts through riboWaltz would dilute its diagnostic plots without contributing to ORF discovery (riboWaltz does not call ORFs). Salmon likewise stays on the primary reference transcriptome, and plastid P-site quantification on the canonical backbone, regardless of `--extended_orf_analysis`.
 
-**Ribo-TISH `quality` stays on the canonical backbone.** The `quality` step estimates P-site offsets and read-length QC against CDS-bearing canonical transcripts. Feeding it the hybrid GTF would mix in CDS-absent novel transcripts that the P-site model cannot interpret. The Ribo-TISH `predict` step (which actually calls ORFs) is the one that consumes the hybrid GTF on `-g` plus the canonical backbone on `-a`. Empirical confirmation that canonical-only is the correct choice for `quality` is pending full-scale validation; the default reflects the spec recommendation in issue #162.
+**Ribo-TISH `quality` stays on the canonical backbone.** The `quality` step estimates P-site offsets and read-length QC against CDS-bearing canonical transcripts. Feeding it the hybrid GTF would mix in CDS-absent novel transcripts that the P-site model cannot interpret. The Ribo-TISH `predict` step (which actually calls ORFs) is the one that consumes the hybrid GTF on `-g` plus the canonical backbone on `-a`. Empirical confirmation that canonical-only is the correct choice for `quality` is pending full-scale validation; the default reflects the spec recommendation.
 
 The default `--extended_orf_analysis false` keeps the pre-#165 behaviour unchanged: the primary STAR pass is the only alignment and every ORF caller runs against the canonical backbone.
 
@@ -563,7 +579,7 @@ When `--extended_orf_analysis true` is set and at least one ORF caller is enable
 - annotated multi-exon CDS are collapsed by `transcript_id` to preserve intron-chain identity;
 - single-exon novel intergenic ORFs are clustered by 80% reciprocal overlap on the outer genomic span;
 - smORFs (≤ 100 aa) are clustered by 80% reciprocal overlap, then peptide-level deduplicated: the catalogue amino-acid FASTA is clustered with MMseqs2 (`--min-seq-id 0.9 -c 0.8`) and each multi-member smORF cluster is folded to one representative, following the GENCODE Ribo-seq ORF catalogue convention (Mudge et al. 2022). Pass `--skip_orf_collapse` to publish the coordinate-merged catalogue without this sequence-level collapse;
-- cross-caller consensus is recorded in `called_by_<caller>` binary columns plus `score_<caller>` columns for Ribo-TISH / RiboCode / Rp-Bp / PRICE (Ribotricer scores are excluded from rank aggregation per #163).
+- cross-caller consensus is recorded in `called_by_<caller>` binary columns plus `score_<caller>` columns for Ribo-TISH / RiboCode / Rp-Bp / PRICE (Ribotricer scores are excluded from rank aggregation).
 
 The catalogue runs once per pipeline invocation (cohort-level, not per sample) and gates on `--extended_orf_analysis true` plus a non-empty enabled-caller set. The default-off path keeps the pre-#167 behaviour unchanged.
 

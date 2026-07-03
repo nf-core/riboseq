@@ -1,21 +1,46 @@
 {
-    "-profile test": {
+    "-profile test --skip_stringtie false --extended_orf_analysis true --translational_efficiency_method dotseq": {
         "content": [
             {
                 "AGAT_SPKEEPLONGESTISOFORM": {
                     "agat": "1.6.1"
                 },
-                "ANOTA2SEQ_ANOTA2SEQRUN": {
-                    "bioconductor-anota2seq": "1.24.0"
-                },
                 "BEDTOOLS_GENOMECOV": {
                     "bedtools": "2.31.1"
+                },
+                "BEDTOOLS_GETFASTA": {
+                    "bedtools": "2.31.1"
+                },
+                "CUSTOM_BED12CODONPOSITIONS": {
+                    "pandas": "2.3.0",
+                    "python": "3.12.11"
                 },
                 "CUSTOM_GTFFILTER": {
                     "python": "3.9.5"
                 },
+                "CUSTOM_ORFCOLLAPSE": {
+                    "pandas": "2.3.0",
+                    "python": "3.12.11",
+                    "pyyaml": "6.0.2"
+                },
+                "CUSTOM_ORFMERGE": {
+                    "python": "3.12.11"
+                },
+                "CUSTOM_ORFNORMALISE": {
+                    "python": "3.12.11"
+                },
                 "CUSTOM_TX2GENE": {
                     "python": "3.10.4"
+                },
+                "DOTSEQ_DOTSEQ_ORF": {
+                    "bioconductor-dotseq": "1.0.0",
+                    "r-dplyr": "1.2.1",
+                    "r-optparse": "1.8.2",
+                    "r-readr": "2.2.0"
+                },
+                "DTE_COUNTS_PREP": {
+                    "pandas": "2.3.0",
+                    "python": "3.12.11"
                 },
                 "FASTQC": {
                     "fastqc": "0.12.1"
@@ -38,7 +63,19 @@
                 "FQ_SUBSAMPLE": {
                     "fq": "0.12.0"
                 },
+                "GAWK_CONCAT": {
+                    "gawk": "5.3.1"
+                },
+                "GAWK_FILTER": {
+                    "gawk": "5.3.1"
+                },
+                "GFFCOMPARE": {
+                    "gffcompare": "0.12.6"
+                },
                 "GFFREAD_CANONICAL": {
+                    "gffread": "0.12.7"
+                },
+                "GFFREAD_HYBRID_TRANSCRIPTOME": {
                     "gffread": "0.12.7"
                 },
                 "GTF_TO_INFRAME_PSITES": {
@@ -50,6 +87,13 @@
                 "MAKE_TRANSCRIPTS_FASTA": {
                     "rsem": "1.3.1",
                     "star": "2.7.10a"
+                },
+                "MMSEQS_EASYCLUSTER": {
+                    "mmseqs": "18.8cc5c"
+                },
+                "ORF_COUNT_MATRIX": {
+                    "pandas": "2.2.3",
+                    "python": "3.11.15"
                 },
                 "PLASTID_MAKE_WIGGLE": {
                     "plastid": "0.6.1"
@@ -108,6 +152,9 @@
                 "SAMTOOLS_VIEW_SPLIT_BY_STRAND": {
                     "samtools": "1.22.1"
                 },
+                "SEQKIT_TRANSLATE": {
+                    "seqkit": "2.13.0"
+                },
                 "SE_GENE_UNIFIED": {
                     "bioconductor-summarizedexperiment": "1.32.0"
                 },
@@ -129,6 +176,17 @@
                     "gawk": "5.1.0",
                     "samtools": 1.21,
                     "star": "2.7.11b"
+                },
+                "STAR_GENOMEGENERATE_HYBRID": {
+                    "gawk": "5.1.0",
+                    "samtools": 1.21,
+                    "star": "2.7.11b"
+                },
+                "STRINGTIE_MERGE": {
+                    "stringtie": "2.2.1"
+                },
+                "STRINGTIE_STRINGTIE": {
+                    "stringtie": "2.2.3"
                 },
                 "TRIMGALORE": {
                     "trimgalore": "0.6.10"
@@ -362,9 +420,23 @@
                 "coverage/SRX11780889.reverse.bigWig",
                 "coverage/SRX11780890.forward.bigWig",
                 "coverage/SRX11780890.reverse.bigWig",
+                "dte",
+                "dte/orf_level",
+                "dte/orf_level/dotseq",
+                "dte/orf_level/dotseq/treated_vs_control.DOTSeqDataSets.rds",
+                "dte/orf_level/dotseq/treated_vs_control.R_sessionInfo.log",
+                "dte/orf_level/dotseq/treated_vs_control.composite.png",
+                "dte/orf_level/dotseq/treated_vs_control.dou.dotseq.results.tsv",
+                "dte/orf_level/dotseq/treated_vs_control.dou_strategy.dotseq.results.tsv",
+                "dte/orf_level/dotseq/treated_vs_control.interaction_p_distribution.png",
+                "dte/orf_level/dotseq/treated_vs_control.translation.dotseq.results.tsv",
+                "dte/orf_level/dotseq/treated_vs_control.venn.png",
+                "dte/orf_level/dotseq/treated_vs_control.volcano.png",
+                "dte/orf_level/orf_combined_counts.tsv",
                 "genome",
                 "genome/index",
                 "genome/sortmerna",
+                "hybrid_star",
                 "multiqc",
                 "multiqc/star",
                 "multiqc/star/multiqc_report.html",
@@ -642,6 +714,29 @@
                 "multiqc/star/multiqc_report_plots/svg/star_alignment_plot-cnt.svg",
                 "multiqc/star/multiqc_report_plots/svg/star_alignment_plot-pct.svg",
                 "multiqc/star/multiqc_report_plots/svg/star_summary_table.svg",
+                "orf_catalogue",
+                "orf_catalogue/cohort.catalogue.bed12",
+                "orf_catalogue/cohort.catalogue.fasta",
+                "orf_catalogue/cohort.catalogue.mqc.tsv",
+                "orf_catalogue/cohort.catalogue.orf_to_gene.tsv",
+                "orf_catalogue/cohort.catalogue.tsv",
+                "orf_catalogue/consensus",
+                "orf_catalogue/consensus/cohort.catalogue.consensus.bed12",
+                "orf_catalogue/consensus/cohort.catalogue.consensus.orf_to_gene.tsv",
+                "orf_catalogue/consensus/cohort.catalogue.consensus.tsv",
+                "orf_catalogue/normalised",
+                "orf_catalogue/normalised/SRX11780885.ribotish.normalised.bed12",
+                "orf_catalogue/normalised/SRX11780885.ribotish.normalised.tsv",
+                "orf_catalogue/normalised/SRX11780886.ribotish.normalised.bed12",
+                "orf_catalogue/normalised/SRX11780886.ribotish.normalised.tsv",
+                "orf_catalogue/normalised/SRX11780887.ribotish.normalised.bed12",
+                "orf_catalogue/normalised/SRX11780887.ribotish.normalised.tsv",
+                "orf_catalogue/normalised/SRX11780888.ribotish.normalised.bed12",
+                "orf_catalogue/normalised/SRX11780888.ribotish.normalised.tsv",
+                "orf_catalogue/normalised/SRX11780889.ribotish.normalised.bed12",
+                "orf_catalogue/normalised/SRX11780889.ribotish.normalised.tsv",
+                "orf_catalogue/normalised/SRX11780890.ribotish.normalised.bed12",
+                "orf_catalogue/normalised/SRX11780890.ribotish.normalised.tsv",
                 "orf_predictions",
                 "orf_predictions/ribotish",
                 "orf_predictions/ribotish/SRX11780885_all.txt",
@@ -666,6 +761,9 @@
                 "orf_predictions/ribotish_all/allsamples_all.txt",
                 "orf_predictions/ribotish_all/allsamples_pred.txt",
                 "orf_predictions/ribotish_all/allsamples_transprofile.py",
+                "orf_quantification",
+                "orf_quantification/cohort.orf_inframe_psites.bed",
+                "orf_quantification/orf_psite_counts.tsv",
                 "pipeline_info",
                 "pipeline_info/nf_core_riboseq_software_mqc_versions.yml",
                 "preprocessing",
@@ -1335,22 +1433,22 @@
                 "riboseq_qc/ribotish/SRX11780890.para.py",
                 "riboseq_qc/ribotish/SRX11780890_qual.pdf",
                 "riboseq_qc/ribotish/SRX11780890_qual.txt",
-                "translational_efficiency",
-                "translational_efficiency/anota2seq",
-                "translational_efficiency/anota2seq/treated_vs_control.Anota2seqDataSet.rds",
-                "translational_efficiency/anota2seq/treated_vs_control.R_sessionInfo.log",
-                "translational_efficiency/anota2seq/treated_vs_control.buffering.anota2seq.results.tsv",
-                "translational_efficiency/anota2seq/treated_vs_control.fold_change.png",
-                "translational_efficiency/anota2seq/treated_vs_control.interaction_p_distribution.pdf",
-                "translational_efficiency/anota2seq/treated_vs_control.residual_distribution_summary.jpeg",
-                "translational_efficiency/anota2seq/treated_vs_control.residual_vs_fitted.jpeg",
-                "translational_efficiency/anota2seq/treated_vs_control.rvm_fit_for_all_contrasts_group.jpg",
-                "translational_efficiency/anota2seq/treated_vs_control.rvm_fit_for_interactions.jpg",
-                "translational_efficiency/anota2seq/treated_vs_control.rvm_fit_for_omnibus_group.jpg",
-                "translational_efficiency/anota2seq/treated_vs_control.simulated_vs_obt_dfbetas_without_interaction.pdf",
-                "translational_efficiency/anota2seq/treated_vs_control.total_mRNA.anota2seq.results.tsv",
-                "translational_efficiency/anota2seq/treated_vs_control.translated_mRNA.anota2seq.results.tsv",
-                "translational_efficiency/anota2seq/treated_vs_control.translation.anota2seq.results.tsv"
+                "stringtie",
+                "stringtie/SRX11780879.denovo.transcripts.gtf",
+                "stringtie/SRX11780880.denovo.transcripts.gtf",
+                "stringtie/SRX11780881.denovo.transcripts.gtf",
+                "stringtie/SRX11780882.denovo.transcripts.gtf",
+                "stringtie/SRX11780883.denovo.transcripts.gtf",
+                "stringtie/SRX11780884.denovo.transcripts.gtf",
+                "stringtie/gffcompare",
+                "stringtie/gffcompare/stringtie_merge.annotated.gtf",
+                "stringtie/gffcompare/stringtie_merge.loci",
+                "stringtie/gffcompare/stringtie_merge.stats",
+                "stringtie/gffcompare/stringtie_merge.stringtie_merge.gtf.refmap",
+                "stringtie/gffcompare/stringtie_merge.stringtie_merge.gtf.tmap",
+                "stringtie/gffcompare/stringtie_merge.tracking",
+                "stringtie/hybrid_reference.gtf",
+                "stringtie/stringtie_merge.gtf"
             ],
             [
                 "SRX11780879.SJ.out.tab:md5,b5239565ecf18cd55147a4e67d7db3a2",
@@ -1476,46 +1574,55 @@
                 "multiqc_ribowaltz_metaprofile_start.txt:md5,6daec197356d6ac87b53b18b2eef130e",
                 "multiqc_ribowaltz_metaprofile_stop.txt:md5,ee7e52c9cd6b03591bced93dd02b0096",
                 "multiqc_ribowaltz_psite_region.txt:md5,f4c44f2d2f6d923190bfc46ca6d6aabe",
-                "multiqc_samtools_flagstat.txt:md5,14e8d04345d9da81e5cc6cb049f5d396",
-                "multiqc_samtools_idxstats.txt:md5,338c19030305e7c9293511f1d98828f7",
-                "multiqc_samtools_stats.txt:md5,bd5f60d4f043e54d738867f09d0ce1d2",
-                "multiqc_star.txt:md5,9bd355c06526d23fa2bb0fcd931d146c",
                 "ribotish_frame_proportions.txt:md5,2e46e5db2f71033a594d87a6e24c1e70",
                 "ribotish_read_length_line.txt:md5,514f4653673462464d74330df9dfd46d",
                 "ribowaltz_frames_plot.txt:md5,536cebfcea9cffdda1b4ec9dd436098b",
                 "ribowaltz_metaprofile_start_plot.txt:md5,61c6fedd66e10824613e357837d83be9",
                 "ribowaltz_metaprofile_stop_plot.txt:md5,5145cae44078798d9e0a7b7251832db9",
                 "ribowaltz_psite_regions_plot.txt:md5,7033d2ca8092a7fff289367fecdea48a",
-                "samtools-flagstat-pct-table.txt:md5,f4865ab1ee16d26db8e9553fbbad397e",
-                "samtools-flagstat-table.txt:md5,35a765de8e3280bd4b1ba8bd77059b19",
-                "samtools-idxstats-mapped-reads-plot_Normalised_Counts.txt:md5,8db9ec219d229213fc054c147ea6c48d",
-                "samtools-idxstats-mapped-reads-plot_Observed_over_Expected_Counts.txt:md5,8db9ec219d229213fc054c147ea6c48d",
-                "samtools-idxstats-mapped-reads-plot_Raw_Counts.txt:md5,28c2f8d940cc35ff1ccd7e39b3e6a541",
-                "samtools-stats-dp.txt:md5,94624c46f237303aad44cda6bbae75e2",
-                "samtools_alignment_plot.txt:md5,c9ab0cbfe5135c14bfdb7d95a94c149c",
-                "star_alignment_plot.txt:md5,611cda02b21bc9f20421ce4b60da5133",
-                "star_summary_table.txt:md5,31b485526cd8c9e7d65ce27a5d9ed043",
-                "SRX11780885_all.txt:md5,96bc42211790337d7e9c90d24ebe1a32",
-                "SRX11780885_pred.txt:md5,96bc42211790337d7e9c90d24ebe1a32",
-                "SRX11780885_transprofile.py:md5,03dc9aae9d0a129d51dd4faf8fa12fad",
+                "cohort.catalogue.bed12:md5,d7c0d4b08479c92dde798dd88f7363ce",
+                "cohort.catalogue.fasta:md5,fcb6edcbc338c901d84dc04d1a7d0f64",
+                "cohort.catalogue.mqc.tsv:md5,05485f921536984f626ceac3cbe4765b",
+                "cohort.catalogue.orf_to_gene.tsv:md5,0d1c11aa2c23064f627787cd77e8cdfb",
+                "cohort.catalogue.tsv:md5,6c74ee9caac4f8a768daaad395b25a45",
+                "cohort.catalogue.consensus.bed12:md5,d7c0d4b08479c92dde798dd88f7363ce",
+                "cohort.catalogue.consensus.orf_to_gene.tsv:md5,0d1c11aa2c23064f627787cd77e8cdfb",
+                "cohort.catalogue.consensus.tsv:md5,6c74ee9caac4f8a768daaad395b25a45",
+                "SRX11780885.ribotish.normalised.bed12:md5,9ded56eb8dc1f6ac54f32f7b75191910",
+                "SRX11780885.ribotish.normalised.tsv:md5,2b0adb7f0a98c6b0e3ec28af2e9f53d9",
+                "SRX11780886.ribotish.normalised.bed12:md5,f3d79b0905fb064eacea7a4c786e6a9e",
+                "SRX11780886.ribotish.normalised.tsv:md5,f836a6129bbe3ba44ecd8471f36c9190",
+                "SRX11780887.ribotish.normalised.bed12:md5,71f7540a0b7b72ad0fba6d0efb600df4",
+                "SRX11780887.ribotish.normalised.tsv:md5,1a74ff1ebbb2f7845fb19425c318daa7",
+                "SRX11780888.ribotish.normalised.bed12:md5,0cbae09fb77c8221e78a3090106b5e17",
+                "SRX11780888.ribotish.normalised.tsv:md5,5d06787f158d20b7d45ca851f5f68ecf",
+                "SRX11780889.ribotish.normalised.bed12:md5,614fe652a2ee788b594e05330f86ddf5",
+                "SRX11780889.ribotish.normalised.tsv:md5,536ae1fb29db034381628883c141e480",
+                "SRX11780890.ribotish.normalised.bed12:md5,220eaac88be55768233c637f3e3cbe79",
+                "SRX11780890.ribotish.normalised.tsv:md5,481642e179b431ffb074a0045e4a114a",
+                "SRX11780885_all.txt:md5,24ec9214a89c2285fd7d338430b95226",
+                "SRX11780885_pred.txt:md5,24ec9214a89c2285fd7d338430b95226",
+                "SRX11780885_transprofile.py:md5,202d559fb8c133aadbb3f1c403d2ae92",
                 "SRX11780886_all.txt:md5,aef11a9444b5a51ddd850b5b201a1ec8",
                 "SRX11780886_pred.txt:md5,aef11a9444b5a51ddd850b5b201a1ec8",
-                "SRX11780886_transprofile.py:md5,6b237fae001ec0c4501e0b82aec8a7a9",
-                "SRX11780887_all.txt:md5,952aaa52db7ae97dd2bcb862aa2566b3",
-                "SRX11780887_pred.txt:md5,952aaa52db7ae97dd2bcb862aa2566b3",
-                "SRX11780887_transprofile.py:md5,04e9415287f4d51575abc53314e471da",
-                "SRX11780888_all.txt:md5,f57c16b795f9791e44a7616438586fc8",
-                "SRX11780888_pred.txt:md5,f57c16b795f9791e44a7616438586fc8",
-                "SRX11780888_transprofile.py:md5,ec6098c852f266070aa55db34608219a",
-                "SRX11780889_all.txt:md5,85a974d244aa92fd265117d02f2942b2",
-                "SRX11780889_pred.txt:md5,85a974d244aa92fd265117d02f2942b2",
-                "SRX11780889_transprofile.py:md5,19e26878c912c5c64158353a888685e0",
-                "SRX11780890_all.txt:md5,c565c97c5e9b9d7a09657b59bba23347",
-                "SRX11780890_pred.txt:md5,c565c97c5e9b9d7a09657b59bba23347",
-                "SRX11780890_transprofile.py:md5,e9fa3776136dd287a1a88c29eb75cd5a",
-                "allsamples_all.txt:md5,335934f2058f1a080eb2d870421737d1",
-                "allsamples_pred.txt:md5,335934f2058f1a080eb2d870421737d1",
-                "allsamples_transprofile.py:md5,6ae455c54cc1de1577c98c29f40ad9a0",
+                "SRX11780886_transprofile.py:md5,3e261b8ee2d8c8f1c2d71883db939555",
+                "SRX11780887_all.txt:md5,973d57ace1b88761f7671a97b10c838e",
+                "SRX11780887_pred.txt:md5,973d57ace1b88761f7671a97b10c838e",
+                "SRX11780887_transprofile.py:md5,c52c8cea4b15c9416c3fd59aad4bddc5",
+                "SRX11780888_all.txt:md5,074d8780d7690c00ed8dcd7cd4e42c6d",
+                "SRX11780888_pred.txt:md5,074d8780d7690c00ed8dcd7cd4e42c6d",
+                "SRX11780888_transprofile.py:md5,8cc033dfca10020fc92fdbfbbaf95387",
+                "SRX11780889_all.txt:md5,03f35578fce44f1a4127505efdaae133",
+                "SRX11780889_pred.txt:md5,03f35578fce44f1a4127505efdaae133",
+                "SRX11780889_transprofile.py:md5,109f50c7b25b1abb0bc1fa0133c25b2b",
+                "SRX11780890_all.txt:md5,3d1c352819397a966af55365718f34ca",
+                "SRX11780890_pred.txt:md5,3d1c352819397a966af55365718f34ca",
+                "SRX11780890_transprofile.py:md5,c86acb297b202001f81d9c953cba0a43",
+                "allsamples_all.txt:md5,16dec2ee613feb7517d83d4b7662a3d3",
+                "allsamples_pred.txt:md5,16dec2ee613feb7517d83d4b7662a3d3",
+                "allsamples_transprofile.py:md5,d4aba478116635320b17b67932126bd2",
+                "cohort.orf_inframe_psites.bed:md5,1fdc02a64fba8c08aea8dd8ffadc963d",
+                "orf_psite_counts.tsv:md5,6dff42ca3cdb0f348ac10935e6cbf531",
                 "SRX11780885.ribowaltz.best_offset.txt:md5,8483e3a3c844284331249dfc8f520e03",
                 "SRX11780885.ribowaltz.cds_coverage_psite.tsv.gz:md5,bf66d9ba8771fc44d275f2f94eb1b9e4",
                 "SRX11780885.ribowaltz.cds_plus42nt_minus27nt_coverage_psite.tsv.gz:md5,b6b4e4e66ed831d93a9d445d70b36f0c",
@@ -1606,51 +1713,39 @@
                 "SRX11780890.ribowaltz.length_distribution.tsv:md5,fe9d756234b8fb26a138aaf4cae1df1d",
                 "SRX11780890.ribowaltz.metaprofile_psite.tsv:md5,d6c9d9aa0199cf9eb10d154b23554d57",
                 "SRX11780890.ribowaltz.psite_region.tsv:md5,57139b0e0bc170fa32ad28b72459cd26",
-                "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "cmd_info.json:md5,29bf147af2c944cefdf53557ec8de52d",
-                "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "cmd_info.json:md5,90b4afb7c77caeb02ccde3f5f4dec362",
-                "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "cmd_info.json:md5,9253c3a5be90f91d08a43f16d0084ab3",
-                "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "cmd_info.json:md5,ab05e548e225761f279627b3ac0dc79e",
-                "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "cmd_info.json:md5,c71478996983388eb4c8847baea51b43",
-                "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "cmd_info.json:md5,fd2146759ca37753a068594b62d835c4",
-                "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "cmd_info.json:md5,11a8c901cf28d93a84cbeb473b682485",
-                "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "cmd_info.json:md5,aaa5aa4c464cdcfb44cb02fc2caa118a",
-                "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "cmd_info.json:md5,3d25495a176ddd0a03183543772fad68",
-                "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "cmd_info.json:md5,c9e9b6e785d912b8715f27c016912b1c",
-                "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "cmd_info.json:md5,e9d4abdab90497b1df0ca99d7f7e2dd0",
-                "expected_bias.gz:md5,3407f87245d0003e0ffbfdf6d8c04f20",
                 "observed_bias.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "observed_bias_3p.gz:md5,92bcd0592d22a6a58d0360fc76103e56",
                 "cmd_info.json:md5,099d55cade11d0888fac9ce7f42d18ed",
@@ -1666,13 +1761,15 @@
                 "SRX11780889.para.py:md5,61738f3e93a6fc2e6f7b6d201f6a59ba",
                 "SRX11780889_qual.txt:md5,7a53ef2b68354c87c5b42036e678e2da",
                 "SRX11780890.para.py:md5,5f1696c5bf20116fa63363917e131284",
-                "SRX11780890_qual.txt:md5,9caaf68044fd714a3265f63c920e75d5"
+                "SRX11780890_qual.txt:md5,9caaf68044fd714a3265f63c920e75d5",
+                "hybrid_reference.gtf:md5,fb1c85fee3d7341e5f50c1ecca543e0a",
+                "stringtie_merge.gtf:md5,d41d8cd98f00b204e9800998ecf8427e"
             ]
         ],
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2026-07-02T11:58:20.251809238"
+        "timestamp": "2026-07-02T12:27:33.180310343"
     }
 }

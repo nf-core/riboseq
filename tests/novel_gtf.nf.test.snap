@@ -8,6 +8,9 @@
                 "ANOTA2SEQ_ANOTA2SEQRUN": {
                     "bioconductor-anota2seq": "1.24.0"
                 },
+                "ANOTA2SEQ_ANOTA2SEQRUN_ORF": {
+                    "bioconductor-anota2seq": "1.24.0"
+                },
                 "BEDTOOLS_GENOMECOV": {
                     "bedtools": "2.31.1"
                 },
@@ -35,11 +38,18 @@
                 "CUSTOM_TX2GENE": {
                     "python": "3.10.4"
                 },
+                "DTE_COUNTS_PREP": {
+                    "pandas": "2.3.0",
+                    "python": "3.12.11"
+                },
                 "FASTQC": {
                     "fastqc": "0.12.1"
                 },
                 "FASTQC_FILTERED": {
                     "fastqc": "0.12.1"
+                },
+                "FILTER_COUNTS_CANONICAL": {
+                    "gawk": "5.3.1"
                 },
                 "FQ_LINT": {
                     "fq": "0.12.0"
@@ -404,6 +414,24 @@
                 "coverage/SRX11780889.reverse.bigWig",
                 "coverage/SRX11780890.forward.bigWig",
                 "coverage/SRX11780890.reverse.bigWig",
+                "dte",
+                "dte/orf_level",
+                "dte/orf_level/anota2seq",
+                "dte/orf_level/anota2seq/treated_vs_control.Anota2seqDataSet.rds",
+                "dte/orf_level/anota2seq/treated_vs_control.R_sessionInfo.log",
+                "dte/orf_level/anota2seq/treated_vs_control.buffering.anota2seq.results.tsv",
+                "dte/orf_level/anota2seq/treated_vs_control.fold_change.png",
+                "dte/orf_level/anota2seq/treated_vs_control.interaction_p_distribution.pdf",
+                "dte/orf_level/anota2seq/treated_vs_control.residual_distribution_summary.jpeg",
+                "dte/orf_level/anota2seq/treated_vs_control.residual_vs_fitted.jpeg",
+                "dte/orf_level/anota2seq/treated_vs_control.rvm_fit_for_all_contrasts_group.jpg",
+                "dte/orf_level/anota2seq/treated_vs_control.rvm_fit_for_interactions.jpg",
+                "dte/orf_level/anota2seq/treated_vs_control.rvm_fit_for_omnibus_group.jpg",
+                "dte/orf_level/anota2seq/treated_vs_control.simulated_vs_obt_dfbetas_without_interaction.pdf",
+                "dte/orf_level/anota2seq/treated_vs_control.total_mRNA.anota2seq.results.tsv",
+                "dte/orf_level/anota2seq/treated_vs_control.translated_mRNA.anota2seq.results.tsv",
+                "dte/orf_level/anota2seq/treated_vs_control.translation.anota2seq.results.tsv",
+                "dte/orf_level/orf_combined_counts.tsv",
                 "genome",
                 "genome/index",
                 "genome/sortmerna",
@@ -1751,6 +1779,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2026-07-01T22:19:47.541436711"
+        "timestamp": "2026-07-02T12:56:04.796460957"
     }
 }

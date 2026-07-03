@@ -1,5 +1,5 @@
 {
-    "-profile test": {
+    "-profile test --translational_efficiency_method anota2seq,deltate": {
         "content": [
             {
                 "AGAT_SPKEEPLONGESTISOFORM": {
@@ -16,6 +16,12 @@
                 },
                 "CUSTOM_TX2GENE": {
                     "python": "3.10.4"
+                },
+                "DESEQ2_DELTATE": {
+                    "bioconductor-deseq2": "1.42.0",
+                    "r-data.table": "1.15.0",
+                    "r-dplyr": "1.1.4",
+                    "r-ggplot2": "3.4.4"
                 },
                 "FASTQC": {
                     "fastqc": "0.12.1"
@@ -1350,7 +1356,27 @@
                 "translational_efficiency/anota2seq/treated_vs_control.simulated_vs_obt_dfbetas_without_interaction.pdf",
                 "translational_efficiency/anota2seq/treated_vs_control.total_mRNA.anota2seq.results.tsv",
                 "translational_efficiency/anota2seq/treated_vs_control.translated_mRNA.anota2seq.results.tsv",
-                "translational_efficiency/anota2seq/treated_vs_control.translation.anota2seq.results.tsv"
+                "translational_efficiency/anota2seq/treated_vs_control.translation.anota2seq.results.tsv",
+                "translational_efficiency/deltate",
+                "translational_efficiency/deltate/treated_vs_control.DESeqDataSet.rds",
+                "translational_efficiency/deltate/treated_vs_control.R_sessionInfo.log",
+                "translational_efficiency/deltate/treated_vs_control.buffering.deltate.genes.tsv",
+                "translational_efficiency/deltate/treated_vs_control.dtegs.deltate.genes.tsv",
+                "translational_efficiency/deltate/treated_vs_control.fold_change.png",
+                "translational_efficiency/deltate/treated_vs_control.heatmap.png",
+                "translational_efficiency/deltate/treated_vs_control.heatmap_annotations.tsv",
+                "translational_efficiency/deltate/treated_vs_control.heatmap_zscores.tsv",
+                "translational_efficiency/deltate/treated_vs_control.intensified.deltate.genes.tsv",
+                "translational_efficiency/deltate/treated_vs_control.interaction_p_distribution.png",
+                "translational_efficiency/deltate/treated_vs_control.mRNA_abundance.deltate.genes.tsv",
+                "translational_efficiency/deltate/treated_vs_control.pca_ribo.png",
+                "translational_efficiency/deltate/treated_vs_control.pca_ribo.tsv",
+                "translational_efficiency/deltate/treated_vs_control.pca_rna.png",
+                "translational_efficiency/deltate/treated_vs_control.pca_rna.tsv",
+                "translational_efficiency/deltate/treated_vs_control.total_mRNA.deltate.results.tsv",
+                "translational_efficiency/deltate/treated_vs_control.translated_mRNA.deltate.results.tsv",
+                "translational_efficiency/deltate/treated_vs_control.translation.deltate.genes.tsv",
+                "translational_efficiency/deltate/treated_vs_control.translation.deltate.results.tsv"
             ],
             [
                 "SRX11780879.SJ.out.tab:md5,b5239565ecf18cd55147a4e67d7db3a2",
@@ -1673,6 +1699,6 @@
             "nf-test": "0.9.3",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2026-07-02T11:58:20.251809238"
+        "timestamp": "2026-07-03T10:12:29.634961617"
     }
 }
