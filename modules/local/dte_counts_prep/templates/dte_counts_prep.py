@@ -34,7 +34,9 @@ Inputs (positional, via the Nextflow template):
                        which is auto-dropped if listed in
                        `--secondary-drop-cols`.
   ${mapping}           TSV with at least the primary and secondary id
-                       columns. First mapping per primary id wins.
+                       columns. When a primary id maps to several secondary
+                       ids, the one whose secondary-matrix row has the highest
+                       total count is used.
 
 `ext.args` (parsed below via argparse):
   --primary-id-col STR        Default: `orf_id`.
@@ -69,14 +71,19 @@ def load_matrix(path, id_col, drop_cols=None):
 
 
 def load_mapping(path, primary_col, secondary_col):
+    """Return {primary_id: [candidate secondary_ids]}, first-seen order preserved."""
     df = pd.read_csv(path, sep="\\t")
     for col in (primary_col, secondary_col):
         if col not in df.columns:
             raise SystemExit(f"{path}: expected `{col}` header")
     df = df[[primary_col, secondary_col]].dropna()
     df = df[(df[primary_col] != "") & (df[secondary_col] != "")]
-    df = df.drop_duplicates(subset=[primary_col], keep="first")
-    return df.set_index(primary_col)[secondary_col]
+    candidates = {}
+    for primary_id, secondary_id in zip(df[primary_col], df[secondary_col]):
+        genes = candidates.setdefault(primary_id, [])
+        if secondary_id not in genes:
+            genes.append(secondary_id)
+    return candidates
 
 
 def write_versions():
@@ -112,7 +119,7 @@ def main():
 
     primary = load_matrix("${primary_counts}", opts.primary_id_col)
     secondary = load_matrix("${secondary_counts}", opts.secondary_id_col, drop_cols=drop_cols)
-    mapping = load_mapping("${mapping}", opts.primary_id_col, opts.secondary_id_col)
+    candidates = load_mapping("${mapping}", opts.primary_id_col, opts.secondary_id_col)
 
     # Sample IDs may overlap when the secondary matrix is wider than the
     # secondary role demands (e.g. a Salmon gene matrix quantified across the
@@ -135,9 +142,20 @@ def main():
                 "(e.g. RNA-seq samples for the RNA-seq denominator)."
             )
 
+    # When a (collapsed) ORF maps to several genes, use the host gene present in
+    # the secondary matrix with the highest total count as the denominator: it
+    # is the gene most likely to drive the ORF's expression, so the better
+    # baseline. This uses the raw total (gene length is unavailable here) and is
+    # therefore mildly biased towards longer genes, but beats an arbitrary pick.
+    gene_totals = secondary.sum(axis=1)
+    resolved = {}
+    for orf, genes in candidates.items():
+        present = [g for g in genes if g in secondary.index]
+        if present:
+            resolved[orf] = max(present, key=lambda g: gene_totals[g])
+
+    mapping = pd.Series(resolved, name=opts.secondary_id_col)
     keep_primary = primary.index[primary.index.isin(mapping.index)]
-    mapped_secondary = mapping.loc[keep_primary]
-    keep_primary = keep_primary[mapped_secondary.isin(secondary.index)]
     mapped_secondary = mapping.loc[keep_primary]
 
     primary_kept = primary.loc[keep_primary]
@@ -152,12 +170,14 @@ def main():
     combined.index.name = opts.primary_id_col
     combined.reset_index().to_csv("${prefix}.tsv", sep="\\t", index=False)
 
-    n_dropped_no_map = len(primary.index.difference(mapping.index))
-    n_dropped_no_secondary = len(primary.index) - n_dropped_no_map - len(keep_primary)
+    n_no_map = sum(orf not in candidates for orf in primary.index)
+    n_no_secondary = sum(
+        orf in candidates and orf not in resolved for orf in primary.index
+    )
     sys.stderr.write(
         f"Primary rows: {len(primary.index)}; "
-        f"dropped {n_dropped_no_map} with no mapping, "
-        f"{n_dropped_no_secondary} mapped but absent from secondary; "
+        f"dropped {n_no_map} with no mapping, "
+        f"{n_no_secondary} mapped but no host gene in secondary; "
         f"kept {len(keep_primary)}.\\n"
     )
 

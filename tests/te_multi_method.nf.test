@@ -1,0 +1,43 @@
+nextflow_pipeline {
+
+    name "Test pipeline with multiple translational efficiency methods"
+    script "../main.nf"
+    tag "pipeline"
+    tag "pipeline_riboseq"
+    tag "te_multi_method"
+
+    test("-profile test --translational_efficiency_method anota2seq,deltate") {
+
+        when {
+            params {
+                outdir                          = "$outputDir"
+                translational_efficiency_method = 'anota2seq,deltate'
+            }
+        }
+
+        then {
+            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
+            def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
+            def anota2seq_dir = file("${params.outdir}/translational_efficiency/anota2seq")
+            def deltate_dir   = file("${params.outdir}/translational_efficiency/deltate")
+            assertAll(
+                { assert workflow.success },
+                // Both methods run in a single pass and publish side by side.
+                { assert anota2seq_dir.exists() && anota2seq_dir.list().length > 0 },
+                { assert deltate_dir.exists() && deltate_dir.list().length > 0 },
+                { assert snapshot(
+                    removeNextflowVersion("$outputDir/pipeline_info/nf_core_riboseq_software_mqc_versions.yml"),
+                    stable_name,
+                    stable_path
+                ).match() }
+            )
+        }
+
+        cleanup {
+            if (System.getenv("NFT_PROFILE")?.contains("docker")) {
+                "docker system prune -a -f --volumes".execute()
+            }
+            new File("${launchDir}").deleteDir()
+        }
+    }
+}

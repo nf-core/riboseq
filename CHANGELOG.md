@@ -66,7 +66,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 |                     | `--run_price`                     |
 |                     | `--extra_price_indexgenome_args`  |
 |                     | `--extra_price_price_args`        |
-|                     | `--extra_orf_dte_args`            |
+|                     | `--extra_orf_deltate_args`        |
+|                     | `--extra_orf_anota2seq_run_args`  |
 |                     | `--extra_dotseq_args`             |
 
 ### `Dependencies`

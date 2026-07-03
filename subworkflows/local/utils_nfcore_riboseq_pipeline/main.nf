@@ -199,7 +199,7 @@ def validateInputParameters() {
 // without the ORF-level prerequisites that DOTSeq needs.
 //
 def dotseqPrerequisitesError() {
-    if (params.translational_efficiency_method != 'dotseq') return
+    if (!('dotseq' in params.translational_efficiency_method.tokenize(',')*.trim())) return
 
     def novel_source_configured = !params.skip_stringtie || params.novel_gtf
     def extended_orf_active     = params.extended_orf_analysis && novel_source_configured

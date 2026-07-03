@@ -659,7 +659,12 @@ workflow RIBOSEQ {
             .map{[it[0], it[2], it[1]]}
             .first()
 
-        if (params.translational_efficiency_method == 'anota2seq') {
+        // --translational_efficiency_method accepts a comma-separated list; each
+        // selected method runs independently (outputs are disambiguated by
+        // subfolder and file name), so several can be produced in one run.
+        def te_methods = params.translational_efficiency_method.tokenize(',')*.trim()
+
+        if ('anota2seq' in te_methods) {
             ANOTA2SEQ_ANOTA2SEQRUN(
                 ch_contrasts,
                 ch_samplesheet_matrix
@@ -667,7 +672,7 @@ workflow RIBOSEQ {
             ch_versions = ch_versions.mix(ANOTA2SEQ_ANOTA2SEQRUN.out.versions)
         }
 
-        if (params.translational_efficiency_method == 'deltate') {
+        if ('deltate' in te_methods) {
             DESEQ2_DELTATE(
                 ch_contrasts,
                 ch_samplesheet_matrix
@@ -687,7 +692,7 @@ workflow RIBOSEQ {
                 .map { meta, counts, samplesheet -> [ meta, samplesheet, counts ] }
                 .first()
 
-            if (params.translational_efficiency_method == 'anota2seq') {
+            if ('anota2seq' in te_methods) {
                 ANOTA2SEQ_ANOTA2SEQRUN_ORF(
                     ch_contrasts,
                     ch_orf_samplesheet_matrix
@@ -695,14 +700,14 @@ workflow RIBOSEQ {
                 ch_versions = ch_versions.mix(ANOTA2SEQ_ANOTA2SEQRUN_ORF.out.versions)
             }
 
-            if (params.translational_efficiency_method == 'deltate') {
+            if ('deltate' in te_methods) {
                 DESEQ2_DELTATE_ORF(
                     ch_contrasts,
                     ch_orf_samplesheet_matrix
                 )
             }
 
-            if (params.translational_efficiency_method == 'dotseq') {
+            if ('dotseq' in te_methods) {
                 ch_dotseq_input = DTE_COUNTS_PREP.out.counts
                     .combine(ch_samplesheet)
                     .combine(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.catalogue_tsv.map { _meta, tsv -> tsv })
