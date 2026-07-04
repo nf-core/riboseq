@@ -92,7 +92,7 @@
                     },
                     "dotseq/dotseq": {
                         "branch": "master",
-                        "git_sha": "277d34e22a51a99cc697310c4e3c38bca49422b8",
+                        "git_sha": "af6538702de73ad229167bcd77a3e279ef91498a",
                         "installed_by": ["modules"]
                     },
                     "fastp": {
