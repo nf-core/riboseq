@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#148](https://github.com/nf-core/riboseq/pull/148) - Update all nf-core modules/subworkflows to latest versions, migrate to topic-based version reporting, fix publishing paths for new subworkflow nesting ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#155](https://github.com/nf-core/riboseq/pull/155) - Drop `if (params.skip_X)` wrappers in `conf/modules.config` so the Nextflow 26.04 v2 strict config parser accepts the file ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#193](https://github.com/nf-core/riboseq/pull/193) - Re-pin `custom/orfnormalise` (nf-core/modules#12173) to fix ribotish `GenomePos` coordinate parsing (0-based, was treated as 1-based), which shifted ribotish-derived catalogue ORFs out of frame ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#194](https://github.com/nf-core/riboseq/pull/194) - Update `dotseq/dotseq` (nf-core/modules#12230) so the DOTSeq heatmap actually renders, and pass `--orf_type_main_value canonical_cds` to pair the heatmap against riboseq's main-ORF label ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Changed`
 
@@ -48,6 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#160](https://github.com/nf-core/riboseq/issues/160) - Change the default `--te_quantification_method` from `alignment` (STAR + Salmon) to `plastid_psite` (in-frame P-site counts). **Breaking:** per-gene counts are not comparable to Salmon-based runs; pass `--te_quantification_method alignment` to restore the previous behaviour. ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#162](https://github.com/nf-core/riboseq/issues/162) - Document that Ribo-TISH `quality` continues to consume the canonical annotation (P-site offset calibration uses CDS-bearing canonical transcripts; mixing CDS-absent novel transcripts would degrade calibration without adding diagnostic signal) ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#163](https://github.com/nf-core/riboseq/issues/163) - Demote Ribotricer from the default ORF caller set to opt-in: replace `--skip_ribotricer` (default `false`) with `--run_ribotricer` (default `false`), warn at runtime when enabled, and exclude its score column from cross-caller rank aggregation. The default caller set is now Ribo-TISH + RiboCode; agreement logic is parameterised on the runtime-enabled caller set ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#194](https://github.com/nf-core/riboseq/pull/194) - Update all nf-core modules and subworkflows to their latest revisions and reconcile the pipeline with the changed component interfaces ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#194](https://github.com/nf-core/riboseq/pull/194) - Raise the minimum Nextflow version to `25.10.0`, required by nf-schema 2.7.2 ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Parameters`
 
@@ -98,7 +101,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Dependency         | Old version | New version |
 | ------------------ | ----------- | ----------- |
-| `MultiQC`          | 1.32        | 1.33        |
+| `MultiQC`          | 1.32        | 1.35        |
+| `nf-schema`        | 2.5.1       | 2.7.2       |
 | `plastid`          |             | 0.6.1       |
 | `bedtools`         |             | 2.31.1      |
 | `bedGraphToBigWig` |             | 469         |

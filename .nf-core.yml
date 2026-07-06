@@ -1,4 +1,6 @@
 lint:
+  merge_markers:
+    - modules/nf-core/bowtie2/align/tests/main.nf.test.snap
   files_unchanged:
     - .gitignore
     - assets/nf-core-riboseq_logo_light.png

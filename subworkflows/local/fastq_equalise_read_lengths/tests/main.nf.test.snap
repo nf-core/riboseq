@@ -32,15 +32,15 @@
                         "sample_type": "riboseq",
                         "pair": "1"
                     },
-                    "ribo_sample.tsv:md5,de0d5702c739ba4c187f45d58322e74b"
+                    "ribo_sample.tsv:md5,5fe96018691be0dfa8bce7a57f8a863a"
                 ]
             ]
         ],
         "meta": {
             "nf-test": "0.9.3",
-            "nextflow": "25.10.2"
+            "nextflow": "25.10.0"
         },
-        "timestamp": "2025-12-16T18:01:01.054654255"
+        "timestamp": "2026-07-03T20:29:45.370741828"
     },
     "per_sample_trim_length": {
         "content": [
