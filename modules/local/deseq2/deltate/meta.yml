@@ -1,0 +1,263 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "deseq2_deltate"
+description: Delta translational efficiency (deltaTE) analysis using DESeq2
+keywords:
+  - riboseq
+  - rnaseq
+  - translation
+  - differential
+  - deltate
+tools:
+  - "deseq2":
+      description: "Differential gene expression analysis based on the negative binomial distribution"
+      homepage: "https://bioconductor.org/packages/release/bioc/html/DESeq2.html"
+      documentation: "https://bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html"
+      doi: "10.1186/s13059-014-0550-8"
+      licence: ["LGPL (>= 3)"]
+      identifier: biotools:deseq2
+
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing contrast information. e.g.  [ id:'contrast1',
+          blocking:'patient' ]
+    - sample_treatment_col:
+        type: string
+        description: |
+          The column in the sample sheet that should be used to define groups for
+          comparison
+    - reference:
+        type: string
+        description: |
+          The value within the contrast_variable column of the sample sheet that
+          should be used to derive the reference samples
+    - target:
+        type: string
+        description: |
+          The value within the contrast_variable column of the sample sheet that
+          should be used to derive the target samples
+  - - meta2:
+        type: map
+        description: |
+          Groovy map containing study-wide metadata related to the sample sheet
+          and matrix
+    - samplesheet:
+        type: file
+        description: |
+          CSV or TSV format sample sheet with sample metadata
+    - counts:
+        type: file
+        description: |
+          Raw TSV or CSV format expression matrix
+output:
+  - translation:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing contrast information. e.g.  [ id:'contrast1',
+            blocking:'patient' ]
+      - "*.translation.deltate.results.tsv":
+          type: file
+          description: Delta translational efficiency results, describing differences in translation efficiency across conditions
+          pattern: ".translation.deltate.results.tsv"
+  - translated_mrna:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing contrast information. e.g.  [ id:'contrast1',
+            blocking:'patient' ]
+      - "*.translated_mRNA.deltate.results.tsv":
+          type: file
+          description: Delta Ribo-seq results, describing differences in ribosome-protected RNA levels across conditions
+          pattern: ".translated_mRNA.deltate.results.tsv"
+  - total_mrna:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing contrast information. e.g.  [ id:'contrast1',
+            blocking:'patient' ]
+      - "*.total_mRNA.deltate.results.tsv":
+          type: file
+          description: Delta RNA-seq results, describing differences in total RNA levels across conditions
+          pattern: ".total_mRNA.deltate.results.tsv"
+  - dtegs:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing contrast information. e.g.  [ id:'contrast1',
+            blocking:'patient' ]
+      - "*.dtegs.deltate.genes.tsv":
+          type: file
+          description: All differentially translated genes (DTEGs) - genes with significant changes in translational efficiency
+          pattern: ".dtegs.deltate.genes.tsv"
+  - mrna_abundance:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing contrast information. e.g.  [ id:'contrast1',
+            blocking:'patient' ]
+      - "*.mRNA_abundance.deltate.genes.tsv":
+          type: file
+          description: Genes showing coordinated changes between RNA-seq and Ribo-seq without net translational efficiency changes
+          pattern: ".mRNA_abundance.deltate.genes.tsv"
+  - translation_genes:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing contrast information. e.g.  [ id:'contrast1',
+            blocking:'patient' ]
+      - "*.translation.deltate.genes.tsv":
+          type: file
+          description: Genes with pure translational regulation - Ribo-seq changes without RNA-seq changes
+          pattern: ".translation.deltate.genes.tsv"
+  - intensified:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing contrast information. e.g.  [ id:'contrast1',
+            blocking:'patient' ]
+      - "*.intensified.deltate.genes.tsv":
+          type: file
+          description: Genes where translation amplifies RNA changes - significant TE, Ribo-seq, and RNA-seq changes in same direction (deltate-specific category)
+          pattern: ".intensified.deltate.genes.tsv"
+  - buffering:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing contrast information. e.g.  [ id:'contrast1',
+            blocking:'patient' ]
+      - "*.buffering.deltate.genes.tsv":
+          type: file
+          description: Genes with buffering effects where translation dampens RNA changes - opposite directional changes
+          pattern: ".buffering.deltate.genes.tsv"
+  - rdata:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing contrast information. e.g.  [ id:'contrast1',
+            blocking:'patient' ]
+      - "*.DESeqDataSet.rds":
+          type: file
+          description: Serialised DESeqDataSet object
+          pattern: ".DESeqDataSet.rds"
+  - fold_change_plot:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing contrast information. e.g.  [ id:'contrast1',
+            blocking:'patient' ]
+      - "*.fold_change.png":
+          type: file
+          description: |
+            A fold change scatter plot in PNG format showing deltaTE vs delta RNA-seq
+          pattern: ".fold_change.png"
+  - interaction_p_distribution_plot:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing contrast information. e.g.  [ id:'contrast1',
+            blocking:'patient' ]
+      - "*.interaction_p_distribution.png":
+          type: file
+          description: |
+            Histogram showing distribution of interaction p-values for model diagnostics
+          pattern: ".interaction_p_distribution.png"
+  - residual_distribution_summary_plot:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing contrast information. e.g.  [ id:'contrast1',
+            blocking:'patient' ]
+      - "*.residual_distribution_summary.png":
+          type: file
+          description: |
+            Summary plot for assessing normal distribution of regression residuals
+          pattern: ".residual_distribution_summary.png"
+  - residual_vs_fitted_plot:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing contrast information. e.g.  [ id:'contrast1',
+            blocking:'patient' ]
+      - "*.residual_vs_fitted.png":
+          type: file
+          description: |
+            Residuals vs fitted values plot for model diagnostics
+          pattern: ".residual_vs_fitted.png"
+  - effect_size_rna_vs_ribo_plot:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing contrast information. e.g.  [ id:'contrast1',
+            blocking:'patient' ]
+      - "*.effect_size_rna_vs_ribo.png":
+          type: file
+          description: |
+            Scatter plot comparing RNA-seq vs Ribo-seq absolute effect sizes
+          pattern: ".effect_size_rna_vs_ribo.png"
+  - effect_size_volcano_plot:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing contrast information. e.g.  [ id:'contrast1',
+            blocking:'patient' ]
+      - "*.effect_size_volcano.png":
+          type: file
+          description: |
+            Volcano-style plot showing TE effect size vs significance
+          pattern: ".effect_size_volcano.png"
+  - pca_ribo:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing contrast information. e.g.  [ id:'contrast1',
+            blocking:'patient' ]
+      - "*.pca_ribo.png":
+          type: file
+          description: |
+            PCA plot for Ribo-seq samples
+          pattern: ".pca_ribo.png"
+  - pca_rna:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing contrast information. e.g.  [ id:'contrast1',
+            blocking:'patient' ]
+      - "*.pca_rna.png":
+          type: file
+          description: |
+            PCA plot for RNA-seq samples
+          pattern: ".pca_rna.png"
+  - heatmap:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing contrast information. e.g.  [ id:'contrast1',
+            blocking:'patient' ]
+      - "*.heatmap.png":
+          type: file
+          description: |
+            Heatmap of significantly regulated genes
+          pattern: ".heatmap.png"
+  - session_info:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing contrast information. e.g.  [ id:'contrast1',
+            blocking:'patient' ]
+      - "*.R_sessionInfo.log":
+          type: file
+          description: |
+            R session information for reproducibility
+          pattern: ".R_sessionInfo.log"
+  - versions:
+      - versions.yml:
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"
+
+authors:
+  - "@pinin4fjords"
+maintainers:
+  - "@pinin4fjords"

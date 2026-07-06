@@ -1,0 +1,51 @@
+nextflow_pipeline {
+
+    name "Test pipeline with read length equalisation"
+    script "../main.nf"
+    tag "pipeline"
+    tag "pipeline_riboseq"
+    tag "equalise_read_lengths"
+
+
+    test("-profile test --equalise_read_lengths") {
+
+        when {
+            params {
+                outdir = "$outputDir"
+                equalise_read_lengths = true
+                ribo_removal_tool = 'bowtie2'
+            }
+        }
+
+        then {
+            // stable_name: All files + folders in ${params.outdir}/ with a stable name
+            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
+            // stable_path: All files in ${params.outdir}/ with stable content
+            def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
+
+            // Check that read length equalisation outputs exist
+            def read_length_stats = getAllFilesFromDir("${params.outdir}/preprocessing/read_length_stats", relative: true)
+
+            assertAll(
+                { assert workflow.success },
+                // Verify read length stats were generated for riboseq samples
+                { assert read_length_stats.size() > 0 },
+                { assert snapshot(
+                    // pipeline versions.yml file for multiqc from which Nextflow version is removed because we test pipelines on multiple Nextflow versions
+                    removeNextflowVersion("$outputDir/pipeline_info/nf_core_riboseq_software_mqc_versions.yml"),
+                    // All stable path name, with a relative path
+                    stable_name,
+                    // All files with stable contents
+                    stable_path
+                ).match() }
+            )
+        }
+
+        cleanup {
+            if (System.getenv("NFT_PROFILE")?.contains("docker")) {
+                "docker system prune -a -f --volumes".execute()
+            }
+            new File("${launchDir}").deleteDir()
+        }
+    }
+}
