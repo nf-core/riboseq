@@ -39,6 +39,10 @@ include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../mod
 include { DESEQ2_DELTATE                                       } from '../../modules/local/deseq2/deltate'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_PSEUDO_TE      } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
+include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_HYBRID_RNA     } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
+include { GAWK as BUILD_FULL_HYBRID_GTF                        } from '../../modules/nf-core/gawk'
+include { GFFREAD as GFFREAD_FULL_HYBRID                       } from '../../modules/nf-core/gffread'
+include { SALMON_INDEX as SALMON_INDEX_FULL_HYBRID             } from '../../modules/nf-core/salmon/index'
 include { RIBOWALTZ                                            } from '../../modules/nf-core/ribowaltz/main'
 include { PLASTID_METAGENE_GENERATE                            } from '../../modules/nf-core/plastid/metagene_generate/main'
 include { PLASTID_PSITE                                        } from '../../modules/nf-core/plastid/psite/main'
@@ -337,7 +341,7 @@ workflow RIBOSEQ {
             ch_strandedness
         )
 
-        ch_hybrid_gtf = NOVEL_TRANSCRIPT_DISCOVERY.out.hybrid_gtf
+        ch_hybrid_gtf = NOVEL_TRANSCRIPT_DISCOVERY.out.hybrid_gtf.first()
     }
 
     //
@@ -679,9 +683,52 @@ workflow RIBOSEQ {
         }
 
         if (extended_orf_active && enabled_orf_callers && !params.skip_plastid) {
+            // ORF-level DTE needs a host-gene RNA denominator for ORFs on novel
+            // transcripts. The primary Salmon matrix is quantified against the
+            // canonical reference only, so novel genes have no row and their
+            // ORFs are dropped. Quantify RNA-seq against the full reference
+            // transcriptome augmented with the novel intergenic transcripts:
+            // canonical genes keep their full-isoform counts (the canonical
+            // backbone used for ORF calling would undercount multi-isoform
+            // genes) and novel genes gain a denominator row.
+            BUILD_FULL_HYBRID_GTF(
+                ch_gtf.combine(ch_hybrid_gtf).map { gtf, hybrid -> [ [id: 'full_hybrid_reference'], [ gtf, hybrid ] ] },
+                file("${projectDir}/assets/build_full_hybrid_gtf.awk"),
+                false
+            )
+
+            GFFREAD_FULL_HYBRID(
+                BUILD_FULL_HYBRID_GTF.out.output,
+                ch_fasta
+            )
+            ch_full_hybrid_transcript_fasta = GFFREAD_FULL_HYBRID.out.gffread_fasta.map { _meta, fasta -> fasta }.first()
+
+            SALMON_INDEX_FULL_HYBRID(
+                ch_fasta,
+                ch_full_hybrid_transcript_fasta
+            )
+
+            ch_rnaseq_reads = ch_reads_for_alignment.filter { meta, _reads -> meta.sample_type == 'rnaseq' }
+
+            QUANTIFY_HYBRID_RNA(
+                ch_samplesheet.map { [ [:], it ] },
+                ch_rnaseq_reads,
+                SALMON_INDEX_FULL_HYBRID.out.index.first(),
+                ch_full_hybrid_transcript_fasta,
+                BUILD_FULL_HYBRID_GTF.out.output.map { _meta, gtf -> gtf }.first(),
+                params.gtf_group_features,
+                params.gtf_extra_attributes,
+                'salmon',
+                false,
+                params.salmon_quant_libtype ?: '',
+                null,
+                null,
+                false
+            )
+
             DTE_COUNTS_PREP(
                 ch_orf_count_matrix
-                    .combine(QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled.map { _meta, counts -> counts })
+                    .combine(QUANTIFY_HYBRID_RNA.out.counts_gene_length_scaled.map { _meta, counts -> counts })
                     .combine(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.orf_to_gene_tsv.map { _meta, tsv -> tsv })
                     .map { meta, ribo, rna, o2g -> [ meta, ribo, rna, o2g ] }
             )
