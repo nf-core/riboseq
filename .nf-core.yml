@@ -4,11 +4,13 @@ lint:
     - assets/nf-core-riboseq_logo_light.png
     - docs/images/nf-core-riboseq_logo_dark.png
     - docs/images/nf-core-riboseq_logo_light.png
+  merge_markers:
+    - modules/nf-core/bowtie2/align/tests/main.nf.test.snap
   nextflow_config:
     - config_defaults:
         - params.ribo_database_manifest
   nf_test_content: false
-nf_core_version: 4.0.2
+nf_core_version: 4.0.3
 repository_type: pipeline
 template:
   author: Jonathan Manning
