@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#194](https://github.com/nf-core/riboseq/pull/194) - Raise the minimum Nextflow version to `25.10.0`, required by nf-schema 2.7.2 ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#156](https://github.com/nf-core/riboseq/pull/156) - Template update for nf-core/tools v4.0.2 ([@nf-core-bot](https://github.com/nf-core-bot), [@pinin4fjords](https://github.com/pinin4fjords))
 - [#210](https://github.com/nf-core/riboseq/pull/210) - Update trimgalore module to 2.3.0 (nf-core/modules#12331) ([@FelixKrueger](https://github.com/FelixKrueger))
+- [#210](https://github.com/nf-core/riboseq/pull/210) - **Behaviour change carried by Trim Galore 2.3.0:** poly-G trimming of R2 is corrected to trim the 3' poly-G tail rather than a 5' poly-C head ([TrimGalore#322](https://github.com/FelixKrueger/TrimGalore/pull/322)). Poly-G trimming is on by default, so paired-end libraries lose marginally more R2 bases and slightly fewer pairs drop below the length cutoff; per-sample read counts and every downstream checksum shift accordingly, and the pipeline test snapshots have been regenerated. Single-end libraries (including Ribo-seq) are unaffected, and adapter and quality trimming are unchanged. ([@FelixKrueger](https://github.com/FelixKrueger))
 
 ### `Parameters`
 
