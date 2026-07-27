@@ -42,8 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Removed`
 
-- [#197](https://github.com/nf-core/riboseq/issues/197) - **Breaking:** remove `--min_mapped_reads`, `--pseudo_aligner`, `--skip_pseudo_alignment` and `--skip_alignment`. None of them worked: `--min_mapped_reads` was an unused remnant of nf-core/rnaseq, `--pseudo_aligner` and `--skip_pseudo_alignment` only influenced whether a Salmon index was built (and setting the latter crashed strandedness inference), and an index-only run via `--skip_alignment` is not a supported mode for this pipeline. Salmon is now the only pseudo-aligner ([@pinin4fjords](https://github.com/pinin4fjords))
-- [#197](https://github.com/nf-core/riboseq/issues/197) - Remove the orphaned `kallisto/index` module and the never-populated `fail_mapped_samples` MultiQC section ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#197](https://github.com/nf-core/riboseq/issues/197) - **Breaking:** remove `--min_mapped_reads`, `--skip_pseudo_alignment` and `--skip_alignment`, none of which worked. `--min_mapped_reads` was an unused remnant of nf-core/rnaseq, `--skip_pseudo_alignment` only influenced whether a Salmon index was built and crashed strandedness inference when set, and an index-only run via `--skip_alignment` is not a supported mode for this pipeline ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#197](https://github.com/nf-core/riboseq/issues/197) - Remove the `fail_mapped_samples` MultiQC section, which was only ever populated by the `--min_mapped_reads` filter ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Changed`
 
@@ -58,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#194](https://github.com/nf-core/riboseq/pull/194) - Raise the minimum Nextflow version to `25.10.0`, required by nf-schema 2.7.2 ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#156](https://github.com/nf-core/riboseq/pull/156) - Template update for nf-core/tools v4.0.2 ([@nf-core-bot](https://github.com/nf-core-bot), [@pinin4fjords](https://github.com/pinin4fjords))
 - [#197](https://github.com/nf-core/riboseq/issues/197) - Honour `--fastp_merge` and `--save_merged_fastq`, which were overridden by hardcoded `false` values in the preprocessing subworkflow call ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#197](https://github.com/nf-core/riboseq/issues/197) - Make `--pseudo_aligner` select the tool used by `--te_quantification_method pseudo`, which always ran Salmon regardless of the setting. kallisto is now a working alternative, with `--kallisto_index`, `--kallisto_quant_fraglen`, `--kallisto_quant_fraglen_sd` and `--extra_kallisto_quant_args`. TE pseudo-alignment outputs move to `quantification/<pseudo_aligner>_te_pseudo`, unchanged for the default `salmon` ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Parameters`
 
@@ -65,9 +66,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | ------------------------- | ---------------------------------------- |
 | `--skip_ribotricer`       | `--run_ribotricer`                       |
 | `--min_mapped_reads`      |                                          |
-| `--pseudo_aligner`        |                                          |
 | `--skip_pseudo_alignment` |                                          |
 | `--skip_alignment`        |                                          |
+|                           | `--kallisto_index`                       |
+|                           | `--kallisto_quant_fraglen`               |
+|                           | `--kallisto_quant_fraglen_sd`            |
+|                           | `--extra_kallisto_quant_args`            |
 |                           | `--ribo_removal_tool`                    |
 |                           | `--skip_ribocode`                        |
 |                           | `--extra_ribocode_gtfupdate_args`        |

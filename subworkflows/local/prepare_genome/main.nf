@@ -14,7 +14,6 @@ include { UNTAR as UNTAR_BBSPLIT_INDEX      } from '../../../modules/nf-core/unt
 include { UNTAR as UNTAR_SORTMERNA_INDEX    } from '../../../modules/nf-core/untar'
 include { UNTAR as UNTAR_STAR_INDEX         } from '../../../modules/nf-core/untar'
 include { UNTAR as UNTAR_SALMON_INDEX       } from '../../../modules/nf-core/untar'
-include { UNTAR as UNTAR_KALLISTO_INDEX     } from '../../../modules/nf-core/untar'
 
 include { CUSTOM_CATADDITIONALFASTA         } from '../../../modules/nf-core/custom/catadditionalfasta'
 include { SAMTOOLS_FAIDX                    } from '../../../modules/nf-core/samtools/faidx'
@@ -290,11 +289,7 @@ workflow PREPARE_GENOME {
     if (build_te_pseudo_index) {
         if (pseudo_aligner == 'kallisto') {
             if (kallisto_index) {
-                if (kallisto_index.endsWith('.tar.gz')) {
-                    ch_pseudo_index_te = UNTAR_KALLISTO_INDEX ( [ [:], kallisto_index ] ).untar
-                } else {
-                    ch_pseudo_index_te = Channel.value([ [:], file(kallisto_index) ])
-                }
+                ch_pseudo_index_te = Channel.value([ [:], file(kallisto_index) ])
             } else {
                 ch_pseudo_index_te = KALLISTO_INDEX_TE ( ch_transcript_fasta.map { tx -> [ [:], tx ] } ).index
             }

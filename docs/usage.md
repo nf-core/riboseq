@@ -501,7 +501,7 @@ Consider this option when:
 What `--pseudo_aligner` controls:
 
 - The tool that produces the per-sample transcript quantifications feeding the TE analysis, and the `quant_type` handed to tximport
-- Which index is built for the pathway: a Salmon index, or a kallisto index (supply a pre-built one with `--kallisto_index`)
+- Which index is built for the pathway: a Salmon index, or a kallisto index (supply a pre-built index file with `--kallisto_index`)
 - The output subdirectory, `quantification/salmon_te_pseudo` or `quantification/kallisto_te_pseudo`
 
 What it does **not** control:

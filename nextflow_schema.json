@@ -127,11 +127,11 @@
                 },
                 "kallisto_index": {
                     "type": "string",
-                    "format": "path",
+                    "format": "file-path",
                     "exists": true,
                     "fa_icon": "fas fa-bezier-curve",
-                    "description": "Path to directory or tar.gz archive for pre-built kallisto index.",
-                    "help_text": "Only used when `--pseudo_aligner kallisto` and `--te_quantification_method pseudo` are set. The index must have been built with a k-mer size appropriate for Ribo-seq read lengths; see `--pseudo_aligner_kmer_size`."
+                    "description": "Path to a pre-built kallisto index file.",
+                    "help_text": "Only used with `--pseudo_aligner kallisto` and `--te_quantification_method pseudo`. This is the single index file written by `kallisto index -i`, not a directory. It must have been built with a k-mer size appropriate for Ribo-seq read lengths; see `--pseudo_aligner_kmer_size`."
                 },
                 "gencode": {
                     "type": "boolean",
