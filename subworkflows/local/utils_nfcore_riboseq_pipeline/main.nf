@@ -188,6 +188,7 @@ workflow PIPELINE_COMPLETION {
 def validateInputParameters() {
     genomeExistsError()
     dotseqPrerequisitesError()
+    kallistoPrerequisitesError()
 
     // --extended_orf_analysis is a no-op without a novel-transcript source
     // (StringTie or a user-supplied --novel_gtf); warn rather than error so
@@ -198,6 +199,20 @@ def validateInputParameters() {
     }
     if (params.extended_orf_analysis && novel_source_configured && params.skip_plastid) {
         log.warn "--extended_orf_analysis is enabled but --skip_plastid is true. ORF-level P-site quantification needs the plastid wiggle tracks and will be skipped; the ORF catalogue will still be built."
+    }
+}
+
+//
+// Exit pipeline if kallisto is selected as the pseudo-aligner without the
+// fragment length statistics it needs. kallisto cannot estimate the fragment
+// length distribution from single-end reads, and Ribo-seq libraries are
+// single-end, so the quantification would abort mid-run without these.
+//
+def kallistoPrerequisitesError() {
+    if (params.pseudo_aligner != 'kallisto' || params.te_quantification_method != 'pseudo') return
+
+    if (!params.kallisto_quant_fraglen || !params.kallisto_quant_fraglen_sd) {
+        error("--pseudo_aligner kallisto requires --kallisto_quant_fraglen and --kallisto_quant_fraglen_sd, which kallisto needs to quantify single-end libraries. Set both, or use --pseudo_aligner salmon.")
     }
 }
 

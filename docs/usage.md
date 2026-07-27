@@ -476,7 +476,7 @@ Reads are aligned with STAR, and Salmon quantifies from the transcriptome BAM in
 --te_quantification_method pseudo
 ```
 
-Uses Salmon pseudo-alignment directly from reads for both Ribo-seq and RNA-seq samples. This is an **experimental alternative** that:
+Quantifies reads directly against the transcriptome for both Ribo-seq and RNA-seq samples, without going via the genome alignment. This is an **experimental alternative** that:
 
 - Applies the same k-mer index and quantification algorithm to both modalities
 - May help reduce length-related quantification biases without requiring read trimming
@@ -488,6 +488,34 @@ Consider this option when:
 - You prefer k-mer-based quantification for methodological consistency between modalities
 
 > **Note**: The pseudo-alignment pathway runs **in addition to** the standard STAR alignment, which is still needed for position-dependent analyses (P-sites, ribosome periodicity, ORF detection). The pseudo-alignment counts are only used for TE analysis.
+
+##### Choosing the pseudo-aligner
+
+`--pseudo_aligner` selects the tool used for this pathway, either `salmon` (default) or `kallisto`:
+
+```bash
+--te_quantification_method pseudo --pseudo_aligner kallisto \
+    --kallisto_quant_fraglen 200 --kallisto_quant_fraglen_sd 30
+```
+
+What `--pseudo_aligner` controls:
+
+- The tool that produces the per-sample transcript quantifications feeding the TE analysis, and the `quant_type` handed to tximport
+- Which index is built for the pathway: a Salmon index, or a kallisto index (supply a pre-built one with `--kallisto_index`)
+- The output subdirectory, `quantification/salmon_te_pseudo` or `quantification/kallisto_te_pseudo`
+
+What it does **not** control:
+
+- The primary STAR genome alignment, which every position-dependent analysis depends on
+- The alignment-mode Salmon quantification of the STAR transcriptome BAM, which always uses Salmon
+- Strandedness inference, which always subsamples and runs Salmon and therefore always needs a Salmon index
+
+kallisto-specific caveats:
+
+- kallisto cannot estimate a fragment length distribution from single-end reads, and Ribo-seq libraries are single-end. `--kallisto_quant_fraglen` and `--kallisto_quant_fraglen_sd` are therefore **required**, and the pipeline exits at startup if they are missing. Set them from your library preparation, for example the mean and standard deviation of the Bioanalyzer insert size distribution minus the adapters.
+- The same two values are applied to every single-end sample in the run, so a cohort mixing libraries with very different insert size distributions is better quantified with Salmon.
+- MultiQC reports kallisto's run logs rather than the richer Salmon quantification metrics.
+- `--pseudo_aligner_kmer_size` is passed to `kallisto index -k`, which requires an odd value no greater than 31.
 
 ### Contrasts specification
 

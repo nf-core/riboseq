@@ -14,6 +14,7 @@ include { UNTAR as UNTAR_BBSPLIT_INDEX      } from '../../../modules/nf-core/unt
 include { UNTAR as UNTAR_SORTMERNA_INDEX    } from '../../../modules/nf-core/untar'
 include { UNTAR as UNTAR_STAR_INDEX         } from '../../../modules/nf-core/untar'
 include { UNTAR as UNTAR_SALMON_INDEX       } from '../../../modules/nf-core/untar'
+include { UNTAR as UNTAR_KALLISTO_INDEX     } from '../../../modules/nf-core/untar'
 
 include { CUSTOM_CATADDITIONALFASTA         } from '../../../modules/nf-core/custom/catadditionalfasta'
 include { SAMTOOLS_FAIDX                    } from '../../../modules/nf-core/samtools/faidx'
@@ -25,6 +26,7 @@ include { SORTMERNA as SORTMERNA_INDEX      } from '../../../modules/nf-core/sor
 include { STAR_GENOMEGENERATE               } from '../../../modules/nf-core/star/genomegenerate'
 include { SALMON_INDEX                      } from '../../../modules/nf-core/salmon/index'
 include { SALMON_INDEX as SALMON_INDEX_TE   } from '../../../modules/nf-core/salmon/index'
+include { KALLISTO_INDEX as KALLISTO_INDEX_TE } from '../../../modules/nf-core/kallisto/index'
 include { RSEM_PREPAREREFERENCE as RSEM_PREPAREREFERENCE_GENOME } from '../../../modules/nf-core/rsem/preparereference'
 include { RSEM_PREPAREREFERENCE as MAKE_TRANSCRIPTS_FASTA       } from '../../../modules/nf-core/rsem/preparereference'
 
@@ -43,6 +45,7 @@ workflow PREPARE_GENOME {
     sortmerna_fasta_list     //      file: /path/to/sortmerna_fasta_list.txt
     star_index               // directory: /path/to/star/index/
     salmon_index             // directory: /path/to/salmon/index/
+    kallisto_index           // directory: /path/to/kallisto/index/
     bbsplit_index            // directory: /path/to/rsem/index/
     sortmerna_index          // directory: /path/to/sortmerna/index/
     gencode                  //   boolean: whether the genome is from GENCODE
@@ -51,7 +54,8 @@ workflow PREPARE_GENOME {
     skip_bbsplit             //   boolean: Skip BBSplit for removal of non-reference genome reads
     skip_sortmerna           //   boolean: Skip sortmerna for removal of non-reference genome reads
     ribo_removal_tool        //    string: Tool for rRNA removal ('sortmerna', 'bowtie2', or 'ribodetector')
-    build_te_pseudo_index    //   boolean: Build Salmon index for TE pseudo-alignment
+    pseudo_aligner           //    string: Pseudo-aligner used for TE quantification ('salmon' or 'kallisto')
+    build_te_pseudo_index    //   boolean: Build the pseudo-aligner index for TE quantification
     canonical_gtf            //      file: /path/to/canonical.gtf (one-transcript-per-gene backbone; null to derive)
 
     main:
@@ -278,11 +282,25 @@ workflow PREPARE_GENOME {
     }
 
     //
-    // Build Salmon index for TE pseudo-alignment (with lower k-mer size for short reads)
+    // Build the TE pseudo-alignment index (with lower k-mer size for short reads).
+    // Salmon quant consumes a bare index path, kallisto quant a [ meta, index ]
+    // tuple, so the emitted channel shape follows the selected pseudo-aligner.
     //
-    ch_salmon_index_te = Channel.empty()
+    ch_pseudo_index_te = Channel.empty()
     if (build_te_pseudo_index) {
-        ch_salmon_index_te = SALMON_INDEX_TE ( ch_fasta, ch_transcript_fasta ).index
+        if (pseudo_aligner == 'kallisto') {
+            if (kallisto_index) {
+                if (kallisto_index.endsWith('.tar.gz')) {
+                    ch_pseudo_index_te = UNTAR_KALLISTO_INDEX ( [ [:], kallisto_index ] ).untar
+                } else {
+                    ch_pseudo_index_te = Channel.value([ [:], file(kallisto_index) ])
+                }
+            } else {
+                ch_pseudo_index_te = KALLISTO_INDEX_TE ( ch_transcript_fasta.map { tx -> [ [:], tx ] } ).index
+            }
+        } else {
+            ch_pseudo_index_te = SALMON_INDEX_TE ( ch_fasta, ch_transcript_fasta ).index
+        }
     }
 
     emit:
@@ -297,6 +315,6 @@ workflow PREPARE_GENOME {
     sortmerna_index  = ch_sortmerna_index        // channel: path(sortmerna/index/)
     star_index       = ch_star_index             // channel: path(star/index/)
     salmon_index     = ch_salmon_index           // channel: path(salmon/index/)
-    salmon_index_te  = ch_salmon_index_te        // channel: path(salmon_te/index/) - for TE pseudo-alignment
+    pseudo_index_te  = ch_pseudo_index_te        // channel: index for TE pseudo-alignment (salmon: path, kallisto: [ meta, path ])
     versions         = ch_versions.ifEmpty(null) // channel: [ versions.yml ]
 }

@@ -80,7 +80,7 @@ workflow RIBOSEQ {
     ch_transcript_fasta // channel: path(transcript.fasta)
     ch_star_index       // channel: path(star/index/)
     ch_salmon_index     // channel: path(salmon/index/)
-    ch_salmon_index_te  // channel: path(salmon_te/index/) - for TE pseudo-alignment
+    ch_pseudo_index_te  // channel: TE pseudo-alignment index (salmon: path, kallisto: [ meta, path ])
     ch_bbsplit_index    // channel: path(bbsplit/index/)
     ch_rrna_fastas      // channel: path(fasta)
     ch_sortmerna_index  // channel: path(sortmerna/index/)
@@ -560,7 +560,7 @@ workflow RIBOSEQ {
 
     //
     // SUBWORKFLOW: Pseudo-alignment quantification for TE analysis (when enabled)
-    // Uses direct Salmon pseudo-alignment with a lower k-mer index optimized for short Ribo-seq reads
+    // Quantifies reads directly against a lower k-mer index optimised for short Ribo-seq reads
     //
 
     ch_te_counts = QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled  // Default: use alignment-based counts
@@ -573,16 +573,16 @@ workflow RIBOSEQ {
         QUANTIFY_PSEUDO_TE (
             ch_samplesheet.map { [ [:], it ] },
             ch_reads_for_te,
-            ch_salmon_index_te,
+            ch_pseudo_index_te,
             ch_transcript_fasta,
             ch_gtf,
             params.gtf_group_features,
             params.gtf_extra_attributes,
-            'salmon',
+            params.pseudo_aligner,
             false,  // alignment_mode = false (pseudo-alignment from reads)
             params.salmon_quant_libtype ?: '',
-            null,
-            null,
+            params.kallisto_quant_fraglen,
+            params.kallisto_quant_fraglen_sd,
             false
         )
         ch_multiqc_files = ch_multiqc_files.mix(QUANTIFY_PSEUDO_TE.out.multiqc.collect{it[1]}.ifEmpty([]))
