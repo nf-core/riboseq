@@ -51,7 +51,6 @@ workflow PREPARE_GENOME {
     skip_bbsplit             //   boolean: Skip BBSplit for removal of non-reference genome reads
     skip_sortmerna           //   boolean: Skip sortmerna for removal of non-reference genome reads
     ribo_removal_tool        //    string: Tool for rRNA removal ('sortmerna', 'bowtie2', or 'ribodetector')
-    skip_alignment           //   boolean: Skip all of the alignment-based processes within the pipeline
     build_te_pseudo_index    //   boolean: Build Salmon index for TE pseudo-alignment
     canonical_gtf            //      file: /path/to/canonical.gtf (one-transcript-per-gene backbone; null to derive)
 
@@ -88,19 +87,7 @@ workflow PREPARE_GENOME {
         }
 
         // Determine whether to filter the GTF or not
-        def filter_gtf =
-            ((
-                // Condition 1: Alignment is required and aligner is set
-                !skip_alignment && aligner
-            ) ||
-            (
-                // Condition 2: Transcript FASTA file is not provided
-                !transcript_fasta
-            )) &&
-            (
-                // Condition 4: --skip_gtf_filter is not provided
-                !skip_gtf_filter
-            )
+        def filter_gtf = (aligner || !transcript_fasta) && !skip_gtf_filter
         if (filter_gtf) {
             CUSTOM_GTFFILTER (
                 ch_gtf.map   { g -> [ [ id: 'reference' ], g ] },
@@ -189,7 +176,7 @@ workflow PREPARE_GENOME {
     def prepare_tool_indices = []
     if (!skip_bbsplit) { prepare_tool_indices << 'bbsplit' }
     if (!skip_sortmerna) { prepare_tool_indices << 'sortmerna' }
-    if (!skip_alignment) { prepare_tool_indices << aligner }
+    prepare_tool_indices << aligner
 
     //
     // Uncompress BBSplit index or generate from scratch if required

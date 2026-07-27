@@ -128,12 +128,6 @@ workflow RIBOSEQ {
         if (ch_bbsplit_fasta_list.isEmpty()) {exit 1, "File provided with --bbsplit_fasta_list is empty: ${ch_bbsplit_fasta_list.getName()}!"}
     }
 
-    // Check alignment parameters
-    def prepareToolIndices  = []
-    if (!params.skip_bbsplit) { prepareToolIndices << 'bbsplit' }
-    if (params.remove_ribo_rna) { prepareToolIndices << 'sortmerna' }
-    if (!params.skip_alignment) { prepareToolIndices << params.aligner }
-
     ch_multiqc_files = channel.empty()
 
     //
@@ -162,7 +156,7 @@ workflow RIBOSEQ {
 
     // The subworkflow only has to do Salmon indexing if it discovers 'auto'
     // samples, and if we haven't already made one elsewhere
-    salmon_index_available = params.salmon_index || (!params.skip_pseudo_alignment && params.pseudo_aligner == 'salmon')
+    salmon_index_available = params.salmon_index as boolean
 
     // Determine if we need to build rRNA removal indexes
     def make_sortmerna_index = !params.sortmerna_index && params.remove_ribo_rna && params.ribo_removal_tool == 'sortmerna'
@@ -189,12 +183,12 @@ workflow RIBOSEQ {
         params.trimmer,                             // trimmer
         params.min_trimmed_reads,                   // min_trimmed_reads
         params.save_trimmed,                        // save_trimmed
-        false,                                      // fastp_merge
+        params.fastp_merge,                         // fastp_merge
         params.remove_ribo_rna,                     // remove_ribo_rna
         params.ribo_removal_tool,                   // ribo_removal_tool
         params.with_umi,                            // with_umi
         params.umi_discard_read,                    // umi_discard_read
-        false,                                      // save_merged_fastq
+        params.save_merged_fastq,                   // save_merged_fastq
         params.stranded_threshold,                  // stranded_threshold
         params.unstranded_threshold                 // unstranded_threshold
     )

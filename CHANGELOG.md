@@ -40,6 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#193](https://github.com/nf-core/riboseq/pull/193) - Re-pin `custom/orfnormalise` (nf-core/modules#12173) to fix ribotish `GenomePos` coordinate parsing (0-based, was treated as 1-based), which shifted ribotish-derived catalogue ORFs out of frame ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#194](https://github.com/nf-core/riboseq/pull/194) - Update `dotseq/dotseq` (nf-core/modules#12230) so the DOTSeq heatmap actually renders, and pass `--orf_type_main_value canonical_cds` to pair the heatmap against riboseq's main-ORF label ([@pinin4fjords](https://github.com/pinin4fjords))
 
+### `Removed`
+
+- [#197](https://github.com/nf-core/riboseq/issues/197) - **Breaking:** remove `--min_mapped_reads`, `--pseudo_aligner`, `--skip_pseudo_alignment` and `--skip_alignment`. None of them worked: `--min_mapped_reads` was an unused remnant of nf-core/rnaseq, `--pseudo_aligner` and `--skip_pseudo_alignment` only influenced whether a Salmon index was built (and setting the latter crashed strandedness inference), and an index-only run via `--skip_alignment` is not a supported mode for this pipeline. Salmon is now the only pseudo-aligner ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#197](https://github.com/nf-core/riboseq/issues/197) - Remove the orphaned `kallisto/index` module and the never-populated `fail_mapped_samples` MultiQC section ([@pinin4fjords](https://github.com/pinin4fjords))
+
 ### `Changed`
 
 - [#129](https://github.com/nf-core/riboseq/pull/129) - Bump pipeline version to 1.3.0dev ([@iraiosub](https://github.com/iraiosub))
@@ -52,51 +57,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#194](https://github.com/nf-core/riboseq/pull/194) - Update all nf-core modules and subworkflows to their latest revisions and reconcile the pipeline with the changed component interfaces ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#194](https://github.com/nf-core/riboseq/pull/194) - Raise the minimum Nextflow version to `25.10.0`, required by nf-schema 2.7.2 ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#156](https://github.com/nf-core/riboseq/pull/156) - Template update for nf-core/tools v4.0.2 ([@nf-core-bot](https://github.com/nf-core-bot), [@pinin4fjords](https://github.com/pinin4fjords))
+- [#197](https://github.com/nf-core/riboseq/issues/197) - Honour `--fastp_merge` and `--save_merged_fastq`, which were overridden by hardcoded `false` values in the preprocessing subworkflow call ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Parameters`
 
-| Old parameter       | New parameter                            |
-| ------------------- | ---------------------------------------- |
-| `--skip_ribotricer` | `--run_ribotricer`                       |
-|                     | `--ribo_removal_tool`                    |
-|                     | `--skip_ribocode`                        |
-|                     | `--extra_ribocode_gtfupdate_args`        |
-|                     | `--extra_ribocode_prepare_args`          |
-|                     | `--extra_ribocode_metaplots_args`        |
-|                     | `--extra_ribocode_ribocode_args`         |
-|                     | `--translational_efficiency_method`      |
-|                     | `--extra_deltate_args`                   |
-|                     | `--te_lfc_threshold`                     |
-|                     | `--rna_lfc_threshold`                    |
-|                     | `--ribo_lfc_threshold`                   |
-|                     | `--equalise_read_lengths`                |
-|                     | `--equalise_read_lengths_target`         |
-|                     | `--skip_plastid`                         |
-|                     | `--plastid_min_length`                   |
-|                     | `--plastid_max_length`                   |
-|                     | `--plastid_default_psite_offset`         |
-|                     | `--extra_plastid_metagene_generate_args` |
-|                     | `--extra_plastid_psite_args`             |
-|                     | `--extra_plastid_make_wiggle_args`       |
-|                     | `--skip_coverage_tracks`                 |
-|                     | `--ribodetector_chunk_size`              |
-|                     | `--canonical_gtf`                        |
-|                     | `--skip_stringtie`                       |
-|                     | `--novel_gtf`                            |
-|                     | `--gffcompare_class_codes`               |
-|                     | `--rrna_blacklist`                       |
-|                     | `--extra_stringtie_args`                 |
-|                     | `--extra_stringtie_merge_args`           |
-|                     | `--extended_orf_analysis`                |
-|                     | `--run_price`                            |
-|                     | `--extra_price_indexgenome_args`         |
-|                     | `--extra_price_price_args`               |
-|                     | `--run_rpbp`                             |
-|                     | `--extra_rpbp_preparegenome_args`        |
-|                     | `--extra_rpbp_predictorfs_args`          |
-|                     | `--extra_orf_deltate_args`               |
-|                     | `--extra_orf_anota2seq_run_args`         |
-|                     | `--extra_dotseq_args`                    |
+| Old parameter             | New parameter                            |
+| ------------------------- | ---------------------------------------- |
+| `--skip_ribotricer`       | `--run_ribotricer`                       |
+| `--min_mapped_reads`      |                                          |
+| `--pseudo_aligner`        |                                          |
+| `--skip_pseudo_alignment` |                                          |
+| `--skip_alignment`        |                                          |
+|                           | `--ribo_removal_tool`                    |
+|                           | `--skip_ribocode`                        |
+|                           | `--extra_ribocode_gtfupdate_args`        |
+|                           | `--extra_ribocode_prepare_args`          |
+|                           | `--extra_ribocode_metaplots_args`        |
+|                           | `--extra_ribocode_ribocode_args`         |
+|                           | `--translational_efficiency_method`      |
+|                           | `--extra_deltate_args`                   |
+|                           | `--te_lfc_threshold`                     |
+|                           | `--rna_lfc_threshold`                    |
+|                           | `--ribo_lfc_threshold`                   |
+|                           | `--equalise_read_lengths`                |
+|                           | `--equalise_read_lengths_target`         |
+|                           | `--skip_plastid`                         |
+|                           | `--plastid_min_length`                   |
+|                           | `--plastid_max_length`                   |
+|                           | `--plastid_default_psite_offset`         |
+|                           | `--extra_plastid_metagene_generate_args` |
+|                           | `--extra_plastid_psite_args`             |
+|                           | `--extra_plastid_make_wiggle_args`       |
+|                           | `--skip_coverage_tracks`                 |
+|                           | `--ribodetector_chunk_size`              |
+|                           | `--canonical_gtf`                        |
+|                           | `--skip_stringtie`                       |
+|                           | `--novel_gtf`                            |
+|                           | `--gffcompare_class_codes`               |
+|                           | `--rrna_blacklist`                       |
+|                           | `--extra_stringtie_args`                 |
+|                           | `--extra_stringtie_merge_args`           |
+|                           | `--extended_orf_analysis`                |
+|                           | `--run_price`                            |
+|                           | `--extra_price_indexgenome_args`         |
+|                           | `--extra_price_price_args`               |
+|                           | `--run_rpbp`                             |
+|                           | `--extra_rpbp_preparegenome_args`        |
+|                           | `--extra_rpbp_predictorfs_args`          |
+|                           | `--extra_orf_deltate_args`               |
+|                           | `--extra_orf_anota2seq_run_args`         |
+|                           | `--extra_dotseq_args`                    |
 
 ### `Dependencies`
 
