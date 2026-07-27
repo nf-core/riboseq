@@ -25,7 +25,7 @@ include { SORTMERNA as SORTMERNA_INDEX      } from '../../../modules/nf-core/sor
 include { STAR_GENOMEGENERATE               } from '../../../modules/nf-core/star/genomegenerate'
 include { SALMON_INDEX                      } from '../../../modules/nf-core/salmon/index'
 include { SALMON_INDEX as SALMON_INDEX_TE   } from '../../../modules/nf-core/salmon/index'
-include { KALLISTO_INDEX as KALLISTO_INDEX_TE } from '../../../modules/nf-core/kallisto/index'
+include { KALLISTO_INDEX as KALLISTO_INDEX_TE  } from '../../../modules/nf-core/kallisto/index'
 include { RSEM_PREPAREREFERENCE as RSEM_PREPAREREFERENCE_GENOME } from '../../../modules/nf-core/rsem/preparereference'
 include { RSEM_PREPAREREFERENCE as MAKE_TRANSCRIPTS_FASTA       } from '../../../modules/nf-core/rsem/preparereference'
 
@@ -44,7 +44,7 @@ workflow PREPARE_GENOME {
     sortmerna_fasta_list     //      file: /path/to/sortmerna_fasta_list.txt
     star_index               // directory: /path/to/star/index/
     salmon_index             // directory: /path/to/salmon/index/
-    kallisto_index           // directory: /path/to/kallisto/index/
+    kallisto_index           //      file: /path/to/kallisto.idx
     bbsplit_index            // directory: /path/to/rsem/index/
     sortmerna_index          // directory: /path/to/sortmerna/index/
     gencode                  //   boolean: whether the genome is from GENCODE
