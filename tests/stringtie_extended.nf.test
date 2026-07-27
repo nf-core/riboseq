@@ -31,6 +31,8 @@ nextflow_pipeline {
             assertAll(
                 { assert workflow.success},
                 { assert hybrid_gtf.exists() && hybrid_gtf.size() > 0 },
+                { assert hybrid_gtf.readLines().count { line -> line.contains('class_code "u"') } > 0 },
+                { assert hybrid_gtf.readLines().every { line -> !line.contains('class_code') || line.contains('class_code "u"') } },
                 { assert ribotish_pred_all.exists() && ribotish_pred_all.size() > 0 },
                 { assert snapshot(
                     // pipeline versions.yml file for multiqc from which Nextflow version is removed because we test pipelines on multiple Nextflow versions
