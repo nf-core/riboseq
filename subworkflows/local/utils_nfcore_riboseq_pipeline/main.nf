@@ -204,9 +204,9 @@ def validateInputParameters() {
 }
 
 //
-// Exit pipeline on parameters that have been withdrawn. Schema validation only
-// warns about unrecognised parameters, which is too quiet for flags whose whole
-// purpose was to suppress work the pipeline will now do regardless.
+// Exit pipeline on removed parameters. Schema validation only warns about
+// unrecognised parameters, too quiet for flags whose purpose was to suppress
+// work the pipeline does regardless.
 //
 def removedParamsError() {
     def removed = [
