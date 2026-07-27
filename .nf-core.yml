@@ -4,10 +4,14 @@ lint:
     - assets/nf-core-riboseq_logo_light.png
     - docs/images/nf-core-riboseq_logo_dark.png
     - docs/images/nf-core-riboseq_logo_light.png
+    - .github/workflows/branch.yml
+    - .github/workflows/linting.yml
   nextflow_config:
     - config_defaults:
         - params.ribo_database_manifest
   nf_test_content: false
+  files_exist:
+    - .github/workflows/linting_comment.yml
 nf_core_version: 3.5.1
 repository_type: pipeline
 template:
