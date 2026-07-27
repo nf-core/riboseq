@@ -388,6 +388,7 @@ The second pass runs only on Ribo-seq samples (RNA-seq and TI-seq do not feed Ri
   - `sorted/samtools_stats/`: `samtools stats`, `flagstat`, `idxstats` for the hybrid alignments.
   - `log/`: STAR log files (`*.Log.final.out`, `*.Log.out`, `*.Log.progress.out`, `*.SJ.out.tab`) for the hybrid pass.
   - `unmapped/`: Unmapped reads from the hybrid pass (only published when `--save_unaligned` is set).
+  - `deduplicated/`: UMI-deduplicated hybrid BAMs, indices and dedup logs (only published when `--save_align_intermeds` or `--save_umi_intermeds` is set).
 - `genome/index/hybrid_star/star/`
   - Hybrid STAR index (only published when `--save_reference` is set).
 
