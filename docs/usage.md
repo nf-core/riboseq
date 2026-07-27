@@ -495,7 +495,7 @@ Consider this option when:
 
 ```bash
 --te_quantification_method pseudo --pseudo_aligner kallisto \
-    --kallisto_quant_fraglen 200 --kallisto_quant_fraglen_sd 30
+    --kallisto_quant_fraglen 30 --kallisto_quant_fraglen_sd 5
 ```
 
 What `--pseudo_aligner` controls:
@@ -512,7 +512,7 @@ What it does **not** control:
 
 kallisto-specific caveats:
 
-- kallisto cannot estimate a fragment length distribution from single-end reads, and Ribo-seq libraries are single-end. `--kallisto_quant_fraglen` and `--kallisto_quant_fraglen_sd` are therefore **required**, and the pipeline exits at startup if they are missing. Set them from your library preparation, for example the mean and standard deviation of the Bioanalyzer insert size distribution minus the adapters.
+- kallisto cannot estimate a fragment length distribution from single-end reads, and Ribo-seq libraries are single-end. `--kallisto_quant_fraglen` and `--kallisto_quant_fraglen_sd` are therefore **required**, and the pipeline exits at startup if they are missing. For Ribo-seq the fragment is the footprint itself, so the values should reflect your observed footprint length distribution (commonly around 30 nt), not a typical RNA-seq insert size. Paired-end RNA-seq samples in the same run ignore them, since kallisto infers the distribution from the pairs.
 - The same two values are applied to every single-end sample in the run, so a cohort mixing libraries with very different insert size distributions is better quantified with Salmon.
 - MultiQC reports kallisto's run logs rather than the richer Salmon quantification metrics.
 - `--pseudo_aligner_kmer_size` is passed to `kallisto index -k`, which requires an odd value no greater than 31.
