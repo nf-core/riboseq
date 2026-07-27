@@ -770,10 +770,9 @@ def _price_transcript_id(orf_id_raw, orf_type):
     """Recover the transcript id from PRICE's `Id` column.
 
     PRICE builds `Id` as `<transcript_id>_<orf_type>_<n>` (an increasing
-    counter within the transcript). Anchoring the split on the row's own
-    `orf_type` value tolerates transcript ids that themselves contain
-    underscores (true for some non-Ensembl annotations), rather than
-    assuming the first or last underscore is the delimiter.
+    counter within the transcript). The split anchors on the row's own
+    `orf_type` value so transcript ids that themselves contain underscores
+    (true for some non-Ensembl annotations) survive intact.
     """
     if orf_type:
         m = re.match(r"^(.+)_" + re.escape(orf_type) + r"_\\d+\$", orf_id_raw)
