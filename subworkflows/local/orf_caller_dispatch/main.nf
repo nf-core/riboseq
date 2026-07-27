@@ -175,10 +175,17 @@ workflow ORF_CALLER_DISPATCH {
         // backbone that exists to disambiguate P-site quantification. Restricting it
         // to the canonical/hybrid annotation would only narrow ORF discovery and
         // bias ORF-type classification to canonical CDS, so PRICE receives the full
-        // multi-isoform annotation it is normally run against.
+        // multi-isoform annotation it is normally run against. In extended mode it
+        // takes the hybrid GTF to bring novel transcripts into scope.
+        //
+        // The reference id (rather than a shared 'reference' constant) keys the
+        // GEDI index so extended and non-extended runs publish to distinct
+        // directories and never share a resume-cache entry.
+        def ch_price_gtf_source  = extended_orf_active ? ch_hybrid_gtf : ch_gtf
+        def ch_price_gtf_meta_id = extended_orf_active ? 'hybrid_reference' : 'reference'
         def ch_price_fasta_gtf = ch_fasta
-            .combine(ch_gtf)
-            .map { fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }
+            .combine(ch_price_gtf_source)
+            .map { fasta, gtf -> [ [id: ch_price_gtf_meta_id], fasta, gtf ] }
             .first()
 
         GEDI_INDEXGENOME(
