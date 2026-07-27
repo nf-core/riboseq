@@ -362,7 +362,7 @@ The hybrid GTF is published as a side product and exposed on the `hybrid_gtf` wo
 <details markdown="1">
 <summary>Output files</summary>
 
-- `stringtie/`
+- `transcript_assembly/stringtie/`
   - `<SAMPLE>.denovo.transcripts.gtf`: Per-sample reference-guided assembly (only produced when StringTie ran; the `.denovo` prefix marks these as inputs to the merge step).
   - `stringtie_merge.gtf`: Merged annotation produced by `stringtie --merge` across all per-sample assemblies. Novel transcripts appear with `MSTRG.*` IDs. Absent when `--novel_gtf` is used.
   - `gffcompare/`: Full gffcompare output (`*.annotated.gtf`, `*.stats`, `*.tracking`, `*.loci`, etc.) classifying novel transcripts against the full reference annotation.
@@ -381,14 +381,15 @@ The second pass runs only on Ribo-seq samples (RNA-seq and TI-seq do not feed Ri
 <details markdown="1">
 <summary>Output files</summary>
 
-- `hybrid_star/`
+- `alignment/hybrid_star/`
   - `hybrid_transcriptome.fasta`: Spliced transcript sequences extracted from the hybrid GTF (only published when `--save_reference` is set).
-  - `index/star/`: Hybrid STAR index (only published when `--save_reference` is set).
   - `original/`: Original (unsorted) hybrid genome and transcriptome BAMs from STAR (only published when `--save_align_intermeds` is set).
   - `sorted/`: Coordinate-sorted hybrid BAMs and their indices (only published when `--save_align_intermeds` is set).
   - `sorted/samtools_stats/`: `samtools stats`, `flagstat`, `idxstats` for the hybrid alignments.
   - `log/`: STAR log files (`*.Log.final.out`, `*.Log.out`, `*.Log.progress.out`, `*.SJ.out.tab`) for the hybrid pass.
   - `unmapped/`: Unmapped reads from the hybrid pass (only published when `--save_unaligned` is set).
+- `genome/index/hybrid_star/star/`
+  - Hybrid STAR index (only published when `--save_reference` is set).
 
 </details>
 
@@ -431,6 +432,8 @@ When `--extended_orf_analysis true` is set (and a novel-transcript source is con
 - `orf_predictions/ribocode/`
   - `*.txt`: ORF predictions with coordinates, read counts, and translation scores
   - `*_collapsed.txt`: Collapsed ORF predictions removing redundant isoforms
+  - `*_updated.gtf`: GTF with start/stop codon annotations added by `GTFupdate`, used to prepare the RiboCode transcript index.
+  - `annotation/`: Transcript index (sequences, CDS positions, pyfasta sidecars) built by `prepare_transcripts`, consumed by the RiboCode ORF-calling step.
   </details>
 
 RiboCode uses the P-site offsets from the metaplots step to identify translated ORFs. If RiboCode fails with `Error, can not determine the P-site locations`, this means the metaplots config file had no valid entries. See the [metaplots troubleshooting note above](#ribocode-metaplots) for how to address this.
@@ -452,6 +455,9 @@ If RiboCode is not needed for your analysis, you can skip it entirely with `--sk
   - `*.predicted-orfs.bed.gz`: per-sample predicted-ORF BED with Bayes factor scores (column 5) after the final-prediction-set filter (`--select-longest-by-stop --select-best-overlapping`).
   - `*.predicted-orfs.dna.fa`: per-sample predicted-ORF nucleotide FASTA matching the BED.
   - `*.predicted-orfs.protein.fa`: per-sample predicted-ORF protein FASTA matching the BED.
+  - `*.annotated.bed.gz`, `*.orfs-genomic.annotated.bed.gz`, `*.orfs-exons.annotated.bed.gz`: intermediate genome/ORF annotation BEDs from `prepare-rpbp-genome`.
+  - `*.metagene-bayes.csv.gz`: per-sample metagene periodicity Bayes factors.
+  - `*.bayes-factors.bed.gz`: per-sample ORF-level Bayes factors, upstream of the final-prediction-set filter above.
 
 </details>
 
@@ -462,8 +468,8 @@ Produced only when `--run_rpbp true` is set. Rp-Bp's Bayesian fit is slow (~20-2
 <details markdown="1">
 <summary>Output files</summary>
 
-- `price/index/`: Gedi `.oml` genome index plus binary sidecar files (built once per reference by `gedi -e IndexGenome`).
-- `price/`
+- `genome/index/price/`: Gedi `.oml` genome index plus binary sidecar files (built once per reference by `gedi -e IndexGenome`). Only published when `--save_reference` is set; PRICE itself always reads the index from the work directory.
+- `orf_predictions/price/`
   - `${prefix}.orfs.tsv`: cohort-level PRICE ORF table (Gene, Id, Location, Type, Start, Range, p value, per-condition + Total counts).
   - `${prefix}.orfs.cit`, `${prefix}.orfs.cit.metadata.json`, `${prefix}.signal.tsv`, `${prefix}.param`: PRICE companion artefacts (CIT index, signal-to-noise data, parameter log).
 
@@ -476,16 +482,16 @@ Produced only when `--run_price true` is set. PRICE is invoked once across the r
 <details markdown="1">
 <summary>Output files</summary>
 
-- `orf_catalogue/normalised/`
+- `orf_predictions/catalogue/normalised/`
   - `*.normalised.bed12`: per-sample, per-caller BED12 of called ORFs in genomic coordinates (multi-exon blocks for spliced ORFs).
   - `*.normalised.tsv`: matching sidecar with caller, sample id, ORF class (`canonical_cds`, `uORF`, `dORF`, `novel_u`, `smORF`, `other`), amino-acid length and the caller's score.
-- `orf_catalogue/`
+- `orf_predictions/catalogue/`
   - `*.catalogue.bed12`: merged, deduplicated ORF catalogue (BED12, stable `orf_NNNNNNNN` ids in column 4).
   - `*.catalogue.tsv`: per-ORF table with `called_by_<caller>` binary columns for every caller in the runtime-enabled set and `score_<caller>` columns for Ribo-TISH / RiboCode / Rp-Bp / PRICE (Ribotricer scores are excluded). Includes `orf_class`, `aa_length`, host `gene_id` and `transcript_id`.
   - `*.orf_to_gene.tsv`: ORF-to-gene mapping. An ORF that maps to multiple host transcripts/genes gets multiple rows here; downstream gene-level aggregation collapses by `gene_id`.
   - `*.catalogue.aa.fasta`: amino-acid FASTA of every catalogue ORF, keyed by `orf_NNNNNNNN`. Produced by `bedtools getfasta` on the merged BED12 followed by `seqkit translate`.
   - `*.catalogue.mqc.tsv`: per-class ORF counts surfaced as a MultiQC custom-content table.
-- `orf_catalogue/consensus/`
+- `orf_predictions/catalogue/consensus/`
   - `*.consensus.bed12`, `*.consensus.tsv`, `*.consensus.orf_to_gene.tsv`: the catalogue filtered to ORFs supported by at least `--orf_min_callers` distinct callers and recurring in at least `--orf_min_samples` samples. Identical to the full catalogue at the defaults (1/1); raise either for a higher-confidence subset. The full catalogue above is always published regardless.
 
 </details>
@@ -506,7 +512,7 @@ When `--extended_orf_analysis true` is set together with plastid (i.e. `--skip_p
 <details markdown="1">
 <summary>Output files</summary>
 
-- `orf_quantification/`
+- `quantification/orf_level/`
   - `*.orf_inframe_psites.bed`: cohort-level BED6 of codon-start positions, one row per in-frame nucleotide per ORF. Frame is defined by each ORF's own start codon (the A of ATG = frame 0), not by the GTF `phase` field. Generated once per pipeline run from `orf_catalogue.bed12`.
   - `orf_psite_counts.tsv`: ORF x sample raw in-frame P-site count matrix. First column `orf_id`; remaining columns are sample ids in lexicographic order. Zero-filled for ORFs absent from a sample. Produced once per pipeline run from the per-sample bedtools-intersect counts.
 
@@ -670,20 +676,20 @@ When `--extended_orf_analysis true` is set with `--te_quantification_method plas
 <details markdown="1">
 <summary>Output files</summary>
 
-- `dte/orf_level/`
+- `translational_efficiency/orf_level/`
   - `orf_combined_counts.tsv`: Combined ORF x sample count matrix produced by the join step. Rows are ORFs; columns are Ribo-seq samples (per-ORF P-site counts) followed by RNA-seq samples (host gene's count replicated across all ORFs mapping to that gene). This is the input fed to the selected DTE method (`--translational_efficiency_method`) for the ORF-level fit.
-- `dte/orf_level/deltate/` (when `--translational_efficiency_method deltate`):
+- `translational_efficiency/orf_level/deltate/` (when `--translational_efficiency_method deltate`):
   - `*.translation.deltate.results.tsv`, `*.translated_mRNA.deltate.results.tsv`, `*.total_mRNA.deltate.results.tsv`: deltaTE result tables at ORF resolution (one set per contrast). The first column header is `gene_id` for compatibility with the gene-level path but the rows are ORF ids.
   - `*.dtegs.deltate.genes.tsv` and the four classified ORF lists (`*.mRNA_abundance`, `*.translation`, `*.intensified`, `*.buffering`): ORF ids assigned to each deltaTE category.
   - `*.fold_change.png`, `*.interaction_p_distribution.png`, `*.pca_ribo.png`, `*.pca_rna.png`, `*.heatmap.png` (plus their `.tsv` underlying data files): the same deltaTE diagnostic plots as the gene-level path, computed at ORF resolution.
   - `*.DESeqDataSet.rds`: serialised DESeq2 objects for downstream inspection.
   - `*.R_sessionInfo.log`: R session information for reproducibility.
-- `dte/orf_level/anota2seq/` (when `--translational_efficiency_method anota2seq`, the default):
+- `translational_efficiency/orf_level/anota2seq/` (when `--translational_efficiency_method anota2seq`, the default):
   - `*.translated_mRNA.anota2seq.results.tsv`, `*.total_mRNA.anota2seq.results.tsv`, `*.translation.anota2seq.results.tsv`, `*.buffering.anota2seq.results.tsv`, `*.mRNA_abundance.anota2seq.results.tsv`: anota2seq result tables at ORF resolution (one set per contrast); rows are ORF ids.
   - `*.fold_change.png`, `*.interaction_p_distribution.pdf`, `*.residual_distribution_summary.jpeg`, `*.residual_vs_fitted.jpeg`, `*.rvm_fit_for_*.jpg`, `*.simulated_vs_obt_dfbetas_without_interaction.pdf`: anota2seq diagnostic plots, computed at ORF resolution. Inspect the residual and RVM fit plots before interpreting results: per-ORF inputs typically have more sparse rows than per-gene inputs and the QC plots surface any failure of the APV / RVM assumptions.
   - `*.Anota2seqDataSet.rds`: serialised Anota2seqDataSet object.
   - `*.R_sessionInfo.log`: R session information for reproducibility.
-- `dte/orf_level/dotseq/` (when `--translational_efficiency_method dotseq`):
+- `translational_efficiency/orf_level/dotseq/` (when `--translational_efficiency_method dotseq`):
   - `*.translation.dotseq.results.tsv`: per-ORF differential translation efficiency from DOTSeq's DTE interaction term (DESeq2 + ashr shrinkage); rows are ORF ids. Same biological quantity as the anota2seq / deltate `translation` table at gene resolution.
   - `*.dou.dotseq.results.tsv`: per-ORF Differential ORF Usage (DOU) results, DOTSeq's per-gene beta-binomial GLM modelling changes in Ribo / RNA proportion across an ORF and its sibling ORFs (shrunk with ashr). DOU has no anota2seq / deltate counterpart and answers a different question to DTE: not "does this ORF's translation change?" but "does this ORF gain or lose share of its parent gene's ribosome occupancy?".
   - `*.dou_strategy.dotseq.results.tsv`, `*.dte_strategy.dotseq.results.tsv`: per-condition Ribo-vs-RNA strategy contrasts, when DOTSeq emits them.
