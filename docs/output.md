@@ -615,7 +615,7 @@ When the parameter `--te_quantification_method pseudo` is used, reads are quanti
 - `quantification/salmon_te_pseudo/` or `quantification/kallisto_te_pseudo/`
   - `<SAMPLE>/`: Raw per-sample output from Salmon or kallisto.
   - `*.merged.te_pseudo.*`: tximport gene- and transcript-level matrices across all samples, in the same layout as `quantification/salmon/` above.
-  - `*.merged.gene_counts.te_pseudo.rds` / `*.merged.transcript_counts.te_pseudo.rds`: SummarizedExperiment containers for the merged matrices.
+  - `*.merged.gene_counts.te_pseudo.SummarizedExperiment.rds` / `*.merged.transcript_counts.te_pseudo.SummarizedExperiment.rds`: SummarizedExperiment containers for the merged matrices.
   - `tx2gene.tsv`: Tab-delimited transcript to gene id mapping used for the summarisation.
 
   </details>
