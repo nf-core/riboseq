@@ -776,7 +776,7 @@ def _price_transcript_id(orf_id_raw, orf_type):
     assuming the first or last underscore is the delimiter.
     """
     if orf_type:
-        m = re.match(r"^(.+)_" + re.escape(orf_type) + r"_\d+$", orf_id_raw)
+        m = re.match(r"^(.+)_" + re.escape(orf_type) + r"_\\d+\$", orf_id_raw)
         if m:
             return m.group(1)
     parts = orf_id_raw.rsplit("_", 2)
