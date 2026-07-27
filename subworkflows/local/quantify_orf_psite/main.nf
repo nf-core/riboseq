@@ -33,8 +33,8 @@ workflow QUANTIFY_ORF_PSITE {
     ch_versions = ch_versions.mix(CUSTOM_BED12CODONPOSITIONS.out.versions)
 
     // `feature: 'orf'` sets the output-filename suffix in the shared counter.
-    // `.first()` makes this a value channel: it is paired with the per-sample
-    // track channel below, and a single-item queue would serve only one sample.
+    // Must be a value channel: it is paired with the per-sample track channel
+    // below, and a single-item queue would serve only one sample.
     ch_inframe_psites = CUSTOM_BED12CODONPOSITIONS.out.bed
         .map { meta, bed -> [ meta + [feature: 'orf'], bed ] }
         .first()
