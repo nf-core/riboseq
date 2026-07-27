@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#193](https://github.com/nf-core/riboseq/pull/193) - Re-pin `custom/orfnormalise` (nf-core/modules#12173) to fix ribotish `GenomePos` coordinate parsing (0-based, was treated as 1-based), which shifted ribotish-derived catalogue ORFs out of frame ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#194](https://github.com/nf-core/riboseq/pull/194) - Update `dotseq/dotseq` (nf-core/modules#12230) so the DOTSeq heatmap actually renders, and pass `--orf_type_main_value canonical_cds` to pair the heatmap against riboseq's main-ORF label ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#204](https://github.com/nf-core/riboseq/pull/204) - Include ORFs on novel transcripts in ORF-level DTE, by quantifying the RNA-seq denominator against the full reference transcriptome augmented with the novel intergenic transcripts so novel genes gain a host-gene row ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#200](https://github.com/nf-core/riboseq/issues/200) - Audit value versus queue channel usage across the workflow and subworkflows, drop the `.first()` calls that only emitted `useless when applied to a value channel` warnings, document the value-channel contract on the reference inputs that feed per-sample fan-outs, and snapshot the `hybrid_star` outputs so a partial Ribo-seq sample set fails the extended-ORF tests ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Changed`
 

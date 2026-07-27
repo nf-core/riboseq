@@ -1,0 +1,55 @@
+Changes in component 'nf-core/fasta_gtf_bam_rpbp'
+'subworkflows/nf-core/fasta_gtf_bam_rpbp/meta.yml' is unchanged
+Changes in 'fasta_gtf_bam_rpbp/main.nf':
+--- subworkflows/nf-core/fasta_gtf_bam_rpbp/main.nf
++++ subworkflows/nf-core/fasta_gtf_bam_rpbp/main.nf
+@@ -11,16 +11,18 @@
+ 
+     take:
+     ch_bam        // channel: [ val(meta), path(bam), path(bai) ] - Ribo-seq BAMs
+-    ch_fasta_gtf  // channel (single value): [ val(meta), path(fasta), path(gtf) ]
++    ch_fasta_gtf  // value channel: [ val(meta), path(fasta), path(gtf) ]. Must be a value channel:
++                  //                the annotation products derived from it are paired with the
++                  //                per-sample BAM channel below.
+ 
+     main:
+ 
+     RPBP_PREPAREGENOME(ch_fasta_gtf)
+ 
+-    ch_transcript_bed   = RPBP_PREPAREGENOME.out.transcript_bed.first()
+-    ch_orfs_genomic_bed = RPBP_PREPAREGENOME.out.orfs_genomic_bed.first()
+-    ch_orfs_exons_bed   = RPBP_PREPAREGENOME.out.orfs_exons_bed.first()
+-    ch_genome_fasta     = ch_fasta_gtf.map { meta, fasta, _gtf -> [ meta, fasta ] }.first()
++    ch_transcript_bed   = RPBP_PREPAREGENOME.out.transcript_bed
++    ch_orfs_genomic_bed = RPBP_PREPAREGENOME.out.orfs_genomic_bed
++    ch_orfs_exons_bed   = RPBP_PREPAREGENOME.out.orfs_exons_bed
++    ch_genome_fasta     = ch_fasta_gtf.map { meta, fasta, _gtf -> [ meta, fasta ] }
+ 
+     RPBP_EXTRACTMETAGENEPROFILES (
+         ch_bam,
+
+'subworkflows/nf-core/fasta_gtf_bam_rpbp/tests/nextflow.config' is unchanged
+Changes in 'fasta_gtf_bam_rpbp/tests/main.nf.test':
+--- subworkflows/nf-core/fasta_gtf_bam_rpbp/tests/main.nf.test
++++ subworkflows/nf-core/fasta_gtf_bam_rpbp/tests/main.nf.test
+@@ -48,7 +48,7 @@
+                     meta,
+                     fa,
+                     file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/Homo_sapiens.GRCh38.111_chr20.gtf", checkIfExists: true)
+-                ] }
++                ] }.first()
+                 """
+             }
+         }
+@@ -85,7 +85,7 @@
+                     meta,
+                     fa,
+                     file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/Homo_sapiens.GRCh38.111_chr20.gtf", checkIfExists: true)
+-                ] }
++                ] }.first()
+                 """
+             }
+         }
+
+'subworkflows/nf-core/fasta_gtf_bam_rpbp/tests/main.nf.test.snap' is unchanged
+************************************************************

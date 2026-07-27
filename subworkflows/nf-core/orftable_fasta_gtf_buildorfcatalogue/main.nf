@@ -20,8 +20,8 @@ workflow ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE {
                    //          caller in {ribocode, ribotish, ribotricer, rpbp, price};
                    //          all caller outputs flow through one channel with the
                    //          caller id carried as a per-record val (not in meta).
-    ch_fasta       // channel: [ val(meta), path(fasta) ]   - reference genome FASTA
-    ch_gtf         // channel: [ val(meta), path(gtf)   ]   - reference GTF (used by
+    ch_fasta       // value channel: [ val(meta), path(fasta) ] - reference genome FASTA
+    ch_gtf         // value channel: [ val(meta), path(gtf)   ] - reference GTF (used by
                    //          ribocode/ribotish normalisers; ignored by rpbp/price)
     val_collapse   // boolean: cluster catalogue peptides by amino-acid identity
                    //          and fold duplicate small ORFs to one representative
@@ -39,7 +39,7 @@ workflow ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE {
     ch_normalise_in = ch_orf_tables.map { meta, table, caller ->
         [ meta + [ id: "${meta.id}.${caller}" ], table, caller ]
     }
-    CUSTOM_ORFNORMALISE ( ch_normalise_in, ch_gtf.first() )
+    CUSTOM_ORFNORMALISE ( ch_normalise_in, ch_gtf )
 
     // 2. Gather all normalised BED12s + sidecar TSVs across callers and
     //    samples into a single cohort-keyed channel. `.collect()` on an
@@ -67,7 +67,7 @@ workflow ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE {
     //    orf_id. `bedtools getfasta -split -s -nameOnly` walks BED12 blocks in
     //    mRNA order on the correct strand and names each sequence by the BED
     //    name (orf_id); `seqkit translate --trim` drops trailing stops.
-    BEDTOOLS_GETFASTA ( CUSTOM_ORFMERGE.out.bed12, ch_fasta.map { _meta, fa -> fa }.first() )
+    BEDTOOLS_GETFASTA ( CUSTOM_ORFMERGE.out.bed12, ch_fasta.map { _meta, fa -> fa } )
     SEQKIT_TRANSLATE  ( BEDTOOLS_GETFASTA.out.fasta )
 
     // 4. Assemble the full merged catalogue (BED12 + tables + AA FASTA) on one

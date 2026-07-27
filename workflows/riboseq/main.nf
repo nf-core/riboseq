@@ -242,7 +242,7 @@ workflow RIBOSEQ {
     //
 
     ch_fasta_fai            = ch_fasta.combine(ch_fai).map { fasta, fai -> [ [:], fasta, fai ] }.first()
-    ch_transcript_fasta_fai = ch_transcript_fasta.map { [ [:], it, [] ] }.first()
+    ch_transcript_fasta_fai = ch_transcript_fasta.map { [ [:], it, [] ] }
 
     FASTQ_ALIGN_STAR(
         ch_reads_for_alignment,
@@ -473,8 +473,8 @@ workflow RIBOSEQ {
 
         ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE(
             ch_orf_tables,
-            ch_fasta    .map { fasta -> [ [id: 'reference'], fasta ] }.first(),
-            ch_hybrid_gtf.map { gtf   -> [ [id: 'reference'], gtf   ] }.first(),
+            ch_fasta    .map { fasta -> [ [id: 'reference'], fasta ] },
+            ch_hybrid_gtf.map { gtf   -> [ [id: 'reference'], gtf   ] },
             !params.skip_orf_collapse
         )
         ch_multiqc_files = ch_multiqc_files.mix(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.multiqc.collect{it[1]}.ifEmpty([]))
@@ -609,7 +609,7 @@ workflow RIBOSEQ {
             false
         )
 
-        ch_inframe_psites = GTF_TO_INFRAME_PSITES.out.output.first()
+        ch_inframe_psites = GTF_TO_INFRAME_PSITES.out.output
 
         // Run p-site quantification per sample
         ch_psite_tracks = PLASTID_MAKE_WIGGLE.out.tracks
