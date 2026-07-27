@@ -39,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#155](https://github.com/nf-core/riboseq/pull/155) - Drop `if (params.skip_X)` wrappers in `conf/modules.config` so the Nextflow 26.04 v2 strict config parser accepts the file ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#193](https://github.com/nf-core/riboseq/pull/193) - Re-pin `custom/orfnormalise` (nf-core/modules#12173) to fix ribotish `GenomePos` coordinate parsing (0-based, was treated as 1-based), which shifted ribotish-derived catalogue ORFs out of frame ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#194](https://github.com/nf-core/riboseq/pull/194) - Update `dotseq/dotseq` (nf-core/modules#12230) so the DOTSeq heatmap actually renders, and pass `--orf_type_main_value canonical_cds` to pair the heatmap against riboseq's main-ORF label ([@pinin4fjords](https://github.com/pinin4fjords))
-- [#206](https://github.com/nf-core/riboseq/pull/206) - Correct the Trim Galore! description in the usage and output docs: the 2.x series is a self-contained Rust program with FastQC reporting built in, not a wrapper around external Cutadapt and FastQC installations ([@FelixKrueger](https://github.com/FelixKrueger))
+- [#210](https://github.com/nf-core/riboseq/pull/210) - Correct the Trim Galore! description in the usage and output docs: the 2.x series is a self-contained Rust program with FastQC reporting built in, not a wrapper around external Cutadapt and FastQC installations ([@FelixKrueger](https://github.com/FelixKrueger))
 
 ### `Changed`
 
@@ -53,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#194](https://github.com/nf-core/riboseq/pull/194) - Update all nf-core modules and subworkflows to their latest revisions and reconcile the pipeline with the changed component interfaces ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#194](https://github.com/nf-core/riboseq/pull/194) - Raise the minimum Nextflow version to `25.10.0`, required by nf-schema 2.7.2 ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#156](https://github.com/nf-core/riboseq/pull/156) - Template update for nf-core/tools v4.0.2 ([@nf-core-bot](https://github.com/nf-core-bot), [@pinin4fjords](https://github.com/pinin4fjords))
-- [#206](https://github.com/nf-core/riboseq/pull/206) - Update trimgalore module to 2.3.0 (nf-core/modules#12331) ([@FelixKrueger](https://github.com/FelixKrueger))
+- [#210](https://github.com/nf-core/riboseq/pull/210) - Update trimgalore module to 2.3.0 (nf-core/modules#12331) ([@FelixKrueger](https://github.com/FelixKrueger))
 
 ### `Parameters`
 
