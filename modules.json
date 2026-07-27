@@ -78,7 +78,8 @@
                     "custom/orfnormalise": {
                         "branch": "master",
                         "git_sha": "edbcc72a8def5a4439106a26e554056121facaf1",
-                        "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
+                        "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"],
+                        "patch": "modules/nf-core/custom/orfnormalise/custom-orfnormalise.diff"
                     },
                     "custom/tx2gene": {
                         "branch": "master",
