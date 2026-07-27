@@ -178,9 +178,9 @@ workflow ORF_CALLER_DISPATCH {
         // multi-isoform annotation it is normally run against. In extended mode it
         // takes the hybrid GTF to bring novel transcripts into scope.
         //
-        // The reference id (rather than a shared 'reference' constant) keys the
-        // GEDI index so extended and non-extended runs publish to distinct
-        // directories and never share a resume-cache entry.
+        // Keying the reference id by mode (rather than a shared 'reference'
+        // constant) keeps the GEDI index's output directory and resume-cache
+        // entry distinct between extended and non-extended runs.
         def ch_price_gtf_source  = extended_orf_active ? ch_hybrid_gtf : ch_gtf
         def ch_price_gtf_meta_id = extended_orf_active ? 'hybrid_reference' : 'reference'
         def ch_price_fasta_gtf = ch_fasta
