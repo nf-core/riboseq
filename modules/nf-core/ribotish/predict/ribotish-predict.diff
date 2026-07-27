@@ -1,0 +1,16 @@
+Changes in component 'nf-core/ribotish/predict'
+'modules/nf-core/ribotish/predict/meta.yml' is unchanged
+'modules/nf-core/ribotish/predict/main.nf' is unchanged
+Changes in 'ribotish/predict/environment.yml':
+--- modules/nf-core/ribotish/predict/environment.yml
++++ modules/nf-core/ribotish/predict/environment.yml
+@@ -4,4 +4,5 @@
+   - conda-forge
+   - bioconda
+ dependencies:
++  - conda-forge::python=3.13.9
+   - bioconda::ribotish=0.2.8
+
+'modules/nf-core/ribotish/predict/tests/main.nf.test' is unchanged
+'modules/nf-core/ribotish/predict/tests/main.nf.test.snap' is unchanged
+************************************************************
