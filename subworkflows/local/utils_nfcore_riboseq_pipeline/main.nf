@@ -187,6 +187,7 @@ workflow PIPELINE_COMPLETION {
 //
 def validateInputParameters() {
     genomeExistsError()
+    removedParamsError()
     dotseqPrerequisitesError()
     kallistoPrerequisitesError()
 
@@ -199,6 +200,24 @@ def validateInputParameters() {
     }
     if (params.extended_orf_analysis && novel_source_configured && params.skip_plastid) {
         log.warn "--extended_orf_analysis is enabled but --skip_plastid is true. ORF-level P-site quantification needs the plastid wiggle tracks and will be skipped; the ORF catalogue will still be built."
+    }
+}
+
+//
+// Exit pipeline on parameters that have been withdrawn. Schema validation only
+// warns about unrecognised parameters, which is too quiet for flags whose whole
+// purpose was to suppress work the pipeline will now do regardless.
+//
+def removedParamsError() {
+    def removed = [
+        'min_mapped_reads'     : 'it was never applied to any sample',
+        'skip_pseudo_alignment': 'pseudo-alignment is selected with --te_quantification_method and --pseudo_aligner',
+        'skip_alignment'       : 'the pipeline has no index-only mode; every downstream stage needs the alignment',
+    ]
+
+    def supplied = removed.findAll { name, _reason -> params.containsKey(name) }
+    if (supplied) {
+        error("The following parameters have been removed:\n" + supplied.collect { name, reason -> "  --${name}: ${reason}" }.join('\n'))
     }
 }
 
