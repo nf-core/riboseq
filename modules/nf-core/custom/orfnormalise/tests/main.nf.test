@@ -224,6 +224,42 @@ nextflow_process {
         }
     }
 
+    test("price - gene_id resolved from transcript, not the concatenated Gene column") {
+
+        when {
+            process {
+                """
+                input[0] = channel.of([
+                    [id: 'sample1'],
+                    file("\${projectDir}/modules/nf-core/custom/orfnormalise/tests/price_gene_precedence.orfs.tsv", checkIfExists: true),
+                    'price'
+                ])
+                input[1] = channel.of([
+                    [id: 'reference'],
+                    file("\${projectDir}/modules/nf-core/custom/orfnormalise/tests/price_gene_precedence.gtf", checkIfExists: true)
+                ])
+                """
+            }
+        }
+
+        then {
+            def lines = path(process.out.tsv[0][1]).text.readLines().findAll { !it.startsWith('#') }
+            def cols  = lines[0].split('\t') as List
+            def row   = lines[1].split('\t')
+            def gid   = cols.indexOf('gene_id')
+            def tid   = cols.indexOf('transcript_id')
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() },
+                // Gene column is 'ENSG_A_ENSG_B' (PRICE's concatenated form);
+                // the annotation resolves ENST_FAKE_TX to a single gene, which
+                // must win over the Gene column.
+                { assert row[gid] == 'ENSG_PLAIN' },
+                { assert row[tid] == 'ENST_FAKE_TX' }
+            )
+        }
+    }
+
     test("homo_sapiens [chr20] - ribotish - score-field override") {
         config "./score_override.config"
 
