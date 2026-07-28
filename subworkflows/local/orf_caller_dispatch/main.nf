@@ -34,13 +34,14 @@ workflow ORF_CALLER_DISPATCH {
     ch_bams_for_analysis     // channel: [ val(meta), path(bam), path(bai) ] - riboseq genome BAMs
     ch_transcriptome_bam     // channel: [ val(meta), path(bam) ] - all sample types, canonical transcriptome
     ch_hybrid_transcriptome_bam // channel: [ val(meta), path(bam) ] - riboseq only, hybrid transcriptome (or empty)
-    // The five reference channels below must be value channels: they are paired with the per-sample
+    // The four reference channels below must be value channels: they are paired with the per-sample
     // BAM channels in the caller fan-outs, and a single-item queue would serve only one sample.
     ch_fasta                 // value channel: path(genome.fasta)
     ch_canonical_gtf         // value channel: path(canonical.gtf)
     ch_hybrid_gtf            // value channel: path(hybrid.gtf)  - equals canonical when no novel source
     ch_gtf                   // value channel: path(genome.gtf)  - full multi-isoform, used by RiboCode when not extended
-    ch_full_hybrid_gtf       // value channel: path(full_hybrid.gtf) - ch_gtf plus the novel genes, empty unless extended
+    // Same contract while extended-ORF analysis is active; empty and unread otherwise.
+    ch_full_hybrid_gtf       // value channel: path(full_hybrid.gtf) - ch_gtf plus the novel genes
     extended_orf_active      // val: bool
 
     main:
