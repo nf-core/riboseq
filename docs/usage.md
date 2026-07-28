@@ -298,6 +298,42 @@ However this is no longer recommended because:
 - Gene annotations in iGenomes are extremely out of date. This can be particularly problematic for RNA-seq analysis, which relies on accurate gene annotation.
 - Some iGenomes references (e.g., GRCh38) point to annotation files that use gene symbols as the primary identifier. This can cause issues for downstream analysis, such as the nf-core [differential abundance](https://nf-co.re/differentialabundance) workflow where a conventional gene identifier distinct from symbol is expected.
 
+### Custom genome stanzas
+
+`--genome` is not restricted to iGenomes keys: any config file supplied with `-c` can define its own `genomes` block, and the pipeline will take the attributes below from the stanza matching `--genome`.
+
+| Genome attribute   | Equivalent parameter |
+| ------------------ | -------------------- |
+| `fasta`            | `--fasta`            |
+| `gtf`              | `--gtf`              |
+| `gff`              | `--gff`              |
+| `transcript_fasta` | `--transcript_fasta` |
+| `additional_fasta` | `--additional_fasta` |
+| `star`             | `--star_index`       |
+| `salmon`           | `--salmon_index`     |
+| `bbsplit`          | `--bbsplit_index`    |
+| `sortmerna`        | `--sortmerna_index`  |
+
+```groovy title="my_genomes.config"
+params {
+    genomes {
+        'GRCh38_local' {
+            fasta     = '/path/to/genome.fa'
+            gtf       = '/path/to/genes.gtf'
+            star      = '/path/to/star/'
+            salmon    = '/path/to/salmon/'
+            sortmerna = '/path/to/sortmerna/'
+        }
+    }
+}
+```
+
+```bash
+nextflow run nf-core/riboseq -profile docker -c my_genomes.config --genome GRCh38_local --input samplesheet.csv --outdir results
+```
+
+Setting the equivalent parameter explicitly (on the command line, in a `-params-file`, or in a config `params` block) overrides the genome attribute.
+
 ### GTF filtering
 
 By default, the input GTF file will be filtered to ensure that sequence names correspond to those in the genome fasta file, and to remove rows with empty transcript identifiers. Filtering can be bypassed completely where you are confident it is not necessary, using the `--skip_gtf_filter` parameter. If you just want to skip the 'transcript_id' checking component of the GTF filtering script used in the pipeline this can be disabled specifically using the `--skip_gtf_transcript_filter` parameter.
