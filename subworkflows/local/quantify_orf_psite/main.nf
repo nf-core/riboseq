@@ -33,6 +33,8 @@ workflow QUANTIFY_ORF_PSITE {
     ch_versions = ch_versions.mix(CUSTOM_BED12CODONPOSITIONS.out.versions)
 
     // `feature: 'orf'` sets the output-filename suffix in the shared counter.
+    // Must be a value channel: it is paired with the per-sample track channel
+    // below, and a single-item queue would serve only one sample.
     ch_inframe_psites = CUSTOM_BED12CODONPOSITIONS.out.bed
         .map { meta, bed -> [ meta + [feature: 'orf'], bed ] }
         .first()
@@ -42,9 +44,8 @@ workflow QUANTIFY_ORF_PSITE {
     ch_versions = ch_versions.mix(QUANTIFY_INFRAME_PSITE_PLASTID.out.versions)
 
     // 3. Collect all per-sample TSVs into one list, then pair with the
-    //    cohort-level catalogue BED. `ch_catalogue_bed.first()` reduces a
-    //    queue channel to a value channel so the pairing is deterministic
-    //    even when `.collect()` has not yet emitted.
+    //    cohort-level catalogue BED on a synthetic key so the pairing does not
+    //    depend on emission order.
     ch_tsvs_collected = QUANTIFY_INFRAME_PSITE_PLASTID.out.counts
         .map { _meta, tsv -> tsv }
         .collect()
