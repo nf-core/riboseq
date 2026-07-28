@@ -86,6 +86,17 @@ quantification/salmon_te_pseudo/*/quant.sf
 quantification/salmon_te_pseudo/*.rds
 quantification/salmon_te_pseudo/**/*.rds
 quantification/salmon_te_pseudo/salmon.merged.te_pseudo.*.tsv
+quantification/salmon_hybrid/*/aux_info/ambig_info.tsv
+quantification/salmon_hybrid/*/aux_info/expected_bias.gz
+quantification/salmon_hybrid/*/aux_info/fld.gz
+quantification/salmon_hybrid/*/aux_info/meta_info.json
+quantification/salmon_hybrid/*/libParams/flenDist.txt
+quantification/salmon_hybrid/*/logs/salmon_quant.log
+quantification/salmon_hybrid/*/quant.genes.sf
+quantification/salmon_hybrid/*/quant.sf
+quantification/salmon_hybrid/*.rds
+quantification/salmon_hybrid/**/*.rds
+quantification/salmon_hybrid/salmon.merged.hybrid.*.tsv
 quantification/inframe_psite/*
 riboseq_qc/ribotish/*_qual.pdf
 psites/ribowaltz/**/*.pdf
