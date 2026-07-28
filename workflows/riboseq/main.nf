@@ -39,6 +39,12 @@ include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../mod
 include { DESEQ2_DELTATE                                       } from '../../modules/local/deseq2/deltate'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_PSEUDO_TE      } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
+include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_HYBRID_RNA     } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
+include { GAWK as BUILD_FULL_HYBRID_GTF                        } from '../../modules/nf-core/gawk'
+include { GFFREAD as GFFREAD_FULL_HYBRID                       } from '../../modules/nf-core/gffread'
+include { STAR_GENOMEGENERATE as STAR_GENOMEGENERATE_FULL_HYBRID } from '../../modules/nf-core/star/genomegenerate'
+include { FASTQ_ALIGN_STAR as FASTQ_ALIGN_STAR_FULL_HYBRID     } from '../../subworkflows/nf-core/fastq_align_star'
+include { BAM_DEDUP_UMI as BAM_DEDUP_UMI_HYBRID_RNA            } from '../../subworkflows/nf-core/bam_dedup_umi'
 include { RIBOWALTZ                                            } from '../../modules/nf-core/ribowaltz/main'
 include { PLASTID_METAGENE_GENERATE                            } from '../../modules/nf-core/plastid/metagene_generate/main'
 include { PLASTID_PSITE                                        } from '../../modules/nf-core/plastid/psite/main'
@@ -337,7 +343,7 @@ workflow RIBOSEQ {
             ch_strandedness
         )
 
-        ch_hybrid_gtf = NOVEL_TRANSCRIPT_DISCOVERY.out.hybrid_gtf
+        ch_hybrid_gtf = NOVEL_TRANSCRIPT_DISCOVERY.out.hybrid_gtf.first()
     }
 
     //
@@ -679,9 +685,78 @@ workflow RIBOSEQ {
         }
 
         if (extended_orf_active && enabled_orf_callers && !params.skip_plastid) {
+            // ORF-level DTE needs a host-gene RNA denominator for ORFs on novel
+            // transcripts. The primary Salmon matrix is quantified against the
+            // canonical reference only, so novel genes have no row and their
+            // ORFs are dropped. Quantify RNA-seq against the full reference
+            // transcriptome augmented with the novel intergenic transcripts,
+            // using the same STAR-align -> Salmon path as the primary
+            // quantification so canonical genes match the gene-level denominator
+            // (the one-transcript-per-gene backbone used for ORF calling would
+            // undercount multi-isoform genes) and novel genes gain a row.
+            BUILD_FULL_HYBRID_GTF(
+                ch_gtf.combine(ch_hybrid_gtf).map { gtf, hybrid -> [ [id: 'full_hybrid_reference'], [ gtf, hybrid ] ] },
+                file("${projectDir}/assets/build_full_hybrid_gtf.awk"),
+                false
+            )
+            ch_full_hybrid_gtf = BUILD_FULL_HYBRID_GTF.out.output.map { _meta, gtf -> gtf }.first()
+
+            GFFREAD_FULL_HYBRID(
+                BUILD_FULL_HYBRID_GTF.out.output,
+                ch_fasta
+            )
+            ch_full_hybrid_transcript_fasta = GFFREAD_FULL_HYBRID.out.gffread_fasta.map { _meta, fasta -> fasta }.first()
+
+            STAR_GENOMEGENERATE_FULL_HYBRID(
+                ch_fasta.map { fasta -> [ [id: 'full_hybrid_reference'], fasta ] },
+                BUILD_FULL_HYBRID_GTF.out.output.map { _meta, gtf -> [ [id: 'full_hybrid_reference'], gtf ] }
+            )
+
+            ch_rnaseq_reads = ch_reads_for_alignment.filter { meta, _reads -> meta.sample_type == 'rnaseq' }
+
+            FASTQ_ALIGN_STAR_FULL_HYBRID(
+                ch_rnaseq_reads,
+                STAR_GENOMEGENERATE_FULL_HYBRID.out.index.map { _meta, index -> [ [:], index ] }.first(),
+                ch_full_hybrid_gtf.map { [ [:], it ] },
+                params.star_ignore_sjdbgtf,
+                ch_fasta_fai,
+                ch_full_hybrid_transcript_fasta.map { [ [:], it, [] ] }
+            )
+
+            ch_full_hybrid_transcriptome_bam = FASTQ_ALIGN_STAR_FULL_HYBRID.out.orig_bam_transcript
+
+            if (params.with_umi) {
+                BAM_DEDUP_UMI_HYBRID_RNA(
+                    FASTQ_ALIGN_STAR_FULL_HYBRID.out.bam.join(FASTQ_ALIGN_STAR_FULL_HYBRID.out.index, by: [0]),
+                    ch_fasta_fai,
+                    params.umi_dedup_tool,
+                    params.umitools_dedup_stats,
+                    FASTQ_ALIGN_STAR_FULL_HYBRID.out.orig_bam_transcript,
+                    ch_full_hybrid_transcript_fasta.map { [ [:], it, [] ] },
+                    params.umitools_dedup_primary_only
+                )
+                ch_full_hybrid_transcriptome_bam = BAM_DEDUP_UMI_HYBRID_RNA.out.transcriptome_bam
+            }
+
+            QUANTIFY_HYBRID_RNA(
+                ch_samplesheet.map { [ [:], it ] },
+                ch_full_hybrid_transcriptome_bam,
+                [],
+                ch_full_hybrid_transcript_fasta,
+                ch_full_hybrid_gtf,
+                params.gtf_group_features,
+                params.gtf_extra_attributes,
+                'salmon',
+                true,
+                params.salmon_quant_libtype ?: '',
+                null,
+                null,
+                false
+            )
+
             DTE_COUNTS_PREP(
                 ch_orf_count_matrix
-                    .combine(QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled.map { _meta, counts -> counts })
+                    .combine(QUANTIFY_HYBRID_RNA.out.counts_gene_length_scaled.map { _meta, counts -> counts })
                     .combine(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.orf_to_gene_tsv.map { _meta, tsv -> tsv })
                     .map { meta, ribo, rna, o2g -> [ meta, ribo, rna, o2g ] }
             )
