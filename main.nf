@@ -15,8 +15,6 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { RIBOSEQ                 } from './workflows/riboseq'
-include { PREPARE_GENOME          } from './subworkflows/local/prepare_genome'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_riboseq_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_riboseq_pipeline'
 include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_riboseq_pipeline'
@@ -28,6 +26,10 @@ include { checkMaxContigSize      } from './subworkflows/local/utils_nfcore_ribo
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
+// An included script takes a snapshot of params at the point of its include
+// statement, so every consumer of these must be included below this block.
+// A value for any of them in nextflow.config would make the assignment a no-op.
+
 params.fasta            = getGenomeAttribute('fasta')
 params.transcript_fasta = getGenomeAttribute('transcript_fasta')
 params.additional_fasta = getGenomeAttribute('additional_fasta')
@@ -37,6 +39,9 @@ params.bbsplit_index    = getGenomeAttribute('bbsplit')
 params.star_index       = getGenomeAttribute('star')
 params.salmon_index     = getGenomeAttribute('salmon')
 params.sortmerna_index  = getGenomeAttribute('sortmerna')
+
+include { RIBOSEQ                 } from './workflows/riboseq'
+include { PREPARE_GENOME          } from './subworkflows/local/prepare_genome'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

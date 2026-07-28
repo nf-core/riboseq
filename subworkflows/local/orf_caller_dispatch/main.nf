@@ -34,11 +34,13 @@ workflow ORF_CALLER_DISPATCH {
     ch_bams_for_analysis     // channel: [ val(meta), path(bam), path(bai) ] - riboseq genome BAMs
     ch_transcriptome_bam     // channel: [ val(meta), path(bam) ] - all sample types, canonical transcriptome
     ch_hybrid_transcriptome_bam // channel: [ val(meta), path(bam) ] - riboseq only, hybrid transcriptome (or empty)
-    ch_fasta                 // channel: path(genome.fasta)
-    ch_canonical_gtf         // channel: path(canonical.gtf)
-    ch_hybrid_gtf            // channel: path(hybrid.gtf)        - equals canonical when no novel source
-    ch_gtf                   // channel: path(genome.gtf)        - full multi-isoform, used by RiboCode when not extended
-    ch_full_hybrid_gtf       // channel: path(full_hybrid.gtf)   - full multi-isoform plus novel genes, empty unless extended
+    // The five reference channels below must be value channels: they are paired with the per-sample
+    // BAM channels in the caller fan-outs, and a single-item queue would serve only one sample.
+    ch_fasta                 // value channel: path(genome.fasta)
+    ch_canonical_gtf         // value channel: path(canonical.gtf)
+    ch_hybrid_gtf            // value channel: path(hybrid.gtf)  - equals canonical when no novel source
+    ch_gtf                   // value channel: path(genome.gtf)  - full multi-isoform, used by RiboCode when not extended
+    ch_full_hybrid_gtf       // value channel: path(full_hybrid.gtf) - ch_gtf plus the novel genes, empty unless extended
     extended_orf_active      // val: bool
 
     main:
@@ -49,18 +51,18 @@ workflow ORF_CALLER_DISPATCH {
     // Annotation channels. Canonical for ORF calling / P-site / DTE; the full
     // ch_gtf is reserved for genome-guided alignment elsewhere in the pipeline.
     ch_fasta_gtf = ch_fasta.combine(ch_canonical_gtf).map{ fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }.first()
-    ch_fasta_gtf_for_ribotish = ch_fasta_gtf.map{ meta, fasta, gtf -> [ meta, fasta, gtf, [] ] }.first()
+    ch_fasta_gtf_for_ribotish = ch_fasta_gtf.map{ meta, fasta, gtf -> [ meta, fasta, gtf, [] ] }
 
     ch_fasta_gtf_extended = ch_fasta
         .combine(ch_hybrid_gtf)
         .map { fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }
         .first()
 
-    // Annotation for the callers that resolve overlapping ORFs themselves, keyed
-    // by mode so index outputs and resume entries stay distinct between the two.
+    // Annotation for the callers that resolve overlapping ORFs themselves.
     ch_fasta_gtf_multi_isoform = extended_orf_active ?
         ch_fasta.combine(ch_full_hybrid_gtf).map { fasta, gtf -> [ [id: 'full_hybrid_reference'], fasta, gtf ] }.first() :
         ch_fasta.combine(ch_gtf).map { fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }.first()
+
     // Extended mode: hybrid GTF feeds Ribo-TISH `-g` (discovery target), canonical
     // backbone feeds `-a` (background model + ORF classification labels).
     ch_fasta_gtf_for_ribotish_extended = ch_fasta
@@ -76,7 +78,7 @@ workflow ORF_CALLER_DISPATCH {
     if (!params.skip_ribotish) {
         RIBOTISH_QUALITY_RIBOSEQ(
             ch_bams_for_analysis,
-            ch_canonical_gtf.map { [ [:], it ] }.first()
+            ch_canonical_gtf.map { [ [:], it ] }
         )
         ch_versions      = ch_versions.mix(RIBOTISH_QUALITY_RIBOSEQ.out.versions)
         ch_multiqc_files = ch_multiqc_files.mix(RIBOTISH_QUALITY_RIBOSEQ.out.distribution.collect{it[1]})
@@ -189,7 +191,7 @@ workflow ORF_CALLER_DISPATCH {
 
         GEDI_PRICE(
             ch_price_inputs,
-            GEDI_INDEXGENOME.out.index.first()
+            GEDI_INDEXGENOME.out.index
         )
         ch_price_predictions = GEDI_PRICE.out.orfs_tsv
     }
@@ -222,12 +224,12 @@ workflow ORF_CALLER_DISPATCH {
         // Step 1: Update GTF annotation
         def ribocode_gtf_meta_id = extended_orf_active ? 'hybrid_reference' : 'reference'
         RIBOCODE_GTFUPDATE(
-            ch_ribocode_gtf_source.map { [ [id: ribocode_gtf_meta_id], it ] }.first()
+            ch_ribocode_gtf_source.map { [ [id: ribocode_gtf_meta_id], it ] }
         )
 
         // Step 2: Prepare annotation files
         RIBOCODE_PREPARE(
-            ch_fasta.map { [ [:], it ] }.first(),
+            ch_fasta.map { [ [:], it ] },
             RIBOCODE_GTFUPDATE.out.gtf
         )
 
