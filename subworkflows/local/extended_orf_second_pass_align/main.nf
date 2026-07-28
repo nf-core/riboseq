@@ -21,8 +21,10 @@ include { FASTQ_ALIGN_STAR as FASTQ_ALIGN_STAR_HYBRID       } from '../../nf-cor
 workflow EXTENDED_ORF_SECOND_PASS_ALIGN {
 
     take:
-    ch_hybrid_gtf            // channel: path(hybrid.gtf)
-    ch_fasta                 // channel: path(genome.fasta)
+    // The two reference channels below must be value channels: they are paired with the per-sample
+    // read channel in the STAR fan-out, and a single-item queue would serve only one sample.
+    ch_hybrid_gtf            // value channel: path(hybrid.gtf)
+    ch_fasta                 // value channel: path(genome.fasta)
     ch_reads_for_alignment   // channel: [ val(meta), [ path(fastq), ... ] ]
     star_ignore_sjdbgtf      // val: params.star_ignore_sjdbgtf
 
@@ -41,8 +43,8 @@ workflow EXTENDED_ORF_SECOND_PASS_ALIGN {
         ch_hybrid_gtf.map { gtf -> [ [id: 'hybrid_reference'], gtf ] }
     )
 
-    ch_hybrid_transcriptome_fasta = GFFREAD_HYBRID_TRANSCRIPTOME.out.gffread_fasta.map { _meta, fasta -> fasta }.first()
-    ch_hybrid_star_index          = STAR_GENOMEGENERATE_HYBRID.out.index.map { _meta, index -> index }.first()
+    ch_hybrid_transcriptome_fasta = GFFREAD_HYBRID_TRANSCRIPTOME.out.gffread_fasta.map { _meta, fasta -> fasta }
+    ch_hybrid_star_index          = STAR_GENOMEGENERATE_HYBRID.out.index.map { _meta, index -> index }
 
     // Only Ribo-seq samples feed RiboCode; skip the costly re-alignment for
     // RNA-seq and TI-seq.
