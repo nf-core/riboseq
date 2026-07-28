@@ -77,7 +77,7 @@
                     },
                     "custom/orfnormalise": {
                         "branch": "master",
-                        "git_sha": "edbcc72a8def5a4439106a26e554056121facaf1",
+                        "git_sha": "c13f18dbfc4910d9287d9d3fff7b83124e108907",
                         "installed_by": ["orftable_fasta_gtf_buildorfcatalogue"]
                     },
                     "custom/tx2gene": {
