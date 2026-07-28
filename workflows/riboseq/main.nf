@@ -431,7 +431,6 @@ workflow RIBOSEQ {
         )
         ch_full_hybrid_gtf_meta = BUILD_FULL_HYBRID_GTF.out.output
         ch_full_hybrid_gtf      = BUILD_FULL_HYBRID_GTF.out.output.map { _meta, gtf -> gtf }.first()
-        ch_versions             = ch_versions.mix(BUILD_FULL_HYBRID_GTF.out.versions)
     }
 
     ORF_CALLER_DISPATCH(
