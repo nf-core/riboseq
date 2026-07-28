@@ -284,8 +284,11 @@ workflow RIBOSEQ {
         ch_transcriptome_bam = BAM_DEDUP_UMI.out.transcriptome_bam
         ch_genome_bam_index  = BAM_DEDUP_UMI.out.index
 
+        // BAM_DEDUP_UMI emits multiqc_files as [ meta, file ] despite its
+        // 'channel: file' comment, so drop the meta here. MULTIQC flattens this
+        // channel, which would otherwise pass the meta map itself as a file.
         ch_multiqc_files = ch_multiqc_files
-            .mix(BAM_DEDUP_UMI.out.multiqc_files)
+            .mix(BAM_DEDUP_UMI.out.multiqc_files.map { _meta, file -> file })
     }
 
     //
