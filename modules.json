@@ -484,9 +484,8 @@
                     },
                     "fastq_remove_rrna": {
                         "branch": "master",
-                        "git_sha": "d07a945f421a4a91ce4e5a22db63e0e7f8741607",
-                        "installed_by": ["fastq_qc_trim_filter_setstrandedness"],
-                        "patch": "subworkflows/nf-core/fastq_remove_rrna/fastq_remove_rrna.diff"
+                        "git_sha": "6b6373229f00bf18285f1bee78ecc10db7dba68b",
+                        "installed_by": ["fastq_qc_trim_filter_setstrandedness"]
                     },
                     "fastq_subsample_fq_salmon": {
                         "branch": "master",
