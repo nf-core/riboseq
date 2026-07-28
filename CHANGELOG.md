@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#204](https://github.com/nf-core/riboseq/pull/204) - Include ORFs on novel transcripts in ORF-level DTE, by quantifying the RNA-seq denominator against the full reference transcriptome augmented with the novel intergenic transcripts so novel genes gain a host-gene row ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#210](https://github.com/nf-core/riboseq/pull/210) - Correct the Trim Galore! description in the usage and output docs: the 2.x series is a self-contained Rust program with FastQC reporting built in, not a wrapper around external Cutadapt and FastQC installations ([@FelixKrueger](https://github.com/FelixKrueger))
 - [#210](https://github.com/nf-core/riboseq/pull/210) - Correct the `--cores` note in the usage and output docs, which dated from the 0.6.x Perl era: worker cores are capped at 8 (not 4), multi-core trimming needs more than 4 CPUs for single-end and more than 5 for paired-end data, and the 2.x N+4 thread model is described. Also fixes a 404 changelog link (`Changelog.md` → `CHANGELOG.md`) ([@FelixKrueger](https://github.com/FelixKrueger))
-- [#202](https://github.com/nf-core/riboseq/issues/202) - Wire PRICE to the hybrid GTF under `--extended_orf_analysis`, matching Rp-Bp, so it can call ORFs on novel StringTie transcripts ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#202](https://github.com/nf-core/riboseq/issues/202) - Give Rp-Bp and PRICE the full reference with novel intergenic genes appended under `--extended_orf_analysis`, so both bring novel transcripts into scope without collapsing to the one-transcript-per-gene backbone ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Changed`
 

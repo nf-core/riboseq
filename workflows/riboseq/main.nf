@@ -418,6 +418,22 @@ workflow RIBOSEQ {
 
     ch_bams_for_analysis = ch_genome_bam_by_type.riboseq.join(ch_genome_bam_index)
 
+    // Full reference with the novel intergenic genes appended, for the callers
+    // and the DTE denominator that need multi-isoform scope rather than the
+    // one-transcript-per-gene backbone the hybrid GTF is built on.
+    ch_full_hybrid_gtf_meta = channel.empty()
+    ch_full_hybrid_gtf      = channel.empty()
+    if (extended_orf_active) {
+        BUILD_FULL_HYBRID_GTF(
+            ch_gtf.combine(ch_hybrid_gtf).map { gtf, hybrid -> [ [id: 'full_hybrid_reference'], [ gtf, hybrid ] ] },
+            file("${projectDir}/assets/build_full_hybrid_gtf.awk"),
+            false
+        )
+        ch_full_hybrid_gtf_meta = BUILD_FULL_HYBRID_GTF.out.output
+        ch_full_hybrid_gtf      = BUILD_FULL_HYBRID_GTF.out.output.map { _meta, gtf -> gtf }.first()
+        ch_versions             = ch_versions.mix(BUILD_FULL_HYBRID_GTF.out.versions)
+    }
+
     ORF_CALLER_DISPATCH(
         ch_bams_for_analysis,
         ch_transcriptome_bam,
@@ -426,6 +442,7 @@ workflow RIBOSEQ {
         ch_canonical_gtf,
         ch_hybrid_gtf,
         ch_gtf,
+        ch_full_hybrid_gtf,
         extended_orf_active
     )
     ch_versions      = ch_versions.mix(ORF_CALLER_DISPATCH.out.versions)
@@ -694,22 +711,15 @@ workflow RIBOSEQ {
             // quantification so canonical genes match the gene-level denominator
             // (the one-transcript-per-gene backbone used for ORF calling would
             // undercount multi-isoform genes) and novel genes gain a row.
-            BUILD_FULL_HYBRID_GTF(
-                ch_gtf.combine(ch_hybrid_gtf).map { gtf, hybrid -> [ [id: 'full_hybrid_reference'], [ gtf, hybrid ] ] },
-                file("${projectDir}/assets/build_full_hybrid_gtf.awk"),
-                false
-            )
-            ch_full_hybrid_gtf = BUILD_FULL_HYBRID_GTF.out.output.map { _meta, gtf -> gtf }.first()
-
             GFFREAD_FULL_HYBRID(
-                BUILD_FULL_HYBRID_GTF.out.output,
+                ch_full_hybrid_gtf_meta,
                 ch_fasta
             )
             ch_full_hybrid_transcript_fasta = GFFREAD_FULL_HYBRID.out.gffread_fasta.map { _meta, fasta -> fasta }.first()
 
             STAR_GENOMEGENERATE_FULL_HYBRID(
                 ch_fasta.map { fasta -> [ [id: 'full_hybrid_reference'], fasta ] },
-                BUILD_FULL_HYBRID_GTF.out.output.map { _meta, gtf -> [ [id: 'full_hybrid_reference'], gtf ] }
+                ch_full_hybrid_gtf_meta
             )
 
             ch_rnaseq_reads = ch_reads_for_alignment.filter { meta, _reads -> meta.sample_type == 'rnaseq' }
