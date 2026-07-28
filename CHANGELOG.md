@@ -40,6 +40,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#193](https://github.com/nf-core/riboseq/pull/193) - Re-pin `custom/orfnormalise` (nf-core/modules#12173) to fix ribotish `GenomePos` coordinate parsing (0-based, was treated as 1-based), which shifted ribotish-derived catalogue ORFs out of frame ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#194](https://github.com/nf-core/riboseq/pull/194) - Update `dotseq/dotseq` (nf-core/modules#12230) so the DOTSeq heatmap actually renders, and pass `--orf_type_main_value canonical_cds` to pair the heatmap against riboseq's main-ORF label ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#195](https://github.com/nf-core/riboseq/issues/195) - Honour the `salmon`, `sortmerna` and `bbsplit` attributes of a `--genome` stanza, which were ignored where the equivalent `--salmon_index`, `--sortmerna_index` and `--bbsplit_index` parameters worked ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#204](https://github.com/nf-core/riboseq/pull/204) - Include ORFs on novel transcripts in ORF-level DTE, by quantifying the RNA-seq denominator against the full reference transcriptome augmented with the novel intergenic transcripts so novel genes gain a host-gene row ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#210](https://github.com/nf-core/riboseq/pull/210) - Correct the Trim Galore! description in the usage and output docs: the 2.x series is a self-contained Rust program with FastQC reporting built in, not a wrapper around external Cutadapt and FastQC installations ([@FelixKrueger](https://github.com/FelixKrueger))
+- [#210](https://github.com/nf-core/riboseq/pull/210) - Correct the `--cores` note in the usage and output docs, which dated from the 0.6.x Perl era: worker cores are capped at 8 (not 4), multi-core trimming needs more than 4 CPUs for single-end and more than 5 for paired-end data, and the 2.x N+4 thread model is described. Also fixes a 404 changelog link (`Changelog.md` → `CHANGELOG.md`) ([@FelixKrueger](https://github.com/FelixKrueger))
 
 ### `Changed`
 
@@ -53,6 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#194](https://github.com/nf-core/riboseq/pull/194) - Update all nf-core modules and subworkflows to their latest revisions and reconcile the pipeline with the changed component interfaces ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#194](https://github.com/nf-core/riboseq/pull/194) - Raise the minimum Nextflow version to `25.10.0`, required by nf-schema 2.7.2 ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#156](https://github.com/nf-core/riboseq/pull/156) - Template update for nf-core/tools v4.0.2 ([@nf-core-bot](https://github.com/nf-core-bot), [@pinin4fjords](https://github.com/pinin4fjords))
+- [#210](https://github.com/nf-core/riboseq/pull/210) - Update trimgalore module to 2.3.0 (nf-core/modules#12331) ([@FelixKrueger](https://github.com/FelixKrueger))
+- [#210](https://github.com/nf-core/riboseq/pull/210) - **Behaviour change carried by Trim Galore 2.3.0:** poly-G trimming of R2 is corrected to trim the 3' poly-G tail rather than a 5' poly-C head ([TrimGalore#322](https://github.com/FelixKrueger/TrimGalore/pull/322)). Poly-G trimming is on by default, so paired-end libraries lose marginally more R2 bases and slightly fewer pairs drop below the length cutoff; per-sample read counts and every downstream checksum shift accordingly, and the pipeline test snapshots have been regenerated. Single-end libraries (including Ribo-seq) are unaffected, and adapter and quality trimming are unchanged. ([@FelixKrueger](https://github.com/FelixKrueger))
 
 ### `Parameters`
 
@@ -109,6 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | `bedtools`         |             | 2.31.1      |
 | `bedGraphToBigWig` |             | 469         |
 | `AGAT`             |             | 1.6.1       |
+| `Trim Galore`      | 2.1.0       | 2.3.0       |
 
 ## v1.2.0 - 2025-12-03
 
