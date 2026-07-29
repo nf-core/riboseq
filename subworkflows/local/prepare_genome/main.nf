@@ -285,7 +285,7 @@ workflow PREPARE_GENOME {
         ch_salmon_index = salmon_index.endsWith('.tar.gz')
             ? UNTAR_SALMON_INDEX ( [ [:], salmon_index ] ).untar.map { it[1] }
             : Channel.value(file(salmon_index))
-    } else if (build_salmon_index_for_strandedness) {
+    } else {
         ch_salmon_index = ch_shared_salmon_index
     }
 
