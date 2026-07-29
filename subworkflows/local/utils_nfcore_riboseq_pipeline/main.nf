@@ -222,16 +222,22 @@ def removedParamsError() {
 }
 
 //
-// Exit pipeline if kallisto is selected as the pseudo-aligner without the
-// fragment length statistics it needs. kallisto cannot estimate the fragment
-// length distribution from single-end reads, and Ribo-seq libraries are
-// single-end, so the quantification would abort mid-run without these.
+// Exit pipeline if kallisto is selected as the pseudo-aligner without what it
+// needs to run. kallisto cannot estimate the fragment length distribution
+// from single-end reads, and Ribo-seq libraries are single-end, so
+// quantification would abort mid-run without the fragment length statistics.
+// Index building would likewise abort mid-run on an even or oversized k-mer
+// size, which kallisto's index format does not support.
 //
 def kallistoPrerequisitesError() {
     if (params.pseudo_aligner != 'kallisto' || params.te_quantification_method != 'pseudo') return
 
     if (!params.kallisto_quant_fraglen || !params.kallisto_quant_fraglen_sd) {
         error("--pseudo_aligner kallisto requires --kallisto_quant_fraglen and --kallisto_quant_fraglen_sd, which kallisto needs to quantify single-end libraries. Set both, or use --pseudo_aligner salmon.")
+    }
+
+    if (!params.kallisto_index && (params.pseudo_aligner_kmer_size % 2 == 0 || params.pseudo_aligner_kmer_size > 31)) {
+        error("--pseudo_aligner_kmer_size ${params.pseudo_aligner_kmer_size} is invalid for kallisto index building: kallisto requires an odd k-mer size no greater than 31. Set --pseudo_aligner_kmer_size to an odd value <= 31, or supply a pre-built --kallisto_index.")
     }
 }
 
