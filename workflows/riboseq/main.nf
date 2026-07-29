@@ -65,6 +65,7 @@ include { paramsSummaryMultiqc     } from '../../subworkflows/nf-core/utils_nfco
 include { softwareVersionsToYAML   } from '../../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText   } from '../../subworkflows/local/utils_nfcore_riboseq_pipeline'
 include { validateInputSamplesheet } from '../../subworkflows/local/utils_nfcore_riboseq_pipeline'
+include { samplesheetNeedsSalmonForStrandedness } from '../../subworkflows/local/utils_nfcore_riboseq_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -85,9 +86,9 @@ workflow RIBOSEQ {
     ch_chrom_sizes      // channel: path(genome.sizes)
     ch_transcript_fasta // channel: path(transcript.fasta)
     ch_star_index       // channel: path(star/index/)
-    ch_salmon_index     // channel: path(salmon/index/)
-    ch_salmon_index_te  // channel: path(salmon_te/index/) - for TE pseudo-alignment
-    ch_bbsplit_index    // channel: path(bbsplit/index/)
+    ch_salmon_index       // channel: path(salmon/index/)
+    ch_kallisto_index_te  // channel: [ meta, path(kallisto/index/) ] for TE pseudo-alignment
+    ch_bbsplit_index      // channel: path(bbsplit/index/)
     ch_rrna_fastas      // channel: path(fasta)
     ch_sortmerna_index  // channel: path(sortmerna/index/)
     ch_bowtie2_index    // channel: path(bowtie2/index/) for rRNA removal
@@ -134,12 +135,6 @@ workflow RIBOSEQ {
         if (ch_bbsplit_fasta_list.isEmpty()) {exit 1, "File provided with --bbsplit_fasta_list is empty: ${ch_bbsplit_fasta_list.getName()}!"}
     }
 
-    // Check alignment parameters
-    def prepareToolIndices  = []
-    if (!params.skip_bbsplit) { prepareToolIndices << 'bbsplit' }
-    if (params.remove_ribo_rna) { prepareToolIndices << 'sortmerna' }
-    if (!params.skip_alignment) { prepareToolIndices << params.aligner }
-
     ch_multiqc_files = channel.empty()
 
     //
@@ -166,9 +161,9 @@ workflow RIBOSEQ {
     // contaminant removal, strandedness inference
     //
 
-    // The subworkflow only has to do Salmon indexing if it discovers 'auto'
-    // samples, and if we haven't already made one elsewhere
-    salmon_index_available = params.salmon_index || (!params.skip_pseudo_alignment && params.pseudo_aligner == 'salmon')
+    // Must also be true when PREPARE_GENOME built the index, or make_salmon_index
+    // below would tell the subworkflow to rebuild and discard it.
+    salmon_index_available = (params.salmon_index as boolean) || samplesheetNeedsSalmonForStrandedness(params.input)
 
     // Determine if we need to build rRNA removal indexes
     def make_sortmerna_index = !params.sortmerna_index && params.remove_ribo_rna && params.ribo_removal_tool == 'sortmerna'
@@ -195,12 +190,12 @@ workflow RIBOSEQ {
         params.trimmer,                             // trimmer
         params.min_trimmed_reads,                   // min_trimmed_reads
         params.save_trimmed,                        // save_trimmed
-        false,                                      // fastp_merge
+        params.fastp_merge,                         // fastp_merge
         params.remove_ribo_rna,                     // remove_ribo_rna
         params.ribo_removal_tool,                   // ribo_removal_tool
         params.with_umi,                            // with_umi
         params.umi_discard_read,                    // umi_discard_read
-        false,                                      // save_merged_fastq
+        params.save_merged_fastq,                   // save_merged_fastq
         params.stranded_threshold,                  // stranded_threshold
         params.unstranded_threshold                 // unstranded_threshold
     )
@@ -587,7 +582,7 @@ workflow RIBOSEQ {
 
     //
     // SUBWORKFLOW: Pseudo-alignment quantification for TE analysis (when enabled)
-    // Uses direct Salmon pseudo-alignment with a lower k-mer index optimized for short Ribo-seq reads
+    // Quantifies reads directly against a lower k-mer index optimised for short Ribo-seq reads
     //
 
     ch_te_counts = QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled  // Default: use alignment-based counts
@@ -597,19 +592,21 @@ workflow RIBOSEQ {
         ch_reads_for_te = ch_reads_for_alignment
             .filter { meta, reads -> meta.sample_type in ['riboseq', 'rnaseq'] }
 
+        def ch_pseudo_index_te = params.pseudo_aligner == 'kallisto' ? ch_kallisto_index_te : ch_salmon_index
+
         QUANTIFY_PSEUDO_TE (
             ch_samplesheet.map { [ [:], it ] },
             ch_reads_for_te,
-            ch_salmon_index_te,
+            ch_pseudo_index_te,
             ch_transcript_fasta,
             ch_gtf,
             params.gtf_group_features,
             params.gtf_extra_attributes,
-            'salmon',
+            params.pseudo_aligner,
             false,  // alignment_mode = false (pseudo-alignment from reads)
             params.salmon_quant_libtype ?: '',
-            null,
-            null,
+            params.kallisto_quant_fraglen,
+            params.kallisto_quant_fraglen_sd,
             false
         )
         ch_multiqc_files = ch_multiqc_files.mix(QUANTIFY_PSEUDO_TE.out.multiqc.collect{it[1]}.ifEmpty([]))

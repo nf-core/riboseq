@@ -187,7 +187,9 @@ workflow PIPELINE_COMPLETION {
 //
 def validateInputParameters() {
     genomeExistsError()
+    removedParamsError()
     dotseqPrerequisitesError()
+    kallistoPrerequisitesError()
 
     // --extended_orf_analysis is a no-op without a novel-transcript source
     // (StringTie or a user-supplied --novel_gtf); warn rather than error so
@@ -198,6 +200,40 @@ def validateInputParameters() {
     }
     if (params.extended_orf_analysis && novel_source_configured && params.skip_plastid) {
         log.warn "--extended_orf_analysis is enabled but --skip_plastid is true. ORF-level P-site quantification needs the plastid wiggle tracks and will be skipped; the ORF catalogue will still be built."
+    }
+}
+
+//
+// Exit pipeline on removed parameters. Schema validation only warns about
+// unrecognised parameters, too quiet for flags whose purpose was to suppress
+// work the pipeline does regardless.
+//
+def removedParamsError() {
+    def removed = [
+        'min_mapped_reads'     : 'it was never applied to any sample',
+        'skip_pseudo_alignment': 'pseudo-alignment is selected with --te_quantification_method and --pseudo_aligner',
+        'skip_alignment'       : 'the pipeline has no index-only mode; every downstream stage needs the alignment',
+    ]
+
+    def supplied = removed.findAll { name, _reason -> params.containsKey(name) }
+    if (supplied) {
+        error("The following parameters have been removed:\n" + supplied.collect { name, reason -> "  --${name}: ${reason}" }.join('\n'))
+    }
+}
+
+//
+// Exit pipeline if kallisto is selected as the pseudo-aligner without what it
+// needs: fragment length stats (single-end libraries) and a valid k-mer size.
+//
+def kallistoPrerequisitesError() {
+    if (params.pseudo_aligner != 'kallisto' || params.te_quantification_method != 'pseudo') return
+
+    if (!params.kallisto_quant_fraglen || !params.kallisto_quant_fraglen_sd) {
+        error("--pseudo_aligner kallisto requires --kallisto_quant_fraglen and --kallisto_quant_fraglen_sd, which kallisto needs to quantify single-end libraries. Set both, or use --pseudo_aligner salmon.")
+    }
+
+    if (!params.kallisto_index && (params.pseudo_aligner_kmer_size % 2 == 0 || params.pseudo_aligner_kmer_size > 31)) {
+        error("--pseudo_aligner_kmer_size ${params.pseudo_aligner_kmer_size} is invalid for kallisto index building: kallisto requires an odd k-mer size no greater than 31. Set --pseudo_aligner_kmer_size to an odd value <= 31, or supply a pre-built --kallisto_index.")
     }
 }
 
@@ -237,6 +273,11 @@ def validateInputSamplesheet(input) {
 
     return [ metas[0], fastqs ]
 }
+def samplesheetNeedsSalmonForStrandedness(input) {
+    samplesheetToList(input, "${projectDir}/assets/schema_input.json")
+        .any { meta, _fastq_1, _fastq_2 -> meta.strandedness == 'auto' }
+}
+
 //
 // Get attribute from genome config file e.g. fasta
 //
