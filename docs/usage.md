@@ -312,6 +312,7 @@ However this is no longer recommended because:
 | `additional_fasta` | `--additional_fasta` |
 | `star`             | `--star_index`       |
 | `salmon`           | `--salmon_index`     |
+| `kallisto`         | `--kallisto_index`   |
 | `bbsplit`          | `--bbsplit_index`    |
 | `sortmerna`        | `--sortmerna_index`  |
 
