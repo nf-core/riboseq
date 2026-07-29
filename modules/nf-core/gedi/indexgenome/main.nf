@@ -24,13 +24,7 @@ process GEDI_INDEXGENOME {
     """
     mkdir -p ${prefix}
 
-    # GEDI records absolute paths inside the .oml and .fi it writes, including one
-    # pointing at the FASTA given to -s. A staged input sits at the task work
-    # directory root, which is not part of the emitted index directory, so on
-    # executors where work directories are not a shared filesystem (AWS Batch with
-    # Fusion, and cloud executors generally) that path is never materialised and
-    # downstream PRICE dies in PriceCodonInference reading sequence. Index from a
-    # copy inside the index directory so the recorded path travels with the index.
+    # GEDI records -s relative only when the FASTA sits beside the .fi
     cp -L ${fasta} ${prefix}/${fasta.name}
 
     gedi -e IndexGenome \\

@@ -127,13 +127,12 @@
                     },
                     "gedi/indexgenome": {
                         "branch": "master",
-                        "git_sha": "51af5cb84874647aa4733742b86142025705b042",
-                        "installed_by": ["modules"],
-                        "patch": "modules/nf-core/gedi/indexgenome/gedi-indexgenome.diff"
+                        "git_sha": "c570cd6a7cf355afca7a795cf202bbc3a75df997",
+                        "installed_by": ["modules"]
                     },
                     "gedi/price": {
                         "branch": "master",
-                        "git_sha": "51af5cb84874647aa4733742b86142025705b042",
+                        "git_sha": "c570cd6a7cf355afca7a795cf202bbc3a75df997",
                         "installed_by": ["modules"]
                     },
                     "gffcompare": {
