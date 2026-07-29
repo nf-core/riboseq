@@ -264,11 +264,16 @@ workflow PREPARE_GENOME {
         }
     }
 
-    // TE pseudo-alignment and strandedness detection can both need a Salmon
-    // index over the same (fasta, transcript_fasta, k-mer size); build it once.
-    ch_shared_salmon_index = Channel.empty()
-    if ((build_te_pseudo_index && pseudo_aligner == 'salmon') || build_salmon_index_for_strandedness) {
-        ch_shared_salmon_index = SALMON_INDEX ( ch_fasta, ch_transcript_fasta ).index
+    // One Salmon index (fasta + transcript_fasta, --pseudo_aligner_kmer_size)
+    // serves both TE pseudo-alignment (--pseudo_aligner salmon) and
+    // strandedness auto-detection; --salmon_index short-circuits either.
+    ch_salmon_index = Channel.empty()
+    if (salmon_index) {
+        ch_salmon_index = salmon_index.endsWith('.tar.gz')
+            ? UNTAR_SALMON_INDEX ( [ [:], salmon_index ] ).untar.map { it[1] }
+            : Channel.value(file(salmon_index))
+    } else if ((build_te_pseudo_index && pseudo_aligner == 'salmon') || build_salmon_index_for_strandedness) {
+        ch_salmon_index = SALMON_INDEX ( ch_fasta, ch_transcript_fasta ).index
     }
 
     ch_pseudo_index_te = Channel.empty()
@@ -277,16 +282,7 @@ workflow PREPARE_GENOME {
             ? (kallisto_index
                 ? Channel.value([ [:], file(kallisto_index) ])
                 : KALLISTO_INDEX_TE ( ch_transcript_fasta.map { tx -> [ [:], tx ] } ).index)
-            : ch_shared_salmon_index
-    }
-
-    ch_salmon_index = Channel.empty()
-    if (salmon_index) {
-        ch_salmon_index = salmon_index.endsWith('.tar.gz')
-            ? UNTAR_SALMON_INDEX ( [ [:], salmon_index ] ).untar.map { it[1] }
-            : Channel.value(file(salmon_index))
-    } else {
-        ch_salmon_index = ch_shared_salmon_index
+            : ch_salmon_index
     }
 
     emit:
