@@ -161,10 +161,8 @@ workflow RIBOSEQ {
     // contaminant removal, strandedness inference
     //
 
-    // A Salmon index is available if the user supplied one, or if
-    // PREPARE_GENOME built one because the samplesheet has 'auto'-strandedness
-    // samples. If make_salmon_index is true regardless, the subworkflow below
-    // rebuilds and discards the index it was given.
+    // Must also be true when PREPARE_GENOME built the index, or make_salmon_index
+    // below would tell the subworkflow to rebuild and discard it.
     salmon_index_available = (params.salmon_index as boolean) || samplesheetNeedsSalmonForStrandedness(params.input)
 
     // Determine if we need to build rRNA removal indexes

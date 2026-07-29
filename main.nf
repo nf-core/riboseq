@@ -64,10 +64,9 @@ workflow NFCORE_RIBOSEQ {
     // SUBWORKFLOW: Prepare reference genome files
     //
 
-    // A Salmon index is needed for strandedness detection whenever the
-    // samplesheet has 'auto'-strandedness samples. Building it here, rather
-    // than inside the preprocessing subworkflow that consumes it, lets it
-    // run in parallel with the rest of genome prep.
+    // Building the strandedness Salmon index here, rather than inside the
+    // preprocessing subworkflow that consumes it, lets it run in parallel
+    // with the rest of genome prep.
     def build_salmon_index_for_strandedness = !params.salmon_index && samplesheetNeedsSalmonForStrandedness(params.input)
 
     PREPARE_GENOME (

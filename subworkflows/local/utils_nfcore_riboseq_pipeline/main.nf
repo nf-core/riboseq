@@ -223,11 +223,7 @@ def removedParamsError() {
 
 //
 // Exit pipeline if kallisto is selected as the pseudo-aligner without what it
-// needs to run. kallisto cannot estimate the fragment length distribution
-// from single-end reads, and Ribo-seq libraries are single-end, so
-// quantification would abort mid-run without the fragment length statistics.
-// Index building would likewise abort mid-run on an even or oversized k-mer
-// size, which kallisto's index format does not support.
+// needs: fragment length stats (single-end libraries) and a valid k-mer size.
 //
 def kallistoPrerequisitesError() {
     if (params.pseudo_aligner != 'kallisto' || params.te_quantification_method != 'pseudo') return
@@ -277,10 +273,6 @@ def validateInputSamplesheet(input) {
 
     return [ metas[0], fastqs ]
 }
-//
-// Whether any sample in the input samplesheet uses 'auto' strandedness,
-// which needs a Salmon index to detect strandedness automatically.
-//
 def samplesheetNeedsSalmonForStrandedness(input) {
     samplesheetToList(input, "${projectDir}/assets/schema_input.json")
         .any { meta, _fastq_1, _fastq_2 -> meta.strandedness == 'auto' }

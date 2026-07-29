@@ -266,41 +266,29 @@ workflow PREPARE_GENOME {
     }
 
     //
-    // Build the TE pseudo-alignment index (with lower k-mer size for short reads).
-    // Salmon quant consumes a bare index path, kallisto quant a [ meta, index ]
-    // tuple, so the emitted channel shape follows the selected pseudo-aligner.
+    // TE pseudo-alignment and strandedness detection both need a Salmon index
+    // over (fasta, transcript_fasta) at the same k-mer size, so share one build.
     //
+    def needs_te_salmon_index = build_te_pseudo_index && pseudo_aligner != 'kallisto'
+
     ch_pseudo_index_te = Channel.empty()
     if (build_te_pseudo_index) {
         if (pseudo_aligner == 'kallisto') {
-            if (kallisto_index) {
-                ch_pseudo_index_te = Channel.value([ [:], file(kallisto_index) ])
-            } else {
-                ch_pseudo_index_te = KALLISTO_INDEX_TE ( ch_transcript_fasta.map { tx -> [ [:], tx ] } ).index
-            }
+            ch_pseudo_index_te = kallisto_index
+                ? Channel.value([ [:], file(kallisto_index) ])
+                : KALLISTO_INDEX_TE ( ch_transcript_fasta.map { tx -> [ [:], tx ] } ).index
         } else {
             ch_pseudo_index_te = SALMON_INDEX_TE ( ch_fasta, ch_transcript_fasta ).index
         }
     }
 
-    //
-    // Uncompress Salmon index, or build one if the samplesheet has samples
-    // with 'auto' strandedness (detected via FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS,
-    // which needs a Salmon index to pseudo-align a subsample against). Same
-    // fasta, transcript fasta and k-mer size as the TE pseudo index above, so
-    // reuse it instead of building an identical index a second time.
-    //
     ch_salmon_index = Channel.empty()
     if (salmon_index) {
-        if (salmon_index.endsWith('.tar.gz')) {
-            ch_salmon_index = UNTAR_SALMON_INDEX ( [ [:], salmon_index ] ).untar.map { it[1] }
-        } else {
-            ch_salmon_index = Channel.value(file(salmon_index))
-        }
+        ch_salmon_index = salmon_index.endsWith('.tar.gz')
+            ? UNTAR_SALMON_INDEX ( [ [:], salmon_index ] ).untar.map { it[1] }
+            : Channel.value(file(salmon_index))
     } else if (build_salmon_index_for_strandedness) {
-        ch_salmon_index = (build_te_pseudo_index && pseudo_aligner == 'salmon')
-            ? ch_pseudo_index_te
-            : SALMON_INDEX ( ch_fasta, ch_transcript_fasta ).index
+        ch_salmon_index = needs_te_salmon_index ? ch_pseudo_index_te : SALMON_INDEX ( ch_fasta, ch_transcript_fasta ).index
     }
 
     emit:
