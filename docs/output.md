@@ -455,7 +455,7 @@ If RiboCode is not needed for your analysis, you can skip it entirely with `--sk
 
 </details>
 
-Produced only when `--run_rpbp true` is set. Rp-Bp's Bayesian fit is slow (~20-24h per replicate at genome-wide scale); see [Rp-Bp in usage.md](usage.md#rp-bp-opt-in-overnight). Rp-Bp's Bayes factor is stable across replicates and is retained in the cross-caller rank-aggregation set. When `--extended_orf_analysis true` is set, Rp-Bp consumes the hybrid GTF and so reports novel intergenic ORFs alongside annotated ones.
+Produced only when `--run_rpbp true` is set. Rp-Bp's Bayesian fit is slow (~20-24h per replicate at genome-wide scale); see [Rp-Bp in usage.md](usage.md#rp-bp-opt-in-overnight). Rp-Bp's Bayes factor is stable across replicates and is retained in the cross-caller rank-aggregation set. When `--extended_orf_analysis true` is set, Rp-Bp consumes the full reference with the novel intergenic genes appended, and so reports novel intergenic ORFs alongside annotated ones.
 
 ### PRICE
 
@@ -469,7 +469,7 @@ Produced only when `--run_rpbp true` is set. Rp-Bp's Bayesian fit is slow (~20-2
 
 </details>
 
-Produced only when `--run_price true` is set. PRICE is invoked once across the riboseq cohort (it estimates a shared codon-position model by EM). When `--extended_orf_analysis true` is set, the IndexGenome step builds the index from the hybrid GTF so PRICE can discover ORFs on novel intergenic transcripts.
+Produced only when `--run_price true` is set. PRICE is invoked once across the riboseq cohort (it estimates a shared codon-position model by EM). When `--extended_orf_analysis true` is set, the IndexGenome step builds the index from the full reference with the novel intergenic genes appended, so PRICE can discover ORFs on novel intergenic transcripts.
 
 ### ORF catalogue (cross-sample)
 

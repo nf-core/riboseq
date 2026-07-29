@@ -422,9 +422,9 @@ workflow RIBOSEQ {
     ch_bams_for_analysis = ch_genome_bam_by_type.riboseq.join(ch_genome_bam_index)
 
     // Full reference with the novel transcripts appended: a superset of every
-    // annotation the ORF callers are given (PRICE takes the full multi-isoform
-    // reference, the genome-BAM callers the canonical backbone), and the
-    // reference the ORF-level DTE RNA denominator is quantified against.
+    // annotation the ORF callers are given, the annotation Rp-Bp and PRICE run
+    // against directly, and the reference the ORF-level DTE RNA denominator is
+    // quantified against.
     ch_full_hybrid_gtf = channel.empty()
     if (extended_orf_active) {
         BUILD_FULL_HYBRID_GTF(
@@ -443,6 +443,7 @@ workflow RIBOSEQ {
         ch_canonical_gtf,
         ch_hybrid_gtf,
         ch_gtf,
+        ch_full_hybrid_gtf,
         extended_orf_active
     )
     ch_versions      = ch_versions.mix(ORF_CALLER_DISPATCH.out.versions)

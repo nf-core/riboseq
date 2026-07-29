@@ -40,6 +40,8 @@ workflow ORF_CALLER_DISPATCH {
     ch_canonical_gtf         // value channel: path(canonical.gtf)
     ch_hybrid_gtf            // value channel: path(hybrid.gtf)  - equals canonical when no novel source
     ch_gtf                   // value channel: path(genome.gtf)  - full multi-isoform, used by RiboCode when not extended
+    // Same contract while extended-ORF analysis is active; empty and unread otherwise.
+    ch_full_hybrid_gtf       // value channel: path(full_hybrid.gtf) - ch_gtf plus the novel genes
     extended_orf_active      // val: bool
 
     main:
@@ -56,6 +58,12 @@ workflow ORF_CALLER_DISPATCH {
         .combine(ch_hybrid_gtf)
         .map { fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }
         .first()
+
+    // Annotation for the callers that resolve overlapping ORFs themselves.
+    ch_fasta_gtf_multi_isoform = extended_orf_active ?
+        ch_fasta.combine(ch_full_hybrid_gtf).map { fasta, gtf -> [ [id: 'full_hybrid_reference'], fasta, gtf ] }.first() :
+        ch_fasta.combine(ch_gtf).map { fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }.first()
+
     // Extended mode: hybrid GTF feeds Ribo-TISH `-g` (discovery target), canonical
     // backbone feeds `-a` (background model + ORF classification labels).
     ch_fasta_gtf_for_ribotish_extended = ch_fasta
@@ -148,19 +156,14 @@ workflow ORF_CALLER_DISPATCH {
 
         // Rp-Bp enumerates candidate ORFs per transcript isoform and resolves
         // redundancy/overlaps itself (longest-per-stop, best Bayes factor per
-        // overlap; Malone et al. 2017), so it takes the full multi-isoform
-        // annotation rather than the one-transcript-per-gene backbone, which
-        // exists to disambiguate P-site quantification. Restricting it to
-        // canonical would drop isoform-specific ORFs and bias ORF-type
-        // classification to canonical CDS. In extended mode it takes the hybrid
-        // GTF to bring novel transcripts into scope.
-        def ch_rpbp_annotation = extended_orf_active ?
-            ch_fasta_gtf_extended :
-            ch_fasta.combine(ch_gtf).map { fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }.first()
-
+        // overlap; Malone et al. 2017), so it takes the multi-isoform annotation
+        // rather than the one-transcript-per-gene backbone, which exists to
+        // disambiguate P-site quantification. Restricting it to canonical would
+        // drop isoform-specific ORFs and bias ORF-type classification to
+        // canonical CDS.
         FASTA_GTF_BAM_RPBP(
             ch_bams_for_analysis,
-            ch_rpbp_annotation
+            ch_fasta_gtf_multi_isoform
         )
         ch_rpbp_predictions = FASTA_GTF_BAM_RPBP.out.predicted
     }
@@ -175,16 +178,10 @@ workflow ORF_CALLER_DISPATCH {
         // PRICE resolves overlapping ORFs and rescues multimappers with its own
         // EM (Erhard et al. 2018), so it has no need for the one-transcript-per-gene
         // backbone that exists to disambiguate P-site quantification. Restricting it
-        // to the canonical/hybrid annotation would only narrow ORF discovery and
-        // bias ORF-type classification to canonical CDS, so PRICE receives the full
-        // multi-isoform annotation it is normally run against.
-        def ch_price_fasta_gtf = ch_fasta
-            .combine(ch_gtf)
-            .map { fasta, gtf -> [ [id: 'reference'], fasta, gtf ] }
-            .first()
-
+        // would only narrow ORF discovery and bias ORF-type classification to
+        // canonical CDS.
         GEDI_INDEXGENOME(
-            ch_price_fasta_gtf
+            ch_fasta_gtf_multi_isoform
         )
 
         // PRICE estimates the codon-position model from the riboseq cohort
