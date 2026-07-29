@@ -276,13 +276,11 @@ workflow PREPARE_GENOME {
         ch_salmon_index = SALMON_INDEX ( ch_fasta, ch_transcript_fasta ).index
     }
 
-    ch_pseudo_index_te = Channel.empty()
-    if (build_te_pseudo_index) {
-        ch_pseudo_index_te = pseudo_aligner == 'kallisto'
-            ? (kallisto_index
-                ? Channel.value([ [:], file(kallisto_index) ])
-                : KALLISTO_INDEX_TE ( ch_transcript_fasta.map { tx -> [ [:], tx ] } ).index)
-            : ch_salmon_index
+    ch_kallisto_index_te = Channel.empty()
+    if (build_te_pseudo_index && pseudo_aligner == 'kallisto') {
+        ch_kallisto_index_te = kallisto_index
+            ? Channel.value([ [:], file(kallisto_index) ])
+            : KALLISTO_INDEX_TE ( ch_transcript_fasta.map { tx -> [ [:], tx ] } ).index
     }
 
     emit:
@@ -296,7 +294,7 @@ workflow PREPARE_GENOME {
     rrna_fastas      = ch_rrna_fastas            // channel: path(sortmerna_fasta_list)
     sortmerna_index  = ch_sortmerna_index        // channel: path(sortmerna/index/)
     star_index       = ch_star_index             // channel: path(star/index/)
-    salmon_index     = ch_salmon_index           // channel: path(salmon/index/)
-    pseudo_index_te  = ch_pseudo_index_te        // channel: index for TE pseudo-alignment (salmon: path, kallisto: [ meta, path ])
-    versions         = ch_versions.ifEmpty(null) // channel: [ versions.yml ]
+    salmon_index      = ch_salmon_index           // channel: path(salmon/index/)
+    kallisto_index_te = ch_kallisto_index_te      // channel: [ meta, path(kallisto/index/) ] for TE pseudo-alignment
+    versions          = ch_versions.ifEmpty(null) // channel: [ versions.yml ]
 }

@@ -86,9 +86,9 @@ workflow RIBOSEQ {
     ch_chrom_sizes      // channel: path(genome.sizes)
     ch_transcript_fasta // channel: path(transcript.fasta)
     ch_star_index       // channel: path(star/index/)
-    ch_salmon_index     // channel: path(salmon/index/)
-    ch_pseudo_index_te  // channel: TE pseudo-alignment index (salmon: path, kallisto: [ meta, path ])
-    ch_bbsplit_index    // channel: path(bbsplit/index/)
+    ch_salmon_index       // channel: path(salmon/index/)
+    ch_kallisto_index_te  // channel: [ meta, path(kallisto/index/) ] for TE pseudo-alignment
+    ch_bbsplit_index      // channel: path(bbsplit/index/)
     ch_rrna_fastas      // channel: path(fasta)
     ch_sortmerna_index  // channel: path(sortmerna/index/)
     ch_bowtie2_index    // channel: path(bowtie2/index/) for rRNA removal
@@ -591,6 +591,8 @@ workflow RIBOSEQ {
         // Filter reads to only riboseq and rnaseq for TE pseudo-alignment
         ch_reads_for_te = ch_reads_for_alignment
             .filter { meta, reads -> meta.sample_type in ['riboseq', 'rnaseq'] }
+
+        def ch_pseudo_index_te = params.pseudo_aligner == 'kallisto' ? ch_kallisto_index_te : ch_salmon_index
 
         QUANTIFY_PSEUDO_TE (
             ch_samplesheet.map { [ [:], it ] },

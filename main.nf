@@ -128,7 +128,7 @@ workflow NFCORE_RIBOSEQ {
         PREPARE_GENOME.out.transcript_fasta,
         PREPARE_GENOME.out.star_index,
         PREPARE_GENOME.out.salmon_index,
-        PREPARE_GENOME.out.pseudo_index_te,
+        PREPARE_GENOME.out.kallisto_index_te,
         PREPARE_GENOME.out.bbsplit_index,
         PREPARE_GENOME.out.rrna_fastas,
         PREPARE_GENOME.out.sortmerna_index,
