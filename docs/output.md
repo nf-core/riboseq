@@ -455,7 +455,7 @@ If RiboCode is not needed for your analysis, you can skip it entirely with `--sk
 
 </details>
 
-Produced only when `--run_rpbp true` is set. Rp-Bp's Bayesian fit is slow (~20-24h per replicate at genome-wide scale); see [Rp-Bp in usage.md](usage.md#rp-bp-opt-in-overnight). Rp-Bp's Bayes factor is stable across replicates and is retained in the cross-caller rank-aggregation set. When `--extended_orf_analysis true` is set, Rp-Bp consumes the hybrid GTF and so reports novel intergenic ORFs alongside annotated ones.
+Produced only when `--run_rpbp true` is set. Rp-Bp's Bayesian fit is slow (~20-24h per replicate at genome-wide scale); see [Rp-Bp in usage.md](usage.md#rp-bp-opt-in-overnight). Rp-Bp's Bayes factor is stable across replicates and is retained in the cross-caller rank-aggregation set. When `--extended_orf_analysis true` is set, Rp-Bp consumes the full reference with the novel intergenic genes appended, and so reports novel intergenic ORFs alongside annotated ones.
 
 ### PRICE
 
@@ -469,7 +469,7 @@ Produced only when `--run_rpbp true` is set. Rp-Bp's Bayesian fit is slow (~20-2
 
 </details>
 
-Produced only when `--run_price true` is set. PRICE is invoked once across the riboseq cohort (it estimates a shared codon-position model by EM). When `--extended_orf_analysis true` is set, the IndexGenome step builds the index from the hybrid GTF so PRICE can discover ORFs on novel intergenic transcripts.
+Produced only when `--run_price true` is set. PRICE is invoked once across the riboseq cohort (it estimates a shared codon-position model by EM). When `--extended_orf_analysis true` is set, the IndexGenome step builds the index from the full reference with the novel intergenic genes appended, so PRICE can discover ORFs on novel intergenic transcripts.
 
 ### ORF catalogue (cross-sample)
 
@@ -497,7 +497,7 @@ Produced only when `--extended_orf_analysis true` is set and at least one ORF ca
 - **smORFs** (amino-acid length ≤ 100) are clustered by 80% reciprocal overlap and then peptide-level deduplicated with MMseqs2 (`--min-seq-id 0.9 -c 0.8`) on the `*.catalogue.aa.fasta` (from `bedtools getfasta` + `seqkit translate`), folding each multi-member cluster to one representative (GENCODE convention, Mudge et al. 2022). `--skip_orf_collapse` publishes the coordinate-merged catalogue without this step.
 - **Cross-caller consensus** is recorded by setting `called_by_<caller> = 1` for every caller that contributed a member of the cluster, plus a per-caller score column.
 
-The catalogue uses the hybrid GTF (canonical + filtered novel intergenic) as its coordinate-validation reference, matching the GTF that the underlying ORF callers consumed when `--extended_orf_analysis true`.
+Host `gene_id` and `transcript_id` are resolved, and transcript-coordinate calls lifted to the genome, against the union of the full multi-isoform annotation (`--gtf`) and the filtered novel transcripts. The callers do not all receive the same annotation (PRICE takes the full multi-isoform reference, the genome-BAM callers the canonical backbone), so only that union covers every transcript an ORF can be reported on. It is also the reference the ORF-level DTE RNA denominator is quantified against, so catalogue gene ids join directly against that matrix.
 
 ### Per-ORF P-site quantification
 

@@ -298,6 +298,42 @@ However this is no longer recommended because:
 - Gene annotations in iGenomes are extremely out of date. This can be particularly problematic for RNA-seq analysis, which relies on accurate gene annotation.
 - Some iGenomes references (e.g., GRCh38) point to annotation files that use gene symbols as the primary identifier. This can cause issues for downstream analysis, such as the nf-core [differential abundance](https://nf-co.re/differentialabundance) workflow where a conventional gene identifier distinct from symbol is expected.
 
+### Custom genome stanzas
+
+`--genome` is not restricted to iGenomes keys: any config file supplied with `-c` can define its own `genomes` block, and the pipeline will take the attributes below from the stanza matching `--genome`.
+
+| Genome attribute   | Equivalent parameter |
+| ------------------ | -------------------- |
+| `fasta`            | `--fasta`            |
+| `gtf`              | `--gtf`              |
+| `gff`              | `--gff`              |
+| `transcript_fasta` | `--transcript_fasta` |
+| `additional_fasta` | `--additional_fasta` |
+| `star`             | `--star_index`       |
+| `salmon`           | `--salmon_index`     |
+| `bbsplit`          | `--bbsplit_index`    |
+| `sortmerna`        | `--sortmerna_index`  |
+
+```groovy title="my_genomes.config"
+params {
+    genomes {
+        'GRCh38_local' {
+            fasta     = '/path/to/genome.fa'
+            gtf       = '/path/to/genes.gtf'
+            star      = '/path/to/star/'
+            salmon    = '/path/to/salmon/'
+            sortmerna = '/path/to/sortmerna/'
+        }
+    }
+}
+```
+
+```bash
+nextflow run nf-core/riboseq -profile docker -c my_genomes.config --genome GRCh38_local --input samplesheet.csv --outdir results
+```
+
+Setting the equivalent parameter explicitly (on the command line, in a `-params-file`, or in a config `params` block) overrides the genome attribute.
+
 ### GTF filtering
 
 By default, the input GTF file will be filtered to ensure that sequence names correspond to those in the genome fasta file, and to remove rows with empty transcript identifiers. Filtering can be bypassed completely where you are confident it is not necessary, using the `--skip_gtf_filter` parameter. If you just want to skip the 'transcript_id' checking component of the GTF filtering script used in the pipeline this can be disabled specifically using the `--skip_gtf_transcript_filter` parameter.
@@ -346,7 +382,7 @@ Rp-Bp runs through the upstream `nf-core/rpbp/*` modules driven by the `FASTA_GT
 
 Per-sample final-prediction outputs - filtered BED of predicted ORFs (with Bayes factor in column 5), plus matched nucleotide and protein FASTAs - are published under `<outdir>/orf_predictions/rpbp/`.
 
-**Annotation.** Rp-Bp is given the full multi-isoform `--gtf` annotation, not the one-transcript-per-gene canonical backbone that the pipeline uses elsewhere to disambiguate P-site quantification. Rp-Bp enumerates candidate ORFs across every transcript isoform (deduplicating identical ORFs by genomic coordinate) and then resolves redundant and overlapping ORFs itself - the longest ORF per stop codon, then the highest Bayes factor among overlaps. Collapsing the annotation to one isoform per gene would silently remove ORFs that exist only on non-canonical isoforms (alternative-5'UTR uORFs, isoform-specific N-terminal extensions or truncations, retained-intron and alternative-exon ORFs) and bias the reported ORF types toward canonical CDS, with no compensating benefit; PRICE is handled the same way and for the same reason ([Malone et al., 2017](https://academic.oup.com/nar/article/45/6/2960/2953491)). Under `--extended_orf_analysis true` Rp-Bp instead receives the hybrid GTF, so novel transcripts are within discovery scope in the same way as Ribo-TISH `predict` and Ribotricer.
+**Annotation.** Rp-Bp is given the full multi-isoform `--gtf` annotation, not the one-transcript-per-gene canonical backbone that the pipeline uses elsewhere to disambiguate P-site quantification. Rp-Bp enumerates candidate ORFs across every transcript isoform (deduplicating identical ORFs by genomic coordinate) and then resolves redundant and overlapping ORFs itself - the longest ORF per stop codon, then the highest Bayes factor among overlaps. Collapsing the annotation to one isoform per gene would silently remove ORFs that exist only on non-canonical isoforms (alternative-5'UTR uORFs, isoform-specific N-terminal extensions or truncations, retained-intron and alternative-exon ORFs) and bias the reported ORF types toward canonical CDS, with no compensating benefit; PRICE is handled the same way and for the same reason ([Malone et al., 2017](https://academic.oup.com/nar/article/45/6/2960/2953491)). Under `--extended_orf_analysis true` Rp-Bp receives the full reference with the novel intergenic genes appended, so novel transcripts come into discovery scope without giving up the isoforms.
 
 > :information_source: **STAR alignment params vs upstream rpbp.** rpbp's own pipeline runs STAR with Ribo-seq-tuned settings (`outFilterMismatchNmax 1`, `outFilterMismatchNoverLmax 0.04`, `outFilterType BySJout`, `sjdbOverhang 33`, `winAnchorMultimapNmax 100`, `seedSearchStartLmaxOverLread 0.5`). We use the pipeline's standard STAR alignment (shared with the RNA-seq side of paired runs), which is more permissive. Practical impact: rpbp processes whatever alignments it gets, but periodicity / Bayes-factor distributions will differ from a standalone rpbp run on the same FASTQs. If you need bit-identical-to-standalone-rpbp output, override with `--extra_star_align_args '--outFilterMismatchNmax 1 --outFilterMismatchNoverLmax 0.04 --outFilterType BySJout --winAnchorMultimapNmax 100 --seedSearchStartLmaxOverLread 0.5'`. Note that `sjdbOverhang` is baked into the STAR index and cannot be changed post-hoc - it would require regenerating the index with `--sjdbOverhang 33`, and that change would only be appropriate for a Ribo-seq-only run (RNA-seq reads are too long for that setting). Tracked for future work: [#173](https://github.com/nf-core/riboseq/issues/173).
 
@@ -360,7 +396,7 @@ The pipeline builds a binary `.oml` genome index via `gedi -e IndexGenome` once 
 
 **Annotation.** Like Rp-Bp, PRICE is given the full multi-isoform `--gtf` annotation rather than the one-transcript-per-gene canonical backbone: it resolves overlapping ORFs and rescues multimappers with its own EM, so restricting it to a single isoform per gene would only narrow ORF discovery and bias ORF-type classification toward canonical CDS.
 
-When `--extended_orf_analysis true` is set, PRICE's IndexGenome receives the hybrid GTF so ORFs on novel intergenic transcripts are within its discovery scope.
+When `--extended_orf_analysis true` is set, PRICE's IndexGenome is built from the full reference with the novel intergenic genes appended, so ORFs on novel transcripts come into scope without giving up the isoforms.
 
 PRICE's CLI banner reports `Price version 1.0.4` while the Bioconda package is `gedi 1.0.6a` (Price is one tool inside the Gedi umbrella). The pipeline captures the package version via `gedi -e Version` for `versions.yml`.
 
@@ -582,6 +618,8 @@ When `--extended_orf_analysis true` is set and at least one ORF caller is enable
 - single-exon novel intergenic ORFs are clustered by 80% reciprocal overlap on the outer genomic span;
 - smORFs (≤ 100 aa) are clustered by 80% reciprocal overlap, then peptide-level deduplicated: the catalogue amino-acid FASTA is clustered with MMseqs2 (`--min-seq-id 0.9 -c 0.8`) and each multi-member smORF cluster is folded to one representative, following the GENCODE Ribo-seq ORF catalogue convention (Mudge et al. 2022). Pass `--skip_orf_collapse` to publish the coordinate-merged catalogue without this sequence-level collapse;
 - cross-caller consensus is recorded in `called_by_<caller>` binary columns plus `score_<caller>` columns for Ribo-TISH / RiboCode / Rp-Bp / PRICE (Ribotricer scores are excluded from rank aggregation).
+
+Host gene and transcript ids are resolved against the union of the full multi-isoform annotation (`--gtf`) and the filtered novel transcripts. The callers do not all receive the same annotation (PRICE takes the full multi-isoform reference, the genome-BAM callers the canonical backbone), so only that union covers every transcript an ORF can be reported on; an ORF called on an isoform absent from the annotation falls back to whatever gene label its caller emitted, which for PRICE is every gene its genomic span overlaps, concatenated. The union is also the reference the ORF-level DTE RNA denominator is quantified against, so catalogue gene ids share a namespace with that matrix.
 
 The catalogue runs once per pipeline invocation (cohort-level, not per sample) and gates on `--extended_orf_analysis true` plus a non-empty enabled-caller set. The default-off path keeps the pre-#167 behaviour unchanged.
 

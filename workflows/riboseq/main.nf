@@ -242,7 +242,7 @@ workflow RIBOSEQ {
     //
 
     ch_fasta_fai            = ch_fasta.combine(ch_fai).map { fasta, fai -> [ [:], fasta, fai ] }.first()
-    ch_transcript_fasta_fai = ch_transcript_fasta.map { [ [:], it, [] ] }.first()
+    ch_transcript_fasta_fai = ch_transcript_fasta.map { [ [:], it, [] ] }
 
     FASTQ_ALIGN_STAR(
         ch_reads_for_alignment,
@@ -418,6 +418,20 @@ workflow RIBOSEQ {
 
     ch_bams_for_analysis = ch_genome_bam_by_type.riboseq.join(ch_genome_bam_index)
 
+    // Full reference with the novel transcripts appended: a superset of every
+    // annotation the ORF callers are given, the annotation Rp-Bp and PRICE run
+    // against directly, and the reference the ORF-level DTE RNA denominator is
+    // quantified against.
+    ch_full_hybrid_gtf = channel.empty()
+    if (extended_orf_active) {
+        BUILD_FULL_HYBRID_GTF(
+            ch_gtf.combine(ch_hybrid_gtf).map { gtf, hybrid -> [ [id: 'full_hybrid_reference'], [ gtf, hybrid ] ] },
+            file("${projectDir}/assets/build_full_hybrid_gtf.awk"),
+            false
+        )
+        ch_full_hybrid_gtf = BUILD_FULL_HYBRID_GTF.out.output.map { _meta, gtf -> gtf }.first()
+    }
+
     ORF_CALLER_DISPATCH(
         ch_bams_for_analysis,
         ch_transcriptome_bam,
@@ -426,6 +440,7 @@ workflow RIBOSEQ {
         ch_canonical_gtf,
         ch_hybrid_gtf,
         ch_gtf,
+        ch_full_hybrid_gtf,
         extended_orf_active
     )
     ch_versions      = ch_versions.mix(ORF_CALLER_DISPATCH.out.versions)
@@ -473,8 +488,8 @@ workflow RIBOSEQ {
 
         ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE(
             ch_orf_tables,
-            ch_fasta    .map { fasta -> [ [id: 'reference'], fasta ] }.first(),
-            ch_hybrid_gtf.map { gtf   -> [ [id: 'reference'], gtf   ] }.first(),
+            ch_fasta          .map { fasta -> [ [id: 'reference'], fasta ] },
+            ch_full_hybrid_gtf.map { gtf   -> [ [id: 'reference'], gtf   ] },
             !params.skip_orf_collapse
         )
         ch_multiqc_files = ch_multiqc_files.mix(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.multiqc.collect{it[1]}.ifEmpty([]))
@@ -609,7 +624,7 @@ workflow RIBOSEQ {
             false
         )
 
-        ch_inframe_psites = GTF_TO_INFRAME_PSITES.out.output.first()
+        ch_inframe_psites = GTF_TO_INFRAME_PSITES.out.output
 
         // Run p-site quantification per sample
         ch_psite_tracks = PLASTID_MAKE_WIGGLE.out.tracks
@@ -689,18 +704,11 @@ workflow RIBOSEQ {
             // transcripts. The primary Salmon matrix is quantified against the
             // canonical reference only, so novel genes have no row and their
             // ORFs are dropped. Quantify RNA-seq against the full reference
-            // transcriptome augmented with the novel intergenic transcripts,
-            // using the same STAR-align -> Salmon path as the primary
-            // quantification so canonical genes match the gene-level denominator
-            // (the one-transcript-per-gene backbone used for ORF calling would
+            // transcriptome augmented with the novel transcripts, using the
+            // same STAR-align -> Salmon path as the primary quantification so
+            // canonical genes match the gene-level denominator (the
+            // one-transcript-per-gene backbone used for ORF calling would
             // undercount multi-isoform genes) and novel genes gain a row.
-            BUILD_FULL_HYBRID_GTF(
-                ch_gtf.combine(ch_hybrid_gtf).map { gtf, hybrid -> [ [id: 'full_hybrid_reference'], [ gtf, hybrid ] ] },
-                file("${projectDir}/assets/build_full_hybrid_gtf.awk"),
-                false
-            )
-            ch_full_hybrid_gtf = BUILD_FULL_HYBRID_GTF.out.output.map { _meta, gtf -> gtf }.first()
-
             GFFREAD_FULL_HYBRID(
                 BUILD_FULL_HYBRID_GTF.out.output,
                 ch_fasta
