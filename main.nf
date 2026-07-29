@@ -19,6 +19,7 @@ include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_ribo
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_riboseq_pipeline'
 include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_riboseq_pipeline'
 include { checkMaxContigSize      } from './subworkflows/local/utils_nfcore_riboseq_pipeline'
+include { samplesheetNeedsSalmonForStrandedness } from './subworkflows/local/utils_nfcore_riboseq_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -38,6 +39,7 @@ params.gff              = getGenomeAttribute('gff')
 params.bbsplit_index    = getGenomeAttribute('bbsplit')
 params.star_index       = getGenomeAttribute('star')
 params.salmon_index     = getGenomeAttribute('salmon')
+params.kallisto_index   = getGenomeAttribute('kallisto')
 params.sortmerna_index  = getGenomeAttribute('sortmerna')
 
 include { RIBOSEQ                 } from './workflows/riboseq'
@@ -61,6 +63,12 @@ workflow NFCORE_RIBOSEQ {
     //
     // SUBWORKFLOW: Prepare reference genome files
     //
+
+    // Building the strandedness Salmon index here, rather than inside the
+    // preprocessing subworkflow that consumes it, lets it run in parallel
+    // with the rest of genome prep.
+    def build_salmon_index_for_strandedness = !params.salmon_index && samplesheetNeedsSalmonForStrandedness(params.input)
+
     PREPARE_GENOME (
         params.fasta,
         params.gtf,
@@ -71,6 +79,7 @@ workflow NFCORE_RIBOSEQ {
         params.ribo_database_manifest,
         params.star_index,
         params.salmon_index,
+        params.kallisto_index,
         params.bbsplit_index,
         params.sortmerna_index,
         params.gencode,
@@ -79,14 +88,15 @@ workflow NFCORE_RIBOSEQ {
         params.skip_bbsplit,
         ! (params.remove_ribo_rna && params.ribo_removal_tool == 'sortmerna'),
         params.remove_ribo_rna ? params.ribo_removal_tool : null,
-        params.skip_alignment,
+        params.pseudo_aligner,
         params.te_quantification_method == 'pseudo' && params.contrasts,
+        build_salmon_index_for_strandedness,
         params.canonical_gtf
     )
     ch_versions = ch_versions.mix(PREPARE_GENOME.out.versions)
 
     // Check if contigs in genome fasta file > 512 Mbp
-    if (!params.skip_alignment && !params.bam_csi_index) {
+    if (!params.bam_csi_index) {
         PREPARE_GENOME
             .out
             .fai
@@ -118,7 +128,7 @@ workflow NFCORE_RIBOSEQ {
         PREPARE_GENOME.out.transcript_fasta,
         PREPARE_GENOME.out.star_index,
         PREPARE_GENOME.out.salmon_index,
-        PREPARE_GENOME.out.salmon_index_te,
+        PREPARE_GENOME.out.kallisto_index_te,
         PREPARE_GENOME.out.bbsplit_index,
         PREPARE_GENOME.out.rrna_fastas,
         PREPARE_GENOME.out.sortmerna_index,

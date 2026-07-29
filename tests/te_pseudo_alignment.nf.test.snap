@@ -89,9 +89,6 @@
                 "SALMON_INDEX": {
                     "salmon": "1.10.3"
                 },
-                "SALMON_INDEX_TE": {
-                    "salmon": "1.10.3"
-                },
                 "SALMON_QUANT": {
                     "salmon": "1.10.3"
                 },
@@ -379,7 +376,6 @@
                 "genome",
                 "genome/bowtie2_rrna",
                 "genome/index",
-                "genome/index_te",
                 "multiqc",
                 "multiqc/star",
                 "multiqc/star/multiqc_report.html",
@@ -1990,10 +1986,10 @@
                 "SRX11780890_qual.txt:md5,9caaf68044fd714a3265f63c920e75d5"
             ]
         ],
-        "timestamp": "2026-07-27T13:45:36.485134173",
+        "timestamp": "2026-07-29T11:37:56.307111783",
         "meta": {
-            "nf-test": "0.9.4",
-            "nextflow": "25.10.4"
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.6"
         }
     }
 }

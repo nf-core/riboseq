@@ -114,6 +114,8 @@ When specifying `contrasts` to perform a translational efficiency analysis (see 
 
 [Trim Galore!](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/) performs quality and adapter trimming on FastQ files, and will automatically detect and trim the appropriate adapter sequence. The 2.x series is a self-contained Rust program with both adapter trimming and FastQC reporting built in, so it no longer wraps external Cutadapt or FastQC installations. It is the default trimming tool used by this pipeline, however you can use fastp instead by specifying the `--trimmer fastp` parameter. [fastp](https://github.com/OpenGene/fastp) is a tool designed to provide fast, all-in-one preprocessing for FastQ files. It has been developed in C++ with multithreading support to achieve higher performance. You can specify additional options for Trim Galore! and fastp via the `--extra_trimgalore_args` and `--extra_fastp_args` parameters, respectively.
 
+With `--trimmer fastp`, `--fastp_merge` stitches overlapping paired-end mates into a single merged read. It has no effect on single-end data or with `--trimmer trimgalore`.
+
 > **NB:** The pipeline reserves threads for Trim Galore!'s non-worker roles, passing `--cores` as `task.cpus - 3` for single-end and `task.cpus - 4` for paired-end data, clamped to between 1 and 8. Multi-core trimming therefore requires more than 4 CPUs for single-end data and more than 5 for paired-end data, and the cap of 8 worker cores is reached at 11 and 12 CPUs respectively. Trim Galore! 2.x uses an N+4 thread model (N workers plus two decompressors, a batcher and a writer) and scales near-linearly up to `--cores 8`, beyond which gzip output I/O usually becomes the limiting factor rather than worker capacity. See the [Trim Galore! changelog](https://github.com/FelixKrueger/TrimGalore/blob/master/CHANGELOG.md) and the [discussion whilst adding this logic to the nf-core/atacseq pipeline](https://github.com/nf-core/atacseq/pull/65).
 
 ## rRNA removal options
@@ -278,7 +280,6 @@ Notes:
 By default, indices are generated dynamically by the workflow for tools such as STAR and Salmon. Since indexing is an expensive process in time and resources you should ensure that it is only done once, by retaining the indices generated from each batch of reference files:
 
 - the `--save_reference` parameter will save your indices in your results directory
-- the `--skip_alignment --skip_pseudo_alignment` will disable other processes if you'd like to do an 'indexing only' workflow run.
 
 Once you have the indices from a workflow run you should save them somewhere central and reuse them in subsequent runs using custom config files or command line parameters such as `--star_index '/path/to/STAR/index/'`.
 
@@ -311,6 +312,7 @@ However this is no longer recommended because:
 | `additional_fasta` | `--additional_fasta` |
 | `star`             | `--star_index`       |
 | `salmon`           | `--salmon_index`     |
+| `kallisto`         | `--kallisto_index`   |
 | `bbsplit`          | `--bbsplit_index`    |
 | `sortmerna`        | `--sortmerna_index`  |
 
@@ -513,7 +515,7 @@ Reads are aligned with STAR, and Salmon quantifies from the transcriptome BAM in
 --te_quantification_method pseudo
 ```
 
-Uses Salmon pseudo-alignment directly from reads for both Ribo-seq and RNA-seq samples. This is an **experimental alternative** that:
+Quantifies reads directly against the transcriptome for both Ribo-seq and RNA-seq samples, without going via the genome alignment. This is an **experimental alternative** that:
 
 - Applies the same k-mer index and quantification algorithm to both modalities
 - May help reduce length-related quantification biases without requiring read trimming
@@ -525,6 +527,34 @@ Consider this option when:
 - You prefer k-mer-based quantification for methodological consistency between modalities
 
 > **Note**: The pseudo-alignment pathway runs **in addition to** the standard STAR alignment, which is still needed for position-dependent analyses (P-sites, ribosome periodicity, ORF detection). The pseudo-alignment counts are only used for TE analysis.
+
+##### Choosing the pseudo-aligner
+
+`--pseudo_aligner` selects the tool used for this pathway, either `salmon` (default) or `kallisto`:
+
+```bash
+--te_quantification_method pseudo --pseudo_aligner kallisto \
+    --kallisto_quant_fraglen 30 --kallisto_quant_fraglen_sd 5
+```
+
+What `--pseudo_aligner` controls:
+
+- The tool that produces the per-sample transcript quantifications feeding the TE analysis, and the `quant_type` handed to tximport
+- Which index is built for the pathway: a Salmon index (supply a pre-built one with `--salmon_index`), or a kallisto index (supply a pre-built index file with `--kallisto_index`)
+- The output subdirectory, `quantification/salmon_te_pseudo` or `quantification/kallisto_te_pseudo`
+
+What it does **not** control:
+
+- The primary STAR genome alignment, which every position-dependent analysis depends on
+- The alignment-mode Salmon quantification of the STAR transcriptome BAM, which always uses Salmon
+- Strandedness inference, which always subsamples and runs Salmon and therefore always needs a Salmon index
+
+kallisto-specific caveats:
+
+- kallisto cannot estimate a fragment length distribution from single-end reads, and Ribo-seq libraries are single-end. `--kallisto_quant_fraglen` and `--kallisto_quant_fraglen_sd` are therefore **required**, and the pipeline exits at startup if they are missing. For Ribo-seq the fragment is the footprint itself, so the values should reflect your observed footprint length distribution (commonly around 30 nt), not a typical RNA-seq insert size. Paired-end RNA-seq samples in the same run ignore them, since kallisto infers the distribution from the pairs.
+- The same two values are applied to every single-end sample in the run, so a cohort mixing libraries with very different insert size distributions is better quantified with Salmon.
+- MultiQC reports kallisto's run logs rather than the richer Salmon quantification metrics.
+- `--pseudo_aligner_kmer_size` is passed to `kallisto index -k`, which requires an odd value no greater than 31.
 
 ### Contrasts specification
 
