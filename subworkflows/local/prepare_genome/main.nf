@@ -55,6 +55,7 @@ workflow PREPARE_GENOME {
     ribo_removal_tool        //    string: Tool for rRNA removal ('sortmerna', 'bowtie2', or 'ribodetector')
     pseudo_aligner           //    string: Pseudo-aligner used for TE quantification ('salmon' or 'kallisto')
     build_te_pseudo_index    //   boolean: Build the pseudo-aligner index for TE quantification
+    build_salmon_index_for_strandedness // boolean: Build a Salmon index for automatic strandedness detection
     canonical_gtf            //      file: /path/to/canonical.gtf (one-transcript-per-gene backbone; null to derive)
 
     main:
@@ -265,7 +266,9 @@ workflow PREPARE_GENOME {
     }
 
     //
-    // Uncompress Salmon index or generate from scratch if required
+    // Uncompress Salmon index, or build one if the samplesheet has samples
+    // with 'auto' strandedness (detected via FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS,
+    // which needs a Salmon index to pseudo-align a subsample against).
     //
     ch_salmon_index = Channel.empty()
     if (salmon_index) {
@@ -274,10 +277,8 @@ workflow PREPARE_GENOME {
         } else {
             ch_salmon_index = Channel.value(file(salmon_index))
         }
-    } else {
-        if ('salmon' in prepare_tool_indices) {
-            ch_salmon_index = SALMON_INDEX ( ch_fasta, ch_transcript_fasta ).index
-        }
+    } else if (build_salmon_index_for_strandedness) {
+        ch_salmon_index = SALMON_INDEX ( ch_fasta, ch_transcript_fasta ).index
     }
 
     //

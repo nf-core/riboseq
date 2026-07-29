@@ -65,6 +65,7 @@ include { paramsSummaryMultiqc     } from '../../subworkflows/nf-core/utils_nfco
 include { softwareVersionsToYAML   } from '../../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText   } from '../../subworkflows/local/utils_nfcore_riboseq_pipeline'
 include { validateInputSamplesheet } from '../../subworkflows/local/utils_nfcore_riboseq_pipeline'
+include { samplesheetNeedsSalmonForStrandedness } from '../../subworkflows/local/utils_nfcore_riboseq_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -160,9 +161,11 @@ workflow RIBOSEQ {
     // contaminant removal, strandedness inference
     //
 
-    // The subworkflow only has to do Salmon indexing if it discovers 'auto'
-    // samples, and if we haven't already made one elsewhere
-    salmon_index_available = params.salmon_index as boolean
+    // A Salmon index is available if the user supplied one, or if
+    // PREPARE_GENOME already built one because the samplesheet has
+    // 'auto'-strandedness samples. Either way, this subworkflow must not
+    // build its own on top, or it would rebuild and discard the one it was given.
+    salmon_index_available = (params.salmon_index as boolean) || samplesheetNeedsSalmonForStrandedness(params.input)
 
     // Determine if we need to build rRNA removal indexes
     def make_sortmerna_index = !params.sortmerna_index && params.remove_ribo_rna && params.ribo_removal_tool == 'sortmerna'

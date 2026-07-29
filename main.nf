@@ -19,6 +19,7 @@ include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_ribo
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_riboseq_pipeline'
 include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_riboseq_pipeline'
 include { checkMaxContigSize      } from './subworkflows/local/utils_nfcore_riboseq_pipeline'
+include { samplesheetNeedsSalmonForStrandedness } from './subworkflows/local/utils_nfcore_riboseq_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -62,6 +63,12 @@ workflow NFCORE_RIBOSEQ {
     //
     // SUBWORKFLOW: Prepare reference genome files
     //
+
+    // A Salmon index is needed up front (rather than lazily, deep inside
+    // preprocessing) whenever the samplesheet has 'auto'-strandedness
+    // samples, so it can build in parallel with the rest of genome prep.
+    def build_salmon_index_for_strandedness = !params.salmon_index && samplesheetNeedsSalmonForStrandedness(params.input)
+
     PREPARE_GENOME (
         params.fasta,
         params.gtf,
@@ -83,6 +90,7 @@ workflow NFCORE_RIBOSEQ {
         params.remove_ribo_rna ? params.ribo_removal_tool : null,
         params.pseudo_aligner,
         params.te_quantification_method == 'pseudo' && params.contrasts,
+        build_salmon_index_for_strandedness,
         params.canonical_gtf
     )
     ch_versions = ch_versions.mix(PREPARE_GENOME.out.versions)

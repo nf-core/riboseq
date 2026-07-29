@@ -278,6 +278,15 @@ def validateInputSamplesheet(input) {
     return [ metas[0], fastqs ]
 }
 //
+// Whether any sample in the input samplesheet uses 'auto' strandedness,
+// which needs a Salmon index to detect strandedness automatically.
+//
+def samplesheetNeedsSalmonForStrandedness(input) {
+    samplesheetToList(input, "${projectDir}/assets/schema_input.json")
+        .any { meta, _fastq_1, _fastq_2 -> meta.strandedness == 'auto' }
+}
+
+//
 // Get attribute from genome config file e.g. fasta
 //
 def getGenomeAttribute(attribute) {
