@@ -266,22 +266,6 @@ workflow PREPARE_GENOME {
     }
 
     //
-    // Uncompress Salmon index, or build one if the samplesheet has samples
-    // with 'auto' strandedness (detected via FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS,
-    // which needs a Salmon index to pseudo-align a subsample against).
-    //
-    ch_salmon_index = Channel.empty()
-    if (salmon_index) {
-        if (salmon_index.endsWith('.tar.gz')) {
-            ch_salmon_index = UNTAR_SALMON_INDEX ( [ [:], salmon_index ] ).untar.map { it[1] }
-        } else {
-            ch_salmon_index = Channel.value(file(salmon_index))
-        }
-    } else if (build_salmon_index_for_strandedness) {
-        ch_salmon_index = SALMON_INDEX ( ch_fasta, ch_transcript_fasta ).index
-    }
-
-    //
     // Build the TE pseudo-alignment index (with lower k-mer size for short reads).
     // Salmon quant consumes a bare index path, kallisto quant a [ meta, index ]
     // tuple, so the emitted channel shape follows the selected pseudo-aligner.
@@ -297,6 +281,26 @@ workflow PREPARE_GENOME {
         } else {
             ch_pseudo_index_te = SALMON_INDEX_TE ( ch_fasta, ch_transcript_fasta ).index
         }
+    }
+
+    //
+    // Uncompress Salmon index, or build one if the samplesheet has samples
+    // with 'auto' strandedness (detected via FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS,
+    // which needs a Salmon index to pseudo-align a subsample against). Same
+    // fasta, transcript fasta and k-mer size as the TE pseudo index above, so
+    // reuse it instead of building an identical index a second time.
+    //
+    ch_salmon_index = Channel.empty()
+    if (salmon_index) {
+        if (salmon_index.endsWith('.tar.gz')) {
+            ch_salmon_index = UNTAR_SALMON_INDEX ( [ [:], salmon_index ] ).untar.map { it[1] }
+        } else {
+            ch_salmon_index = Channel.value(file(salmon_index))
+        }
+    } else if (build_salmon_index_for_strandedness) {
+        ch_salmon_index = (build_te_pseudo_index && pseudo_aligner == 'salmon')
+            ? ch_pseudo_index_te
+            : SALMON_INDEX ( ch_fasta, ch_transcript_fasta ).index
     }
 
     emit:
