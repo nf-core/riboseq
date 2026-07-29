@@ -24,7 +24,6 @@ include { BBMAP_BBSPLIT                     } from '../../../modules/nf-core/bbm
 include { SORTMERNA as SORTMERNA_INDEX      } from '../../../modules/nf-core/sortmerna'
 include { STAR_GENOMEGENERATE               } from '../../../modules/nf-core/star/genomegenerate'
 include { SALMON_INDEX                      } from '../../../modules/nf-core/salmon/index'
-include { SALMON_INDEX as SALMON_INDEX_TE   } from '../../../modules/nf-core/salmon/index'
 include { KALLISTO_INDEX as KALLISTO_INDEX_TE  } from '../../../modules/nf-core/kallisto/index'
 include { RSEM_PREPAREREFERENCE as RSEM_PREPAREREFERENCE_GENOME } from '../../../modules/nf-core/rsem/preparereference'
 include { RSEM_PREPAREREFERENCE as MAKE_TRANSCRIPTS_FASTA       } from '../../../modules/nf-core/rsem/preparereference'
@@ -265,21 +264,20 @@ workflow PREPARE_GENOME {
         }
     }
 
-    //
-    // TE pseudo-alignment and strandedness detection both need a Salmon index
-    // over (fasta, transcript_fasta) at the same k-mer size, so share one build.
-    //
-    def needs_te_salmon_index = build_te_pseudo_index && pseudo_aligner != 'kallisto'
+    // TE pseudo-alignment and strandedness detection can both need a Salmon
+    // index over the same (fasta, transcript_fasta, k-mer size); build it once.
+    ch_shared_salmon_index = Channel.empty()
+    if ((build_te_pseudo_index && pseudo_aligner == 'salmon') || build_salmon_index_for_strandedness) {
+        ch_shared_salmon_index = SALMON_INDEX ( ch_fasta, ch_transcript_fasta ).index
+    }
 
     ch_pseudo_index_te = Channel.empty()
     if (build_te_pseudo_index) {
-        if (pseudo_aligner == 'kallisto') {
-            ch_pseudo_index_te = kallisto_index
+        ch_pseudo_index_te = pseudo_aligner == 'kallisto'
+            ? (kallisto_index
                 ? Channel.value([ [:], file(kallisto_index) ])
-                : KALLISTO_INDEX_TE ( ch_transcript_fasta.map { tx -> [ [:], tx ] } ).index
-        } else {
-            ch_pseudo_index_te = SALMON_INDEX_TE ( ch_fasta, ch_transcript_fasta ).index
-        }
+                : KALLISTO_INDEX_TE ( ch_transcript_fasta.map { tx -> [ [:], tx ] } ).index)
+            : ch_shared_salmon_index
     }
 
     ch_salmon_index = Channel.empty()
@@ -288,7 +286,7 @@ workflow PREPARE_GENOME {
             ? UNTAR_SALMON_INDEX ( [ [:], salmon_index ] ).untar.map { it[1] }
             : Channel.value(file(salmon_index))
     } else if (build_salmon_index_for_strandedness) {
-        ch_salmon_index = needs_te_salmon_index ? ch_pseudo_index_te : SALMON_INDEX ( ch_fasta, ch_transcript_fasta ).index
+        ch_salmon_index = ch_shared_salmon_index
     }
 
     emit:
