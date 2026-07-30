@@ -24,7 +24,7 @@ include { BBMAP_BBSPLIT                     } from '../../../modules/nf-core/bbm
 include { SORTMERNA as SORTMERNA_INDEX      } from '../../../modules/nf-core/sortmerna'
 include { STAR_GENOMEGENERATE               } from '../../../modules/nf-core/star/genomegenerate'
 include { SALMON_INDEX                      } from '../../../modules/nf-core/salmon/index'
-include { SALMON_INDEX as SALMON_INDEX_TE   } from '../../../modules/nf-core/salmon/index'
+include { KALLISTO_INDEX as KALLISTO_INDEX_TE  } from '../../../modules/nf-core/kallisto/index'
 include { RSEM_PREPAREREFERENCE as RSEM_PREPAREREFERENCE_GENOME } from '../../../modules/nf-core/rsem/preparereference'
 include { RSEM_PREPAREREFERENCE as MAKE_TRANSCRIPTS_FASTA       } from '../../../modules/nf-core/rsem/preparereference'
 
@@ -43,6 +43,7 @@ workflow PREPARE_GENOME {
     sortmerna_fasta_list     //      file: /path/to/sortmerna_fasta_list.txt
     star_index               // directory: /path/to/star/index/
     salmon_index             // directory: /path/to/salmon/index/
+    kallisto_index           //      file: /path/to/kallisto.idx
     bbsplit_index            // directory: /path/to/rsem/index/
     sortmerna_index          // directory: /path/to/sortmerna/index/
     gencode                  //   boolean: whether the genome is from GENCODE
@@ -51,8 +52,9 @@ workflow PREPARE_GENOME {
     skip_bbsplit             //   boolean: Skip BBSplit for removal of non-reference genome reads
     skip_sortmerna           //   boolean: Skip sortmerna for removal of non-reference genome reads
     ribo_removal_tool        //    string: Tool for rRNA removal ('sortmerna', 'bowtie2', or 'ribodetector')
-    skip_alignment           //   boolean: Skip all of the alignment-based processes within the pipeline
-    build_te_pseudo_index    //   boolean: Build Salmon index for TE pseudo-alignment
+    pseudo_aligner           //    string: Pseudo-aligner used for TE quantification ('salmon' or 'kallisto')
+    build_te_pseudo_index    //   boolean: Build the pseudo-aligner index for TE quantification
+    build_salmon_index_for_strandedness // boolean: Build a Salmon index for automatic strandedness detection
     canonical_gtf            //      file: /path/to/canonical.gtf (one-transcript-per-gene backbone; null to derive)
 
     main:
@@ -88,19 +90,7 @@ workflow PREPARE_GENOME {
         }
 
         // Determine whether to filter the GTF or not
-        def filter_gtf =
-            ((
-                // Condition 1: Alignment is required and aligner is set
-                !skip_alignment && aligner
-            ) ||
-            (
-                // Condition 2: Transcript FASTA file is not provided
-                !transcript_fasta
-            )) &&
-            (
-                // Condition 4: --skip_gtf_filter is not provided
-                !skip_gtf_filter
-            )
+        def filter_gtf = (aligner || !transcript_fasta) && !skip_gtf_filter
         if (filter_gtf) {
             CUSTOM_GTFFILTER (
                 ch_gtf.map   { g -> [ [ id: 'reference' ], g ] },
@@ -189,7 +179,7 @@ workflow PREPARE_GENOME {
     def prepare_tool_indices = []
     if (!skip_bbsplit) { prepare_tool_indices << 'bbsplit' }
     if (!skip_sortmerna) { prepare_tool_indices << 'sortmerna' }
-    if (!skip_alignment) { prepare_tool_indices << aligner }
+    prepare_tool_indices << aligner
 
     //
     // Uncompress BBSplit index or generate from scratch if required
@@ -274,28 +264,23 @@ workflow PREPARE_GENOME {
         }
     }
 
-    //
-    // Uncompress Salmon index or generate from scratch if required
-    //
+    // One Salmon index (fasta + transcript_fasta, --pseudo_aligner_kmer_size)
+    // serves both TE pseudo-alignment (--pseudo_aligner salmon) and
+    // strandedness auto-detection; --salmon_index short-circuits either.
     ch_salmon_index = Channel.empty()
     if (salmon_index) {
-        if (salmon_index.endsWith('.tar.gz')) {
-            ch_salmon_index = UNTAR_SALMON_INDEX ( [ [:], salmon_index ] ).untar.map { it[1] }
-        } else {
-            ch_salmon_index = Channel.value(file(salmon_index))
-        }
-    } else {
-        if ('salmon' in prepare_tool_indices) {
-            ch_salmon_index = SALMON_INDEX ( ch_fasta, ch_transcript_fasta ).index
-        }
+        ch_salmon_index = salmon_index.endsWith('.tar.gz')
+            ? UNTAR_SALMON_INDEX ( [ [:], salmon_index ] ).untar.map { it[1] }
+            : Channel.value(file(salmon_index))
+    } else if ((build_te_pseudo_index && pseudo_aligner == 'salmon') || build_salmon_index_for_strandedness) {
+        ch_salmon_index = SALMON_INDEX ( ch_fasta, ch_transcript_fasta ).index
     }
 
-    //
-    // Build Salmon index for TE pseudo-alignment (with lower k-mer size for short reads)
-    //
-    ch_salmon_index_te = Channel.empty()
-    if (build_te_pseudo_index) {
-        ch_salmon_index_te = SALMON_INDEX_TE ( ch_fasta, ch_transcript_fasta ).index
+    ch_kallisto_index_te = Channel.empty()
+    if (build_te_pseudo_index && pseudo_aligner == 'kallisto') {
+        ch_kallisto_index_te = kallisto_index
+            ? Channel.value([ [:], file(kallisto_index) ])
+            : KALLISTO_INDEX_TE ( ch_transcript_fasta.map { tx -> [ [:], tx ] } ).index
     }
 
     emit:
@@ -309,7 +294,7 @@ workflow PREPARE_GENOME {
     rrna_fastas      = ch_rrna_fastas            // channel: path(sortmerna_fasta_list)
     sortmerna_index  = ch_sortmerna_index        // channel: path(sortmerna/index/)
     star_index       = ch_star_index             // channel: path(star/index/)
-    salmon_index     = ch_salmon_index           // channel: path(salmon/index/)
-    salmon_index_te  = ch_salmon_index_te        // channel: path(salmon_te/index/) - for TE pseudo-alignment
-    versions         = ch_versions.ifEmpty(null) // channel: [ versions.yml ]
+    salmon_index      = ch_salmon_index           // channel: path(salmon/index/)
+    kallisto_index_te = ch_kallisto_index_te      // channel: [ meta, path(kallisto/index/) ] for TE pseudo-alignment
+    versions          = ch_versions.ifEmpty(null) // channel: [ versions.yml ]
 }

@@ -18,8 +18,8 @@ workflow NOVEL_TRANSCRIPT_DISCOVERY {
 
     take:
     ch_rnaseq_bam          // channel: [ val(meta), path(bam) ]    - genome BAMs flagged as RNA-seq
-    ch_gtf                 // channel: path(genome.gtf)            - full multi-isoform reference for gffcompare
-    ch_canonical_gtf       // channel: path(canonical.gtf)         - one-transcript-per-gene backbone for concat
+    ch_gtf                 // value channel: path(genome.gtf)      - full multi-isoform reference for gffcompare
+    ch_canonical_gtf       // value channel: path(canonical.gtf)   - one-transcript-per-gene backbone for concat
     user_novel_gtf         // val: path or null                    - --novel_gtf override (skips StringTie if set)
     run_stringtie          // val: bool                            - run StringTie when no user override
     gffcompare_class_codes // val: string                          - --gffcompare_class_codes
@@ -65,8 +65,8 @@ workflow NOVEL_TRANSCRIPT_DISCOVERY {
 
     GTF_HYBRIDMERGE_GFFCOMPARE(
         ch_novel_pre_filter,
-        ch_gtf.map { gtf -> [ [:], gtf ] }.first(),
-        ch_canonical_gtf.map { gtf -> [ [id: 'hybrid_reference'], gtf ] }.first(),
+        ch_gtf.map { gtf -> [ [:], gtf ] },
+        ch_canonical_gtf.map { gtf -> [ [id: 'hybrid_reference'], gtf ] },
         Channel.value(gffcompare_class_codes),
         ch_blacklist_bed
     )

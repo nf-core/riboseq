@@ -112,9 +112,11 @@ When specifying `contrasts` to perform a translational efficiency analysis (see 
 
 ## Adapter trimming options
 
-[Trim Galore!](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/) is a wrapper tool around Cutadapt and FastQC to peform quality and adapter trimming on FastQ files. Trim Galore! will automatically detect and trim the appropriate adapter sequence. It is the default trimming tool used by this pipeline, however you can use fastp instead by specifying the `--trimmer fastp` parameter. [fastp](https://github.com/OpenGene/fastp) is a tool designed to provide fast, all-in-one preprocessing for FastQ files. It has been developed in C++ with multithreading support to achieve higher performance. You can specify additional options for Trim Galore! and fastp via the `--extra_trimgalore_args` and `--extra_fastp_args` parameters, respectively.
+[Trim Galore!](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/) performs quality and adapter trimming on FastQ files, and will automatically detect and trim the appropriate adapter sequence. The 2.x series is a self-contained Rust program with both adapter trimming and FastQC reporting built in, so it no longer wraps external Cutadapt or FastQC installations. It is the default trimming tool used by this pipeline, however you can use fastp instead by specifying the `--trimmer fastp` parameter. [fastp](https://github.com/OpenGene/fastp) is a tool designed to provide fast, all-in-one preprocessing for FastQ files. It has been developed in C++ with multithreading support to achieve higher performance. You can specify additional options for Trim Galore! and fastp via the `--extra_trimgalore_args` and `--extra_fastp_args` parameters, respectively.
 
-> **NB:** TrimGalore! will only run using multiple cores if you are able to use more than > 5 and > 6 CPUs for single- and paired-end data, respectively. The total cores available to TrimGalore! will also be capped at 4 (7 and 8 CPUs in total for single- and paired-end data, respectively) because there is no longer a run-time benefit. See [release notes](https://github.com/FelixKrueger/TrimGalore/blob/master/Changelog.md#version-060-release-on-1-mar-2019) and [discussion whilst adding this logic to the nf-core/atacseq pipeline](https://github.com/nf-core/atacseq/pull/65).
+With `--trimmer fastp`, `--fastp_merge` stitches overlapping paired-end mates into a single merged read. It has no effect on single-end data or with `--trimmer trimgalore`.
+
+> **NB:** The pipeline reserves threads for Trim Galore!'s non-worker roles, passing `--cores` as `task.cpus - 3` for single-end and `task.cpus - 4` for paired-end data, clamped to between 1 and 8. Multi-core trimming therefore requires more than 4 CPUs for single-end data and more than 5 for paired-end data, and the cap of 8 worker cores is reached at 11 and 12 CPUs respectively. Trim Galore! 2.x uses an N+4 thread model (N workers plus two decompressors, a batcher and a writer) and scales near-linearly up to `--cores 8`, beyond which gzip output I/O usually becomes the limiting factor rather than worker capacity. See the [Trim Galore! changelog](https://github.com/FelixKrueger/TrimGalore/blob/master/CHANGELOG.md) and the [discussion whilst adding this logic to the nf-core/atacseq pipeline](https://github.com/nf-core/atacseq/pull/65).
 
 ## rRNA removal options
 
@@ -278,7 +280,6 @@ Notes:
 By default, indices are generated dynamically by the workflow for tools such as STAR and Salmon. Since indexing is an expensive process in time and resources you should ensure that it is only done once, by retaining the indices generated from each batch of reference files:
 
 - the `--save_reference` parameter will save your indices in your results directory
-- the `--skip_alignment --skip_pseudo_alignment` will disable other processes if you'd like to do an 'indexing only' workflow run.
 
 Once you have the indices from a workflow run you should save them somewhere central and reuse them in subsequent runs using custom config files or command line parameters such as `--star_index '/path/to/STAR/index/'`.
 
@@ -297,6 +298,43 @@ However this is no longer recommended because:
 
 - Gene annotations in iGenomes are extremely out of date. This can be particularly problematic for RNA-seq analysis, which relies on accurate gene annotation.
 - Some iGenomes references (e.g., GRCh38) point to annotation files that use gene symbols as the primary identifier. This can cause issues for downstream analysis, such as the nf-core [differential abundance](https://nf-co.re/differentialabundance) workflow where a conventional gene identifier distinct from symbol is expected.
+
+### Custom genome stanzas
+
+`--genome` is not restricted to iGenomes keys: any config file supplied with `-c` can define its own `genomes` block, and the pipeline will take the attributes below from the stanza matching `--genome`.
+
+| Genome attribute   | Equivalent parameter |
+| ------------------ | -------------------- |
+| `fasta`            | `--fasta`            |
+| `gtf`              | `--gtf`              |
+| `gff`              | `--gff`              |
+| `transcript_fasta` | `--transcript_fasta` |
+| `additional_fasta` | `--additional_fasta` |
+| `star`             | `--star_index`       |
+| `salmon`           | `--salmon_index`     |
+| `kallisto`         | `--kallisto_index`   |
+| `bbsplit`          | `--bbsplit_index`    |
+| `sortmerna`        | `--sortmerna_index`  |
+
+```groovy title="my_genomes.config"
+params {
+    genomes {
+        'GRCh38_local' {
+            fasta     = '/path/to/genome.fa'
+            gtf       = '/path/to/genes.gtf'
+            star      = '/path/to/star/'
+            salmon    = '/path/to/salmon/'
+            sortmerna = '/path/to/sortmerna/'
+        }
+    }
+}
+```
+
+```bash
+nextflow run nf-core/riboseq -profile docker -c my_genomes.config --genome GRCh38_local --input samplesheet.csv --outdir results
+```
+
+Setting the equivalent parameter explicitly (on the command line, in a `-params-file`, or in a config `params` block) overrides the genome attribute.
 
 ### GTF filtering
 
@@ -346,7 +384,7 @@ Rp-Bp runs through the upstream `nf-core/rpbp/*` modules driven by the `FASTA_GT
 
 Per-sample final-prediction outputs - filtered BED of predicted ORFs (with Bayes factor in column 5), plus matched nucleotide and protein FASTAs - are published under `<outdir>/orf_predictions/rpbp/`.
 
-**Annotation.** Rp-Bp is given the full multi-isoform `--gtf` annotation, not the one-transcript-per-gene canonical backbone that the pipeline uses elsewhere to disambiguate P-site quantification. Rp-Bp enumerates candidate ORFs across every transcript isoform (deduplicating identical ORFs by genomic coordinate) and then resolves redundant and overlapping ORFs itself - the longest ORF per stop codon, then the highest Bayes factor among overlaps. Collapsing the annotation to one isoform per gene would silently remove ORFs that exist only on non-canonical isoforms (alternative-5'UTR uORFs, isoform-specific N-terminal extensions or truncations, retained-intron and alternative-exon ORFs) and bias the reported ORF types toward canonical CDS, with no compensating benefit; PRICE is handled the same way and for the same reason ([Malone et al., 2017](https://academic.oup.com/nar/article/45/6/2960/2953491)). Under `--extended_orf_analysis true` Rp-Bp instead receives the hybrid GTF, so novel transcripts are within discovery scope in the same way as Ribo-TISH `predict` and Ribotricer.
+**Annotation.** Rp-Bp is given the full multi-isoform `--gtf` annotation, not the one-transcript-per-gene canonical backbone that the pipeline uses elsewhere to disambiguate P-site quantification. Rp-Bp enumerates candidate ORFs across every transcript isoform (deduplicating identical ORFs by genomic coordinate) and then resolves redundant and overlapping ORFs itself - the longest ORF per stop codon, then the highest Bayes factor among overlaps. Collapsing the annotation to one isoform per gene would silently remove ORFs that exist only on non-canonical isoforms (alternative-5'UTR uORFs, isoform-specific N-terminal extensions or truncations, retained-intron and alternative-exon ORFs) and bias the reported ORF types toward canonical CDS, with no compensating benefit; PRICE is handled the same way and for the same reason ([Malone et al., 2017](https://academic.oup.com/nar/article/45/6/2960/2953491)). Under `--extended_orf_analysis true` Rp-Bp receives the full reference with the novel intergenic genes appended, so novel transcripts come into discovery scope without giving up the isoforms.
 
 > :information_source: **STAR alignment params vs upstream rpbp.** rpbp's own pipeline runs STAR with Ribo-seq-tuned settings (`outFilterMismatchNmax 1`, `outFilterMismatchNoverLmax 0.04`, `outFilterType BySJout`, `sjdbOverhang 33`, `winAnchorMultimapNmax 100`, `seedSearchStartLmaxOverLread 0.5`). We use the pipeline's standard STAR alignment (shared with the RNA-seq side of paired runs), which is more permissive. Practical impact: rpbp processes whatever alignments it gets, but periodicity / Bayes-factor distributions will differ from a standalone rpbp run on the same FASTQs. If you need bit-identical-to-standalone-rpbp output, override with `--extra_star_align_args '--outFilterMismatchNmax 1 --outFilterMismatchNoverLmax 0.04 --outFilterType BySJout --winAnchorMultimapNmax 100 --seedSearchStartLmaxOverLread 0.5'`. Note that `sjdbOverhang` is baked into the STAR index and cannot be changed post-hoc - it would require regenerating the index with `--sjdbOverhang 33`, and that change would only be appropriate for a Ribo-seq-only run (RNA-seq reads are too long for that setting). Tracked for future work: [#173](https://github.com/nf-core/riboseq/issues/173).
 
@@ -360,7 +398,7 @@ The pipeline builds a binary `.oml` genome index via `gedi -e IndexGenome` once 
 
 **Annotation.** Like Rp-Bp, PRICE is given the full multi-isoform `--gtf` annotation rather than the one-transcript-per-gene canonical backbone: it resolves overlapping ORFs and rescues multimappers with its own EM, so restricting it to a single isoform per gene would only narrow ORF discovery and bias ORF-type classification toward canonical CDS.
 
-When `--extended_orf_analysis true` is set, PRICE's IndexGenome receives the hybrid GTF so ORFs on novel intergenic transcripts are within its discovery scope.
+When `--extended_orf_analysis true` is set, PRICE's IndexGenome is built from the full reference with the novel intergenic genes appended, so ORFs on novel transcripts come into scope without giving up the isoforms.
 
 PRICE's CLI banner reports `Price version 1.0.4` while the Bioconda package is `gedi 1.0.6a` (Price is one tool inside the Gedi umbrella). The pipeline captures the package version via `gedi -e Version` for `versions.yml`.
 
@@ -396,7 +434,9 @@ When `--extended_orf_analysis true` is set with `--te_quantification_method plas
 - `deltate`: DESeq2 with a `~ condition + seq_type + condition:seq_type` interaction model.
 - `dotseq` (ORF-level only): DOTSeq's ORF-level differential translation efficiency (DESeq2 + ashr) AND its DOTSeq-specific DOU contrast - a per-gene beta-binomial GLM modelling whether each ORF gains or loses a share of its parent gene's ribosome occupancy across conditions (the question "is this ORF gaining ribosomes at the expense of its siblings?", which DTE alone can't answer). Selecting `dotseq` requires `--extended_orf_analysis true` and an enabled ORF caller; the gene-level fit is skipped.
 
-A pre-processing step joins the per-ORF P-site count matrix (`<outdir>/orf_quantification/orf_psite_counts.tsv`) with the gene-level Salmon RNA-seq matrix via `orf_to_gene.tsv` from the catalogue, producing one combined count table whose rows are ORFs and whose RNA columns hold the host gene's count replicated across all ORFs sharing that gene. The selected method is then fitted, treating each ORF row as a feature. Results land under `<outdir>/dte/orf_level/<method>/`, alongside the shared combined input matrix (`<outdir>/dte/orf_level/orf_combined_counts.tsv`).
+A pre-processing step joins the per-ORF P-site count matrix (`<outdir>/orf_quantification/orf_psite_counts.tsv`) with a gene-level RNA-seq matrix via `orf_to_gene.tsv` from the catalogue, producing one combined count table whose rows are ORFs and whose RNA columns hold the host gene's count replicated across all ORFs sharing that gene. The selected method is then fitted, treating each ORF row as a feature. Results land under `<outdir>/dte/orf_level/<method>/`, alongside the shared combined input matrix (`<outdir>/dte/orf_level/orf_combined_counts.tsv`).
+
+The RNA-seq matrix used here is quantified against the full reference transcriptome augmented with the novel intergenic transcripts, not the canonical reference alone, using the same STAR-alignment then Salmon path as the primary RNA-seq quantification (so canonical genes match the gene-level denominator rather than being recomputed by a different method). This is what lets ORFs on novel genes participate: their host gene is a novel StringTie gene that does not exist in the canonical reference, so a canonical-only denominator would give them no RNA row and the join would silently drop every such ORF, leaving only novel ORFs that happen to sit on known genes. Canonical genes keep their full-isoform counts (the one-transcript-per-gene backbone used for ORF calling would undercount multi-isoform genes). The augmented RNA-seq matrices are published under `<outdir>/quantification/salmon_hybrid/`. Novel-transcript ORFs are still subject to the low-count caveat below, and their reliability depends on the confidence of the underlying StringTie assembly.
 
 Two caveats apply:
 
@@ -475,7 +515,7 @@ Reads are aligned with STAR, and Salmon quantifies from the transcriptome BAM in
 --te_quantification_method pseudo
 ```
 
-Uses Salmon pseudo-alignment directly from reads for both Ribo-seq and RNA-seq samples. This is an **experimental alternative** that:
+Quantifies reads directly against the transcriptome for both Ribo-seq and RNA-seq samples, without going via the genome alignment. This is an **experimental alternative** that:
 
 - Applies the same k-mer index and quantification algorithm to both modalities
 - May help reduce length-related quantification biases without requiring read trimming
@@ -487,6 +527,34 @@ Consider this option when:
 - You prefer k-mer-based quantification for methodological consistency between modalities
 
 > **Note**: The pseudo-alignment pathway runs **in addition to** the standard STAR alignment, which is still needed for position-dependent analyses (P-sites, ribosome periodicity, ORF detection). The pseudo-alignment counts are only used for TE analysis.
+
+##### Choosing the pseudo-aligner
+
+`--pseudo_aligner` selects the tool used for this pathway, either `salmon` (default) or `kallisto`:
+
+```bash
+--te_quantification_method pseudo --pseudo_aligner kallisto \
+    --kallisto_quant_fraglen 30 --kallisto_quant_fraglen_sd 5
+```
+
+What `--pseudo_aligner` controls:
+
+- The tool that produces the per-sample transcript quantifications feeding the TE analysis, and the `quant_type` handed to tximport
+- Which index is built for the pathway: a Salmon index (supply a pre-built one with `--salmon_index`), or a kallisto index (supply a pre-built index file with `--kallisto_index`)
+- The output subdirectory, `quantification/salmon_te_pseudo` or `quantification/kallisto_te_pseudo`
+
+What it does **not** control:
+
+- The primary STAR genome alignment, which every position-dependent analysis depends on
+- The alignment-mode Salmon quantification of the STAR transcriptome BAM, which always uses Salmon
+- Strandedness inference, which always subsamples and runs Salmon and therefore always needs a Salmon index
+
+kallisto-specific caveats:
+
+- kallisto cannot estimate a fragment length distribution from single-end reads, and Ribo-seq libraries are single-end. `--kallisto_quant_fraglen` and `--kallisto_quant_fraglen_sd` are therefore **required**, and the pipeline exits at startup if they are missing. For Ribo-seq the fragment is the footprint itself, so the values should reflect your observed footprint length distribution (commonly around 30 nt), not a typical RNA-seq insert size. Paired-end RNA-seq samples in the same run ignore them, since kallisto infers the distribution from the pairs.
+- The same two values are applied to every single-end sample in the run, so a cohort mixing libraries with very different insert size distributions is better quantified with Salmon.
+- MultiQC reports kallisto's run logs rather than the richer Salmon quantification metrics.
+- `--pseudo_aligner_kmer_size` is passed to `kallisto index -k`, which requires an odd value no greater than 31.
 
 ### Contrasts specification
 
@@ -580,6 +648,8 @@ When `--extended_orf_analysis true` is set and at least one ORF caller is enable
 - single-exon novel intergenic ORFs are clustered by 80% reciprocal overlap on the outer genomic span;
 - smORFs (≤ 100 aa) are clustered by 80% reciprocal overlap, then peptide-level deduplicated: the catalogue amino-acid FASTA is clustered with MMseqs2 (`--min-seq-id 0.9 -c 0.8`) and each multi-member smORF cluster is folded to one representative, following the GENCODE Ribo-seq ORF catalogue convention (Mudge et al. 2022). Pass `--skip_orf_collapse` to publish the coordinate-merged catalogue without this sequence-level collapse;
 - cross-caller consensus is recorded in `called_by_<caller>` binary columns plus `score_<caller>` columns for Ribo-TISH / RiboCode / Rp-Bp / PRICE (Ribotricer scores are excluded from rank aggregation).
+
+Host gene and transcript ids are resolved against the union of the full multi-isoform annotation (`--gtf`) and the filtered novel transcripts. The callers do not all receive the same annotation (PRICE takes the full multi-isoform reference, the genome-BAM callers the canonical backbone), so only that union covers every transcript an ORF can be reported on; an ORF called on an isoform absent from the annotation falls back to whatever gene label its caller emitted, which for PRICE is every gene its genomic span overlaps, concatenated. The union is also the reference the ORF-level DTE RNA denominator is quantified against, so catalogue gene ids share a namespace with that matrix.
 
 The catalogue runs once per pipeline invocation (cohort-level, not per sample) and gates on `--extended_orf_analysis true` plus a non-empty enabled-caller set. The default-off path keeps the pre-#167 behaviour unchanged.
 

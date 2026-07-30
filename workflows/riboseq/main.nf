@@ -39,6 +39,12 @@ include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../mod
 include { DESEQ2_DELTATE                                       } from '../../modules/local/deseq2/deltate'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_STAR_SALMON    } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
 include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_PSEUDO_TE      } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
+include { QUANTIFY_PSEUDO_ALIGNMENT as QUANTIFY_HYBRID_RNA     } from '../../subworkflows/nf-core/quantify_pseudo_alignment'
+include { GAWK as BUILD_FULL_HYBRID_GTF                        } from '../../modules/nf-core/gawk'
+include { GFFREAD as GFFREAD_FULL_HYBRID                       } from '../../modules/nf-core/gffread'
+include { STAR_GENOMEGENERATE as STAR_GENOMEGENERATE_FULL_HYBRID } from '../../modules/nf-core/star/genomegenerate'
+include { FASTQ_ALIGN_STAR as FASTQ_ALIGN_STAR_FULL_HYBRID     } from '../../subworkflows/nf-core/fastq_align_star'
+include { BAM_DEDUP_UMI as BAM_DEDUP_UMI_HYBRID_RNA            } from '../../subworkflows/nf-core/bam_dedup_umi'
 include { RIBOWALTZ                                            } from '../../modules/nf-core/ribowaltz/main'
 include { PLASTID_METAGENE_GENERATE                            } from '../../modules/nf-core/plastid/metagene_generate/main'
 include { PLASTID_PSITE                                        } from '../../modules/nf-core/plastid/psite/main'
@@ -59,6 +65,7 @@ include { paramsSummaryMultiqc     } from '../../subworkflows/nf-core/utils_nfco
 include { softwareVersionsToYAML   } from '../../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText   } from '../../subworkflows/local/utils_nfcore_riboseq_pipeline'
 include { validateInputSamplesheet } from '../../subworkflows/local/utils_nfcore_riboseq_pipeline'
+include { samplesheetNeedsSalmonForStrandedness } from '../../subworkflows/local/utils_nfcore_riboseq_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -79,9 +86,9 @@ workflow RIBOSEQ {
     ch_chrom_sizes      // channel: path(genome.sizes)
     ch_transcript_fasta // channel: path(transcript.fasta)
     ch_star_index       // channel: path(star/index/)
-    ch_salmon_index     // channel: path(salmon/index/)
-    ch_salmon_index_te  // channel: path(salmon_te/index/) - for TE pseudo-alignment
-    ch_bbsplit_index    // channel: path(bbsplit/index/)
+    ch_salmon_index       // channel: path(salmon/index/)
+    ch_kallisto_index_te  // channel: [ meta, path(kallisto/index/) ] for TE pseudo-alignment
+    ch_bbsplit_index      // channel: path(bbsplit/index/)
     ch_rrna_fastas      // channel: path(fasta)
     ch_sortmerna_index  // channel: path(sortmerna/index/)
     ch_bowtie2_index    // channel: path(bowtie2/index/) for rRNA removal
@@ -128,12 +135,6 @@ workflow RIBOSEQ {
         if (ch_bbsplit_fasta_list.isEmpty()) {exit 1, "File provided with --bbsplit_fasta_list is empty: ${ch_bbsplit_fasta_list.getName()}!"}
     }
 
-    // Check alignment parameters
-    def prepareToolIndices  = []
-    if (!params.skip_bbsplit) { prepareToolIndices << 'bbsplit' }
-    if (params.remove_ribo_rna) { prepareToolIndices << 'sortmerna' }
-    if (!params.skip_alignment) { prepareToolIndices << params.aligner }
-
     ch_multiqc_files = channel.empty()
 
     //
@@ -160,9 +161,9 @@ workflow RIBOSEQ {
     // contaminant removal, strandedness inference
     //
 
-    // The subworkflow only has to do Salmon indexing if it discovers 'auto'
-    // samples, and if we haven't already made one elsewhere
-    salmon_index_available = params.salmon_index || (!params.skip_pseudo_alignment && params.pseudo_aligner == 'salmon')
+    // Must also be true when PREPARE_GENOME built the index, or make_salmon_index
+    // below would tell the subworkflow to rebuild and discard it.
+    salmon_index_available = (params.salmon_index as boolean) || samplesheetNeedsSalmonForStrandedness(params.input)
 
     // Determine if we need to build rRNA removal indexes
     def make_sortmerna_index = !params.sortmerna_index && params.remove_ribo_rna && params.ribo_removal_tool == 'sortmerna'
@@ -189,12 +190,12 @@ workflow RIBOSEQ {
         params.trimmer,                             // trimmer
         params.min_trimmed_reads,                   // min_trimmed_reads
         params.save_trimmed,                        // save_trimmed
-        false,                                      // fastp_merge
+        params.fastp_merge,                         // fastp_merge
         params.remove_ribo_rna,                     // remove_ribo_rna
         params.ribo_removal_tool,                   // ribo_removal_tool
         params.with_umi,                            // with_umi
         params.umi_discard_read,                    // umi_discard_read
-        false,                                      // save_merged_fastq
+        params.save_merged_fastq,                   // save_merged_fastq
         params.stranded_threshold,                  // stranded_threshold
         params.unstranded_threshold                 // unstranded_threshold
     )
@@ -236,7 +237,7 @@ workflow RIBOSEQ {
     //
 
     ch_fasta_fai            = ch_fasta.combine(ch_fai).map { fasta, fai -> [ [:], fasta, fai ] }.first()
-    ch_transcript_fasta_fai = ch_transcript_fasta.map { [ [:], it, [] ] }.first()
+    ch_transcript_fasta_fai = ch_transcript_fasta.map { [ [:], it, [] ] }
 
     FASTQ_ALIGN_STAR(
         ch_reads_for_alignment,
@@ -337,7 +338,7 @@ workflow RIBOSEQ {
             ch_strandedness
         )
 
-        ch_hybrid_gtf = NOVEL_TRANSCRIPT_DISCOVERY.out.hybrid_gtf
+        ch_hybrid_gtf = NOVEL_TRANSCRIPT_DISCOVERY.out.hybrid_gtf.first()
     }
 
     //
@@ -412,6 +413,20 @@ workflow RIBOSEQ {
 
     ch_bams_for_analysis = ch_genome_bam_by_type.riboseq.join(ch_genome_bam_index)
 
+    // Full reference with the novel transcripts appended: a superset of every
+    // annotation the ORF callers are given, the annotation Rp-Bp and PRICE run
+    // against directly, and the reference the ORF-level DTE RNA denominator is
+    // quantified against.
+    ch_full_hybrid_gtf = channel.empty()
+    if (extended_orf_active) {
+        BUILD_FULL_HYBRID_GTF(
+            ch_gtf.combine(ch_hybrid_gtf).map { gtf, hybrid -> [ [id: 'full_hybrid_reference'], [ gtf, hybrid ] ] },
+            file("${projectDir}/assets/build_full_hybrid_gtf.awk"),
+            false
+        )
+        ch_full_hybrid_gtf = BUILD_FULL_HYBRID_GTF.out.output.map { _meta, gtf -> gtf }.first()
+    }
+
     ORF_CALLER_DISPATCH(
         ch_bams_for_analysis,
         ch_transcriptome_bam,
@@ -420,6 +435,7 @@ workflow RIBOSEQ {
         ch_canonical_gtf,
         ch_hybrid_gtf,
         ch_gtf,
+        ch_full_hybrid_gtf,
         extended_orf_active
     )
     ch_versions      = ch_versions.mix(ORF_CALLER_DISPATCH.out.versions)
@@ -467,8 +483,8 @@ workflow RIBOSEQ {
 
         ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE(
             ch_orf_tables,
-            ch_fasta    .map { fasta -> [ [id: 'reference'], fasta ] }.first(),
-            ch_hybrid_gtf.map { gtf   -> [ [id: 'reference'], gtf   ] }.first(),
+            ch_fasta          .map { fasta -> [ [id: 'reference'], fasta ] },
+            ch_full_hybrid_gtf.map { gtf   -> [ [id: 'reference'], gtf   ] },
             !params.skip_orf_collapse
         )
         ch_multiqc_files = ch_multiqc_files.mix(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.multiqc.collect{it[1]}.ifEmpty([]))
@@ -566,7 +582,7 @@ workflow RIBOSEQ {
 
     //
     // SUBWORKFLOW: Pseudo-alignment quantification for TE analysis (when enabled)
-    // Uses direct Salmon pseudo-alignment with a lower k-mer index optimized for short Ribo-seq reads
+    // Quantifies reads directly against a lower k-mer index optimised for short Ribo-seq reads
     //
 
     ch_te_counts = QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled  // Default: use alignment-based counts
@@ -576,19 +592,21 @@ workflow RIBOSEQ {
         ch_reads_for_te = ch_reads_for_alignment
             .filter { meta, reads -> meta.sample_type in ['riboseq', 'rnaseq'] }
 
+        def ch_pseudo_index_te = params.pseudo_aligner == 'kallisto' ? ch_kallisto_index_te : ch_salmon_index
+
         QUANTIFY_PSEUDO_TE (
             ch_samplesheet.map { [ [:], it ] },
             ch_reads_for_te,
-            ch_salmon_index_te,
+            ch_pseudo_index_te,
             ch_transcript_fasta,
             ch_gtf,
             params.gtf_group_features,
             params.gtf_extra_attributes,
-            'salmon',
+            params.pseudo_aligner,
             false,  // alignment_mode = false (pseudo-alignment from reads)
             params.salmon_quant_libtype ?: '',
-            null,
-            null,
+            params.kallisto_quant_fraglen,
+            params.kallisto_quant_fraglen_sd,
             false
         )
         ch_multiqc_files = ch_multiqc_files.mix(QUANTIFY_PSEUDO_TE.out.multiqc.collect{it[1]}.ifEmpty([]))
@@ -603,7 +621,7 @@ workflow RIBOSEQ {
             false
         )
 
-        ch_inframe_psites = GTF_TO_INFRAME_PSITES.out.output.first()
+        ch_inframe_psites = GTF_TO_INFRAME_PSITES.out.output
 
         // Run p-site quantification per sample
         ch_psite_tracks = PLASTID_MAKE_WIGGLE.out.tracks
@@ -679,9 +697,71 @@ workflow RIBOSEQ {
         }
 
         if (extended_orf_active && enabled_orf_callers && !params.skip_plastid) {
+            // ORF-level DTE needs a host-gene RNA denominator for ORFs on novel
+            // transcripts. The primary Salmon matrix is quantified against the
+            // canonical reference only, so novel genes have no row and their
+            // ORFs are dropped. Quantify RNA-seq against the full reference
+            // transcriptome augmented with the novel transcripts, using the
+            // same STAR-align -> Salmon path as the primary quantification so
+            // canonical genes match the gene-level denominator (the
+            // one-transcript-per-gene backbone used for ORF calling would
+            // undercount multi-isoform genes) and novel genes gain a row.
+            GFFREAD_FULL_HYBRID(
+                BUILD_FULL_HYBRID_GTF.out.output,
+                ch_fasta
+            )
+            ch_full_hybrid_transcript_fasta = GFFREAD_FULL_HYBRID.out.gffread_fasta.map { _meta, fasta -> fasta }.first()
+
+            STAR_GENOMEGENERATE_FULL_HYBRID(
+                ch_fasta.map { fasta -> [ [id: 'full_hybrid_reference'], fasta ] },
+                BUILD_FULL_HYBRID_GTF.out.output.map { _meta, gtf -> [ [id: 'full_hybrid_reference'], gtf ] }
+            )
+
+            ch_rnaseq_reads = ch_reads_for_alignment.filter { meta, _reads -> meta.sample_type == 'rnaseq' }
+
+            FASTQ_ALIGN_STAR_FULL_HYBRID(
+                ch_rnaseq_reads,
+                STAR_GENOMEGENERATE_FULL_HYBRID.out.index.map { _meta, index -> [ [:], index ] }.first(),
+                ch_full_hybrid_gtf.map { [ [:], it ] },
+                params.star_ignore_sjdbgtf,
+                ch_fasta_fai,
+                ch_full_hybrid_transcript_fasta.map { [ [:], it, [] ] }
+            )
+
+            ch_full_hybrid_transcriptome_bam = FASTQ_ALIGN_STAR_FULL_HYBRID.out.orig_bam_transcript
+
+            if (params.with_umi) {
+                BAM_DEDUP_UMI_HYBRID_RNA(
+                    FASTQ_ALIGN_STAR_FULL_HYBRID.out.bam.join(FASTQ_ALIGN_STAR_FULL_HYBRID.out.index, by: [0]),
+                    ch_fasta_fai,
+                    params.umi_dedup_tool,
+                    params.umitools_dedup_stats,
+                    FASTQ_ALIGN_STAR_FULL_HYBRID.out.orig_bam_transcript,
+                    ch_full_hybrid_transcript_fasta.map { [ [:], it, [] ] },
+                    params.umitools_dedup_primary_only
+                )
+                ch_full_hybrid_transcriptome_bam = BAM_DEDUP_UMI_HYBRID_RNA.out.transcriptome_bam
+            }
+
+            QUANTIFY_HYBRID_RNA(
+                ch_samplesheet.map { [ [:], it ] },
+                ch_full_hybrid_transcriptome_bam,
+                [],
+                ch_full_hybrid_transcript_fasta,
+                ch_full_hybrid_gtf,
+                params.gtf_group_features,
+                params.gtf_extra_attributes,
+                'salmon',
+                true,
+                params.salmon_quant_libtype ?: '',
+                null,
+                null,
+                false
+            )
+
             DTE_COUNTS_PREP(
                 ch_orf_count_matrix
-                    .combine(QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled.map { _meta, counts -> counts })
+                    .combine(QUANTIFY_HYBRID_RNA.out.counts_gene_length_scaled.map { _meta, counts -> counts })
                     .combine(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.orf_to_gene_tsv.map { _meta, tsv -> tsv })
                     .map { meta, ribo, rna, o2g -> [ meta, ribo, rna, o2g ] }
             )
