@@ -280,7 +280,7 @@ workflow RIBOSEQ {
         ch_genome_bam_index  = BAM_DEDUP_UMI.out.index
 
         ch_multiqc_files = ch_multiqc_files
-            .mix(BAM_DEDUP_UMI.out.multiqc_files)
+            .mix(BAM_DEDUP_UMI.out.multiqc_files.map { _meta, file -> file })
     }
 
     //
