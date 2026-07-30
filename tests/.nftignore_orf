@@ -19,6 +19,7 @@ stringtie/stringtie_merge.gtf
 stringtie/stringtie_merge_filtered.gtf
 stringtie/hybrid_reference.gtf
 stringtie/gffcompare/**
+quantification/salmon_hybrid/tx2gene.tsv
 orf_predictions/ribotish/*_transprofile.py
 orf_predictions/ribotish_all/*_transprofile.py
 dte/orf_level/orf_combined_counts.tsv
