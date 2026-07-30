@@ -607,6 +607,19 @@ When the parameter `--te_quantification_method plastid_psite` is used, the follo
 
   </details>
 
+When the parameter `--te_quantification_method pseudo` is used, reads are quantified directly against the transcriptome by the tool named in `--pseudo_aligner`, and the results are written to a directory named after it:
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `quantification/salmon_te_pseudo/` or `quantification/kallisto_te_pseudo/`
+  - `<SAMPLE>/`: Raw per-sample output from Salmon or kallisto.
+  - `*.merged.te_pseudo.*`: tximport gene- and transcript-level matrices across all samples, in the same layout as `quantification/salmon/` above.
+  - `*.merged.gene_counts.te_pseudo.SummarizedExperiment.rds` / `*.merged.transcript_counts.te_pseudo.SummarizedExperiment.rds`: SummarizedExperiment containers for the merged matrices.
+  - `tx2gene.tsv`: Tab-delimited transcript to gene id mapping used for the summarisation.
+
+  </details>
+
 ## Translational efficiency
 
 The pipeline supports two methods for translational efficiency analysis: anota2seq (default) and deltaTE. The method used depends on the `--translational_efficiency_method` parameter.
