@@ -14,10 +14,10 @@ nextflow_pipeline {
                 outdir                = "$outputDir"
                 extended_orf_analysis = true
                 skip_stringtie        = true
-                // novel_gtf deliberately unset: this is the configuration that
-                // previously produced no catalogue at all. -profile test supplies
-                // contrasts and leaves skip_plastid false, which is what exercises
-                // the ORF quantification and ORF-level DTE paths.
+                // novel_gtf deliberately unset to exercise catalogue construction
+                // without a novel-transcript source. -profile test supplies contrasts
+                // and leaves skip_plastid false, exercising ORF quantification and
+                // ORF-level DTE.
             }
         }
 

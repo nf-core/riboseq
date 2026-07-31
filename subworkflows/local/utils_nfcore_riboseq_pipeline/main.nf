@@ -191,7 +191,7 @@ def validateInputParameters() {
     dotseqPrerequisitesError()
     kallistoPrerequisitesError()
 
-    // Without a novel source only caller routing is a no-op; the catalogue still builds.
+    // Without a novel source, caller routing is a no-op; catalogue construction is independent.
     def novel_source_configured = !params.skip_stringtie || params.novel_gtf
     if (params.extended_orf_analysis && !novel_source_configured) {
         log.warn "--extended_orf_analysis is enabled but no novel-transcript source is configured (--skip_stringtie is true and --novel_gtf is unset). ORF callers will run against their usual annotation rather than a hybrid one; the ORF catalogue is still built."
