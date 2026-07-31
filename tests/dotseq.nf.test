@@ -28,9 +28,12 @@ nextflow_pipeline {
             def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore_orf')
 
             def dotseq_dir = file("${params.outdir}/dte/orf_level/dotseq")
+            def hybrid_gtf = file("${params.outdir}/stringtie/hybrid_reference.gtf")
             assertAll(
                 { assert workflow.success },
                 { assert dotseq_dir.exists() && dotseq_dir.list().length > 0 },
+                { assert hybrid_gtf.readLines().count { line -> line.contains('class_code "u"') } > 0 },
+                { assert hybrid_gtf.readLines().every { line -> !line.contains('class_code') || line.contains('class_code "u"') } },
                 { assert snapshot(
                     removeNextflowVersion("$outputDir/pipeline_info/nf_core_riboseq_software_mqc_versions.yml"),
                     stable_name,
