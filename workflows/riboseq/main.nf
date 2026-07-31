@@ -358,8 +358,18 @@ workflow RIBOSEQ {
     // transcripts would degrade diagnostic plots without any ORF-discovery gain.
     // See docs/usage.md (Extended ORF discovery) for the full rationale.
     //
+    def enabled_orf_callers = []
+    if (!params.skip_ribotish)   { enabled_orf_callers << 'ribotish' }
+    if (!params.skip_ribocode)   { enabled_orf_callers << 'ribocode' }
+    if ( params.run_ribotricer)  { enabled_orf_callers << 'ribotricer' }
+    if ( params.run_rpbp)        { enabled_orf_callers << 'rpbp' }
+    if ( params.run_price)       { enabled_orf_callers << 'price' }
+
+    // Novel transcripts are needed to route hybrid annotation into the callers;
+    // the ORF catalogue only needs callers and a GTF.
     def novel_source_configured = !params.skip_stringtie || params.novel_gtf
     def extended_orf_active = params.extended_orf_analysis && novel_source_configured
+    def orf_catalogue_active = (params.extended_orf_analysis && enabled_orf_callers) as boolean
 
     ch_hybrid_transcriptome_bam = channel.empty()
 
@@ -418,7 +428,7 @@ workflow RIBOSEQ {
     // against directly, and the reference the ORF-level DTE RNA denominator is
     // quantified against.
     ch_full_hybrid_gtf = channel.empty()
-    if (extended_orf_active) {
+    if (extended_orf_active || orf_catalogue_active) {
         BUILD_FULL_HYBRID_GTF(
             ch_gtf.combine(ch_hybrid_gtf).map { gtf, hybrid -> [ [id: 'full_hybrid_reference'], [ gtf, hybrid ] ] },
             file("${projectDir}/assets/build_full_hybrid_gtf.awk"),
@@ -442,31 +452,6 @@ workflow RIBOSEQ {
     ch_multiqc_files = ch_multiqc_files.mix(ORF_CALLER_DISPATCH.out.multiqc_files)
 
     //
-    // Dynamic ORF-caller set for cross-caller agreement.
-    // The enabled list reflects which callers ran at runtime; the agreement
-    // threshold and rank-aggregation set are derived from it so the logic
-    // works whether 2 (default) or 3+ callers are active.
-    //
-    def enabled_orf_callers = []
-    if (!params.skip_ribotish)   { enabled_orf_callers << 'ribotish' }
-    if (!params.skip_ribocode)   { enabled_orf_callers << 'ribocode' }
-    if ( params.run_ribotricer)  { enabled_orf_callers << 'ribotricer' }
-    if ( params.run_rpbp)        { enabled_orf_callers << 'rpbp' }
-    if ( params.run_price)       { enabled_orf_callers << 'price' }
-
-    // Ribotricer contributes binary calls only; its scores are excluded from
-    // the cross-caller rank aggregation due to known rank instability. Rp-Bp's
-    // Bayes factor is stable and is retained for ranking.
-    def rank_aggregation_callers  = enabled_orf_callers - 'ribotricer'
-    // Strict-majority of enabled callers (floor(N/2)+1): N=2 -> 2 (both must
-    // agree), N=3 -> 2 (majority). Adapts as the caller set grows.
-    def orf_agreement_min_callers = enabled_orf_callers
-        ? enabled_orf_callers.size().intdiv(2) + 1
-        : 0
-    ch_enabled_orf_callers      = channel.value(enabled_orf_callers)
-    ch_rank_aggregation_callers = channel.value(rank_aggregation_callers)
-
-    //
     // Cross-sample ORF catalogue. Built once per pipeline run
     // when extended-ORF analysis is enabled AND at least one ORF caller ran.
     // The catalogue normalises each caller's per-sample output into a unified
@@ -474,7 +459,7 @@ workflow RIBOSEQ {
     // CDS, reciprocal overlap for novel intergenic / smORFs), and emits the
     // merged BED12 + sidecar TSV + ORF-to-gene mapping + AA FASTA.
     //
-    if (extended_orf_active && enabled_orf_callers) {
+    if (orf_catalogue_active) {
         ch_orf_tables = ORF_CALLER_DISPATCH.out.ribotish_predictions  .map { meta, f -> [ meta, f, 'ribotish'   ] }
             .mix(ORF_CALLER_DISPATCH.out.ribocode_predictions         .map { meta, f -> [ meta, f, 'ribocode'   ] })
             .mix(ORF_CALLER_DISPATCH.out.ribotricer_predictions       .map { meta, f -> [ meta, f, 'ribotricer' ] })
@@ -543,7 +528,7 @@ workflow RIBOSEQ {
         // predicate as ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE so it only fires when the
         // catalogue exists.
         //
-        if (extended_orf_active && enabled_orf_callers) {
+        if (orf_catalogue_active) {
             ch_orf_psite_tracks = PLASTID_MAKE_WIGGLE.out.tracks
                 .map { meta, tracks -> [ meta, tracks[0], tracks[1] ] }
 
@@ -696,72 +681,76 @@ workflow RIBOSEQ {
             )
         }
 
-        if (extended_orf_active && enabled_orf_callers && !params.skip_plastid) {
-            // ORF-level DTE needs a host-gene RNA denominator for ORFs on novel
-            // transcripts. The primary Salmon matrix is quantified against the
-            // canonical reference only, so novel genes have no row and their
-            // ORFs are dropped. Quantify RNA-seq against the full reference
-            // transcriptome augmented with the novel transcripts, using the
-            // same STAR-align -> Salmon path as the primary quantification so
-            // canonical genes match the gene-level denominator (the
-            // one-transcript-per-gene backbone used for ORF calling would
-            // undercount multi-isoform genes) and novel genes gain a row.
-            GFFREAD_FULL_HYBRID(
-                BUILD_FULL_HYBRID_GTF.out.output,
-                ch_fasta
-            )
-            ch_full_hybrid_transcript_fasta = GFFREAD_FULL_HYBRID.out.gffread_fasta.map { _meta, fasta -> fasta }.first()
-
-            STAR_GENOMEGENERATE_FULL_HYBRID(
-                ch_fasta.map { fasta -> [ [id: 'full_hybrid_reference'], fasta ] },
-                BUILD_FULL_HYBRID_GTF.out.output.map { _meta, gtf -> [ [id: 'full_hybrid_reference'], gtf ] }
-            )
-
-            ch_rnaseq_reads = ch_reads_for_alignment.filter { meta, _reads -> meta.sample_type == 'rnaseq' }
-
-            FASTQ_ALIGN_STAR_FULL_HYBRID(
-                ch_rnaseq_reads,
-                STAR_GENOMEGENERATE_FULL_HYBRID.out.index.map { _meta, index -> [ [:], index ] }.first(),
-                ch_full_hybrid_gtf.map { [ [:], it ] },
-                params.star_ignore_sjdbgtf,
-                ch_fasta_fai,
-                ch_full_hybrid_transcript_fasta.map { [ [:], it, [] ] }
-            )
-
-            ch_full_hybrid_transcriptome_bam = FASTQ_ALIGN_STAR_FULL_HYBRID.out.orig_bam_transcript
-
-            if (params.with_umi) {
-                BAM_DEDUP_UMI_HYBRID_RNA(
-                    FASTQ_ALIGN_STAR_FULL_HYBRID.out.bam.join(FASTQ_ALIGN_STAR_FULL_HYBRID.out.index, by: [0]),
-                    ch_fasta_fai,
-                    params.umi_dedup_tool,
-                    params.umitools_dedup_stats,
-                    FASTQ_ALIGN_STAR_FULL_HYBRID.out.orig_bam_transcript,
-                    ch_full_hybrid_transcript_fasta.map { [ [:], it, [] ] },
-                    params.umitools_dedup_primary_only
+        if (orf_catalogue_active && !params.skip_plastid) {
+            // ORF-level DTE needs a host-gene RNA denominator. Novel genes have no
+            // row in the primary Salmon matrix, so with a novel source present the
+            // RNA-seq reads are requantified against the full reference plus novel
+            // transcripts. Without one there are no novel genes, so the primary
+            // matrix already covers every host gene and is reused directly.
+            if (extended_orf_active) {
+                GFFREAD_FULL_HYBRID(
+                    BUILD_FULL_HYBRID_GTF.out.output,
+                    ch_fasta
                 )
-                ch_full_hybrid_transcriptome_bam = BAM_DEDUP_UMI_HYBRID_RNA.out.transcriptome_bam
-            }
+                ch_full_hybrid_transcript_fasta = GFFREAD_FULL_HYBRID.out.gffread_fasta.map { _meta, fasta -> fasta }.first()
 
-            QUANTIFY_HYBRID_RNA(
-                ch_samplesheet.map { [ [:], it ] },
-                ch_full_hybrid_transcriptome_bam,
-                [],
-                ch_full_hybrid_transcript_fasta,
-                ch_full_hybrid_gtf,
-                params.gtf_group_features,
-                params.gtf_extra_attributes,
-                'salmon',
-                true,
-                params.salmon_quant_libtype ?: '',
-                null,
-                null,
-                false
-            )
+                STAR_GENOMEGENERATE_FULL_HYBRID(
+                    ch_fasta.map { fasta -> [ [id: 'full_hybrid_reference'], fasta ] },
+                    BUILD_FULL_HYBRID_GTF.out.output.map { _meta, gtf -> [ [id: 'full_hybrid_reference'], gtf ] }
+                )
+
+                ch_rnaseq_reads = ch_reads_for_alignment.filter { meta, _reads -> meta.sample_type == 'rnaseq' }
+
+                FASTQ_ALIGN_STAR_FULL_HYBRID(
+                    ch_rnaseq_reads,
+                    STAR_GENOMEGENERATE_FULL_HYBRID.out.index.map { _meta, index -> [ [:], index ] }.first(),
+                    ch_full_hybrid_gtf.map { [ [:], it ] },
+                    params.star_ignore_sjdbgtf,
+                    ch_fasta_fai,
+                    ch_full_hybrid_transcript_fasta.map { [ [:], it, [] ] }
+                )
+
+                ch_full_hybrid_transcriptome_bam = FASTQ_ALIGN_STAR_FULL_HYBRID.out.orig_bam_transcript
+
+                if (params.with_umi) {
+                    BAM_DEDUP_UMI_HYBRID_RNA(
+                        FASTQ_ALIGN_STAR_FULL_HYBRID.out.bam.join(FASTQ_ALIGN_STAR_FULL_HYBRID.out.index, by: [0]),
+                        ch_fasta_fai,
+                        params.umi_dedup_tool,
+                        params.umitools_dedup_stats,
+                        FASTQ_ALIGN_STAR_FULL_HYBRID.out.orig_bam_transcript,
+                        ch_full_hybrid_transcript_fasta.map { [ [:], it, [] ] },
+                        params.umitools_dedup_primary_only
+                    )
+                    ch_full_hybrid_transcriptome_bam = BAM_DEDUP_UMI_HYBRID_RNA.out.transcriptome_bam
+                }
+
+                QUANTIFY_HYBRID_RNA(
+                    ch_samplesheet.map { [ [:], it ] },
+                    ch_full_hybrid_transcriptome_bam,
+                    [],
+                    ch_full_hybrid_transcript_fasta,
+                    ch_full_hybrid_gtf,
+                    params.gtf_group_features,
+                    params.gtf_extra_attributes,
+                    'salmon',
+                    true,
+                    params.salmon_quant_libtype ?: '',
+                    null,
+                    null,
+                    false
+                )
+
+                ch_orf_dte_rna_counts = QUANTIFY_HYBRID_RNA.out.counts_gene_length_scaled
+            }
+            else {
+                // DTE_COUNTS_PREP drops the Ribo-seq columns it carries.
+                ch_orf_dte_rna_counts = QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled
+            }
 
             DTE_COUNTS_PREP(
                 ch_orf_count_matrix
-                    .combine(QUANTIFY_HYBRID_RNA.out.counts_gene_length_scaled.map { _meta, counts -> counts })
+                    .combine(ch_orf_dte_rna_counts.map { _meta, counts -> counts })
                     .combine(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.orf_to_gene_tsv.map { _meta, tsv -> tsv })
                     .map { meta, ribo, rna, o2g -> [ meta, ribo, rna, o2g ] }
             )

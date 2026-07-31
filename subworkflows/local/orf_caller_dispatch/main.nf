@@ -40,7 +40,7 @@ workflow ORF_CALLER_DISPATCH {
     ch_canonical_gtf         // value channel: path(canonical.gtf)
     ch_hybrid_gtf            // value channel: path(hybrid.gtf)  - equals canonical when no novel source
     ch_gtf                   // value channel: path(genome.gtf)  - full multi-isoform, used by RiboCode when not extended
-    // Same contract while extended-ORF analysis is active; empty and unread otherwise.
+    // Same contract; populated whenever the hybrid GTF is built.
     ch_full_hybrid_gtf       // value channel: path(full_hybrid.gtf) - ch_gtf plus the novel genes
     extended_orf_active      // val: bool
 

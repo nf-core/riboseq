@@ -622,7 +622,9 @@ By default, all ORF callers run against the canonical backbone GTF so the pipeli
 - **Ribotricer `prepare-orfs`**: hybrid GTF directly (Ribotricer has no secondary-annotation concept; CDS-absent novel transcripts are auto-labelled `novel`).
 - **RiboCode**: hybrid GTF as the annotation source plus a hybrid transcriptome BAM produced by a second STAR alignment pass (see below).
 
-A novel-transcript source must be configured — `--skip_stringtie false` or `--novel_gtf <path>`. If `--extended_orf_analysis true` is set without one of those, the pipeline warns and falls back to the canonical GTF (the flag is a no-op rather than an error so users can compose flags incrementally).
+A novel-transcript source — `--skip_stringtie false` or `--novel_gtf <path>` — is required to route hybrid annotation into the callers. If `--extended_orf_analysis true` is set without one, the pipeline warns and the callers fall back to their usual annotation, but the cross-caller ORF catalogue, per-ORF P-site quantification and ORF-level DTE are still produced, built against the full reference annotation. Note `--skip_stringtie` defaults to `true`.
+
+Two caveats when comparing runs. Catalogue `orf_id` values are assigned by coordinate order, so adding novel transcripts renumbers every ORF downstream of them — compare runs on genomic coordinates, never on `orf_id`. And with a single enabled caller the consensus view carries no cross-caller information; with `--orf_min_callers 2` it is empty, and the pipeline warns.
 
 ### Second STAR pass for RiboCode
 
