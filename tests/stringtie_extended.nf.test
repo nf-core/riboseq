@@ -28,10 +28,28 @@ nextflow_pipeline {
 
             def hybrid_gtf            = file("${params.outdir}/transcript_assembly/stringtie/hybrid_reference.gtf")
             def ribotish_pred_all     = file("${params.outdir}/orf_predictions/ribotish_all/allsamples_pred.txt")
+
+            // An ORF whose gene id is missing from the RNA-seq matrix is
+            // dropped from the ORF-level DTE join without an error.
+            def orf_to_gene = file("${params.outdir}/orf_predictions/catalogue/cohort.catalogue.orf_to_gene.tsv").readLines()
+            def catalogue_genes = orf_to_gene.drop(1)
+                .collect { it.split('\t', -1)[1] }
+                .findAll { it }
+                .unique()
+            def rna_genes = file("${params.outdir}/quantification/salmon_hybrid/salmon.merged.hybrid.gene_counts_length_scaled.tsv")
+                .readLines()
+                .drop(1)
+                .collect { it.split('\t')[0] }
+                .toSet()
+
             assertAll(
                 { assert workflow.success},
                 { assert hybrid_gtf.exists() && hybrid_gtf.size() > 0 },
+                { assert hybrid_gtf.readLines().count { line -> line.contains('class_code "u"') } > 0 },
+                { assert hybrid_gtf.readLines().every { line -> !line.contains('class_code') || line.contains('class_code "u"') } },
                 { assert ribotish_pred_all.exists() && ribotish_pred_all.size() > 0 },
+                { assert catalogue_genes.size() > 0 },
+                { assert catalogue_genes.every { rna_genes.contains(it) } },
                 { assert snapshot(
                     // pipeline versions.yml file for multiqc from which Nextflow version is removed because we test pipelines on multiple Nextflow versions
                     removeNextflowVersion("$outputDir/pipeline_info/nf_core_riboseq_software_mqc_versions.yml"),

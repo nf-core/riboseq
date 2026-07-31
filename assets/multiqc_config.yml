@@ -58,7 +58,6 @@ run_modules:
 # Order of modules
 top_modules:
   - "fail_trimmed_samples"
-  - "fail_mapped_samples"
   - "fail_strand_check"
   - "star_rsem_deseq2_pca"
   - "star_rsem_deseq2_clustering"
@@ -279,15 +278,6 @@ custom_data:
       table_title: "Samples failed trimming threshold"
       namespace: "Samples failed trimming threshold"
       format: "{:.0f}"
-  fail_mapped_samples:
-    section_name: "WARNING: Fail Alignment Check"
-    description: "List of samples that failed the STAR minimum mapped reads threshold specified via the '--min_mapped_reads' parameter, and hence were ignored for the downstream processing steps."
-    plot_type: "table"
-    pconfig:
-      id: "fail_mapped_samples_table"
-      table_title: "Samples failed mapping threshold"
-      namespace: "Samples failed mapping threshold"
-      format: "{:.2f}"
   fail_strand_check:
     section_name: "WARNING: Fail Strand Check"
     description: "List of samples that failed the strandedness check between that provided in the samplesheet and calculated by the <a href='http://rseqc.sourceforge.net/#infer-experiment-py'>RSeQC infer_experiment.py</a> tool."

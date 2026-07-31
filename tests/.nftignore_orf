@@ -1,5 +1,10 @@
 # Extended-ORF analysis variant: extends .nftignore with MultiQC
 # aggregates that include non-deterministic hybrid-STAR sample data.
+#
+# StringTie assigns MSTRG gene/transcript ids in an order that varies
+# between runs, so the merged assembly and everything derived from it
+# (class-code filter output, hybrid GTF, ribotish transcript profiles)
+# has run-varying content. The tests assert on their structure instead.
 .DS_Store
 alignment/star/**/*.bam.stats
 alignment/star/**/*.{bam,bam.bai}
@@ -10,7 +15,13 @@ alignment/hybrid_star/log/SRX*.hybrid.SJ.out.tab
 alignment/hybrid_star/original/**
 alignment/hybrid_star/sorted/**
 transcript_assembly/stringtie/SRX*.denovo.transcripts.gtf
+transcript_assembly/stringtie/stringtie_merge.gtf
+transcript_assembly/stringtie/stringtie_merge_filtered.gtf
+transcript_assembly/stringtie/hybrid_reference.gtf
 transcript_assembly/stringtie/gffcompare/**
+quantification/salmon_hybrid/tx2gene.tsv
+orf_predictions/ribotish/*_transprofile.py
+orf_predictions/ribotish_all/*_transprofile.py
 translational_efficiency/orf_level/orf_combined_counts.tsv
 multiqc/multiqc_plots/{svg,pdf,png}/*.{svg,pdf,png}
 multiqc/multiqc_report.html
@@ -86,6 +97,17 @@ quantification/salmon_te_pseudo/*/quant.sf
 quantification/salmon_te_pseudo/*.rds
 quantification/salmon_te_pseudo/**/*.rds
 quantification/salmon_te_pseudo/salmon.merged.te_pseudo.*.tsv
+quantification/salmon_hybrid/*/aux_info/ambig_info.tsv
+quantification/salmon_hybrid/*/aux_info/expected_bias.gz
+quantification/salmon_hybrid/*/aux_info/fld.gz
+quantification/salmon_hybrid/*/aux_info/meta_info.json
+quantification/salmon_hybrid/*/libParams/flenDist.txt
+quantification/salmon_hybrid/*/logs/salmon_quant.log
+quantification/salmon_hybrid/*/quant.genes.sf
+quantification/salmon_hybrid/*/quant.sf
+quantification/salmon_hybrid/*.rds
+quantification/salmon_hybrid/**/*.rds
+quantification/salmon_hybrid/salmon.merged.hybrid.*.tsv
 quantification/inframe_psite/*
 riboseq_qc/ribotish/*_qual.pdf
 psites/ribowaltz/**/*.pdf

@@ -125,6 +125,14 @@
                     "fa_icon": "fas fa-bezier-curve",
                     "description": "Path to directory or tar.gz archive for pre-built Salmon index."
                 },
+                "kallisto_index": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "fa_icon": "fas fa-bezier-curve",
+                    "description": "Path to a pre-built kallisto index file.",
+                    "help_text": "Only used with `--pseudo_aligner kallisto` and `--te_quantification_method pseudo`. This is the single index file written by `kallisto index -i`, not a directory. It must have been built with a k-mer size appropriate for Ribo-seq read lengths; see `--pseudo_aligner_kmer_size`."
+                },
                 "gencode": {
                     "type": "boolean",
                     "fa_icon": "fas fa-code-branch",
@@ -362,22 +370,30 @@
                 },
                 "pseudo_aligner": {
                     "type": "string",
-                    "description": "Specifies the pseudo aligner to use - available options are 'salmon' or 'kallisto'. Runs in addition to the main aligner.",
+                    "default": "salmon",
+                    "description": "Pseudo-aligner used for translational efficiency quantification under `--te_quantification_method pseudo`.",
+                    "help_text": "Only takes effect when `--te_quantification_method pseudo` is set. It does not change the primary STAR alignment, the alignment-mode Salmon quantification of the transcriptome BAM, or strandedness inference, all of which always use STAR and Salmon. With `kallisto`, single-end libraries additionally require `--kallisto_quant_fraglen` and `--kallisto_quant_fraglen_sd`.",
                     "fa_icon": "fas fa-fish",
                     "enum": ["salmon", "kallisto"]
-                },
-                "skip_pseudo_alignment": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Skip pseudo alignment and quantification.",
-                    "fa_icon": "fas fa-forward"
                 },
                 "pseudo_aligner_kmer_size": {
                     "type": "integer",
                     "default": 23,
+                    "minimum": 1,
                     "description": "Kmer length passed to Salmon indexing for pseudo-alignment quantification.",
                     "help_text": "This parameter controls the k-mer size when building the Salmon index. In this pipeline, it primarily affects the TE pseudo-alignment method (--te_quantification_method pseudo). The default of 23 is suitable for short Ribo-seq reads. It is also used internally for strandedness detection, where the exact value is less critical.",
                     "fa_icon": "fas fa-ruler-horizontal"
+                },
+                "kallisto_quant_fraglen": {
+                    "type": "integer",
+                    "fa_icon": "fas fa-ruler-horizontal",
+                    "description": "Estimated average fragment length required by kallisto for single-end libraries.",
+                    "help_text": "kallisto cannot infer the fragment length distribution from single-end reads and refuses to run without it. Required whenever `--pseudo_aligner kallisto` is combined with `--te_quantification_method pseudo`, because Ribo-seq libraries are single-end."
+                },
+                "kallisto_quant_fraglen_sd": {
+                    "type": "integer",
+                    "fa_icon": "fas fa-ruler-horizontal",
+                    "description": "Estimated standard deviation of the fragment length required by kallisto for single-end libraries."
                 },
                 "bam_csi_index": {
                     "type": "boolean",
@@ -413,13 +429,6 @@
                         "U"
                     ]
                 },
-                "min_mapped_reads": {
-                    "type": "number",
-                    "default": 5.0,
-                    "fa_icon": "fas fa-percentage",
-                    "description": "Minimum percentage of uniquely mapped reads below which samples are removed from further processing.",
-                    "help_text": "Some downstream steps in the pipeline will fail if this threshold is too low."
-                },
                 "seq_center": {
                     "type": "string",
                     "description": "Sequencing center information to be added to read group of BAM files.",
@@ -433,6 +442,11 @@
                 "extra_salmon_quant_args": {
                     "type": "string",
                     "description": "Extra arguments to pass to Salmon quant command in addition to defaults defined by the pipeline.",
+                    "fa_icon": "fas fa-plus"
+                },
+                "extra_kallisto_quant_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to the kallisto quant command in addition to defaults defined by the pipeline.",
                     "fa_icon": "fas fa-plus"
                 },
                 "stranded_threshold": {
@@ -700,11 +714,6 @@
                     "description": "Skip the adapter trimming step.",
                     "help_text": "Use this if your input FastQ files have already been trimmed outside of the workflow or if you're very confident that there is no adapter contamination in your data.",
                     "fa_icon": "fas fa-fast-forward"
-                },
-                "skip_alignment": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-fast-forward",
-                    "description": "Skip all of the alignment-based processes within the pipeline."
                 },
                 "skip_markduplicates": {
                     "type": "boolean",
