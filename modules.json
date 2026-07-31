@@ -494,12 +494,12 @@
                     },
                     "gtf_hybridmerge_gffcompare": {
                         "branch": "master",
-                        "git_sha": "bf60969a3abb40d294cffd5105f574637bfa6260",
+                        "git_sha": "5ca7e22642f230ed5fbc6684857421cf6ccd7393",
                         "installed_by": ["subworkflows"]
                     },
                     "orftable_fasta_gtf_buildorfcatalogue": {
                         "branch": "master",
-                        "git_sha": "edbcc72a8def5a4439106a26e554056121facaf1",
+                        "git_sha": "23ca2b32dacbfc86c23af4ea6413ce96a022ea85",
                         "installed_by": ["subworkflows"]
                     },
                     "quant_tximport_summarizedexperiment": {

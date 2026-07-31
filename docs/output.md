@@ -366,9 +366,9 @@ The hybrid GTF is published as a side product and exposed on the `hybrid_gtf` wo
   - `<SAMPLE>.denovo.transcripts.gtf`: Per-sample reference-guided assembly (only produced when StringTie ran; the `.denovo` prefix marks these as inputs to the merge step).
   - `stringtie_merge.gtf`: Merged annotation produced by `stringtie --merge` across all per-sample assemblies. Novel transcripts appear with `MSTRG.*` IDs. Absent when `--novel_gtf` is used.
   - `gffcompare/`: Full gffcompare output (`*.annotated.gtf`, `*.stats`, `*.tracking`, `*.loci`, etc.) classifying novel transcripts against the full reference annotation.
-  - `novel_filtered.gtf`: Novel transcripts retained after the gffcompare class-code filter (default class `u` = intergenic only).
-  - `novel_filtered.blacklisted.gtf`: Class-filtered novel transcripts after the optional rRNA/repeat blacklist intersect (only present when `--rrna_blacklist` is supplied).
-  - `hybrid_reference.gtf`: Canonical reference + filtered novel transcripts, sorted by chromosome and start coordinate. Exposed as the `hybrid_gtf` workflow emit channel.
+  - `stringtie_merge_filtered.gtf` (`novel_gtf_filtered.gtf` when `--novel_gtf` is used): Novel transcripts retained after the gffcompare class-code filter (default class `u` = intergenic only).
+  - `stringtie_merge_blacklisted.gtf` (`novel_gtf_blacklisted.gtf` when `--novel_gtf` is used): Class-filtered novel transcripts after the optional rRNA/repeat blacklist intersect (only present when `--rrna_blacklist` is supplied).
+  - `hybrid_reference.gtf`: Canonical reference records followed by the filtered novel records, with a synthesised `gene` row for each novel gene absent from the canonical backbone. Exposed as the `hybrid_gtf` workflow emit channel.
 
 </details>
 
