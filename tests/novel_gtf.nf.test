@@ -1,0 +1,57 @@
+nextflow_pipeline {
+
+    name "Test pipeline with --novel_gtf bypass and --extended_orf_analysis"
+    script "../main.nf"
+    tag "pipeline"
+    tag "pipeline_riboseq"
+    tag "novel_gtf"
+    tag "extended_orf_analysis"
+
+    test("-profile test --novel_gtf <synthetic intergenic chr20 GTF> --extended_orf_analysis true") {
+
+        when {
+            params {
+                outdir                  = "$outputDir"
+                novel_gtf               = "${projectDir}/tests/data/novel_intergenic_chr20.gtf"
+                extended_orf_analysis   = true
+                skip_stringtie          = true
+                // run_ribotricer left at default false: the chr20 test data
+                // is too sparse for ribotricer's periodicity inference (no
+                // periodic read length found). The hybrid-GTF wiring into
+                // Ribotricer is structurally identical to canonical wiring;
+                // the Ribo-TISH predict path below covers the extended ORF
+                // discovery semantics.
+            }
+        }
+
+        then {
+            // stable_name: All files + folders in ${params.outdir}/ with a stable name
+            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}', 'hybrid_star/**'])
+            // stable_path: All files in ${params.outdir}/ with stable content
+            def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore_orf')
+
+            def hybrid_gtf            = file("${params.outdir}/stringtie/hybrid_reference.gtf")
+            def ribotish_pred_all     = file("${params.outdir}/orf_predictions/ribotish_all/allsamples_pred.txt")
+            assertAll(
+                { assert workflow.success},
+                { assert hybrid_gtf.exists() && hybrid_gtf.size() > 0 },
+                { assert ribotish_pred_all.exists() && ribotish_pred_all.size() > 0 },
+                { assert snapshot(
+                    // pipeline versions.yml file for multiqc from which Nextflow version is removed because we test pipelines on multiple Nextflow versions
+                    removeNextflowVersion("$outputDir/pipeline_info/nf_core_riboseq_software_mqc_versions.yml"),
+                    // All stable path name, with a relative path
+                    stable_name,
+                    // All files with stable contents
+                    stable_path
+                ).match() }
+            )
+        }
+
+        cleanup {
+            if (System.getenv("NFT_PROFILE")?.contains("docker")) {
+                "docker system prune -a -f --volumes".execute()
+            }
+            new File("${launchDir}").deleteDir()
+        }
+    }
+}

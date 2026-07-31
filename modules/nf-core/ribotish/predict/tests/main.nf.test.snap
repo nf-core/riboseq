@@ -1,0 +1,154 @@
+{
+    "sarscov2 [bam] - single_end - single ribo bam - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test",
+                        "single_end": true,
+                        "strandedness": "forward"
+                    },
+                    "test_pred.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test",
+                        "single_end": true,
+                        "strandedness": "forward"
+                    },
+                    "test_all.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test",
+                        "single_end": true,
+                        "strandedness": "forward"
+                    },
+                    "test_transprofile.py:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            {
+                "versions_ribotish": [
+                    [
+                        "RIBOTISH_PREDICT",
+                        "ribotish",
+                        "0.2.8"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-05-19T10:03:51.7008198",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.1"
+        }
+    },
+    "sarscov2 [bam] - single_end - multi ribo bam - stub": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test",
+                        "single_end": true,
+                        "strandedness": "forward"
+                    },
+                    "test_pred.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test",
+                        "single_end": true,
+                        "strandedness": "forward"
+                    },
+                    "test_all.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test",
+                        "single_end": true,
+                        "strandedness": "forward"
+                    },
+                    "test_transprofile.py:md5,d41d8cd98f00b204e9800998ecf8427e"
+                ]
+            ],
+            {
+                "versions_ribotish": [
+                    [
+                        "RIBOTISH_PREDICT",
+                        "ribotish",
+                        "0.2.8"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-05-19T10:04:37.952263709",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.1"
+        }
+    },
+    "sarscov2 [bam] - single_end - multi ribo bam": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test",
+                        "single_end": true,
+                        "strandedness": "forward"
+                    },
+                    "test_transprofile.py:md5,202a5b5983806e8d9f242c6157736357"
+                ]
+            ],
+            {
+                "versions_ribotish": [
+                    [
+                        "RIBOTISH_PREDICT",
+                        "ribotish",
+                        "0.2.8"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-05-19T10:04:30.097163994",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.1"
+        }
+    },
+    "sarscov2 [bam] - single_end - single ribo bam": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test",
+                        "single_end": true,
+                        "strandedness": "forward"
+                    },
+                    "test_transprofile.py:md5,3e6aaa9ec9f3346ae8c838da2d415924"
+                ]
+            ],
+            {
+                "versions_ribotish": [
+                    [
+                        "RIBOTISH_PREDICT",
+                        "ribotish",
+                        "0.2.8"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-05-19T10:03:43.377664597",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.1"
+        }
+    }
+}
