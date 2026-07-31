@@ -127,9 +127,9 @@ To facilitate processing of input data which has the UMI barcode already embedde
 
 </details>
 
-[Trim Galore!](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/) is a wrapper tool around Cutadapt and FastQC to peform quality and adapter trimming on FastQ files. Trim Galore! will automatically detect and trim the appropriate adapter sequence. It is the default trimming tool used by this pipeline, however you can use fastp instead by specifying the `--trimmer fastp` parameter. You can specify additional options for Trim Galore! via the `--extra_trimgalore_args` parameters.
+[Trim Galore!](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/) performs quality and adapter trimming on FastQ files, and will automatically detect and trim the appropriate adapter sequence. The 2.x series is a self-contained Rust program with both adapter trimming and FastQC reporting built in, so it no longer wraps external Cutadapt or FastQC installations. It is the default trimming tool used by this pipeline, however you can use fastp instead by specifying the `--trimmer fastp` parameter. You can specify additional options for Trim Galore! via the `--extra_trimgalore_args` parameters.
 
-> **NB:** TrimGalore! will only run using multiple cores if you are able to use more than > 5 and > 6 CPUs for single- and paired-end data, respectively. The total cores available to TrimGalore! will also be capped at 4 (7 and 8 CPUs in total for single- and paired-end data, respectively) because there is no longer a run-time benefit. See [release notes](https://github.com/FelixKrueger/TrimGalore/blob/master/Changelog.md#version-060-release-on-1-mar-2019) and [discussion whilst adding this logic to the nf-core/atacseq pipeline](https://github.com/nf-core/atacseq/pull/65).
+> **NB:** The pipeline reserves threads for Trim Galore!'s non-worker roles, passing `--cores` as `task.cpus - 3` for single-end and `task.cpus - 4` for paired-end data, clamped to between 1 and 8. Multi-core trimming therefore requires more than 4 CPUs for single-end data and more than 5 for paired-end data, and the cap of 8 worker cores is reached at 11 and 12 CPUs respectively. Trim Galore! 2.x uses an N+4 thread model (N workers plus two decompressors, a batcher and a writer) and scales near-linearly up to `--cores 8`, beyond which gzip output I/O usually becomes the limiting factor rather than worker capacity. See the [Trim Galore! changelog](https://github.com/FelixKrueger/TrimGalore/blob/master/CHANGELOG.md) and the [discussion whilst adding this logic to the nf-core/atacseq pipeline](https://github.com/nf-core/atacseq/pull/65).
 
 ![MultiQC - cutadapt trimmed sequence length plot](images/mqc_cutadapt_trimmed.png)
 
@@ -366,9 +366,9 @@ The hybrid GTF is published as a side product and exposed on the `hybrid_gtf` wo
   - `<SAMPLE>.denovo.transcripts.gtf`: Per-sample reference-guided assembly (only produced when StringTie ran; the `.denovo` prefix marks these as inputs to the merge step).
   - `stringtie_merge.gtf`: Merged annotation produced by `stringtie --merge` across all per-sample assemblies. Novel transcripts appear with `MSTRG.*` IDs. Absent when `--novel_gtf` is used.
   - `gffcompare/`: Full gffcompare output (`*.annotated.gtf`, `*.stats`, `*.tracking`, `*.loci`, etc.) classifying novel transcripts against the full reference annotation.
-  - `novel_filtered.gtf`: Novel transcripts retained after the gffcompare class-code filter (default class `u` = intergenic only).
-  - `novel_filtered.blacklisted.gtf`: Class-filtered novel transcripts after the optional rRNA/repeat blacklist intersect (only present when `--rrna_blacklist` is supplied).
-  - `hybrid_reference.gtf`: Canonical reference + filtered novel transcripts, sorted by chromosome and start coordinate. Exposed as the `hybrid_gtf` workflow emit channel.
+  - `stringtie_merge_filtered.gtf` (`novel_gtf_filtered.gtf` when `--novel_gtf` is used): Novel transcripts retained after the gffcompare class-code filter (default class `u` = intergenic only).
+  - `stringtie_merge_blacklisted.gtf` (`novel_gtf_blacklisted.gtf` when `--novel_gtf` is used): Class-filtered novel transcripts after the optional rRNA/repeat blacklist intersect (only present when `--rrna_blacklist` is supplied).
+  - `hybrid_reference.gtf`: Canonical reference records followed by the filtered novel records, with a synthesised `gene` row for each novel gene absent from the canonical backbone. Exposed as the `hybrid_gtf` workflow emit channel.
 
 </details>
 
@@ -455,7 +455,7 @@ If RiboCode is not needed for your analysis, you can skip it entirely with `--sk
 
 </details>
 
-Produced only when `--run_rpbp true` is set. Rp-Bp's Bayesian fit is slow (~20-24h per replicate at genome-wide scale); see [Rp-Bp in usage.md](usage.md#rp-bp-opt-in-overnight). Rp-Bp's Bayes factor is stable across replicates and is retained in the cross-caller rank-aggregation set. When `--extended_orf_analysis true` is set, Rp-Bp consumes the hybrid GTF and so reports novel intergenic ORFs alongside annotated ones.
+Produced only when `--run_rpbp true` is set. Rp-Bp's Bayesian fit is slow (~20-24h per replicate at genome-wide scale); see [Rp-Bp in usage.md](usage.md#rp-bp-opt-in-overnight). Rp-Bp's Bayes factor is stable across replicates and is retained in the cross-caller rank-aggregation set. When `--extended_orf_analysis true` is set, Rp-Bp consumes the full reference with the novel intergenic genes appended, and so reports novel intergenic ORFs alongside annotated ones.
 
 ### PRICE
 
@@ -469,7 +469,7 @@ Produced only when `--run_rpbp true` is set. Rp-Bp's Bayesian fit is slow (~20-2
 
 </details>
 
-Produced only when `--run_price true` is set. PRICE is invoked once across the riboseq cohort (it estimates a shared codon-position model by EM). When `--extended_orf_analysis true` is set, the IndexGenome step builds the index from the hybrid GTF so PRICE can discover ORFs on novel intergenic transcripts.
+Produced only when `--run_price true` is set. PRICE is invoked once across the riboseq cohort (it estimates a shared codon-position model by EM). When `--extended_orf_analysis true` is set, the IndexGenome step builds the index from the full reference with the novel intergenic genes appended, so PRICE can discover ORFs on novel intergenic transcripts.
 
 ### ORF catalogue (cross-sample)
 
@@ -497,7 +497,7 @@ Produced only when `--extended_orf_analysis true` is set and at least one ORF ca
 - **smORFs** (amino-acid length ≤ 100) are clustered by 80% reciprocal overlap and then peptide-level deduplicated with MMseqs2 (`--min-seq-id 0.9 -c 0.8`) on the `*.catalogue.aa.fasta` (from `bedtools getfasta` + `seqkit translate`), folding each multi-member cluster to one representative (GENCODE convention, Mudge et al. 2022). `--skip_orf_collapse` publishes the coordinate-merged catalogue without this step.
 - **Cross-caller consensus** is recorded by setting `called_by_<caller> = 1` for every caller that contributed a member of the cluster, plus a per-caller score column.
 
-The catalogue uses the hybrid GTF (canonical + filtered novel intergenic) as its coordinate-validation reference, matching the GTF that the underlying ORF callers consumed when `--extended_orf_analysis true`.
+Host `gene_id` and `transcript_id` are resolved, and transcript-coordinate calls lifted to the genome, against the union of the full multi-isoform annotation (`--gtf`) and the filtered novel transcripts. The callers do not all receive the same annotation (PRICE takes the full multi-isoform reference, the genome-BAM callers the canonical backbone), so only that union covers every transcript an ORF can be reported on. It is also the reference the ORF-level DTE RNA denominator is quantified against, so catalogue gene ids join directly against that matrix.
 
 ### Per-ORF P-site quantification
 
@@ -607,6 +607,19 @@ When the parameter `--te_quantification_method plastid_psite` is used, the follo
 
   </details>
 
+When the parameter `--te_quantification_method pseudo` is used, reads are quantified directly against the transcriptome by the tool named in `--pseudo_aligner`, and the results are written to a directory named after it:
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `quantification/salmon_te_pseudo/` or `quantification/kallisto_te_pseudo/`
+  - `<SAMPLE>/`: Raw per-sample output from Salmon or kallisto.
+  - `*.merged.te_pseudo.*`: tximport gene- and transcript-level matrices across all samples, in the same layout as `quantification/salmon/` above.
+  - `*.merged.gene_counts.te_pseudo.SummarizedExperiment.rds` / `*.merged.transcript_counts.te_pseudo.SummarizedExperiment.rds`: SummarizedExperiment containers for the merged matrices.
+  - `tx2gene.tsv`: Tab-delimited transcript to gene id mapping used for the summarisation.
+
+  </details>
+
 ## Translational efficiency
 
 The pipeline supports two methods for translational efficiency analysis: anota2seq (default) and deltaTE. The method used depends on the `--translational_efficiency_method` parameter.
@@ -667,11 +680,13 @@ When using `--translational_efficiency_method deltate`, the pipeline produces th
 
 When `--extended_orf_analysis true` is set with `--te_quantification_method plastid_psite`, the pipeline produces two additional output directories alongside the gene-level anota2seq / deltaTE results. See [Translational efficiency / ORF-level differential translation](usage.md#orf-level-differential-translation) for the analysis rationale and the row-independence caveat.
 
+The RNA-seq denominator is quantified against the full reference transcriptome augmented with the novel intergenic transcripts, using the same STAR-alignment then Salmon path as the primary quantification, so ORFs on novel genes keep a host-gene RNA-seq row and are retained in the analysis. Quantifying against the canonical reference alone would leave every novel-gene ORF without a denominator and silently drop it, so only novel ORFs on known genes would survive. Canonical genes keep their full-isoform counts (the one-transcript-per-gene backbone used for ORF calling would undercount multi-isoform genes). The hybrid RNA-seq gene matrices are published under `quantification/salmon_hybrid/` (same Salmon layout as `quantification/salmon/`, filenames prefixed `salmon.merged.hybrid.`).
+
 <details markdown="1">
 <summary>Output files</summary>
 
 - `dte/orf_level/`
-  - `orf_combined_counts.tsv`: Combined ORF x sample count matrix produced by the join step. Rows are ORFs; columns are Ribo-seq samples (per-ORF P-site counts) followed by RNA-seq samples (host gene's count replicated across all ORFs mapping to that gene). This is the input fed to the selected DTE method (`--translational_efficiency_method`) for the ORF-level fit.
+  - `orf_combined_counts.tsv`: Combined ORF x sample count matrix produced by the join step. Rows are ORFs; columns are Ribo-seq samples (per-ORF P-site counts) followed by RNA-seq samples (host gene's count from the hybrid-transcriptome quantification, replicated across all ORFs mapping to that gene). This is the input fed to the selected DTE method (`--translational_efficiency_method`) for the ORF-level fit.
 - `dte/orf_level/deltate/` (when `--translational_efficiency_method deltate`):
   - `*.translation.deltate.results.tsv`, `*.translated_mRNA.deltate.results.tsv`, `*.total_mRNA.deltate.results.tsv`: deltaTE result tables at ORF resolution (one set per contrast). The first column header is `gene_id` for compatibility with the gene-level path but the rows are ORF ids.
   - `*.dtegs.deltate.genes.tsv` and the four classified ORF lists (`*.mRNA_abundance`, `*.translation`, `*.intensified`, `*.buffering`): ORF ids assigned to each deltaTE category.

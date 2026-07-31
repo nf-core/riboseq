@@ -39,12 +39,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#155](https://github.com/nf-core/riboseq/pull/155) - Drop `if (params.skip_X)` wrappers in `conf/modules.config` so the Nextflow 26.04 v2 strict config parser accepts the file ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#193](https://github.com/nf-core/riboseq/pull/193) - Re-pin `custom/orfnormalise` (nf-core/modules#12173) to fix ribotish `GenomePos` coordinate parsing (0-based, was treated as 1-based), which shifted ribotish-derived catalogue ORFs out of frame ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#194](https://github.com/nf-core/riboseq/pull/194) - Update `dotseq/dotseq` (nf-core/modules#12230) so the DOTSeq heatmap actually renders, and pass `--orf_type_main_value canonical_cds` to pair the heatmap against riboseq's main-ORF label ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#213](https://github.com/nf-core/riboseq/pull/213) - Anchor the subworkflow-level `withName` selectors so `GTF_HYBRIDMERGE_GFFCOMPARE` and `ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE` config applies in-pipeline; the hybrid GTF had been silently dropping every novel transcript ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#195](https://github.com/nf-core/riboseq/issues/195) - Honour the `salmon`, `sortmerna` and `bbsplit` attributes of a `--genome` stanza, which were ignored where the equivalent `--salmon_index`, `--sortmerna_index` and `--bbsplit_index` parameters worked ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#199](https://github.com/nf-core/riboseq/issues/199) - Pin `ribotish/predict` conda environment to Python 3.13.9 to match the container and avoid Python 3.14's `forkserver` default breaking ribotish's fork-only multiprocessing ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#204](https://github.com/nf-core/riboseq/pull/204) - Include ORFs on novel transcripts in ORF-level DTE, by quantifying the RNA-seq denominator against the full reference transcriptome augmented with the novel intergenic transcripts so novel genes gain a host-gene row ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#210](https://github.com/nf-core/riboseq/pull/210)
+  - Correct the Trim Galore! description in the usage and output docs: the 2.x series is a self-contained Rust program with FastQC reporting built in, not a wrapper around external Cutadapt and FastQC installations ([@FelixKrueger](https://github.com/FelixKrueger))
+  - Correct the `--cores` note in the usage and output docs, which dated from the 0.6.x Perl era: worker cores are capped at 8 (not 4), multi-core trimming needs more than 4 CPUs for single-end and more than 5 for paired-end data, and the 2.x N+4 thread model is described. Also fixes a 404 changelog link (`Changelog.md` → `CHANGELOG.md`) ([@FelixKrueger](https://github.com/FelixKrueger))
+- [#220](https://github.com/nf-core/riboseq/pull/220) - Strip the meta map from `BAM_DEDUP_UMI.out.multiqc_files` before mixing it into the MultiQC channel. The subworkflow emits `[ meta, file ]` tuples despite documenting the output as `channel: file`, and `MULTIQC` flattens that channel, so with `--with_umi` the run failed with `Not a valid path value type: java.util.LinkedHashMap` ([@FelixKrueger](https://github.com/FelixKrueger))
+- [#197](https://github.com/nf-core/riboseq/issues/197) - Consolidate Salmon indexing in `PREPARE_GENOME`: strandedness auto-detection and TE pseudo-alignment (`--pseudo_aligner salmon`) now share one eagerly-built index instead of duplicating it via `SALMON_INDEX_TE`, and `--salmon_index` is honoured for both, publishing under `genome/index/` only. Also adds the missing `kallisto` row to the `--genome` stanza table and a `minimum: 1` bound on `--pseudo_aligner_kmer_size` ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#200](https://github.com/nf-core/riboseq/issues/200) - Audit value versus queue channel usage across the workflow and subworkflows, drop the `.first()` calls that only emitted `useless when applied to a value channel` warnings, document the value-channel contract on the reference inputs that feed per-sample fan-outs, and snapshot the `hybrid_star` outputs so a partial Ribo-seq sample set fails the extended-ORF tests ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#207](https://github.com/nf-core/riboseq/pull/207) - Resolve PRICE ORF `gene_id` from the transcript ID in the `Id` column instead of PRICE's own `Gene` column, which concatenates multiple overlapping gene IDs with underscores and dropped PRICE-only ORFs from the RNA-seq join in `dte/orf_level/orf_combined_counts.tsv` ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#207](https://github.com/nf-core/riboseq/pull/207) - Resolve ORF catalogue gene ids against the union of the full multi-isoform annotation and the novel transcripts instead of the canonical backbone, so ORFs called on non-representative isoforms (PRICE and Rp-Bp are handed the full annotation by design) keep a gene id that joins against the ORF-level DTE RNA denominator ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#209](https://github.com/nf-core/riboseq/pull/209) - Give Rp-Bp and PRICE the full reference with the novel intergenic genes appended under `--extended_orf_analysis`, so both bring novel transcripts into scope without collapsing to the one-transcript-per-gene backbone the hybrid GTF is built on ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#217](https://github.com/nf-core/riboseq/pull/217) - Re-pin `gedi/indexgenome` and `gedi/price` (nf-core/modules#12451) so the GEDI index carries its FASTA and the `.oml`'s absolute paths are repointed at read time, fixing `--run_price` failing in PRICE's `PriceCodonInference` where the path GEDI recorded for the staged input was never materialised ([@FelixKrueger](https://github.com/FelixKrueger), [@pinin4fjords](https://github.com/pinin4fjords))
+
+### `Removed`
+
+- [#197](https://github.com/nf-core/riboseq/issues/197) - **Breaking:** remove `--min_mapped_reads`, `--skip_pseudo_alignment` and `--skip_alignment`, none of which worked. `--min_mapped_reads` was an unused remnant of nf-core/rnaseq, `--skip_pseudo_alignment` only influenced whether a Salmon index was built and crashed strandedness inference when set, and an index-only run via `--skip_alignment` is not a supported mode for this pipeline ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#197](https://github.com/nf-core/riboseq/issues/197) - Remove the `fail_mapped_samples` MultiQC section, which was only ever populated by the `--min_mapped_reads` filter ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Changed`
 
 - [#129](https://github.com/nf-core/riboseq/pull/129) - Bump pipeline version to 1.3.0dev ([@iraiosub](https://github.com/iraiosub))
 - [#152](https://github.com/nf-core/riboseq/pull/152) - Update ribodetector module to 0.3.3 (nf-core/modules#11131) ([@pinin4fjords](https://github.com/pinin4fjords))
-- [#154](https://github.com/nf-core/riboseq/pull/154) - Add riboWaltz QC plots to the MultiQC report via a new MultiQC riboWaltz module ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#154](https://github.com/nf-core/riboseq/pull/154) - Add riboWaltz QC plots to the MultiQC report via a new MultiQC riboWaltz module ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#160](https://github.com/nf-core/riboseq/issues/160) - Change the default `--te_quantification_method` from `alignment` (STAR + Salmon) to `plastid_psite` (in-frame P-site counts). **Breaking:** per-gene counts are not comparable to Salmon-based runs; pass `--te_quantification_method alignment` to restore the previous behaviour. ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#162](https://github.com/nf-core/riboseq/issues/162) - Document that Ribo-TISH `quality` continues to consume the canonical annotation (P-site offset calibration uses CDS-bearing canonical transcripts; mixing CDS-absent novel transcripts would degrade calibration without adding diagnostic signal) ([@pinin4fjords](https://github.com/pinin4fjords))
@@ -52,52 +70,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#194](https://github.com/nf-core/riboseq/pull/194) - Update all nf-core modules and subworkflows to their latest revisions and reconcile the pipeline with the changed component interfaces ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#194](https://github.com/nf-core/riboseq/pull/194) - Raise the minimum Nextflow version to `25.10.0`, required by nf-schema 2.7.2 ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#156](https://github.com/nf-core/riboseq/pull/156) - Template update for nf-core/tools v4.0.2 ([@nf-core-bot](https://github.com/nf-core-bot), [@pinin4fjords](https://github.com/pinin4fjords))
+- [#210](https://github.com/nf-core/riboseq/pull/210)
+  - Update trimgalore module to 2.3.0 (nf-core/modules#12331) ([@FelixKrueger](https://github.com/FelixKrueger))
+  - **Behaviour change carried by Trim Galore 2.3.0:** poly-G trimming of R2 is corrected to trim the 3' poly-G tail rather than a 5' poly-C head ([TrimGalore#322](https://github.com/FelixKrueger/TrimGalore/pull/322)). Poly-G trimming is on by default, so paired-end libraries lose marginally more R2 bases and slightly fewer pairs drop below the length cutoff; per-sample read counts and every downstream checksum shift accordingly, and the pipeline test snapshots have been regenerated. Single-end libraries (including Ribo-seq) are unaffected, and adapter and quality trimming are unchanged. ([@FelixKrueger](https://github.com/FelixKrueger))
+- [#197](https://github.com/nf-core/riboseq/issues/197) - Honour `--fastp_merge` and `--save_merged_fastq`, which were overridden by hardcoded `false` values in the preprocessing subworkflow call ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#197](https://github.com/nf-core/riboseq/issues/197) - Make `--pseudo_aligner` select the tool used by `--te_quantification_method pseudo`, which always ran Salmon regardless of the setting. kallisto is now a working alternative, with `--kallisto_index`, `--kallisto_quant_fraglen`, `--kallisto_quant_fraglen_sd` and `--extra_kallisto_quant_args`. TE pseudo-alignment outputs move to `quantification/<pseudo_aligner>_te_pseudo`, unchanged for the default `salmon` ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#205](https://github.com/nf-core/riboseq/pull/205) - Template update for nf-core/tools v4.0.3 ([@nf-core-bot](https://github.com/nf-core-bot), [@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Parameters`
 
-| Old parameter       | New parameter                            |
-| ------------------- | ---------------------------------------- |
-| `--skip_ribotricer` | `--run_ribotricer`                       |
-|                     | `--ribo_removal_tool`                    |
-|                     | `--skip_ribocode`                        |
-|                     | `--extra_ribocode_gtfupdate_args`        |
-|                     | `--extra_ribocode_prepare_args`          |
-|                     | `--extra_ribocode_metaplots_args`        |
-|                     | `--extra_ribocode_ribocode_args`         |
-|                     | `--translational_efficiency_method`      |
-|                     | `--extra_deltate_args`                   |
-|                     | `--te_lfc_threshold`                     |
-|                     | `--rna_lfc_threshold`                    |
-|                     | `--ribo_lfc_threshold`                   |
-|                     | `--equalise_read_lengths`                |
-|                     | `--equalise_read_lengths_target`         |
-|                     | `--skip_plastid`                         |
-|                     | `--plastid_min_length`                   |
-|                     | `--plastid_max_length`                   |
-|                     | `--plastid_default_psite_offset`         |
-|                     | `--extra_plastid_metagene_generate_args` |
-|                     | `--extra_plastid_psite_args`             |
-|                     | `--extra_plastid_make_wiggle_args`       |
-|                     | `--skip_coverage_tracks`                 |
-|                     | `--ribodetector_chunk_size`              |
-|                     | `--canonical_gtf`                        |
-|                     | `--skip_stringtie`                       |
-|                     | `--novel_gtf`                            |
-|                     | `--gffcompare_class_codes`               |
-|                     | `--rrna_blacklist`                       |
-|                     | `--extra_stringtie_args`                 |
-|                     | `--extra_stringtie_merge_args`           |
-|                     | `--extended_orf_analysis`                |
-|                     | `--run_price`                            |
-|                     | `--extra_price_indexgenome_args`         |
-|                     | `--extra_price_price_args`               |
-|                     | `--run_rpbp`                             |
-|                     | `--extra_rpbp_preparegenome_args`        |
-|                     | `--extra_rpbp_predictorfs_args`          |
-|                     | `--extra_orf_deltate_args`               |
-|                     | `--extra_orf_anota2seq_run_args`         |
-|                     | `--extra_dotseq_args`                    |
+| Old parameter             | New parameter                            |
+| ------------------------- | ---------------------------------------- |
+| `--skip_ribotricer`       | `--run_ribotricer`                       |
+| `--min_mapped_reads`      |                                          |
+| `--skip_pseudo_alignment` |                                          |
+| `--skip_alignment`        |                                          |
+|                           | `--kallisto_index`                       |
+|                           | `--kallisto_quant_fraglen`               |
+|                           | `--kallisto_quant_fraglen_sd`            |
+|                           | `--extra_kallisto_quant_args`            |
+|                           | `--ribo_removal_tool`                    |
+|                           | `--skip_ribocode`                        |
+|                           | `--extra_ribocode_gtfupdate_args`        |
+|                           | `--extra_ribocode_prepare_args`          |
+|                           | `--extra_ribocode_metaplots_args`        |
+|                           | `--extra_ribocode_ribocode_args`         |
+|                           | `--translational_efficiency_method`      |
+|                           | `--extra_deltate_args`                   |
+|                           | `--te_lfc_threshold`                     |
+|                           | `--rna_lfc_threshold`                    |
+|                           | `--ribo_lfc_threshold`                   |
+|                           | `--equalise_read_lengths`                |
+|                           | `--equalise_read_lengths_target`         |
+|                           | `--skip_plastid`                         |
+|                           | `--plastid_min_length`                   |
+|                           | `--plastid_max_length`                   |
+|                           | `--plastid_default_psite_offset`         |
+|                           | `--extra_plastid_metagene_generate_args` |
+|                           | `--extra_plastid_psite_args`             |
+|                           | `--extra_plastid_make_wiggle_args`       |
+|                           | `--skip_coverage_tracks`                 |
+|                           | `--ribodetector_chunk_size`              |
+|                           | `--canonical_gtf`                        |
+|                           | `--skip_stringtie`                       |
+|                           | `--novel_gtf`                            |
+|                           | `--gffcompare_class_codes`               |
+|                           | `--rrna_blacklist`                       |
+|                           | `--extra_stringtie_args`                 |
+|                           | `--extra_stringtie_merge_args`           |
+|                           | `--extended_orf_analysis`                |
+|                           | `--run_price`                            |
+|                           | `--extra_price_indexgenome_args`         |
+|                           | `--extra_price_price_args`               |
+|                           | `--run_rpbp`                             |
+|                           | `--extra_rpbp_preparegenome_args`        |
+|                           | `--extra_rpbp_predictorfs_args`          |
+|                           | `--extra_orf_deltate_args`               |
+|                           | `--extra_orf_anota2seq_run_args`         |
+|                           | `--extra_dotseq_args`                    |
 
 ### `Dependencies`
 
@@ -109,6 +139,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | `bedtools`         |             | 2.31.1      |
 | `bedGraphToBigWig` |             | 469         |
 | `AGAT`             |             | 1.6.1       |
+| `Trim Galore`      | 2.1.0       | 2.3.0       |
 
 ## v1.2.0 - 2025-12-03
 

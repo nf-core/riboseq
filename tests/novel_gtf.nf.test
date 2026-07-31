@@ -26,7 +26,7 @@ nextflow_pipeline {
 
         then {
             // stable_name: All files + folders in ${params.outdir}/ with a stable name
-            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}', 'hybrid_star/**'])
+            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
             // stable_path: All files in ${params.outdir}/ with stable content
             def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore_orf')
 
@@ -35,6 +35,8 @@ nextflow_pipeline {
             assertAll(
                 { assert workflow.success},
                 { assert hybrid_gtf.exists() && hybrid_gtf.size() > 0 },
+                { assert hybrid_gtf.readLines().count { line -> line.contains('class_code "u"') } > 0 },
+                { assert hybrid_gtf.readLines().every { line -> !line.contains('class_code') || line.contains('class_code "u"') } },
                 { assert ribotish_pred_all.exists() && ribotish_pred_all.size() > 0 },
                 { assert snapshot(
                     // pipeline versions.yml file for multiqc from which Nextflow version is removed because we test pipelines on multiple Nextflow versions
