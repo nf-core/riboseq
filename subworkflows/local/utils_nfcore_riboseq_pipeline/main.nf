@@ -212,6 +212,13 @@ def validateInputParameters() {
     if (params.extended_orf_analysis && enabled_caller_count > 0 && params.orf_min_callers > enabled_caller_count) {
         log.warn "--orf_min_callers is ${params.orf_min_callers} but only ${enabled_caller_count} ORF caller(s) are enabled, so no ORF can reach the threshold and the consensus view will be empty. Lower --orf_min_callers or enable more callers."
     }
+
+    // Without a novel source the ORF-DTE denominator is the primary Salmon matrix, keyed on
+    // --gtf gene ids, while catalogue host genes also come from --canonical_gtf.
+    if (params.extended_orf_analysis && enabled_caller_count > 0 && !novel_source_configured
+        && params.canonical_gtf && !params.skip_plastid && params.contrasts) {
+        log.warn "--canonical_gtf is supplied with no novel-transcript source, so ORF-level differential translation reuses the primary Salmon matrix, whose gene ids come from --gtf alone. Any ORF whose host gene exists only in --canonical_gtf has no row in that matrix and will be dropped from the ORF-level results; DTE_COUNTS_PREP reports the count on stderr. Set --skip_stringtie false or --novel_gtf to quantify the denominator against the full annotation instead."
+    }
 }
 
 //
