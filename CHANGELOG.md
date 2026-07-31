@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Fixed`
 
+- [#146](https://github.com/nf-core/riboseq/issues/146), [#149](https://github.com/nf-core/riboseq/issues/149) - Add per-sample UMI handling through an optional `with_umi` samplesheet column, so mixed experiments can extract and deduplicate UMI-bearing Ribo-seq libraries without applying UMI processing to matched non-UMI RNA-seq libraries. The global `--with_umi` parameter remains the fallback when the column is absent. Add pipeline coverage for the mixed path. ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#133](https://github.com/nf-core/riboseq/pull/133) - Improve anota2seq documentation: fix typos in contrast file docs, document available `extra_anota2seq_run_args` options ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#145](https://github.com/nf-core/riboseq/pull/145) - Filter to primary alignments before UMI-tools dedup ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#147](https://github.com/nf-core/riboseq/pull/147) - Fix RiboCode error handling and P-site detection failures ([@pinin4fjords](https://github.com/pinin4fjords))

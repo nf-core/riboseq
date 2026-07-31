@@ -34,6 +34,8 @@ include { GAWK as FILTER_COUNTS_CANONICAL                      } from '../../mod
 // MODULE: Installed directly from nf-core/modules
 //
 include { MULTIQC                                              } from '../../modules/nf-core/multiqc/main'
+include { CAT_FASTQ as CAT_FASTQ_BEFORE_UMI                    } from '../../modules/nf-core/cat/fastq/main'
+include { UMITOOLS_EXTRACT                                     } from '../../modules/nf-core/umitools/extract/main'
 include { UMITOOLS_PREPAREFORRSEM as UMITOOLS_PREPAREFORSALMON } from '../../modules/nf-core/umitools/prepareforrsem'
 include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../modules/nf-core/anota2seq/anota2seqrun'
 include { DESEQ2_DELTATE                                       } from '../../modules/local/deseq2/deltate'
@@ -66,6 +68,8 @@ include { softwareVersionsToYAML   } from '../../subworkflows/nf-core/utils_nfco
 include { methodsDescriptionText   } from '../../subworkflows/local/utils_nfcore_riboseq_pipeline'
 include { validateInputSamplesheet } from '../../subworkflows/local/utils_nfcore_riboseq_pipeline'
 include { samplesheetNeedsSalmonForStrandedness } from '../../subworkflows/local/utils_nfcore_riboseq_pipeline'
+include { resolveSampleUmi      } from '../../subworkflows/local/utils_nfcore_riboseq_pipeline'
+include { samplesheetHasUmi     } from '../../subworkflows/local/utils_nfcore_riboseq_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -144,6 +148,7 @@ workflow RIBOSEQ {
         .fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
         .map {
             meta, fastq_1, fastq_2 ->
+                meta = resolveSampleUmi(meta, params.with_umi)
                 if (!fastq_2) {
                     return [ meta.id, meta + [ single_end:true ], [ fastq_1 ] ]
                 } else {
@@ -168,9 +173,51 @@ workflow RIBOSEQ {
     // Determine if we need to build rRNA removal indexes
     def make_sortmerna_index = !params.sortmerna_index && params.remove_ribo_rna && params.ribo_removal_tool == 'sortmerna'
     def make_bowtie2_index   = params.remove_ribo_rna && params.ribo_removal_tool == 'bowtie2'
+    def any_sample_with_umi  = samplesheetHasUmi(params.input, params.with_umi)
+
+    ch_fastq_for_preprocessing = ch_fastq
+    if (any_sample_with_umi && !params.skip_umi_extract) {
+        ch_fastq
+            .branch { meta, reads ->
+                umi: meta.with_umi
+                    return [ meta, reads ]
+                no_umi: true
+                    return [ meta, reads ]
+            }
+            .set { ch_fastq_by_umi }
+
+        ch_fastq_by_umi.umi
+            .branch { meta, fastqs ->
+                single_run: fastqs.size() == 1
+                    return [ meta, fastqs.flatten() ]
+                multiple_runs: true
+                    return [ meta, fastqs.flatten() ]
+            }
+            .set { ch_umi_fastq_by_run_count }
+
+        CAT_FASTQ_BEFORE_UMI(ch_umi_fastq_by_run_count.multiple_runs)
+
+        ch_umi_fastq_by_run_count.single_run
+            .mix(CAT_FASTQ_BEFORE_UMI.out.reads)
+            .set { ch_umi_fastq }
+
+        UMITOOLS_EXTRACT(ch_umi_fastq)
+
+        ch_extracted_umi_reads = UMITOOLS_EXTRACT.out.reads
+            .map { meta, reads -> [ meta, reads instanceof List ? reads : [ reads ] ] }
+        if (params.umi_discard_read in [1, 2]) {
+            ch_extracted_umi_reads = ch_extracted_umi_reads
+                .map { meta, reads ->
+                    meta.single_end ? [ meta, reads ] : [ meta + [ single_end: true ], [ reads[params.umi_discard_read % 2] ] ]
+                }
+        }
+
+        ch_fastq_for_preprocessing = ch_extracted_umi_reads.mix(ch_fastq_by_umi.no_umi)
+        ch_multiqc_files = ch_multiqc_files.mix(UMITOOLS_EXTRACT.out.log.map { _meta, log -> log })
+    }
 
     FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS (
-        ch_fastq,                                   // ch_reads
+        ch_fastq_for_preprocessing,                 // ch_reads
         ch_fasta,                                   // ch_fasta
         ch_transcript_fasta,                        // ch_transcript_fasta
         ch_gtf,                                     // ch_gtf
@@ -193,7 +240,7 @@ workflow RIBOSEQ {
         params.fastp_merge,                         // fastp_merge
         params.remove_ribo_rna,                     // remove_ribo_rna
         params.ribo_removal_tool,                   // ribo_removal_tool
-        params.with_umi,                            // with_umi
+        false,                                      // with_umi
         params.umi_discard_read,                    // umi_discard_read
         params.save_merged_fastq,                   // save_merged_fastq
         params.stranded_threshold,                  // stranded_threshold
@@ -263,21 +310,27 @@ workflow RIBOSEQ {
     // SUBWORKFLOW: Remove duplicate reads from BAM file based on UMIs
     //
 
-    if (params.with_umi) {
+    if (any_sample_with_umi) {
+
+        ch_genome_bam_without_umi        = ch_genome_bam.filter { meta, _bam -> !meta.with_umi }
+        ch_genome_bam_index_without_umi  = ch_genome_bam_index.filter { meta, _index -> !meta.with_umi }
+        ch_transcriptome_bam_without_umi = ch_transcriptome_bam.filter { meta, _bam -> !meta.with_umi }
 
         BAM_DEDUP_UMI(
-            ch_genome_bam.join(ch_genome_bam_index, by: [0]),
+            ch_genome_bam
+                .filter { meta, _bam -> meta.with_umi }
+                .join(ch_genome_bam_index.filter { meta, _index -> meta.with_umi }, by: [0]),
             ch_fasta_fai,
             params.umi_dedup_tool,
             params.umitools_dedup_stats,
-            ch_transcriptome_bam,
+            ch_transcriptome_bam.filter { meta, _bam -> meta.with_umi },
             ch_transcript_fasta_fai,
             params.umitools_dedup_primary_only
         )
 
-        ch_genome_bam        = BAM_DEDUP_UMI.out.bam
-        ch_transcriptome_bam = BAM_DEDUP_UMI.out.transcriptome_bam
-        ch_genome_bam_index  = BAM_DEDUP_UMI.out.index
+        ch_genome_bam        = BAM_DEDUP_UMI.out.bam.mix(ch_genome_bam_without_umi)
+        ch_transcriptome_bam = BAM_DEDUP_UMI.out.transcriptome_bam.mix(ch_transcriptome_bam_without_umi)
+        ch_genome_bam_index  = BAM_DEDUP_UMI.out.index.mix(ch_genome_bam_index_without_umi)
 
         ch_multiqc_files = ch_multiqc_files
             .mix(BAM_DEDUP_UMI.out.multiqc_files.map { _meta, file -> file })
@@ -379,17 +432,23 @@ workflow RIBOSEQ {
         // PCR duplicates on both annotations. Only the transcriptome BAM is
         // consumed downstream; the genome dedup is run to keep accounting
         // identical to the primary path.
-        if (params.with_umi) {
+        if (any_sample_with_umi) {
+            ch_hybrid_transcriptome_bam_without_umi = EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcriptome_bam
+                .filter { meta, _bam -> !meta.with_umi }
+
             BAM_DEDUP_UMI_HYBRID(
-                EXTENDED_ORF_SECOND_PASS_ALIGN.out.genome_bam.join(EXTENDED_ORF_SECOND_PASS_ALIGN.out.genome_bai, by: [0]),
+                EXTENDED_ORF_SECOND_PASS_ALIGN.out.genome_bam
+                    .filter { meta, _bam -> meta.with_umi }
+                    .join(EXTENDED_ORF_SECOND_PASS_ALIGN.out.genome_bai.filter { meta, _index -> meta.with_umi }, by: [0]),
                 ch_fasta_fai,
                 params.umi_dedup_tool,
                 params.umitools_dedup_stats,
-                EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcriptome_bam,
+                EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcriptome_bam.filter { meta, _bam -> meta.with_umi },
                 EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcript_fasta.map { [ [:], it, [] ] },
                 params.umitools_dedup_primary_only
             )
             ch_hybrid_transcriptome_bam = BAM_DEDUP_UMI_HYBRID.out.transcriptome_bam
+                .mix(ch_hybrid_transcriptome_bam_without_umi)
         }
     }
 
@@ -730,17 +789,23 @@ workflow RIBOSEQ {
 
             ch_full_hybrid_transcriptome_bam = FASTQ_ALIGN_STAR_FULL_HYBRID.out.orig_bam_transcript
 
-            if (params.with_umi) {
+            if (any_sample_with_umi) {
+                ch_full_hybrid_transcriptome_bam_without_umi = FASTQ_ALIGN_STAR_FULL_HYBRID.out.orig_bam_transcript
+                    .filter { meta, _bam -> !meta.with_umi }
+
                 BAM_DEDUP_UMI_HYBRID_RNA(
-                    FASTQ_ALIGN_STAR_FULL_HYBRID.out.bam.join(FASTQ_ALIGN_STAR_FULL_HYBRID.out.index, by: [0]),
+                    FASTQ_ALIGN_STAR_FULL_HYBRID.out.bam
+                        .filter { meta, _bam -> meta.with_umi }
+                        .join(FASTQ_ALIGN_STAR_FULL_HYBRID.out.index.filter { meta, _index -> meta.with_umi }, by: [0]),
                     ch_fasta_fai,
                     params.umi_dedup_tool,
                     params.umitools_dedup_stats,
-                    FASTQ_ALIGN_STAR_FULL_HYBRID.out.orig_bam_transcript,
+                    FASTQ_ALIGN_STAR_FULL_HYBRID.out.orig_bam_transcript.filter { meta, _bam -> meta.with_umi },
                     ch_full_hybrid_transcript_fasta.map { [ [:], it, [] ] },
                     params.umitools_dedup_primary_only
                 )
                 ch_full_hybrid_transcriptome_bam = BAM_DEDUP_UMI_HYBRID_RNA.out.transcriptome_bam
+                    .mix(ch_full_hybrid_transcriptome_bam_without_umi)
             }
 
             QUANTIFY_HYBRID_RNA(

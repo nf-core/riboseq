@@ -1,0 +1,56 @@
+nextflow_pipeline {
+
+    name "Test pipeline with mixed per-sample UMI status"
+    script "../main.nf"
+    tag "pipeline"
+    tag "pipeline_riboseq"
+    tag "mixed_umi"
+
+    test("UMI Ribo-seq with non-UMI RNA-seq") {
+
+        when {
+            params {
+                outdir = "$outputDir"
+                input = "${projectDir}/tests/samplesheet_mixed_umi.csv"
+                contrasts = null
+                with_umi = false
+                umitools_bc_pattern = 'NNNN'
+                save_umi_intermeds = true
+                remove_ribo_rna = false
+                skip_fastqc = true
+                skip_trimming = true
+                skip_linting = true
+                skip_ribotish = true
+                skip_ribocode = true
+                skip_ribowaltz = true
+                skip_plastid = true
+                skip_coverage_tracks = true
+            }
+        }
+
+        then {
+            def umi_outputs = getAllFilesFromDir("${params.outdir}/preprocessing/umitools")
+                .collect { it.name }
+            def dedup_outputs = getAllFilesFromDir("${params.outdir}/alignment/star/deduplicated")
+                .collect { it.name }
+            def aligned_stats = getAllFilesFromDir("${params.outdir}/alignment/star/sorted/samtools_stats")
+                .collect { it.name }
+
+            assertAll(
+                { assert workflow.success },
+                { assert umi_outputs && umi_outputs.every { it.startsWith('SRX11780885') } },
+                { assert dedup_outputs && dedup_outputs.every { !it.contains('SRX11780879') } },
+                { assert dedup_outputs.any { it.contains('SRX11780885') } },
+                { assert aligned_stats.any { it.contains('SRX11780879') } },
+                { assert aligned_stats.any { it.contains('SRX11780885') } }
+            )
+        }
+
+        cleanup {
+            if (System.getenv("NFT_PROFILE")?.contains("docker")) {
+                "docker system prune -a -f --volumes".execute()
+            }
+            new File("${launchDir}").deleteDir()
+        }
+    }
+}

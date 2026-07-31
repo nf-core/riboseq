@@ -112,6 +112,7 @@ workflow PIPELINE_INITIALISATION {
         .fromList(samplesheetToList(input, "${projectDir}/assets/schema_input.json"))
         .map {
             meta, fastq_1, fastq_2 ->
+                meta = resolveSampleUmi(meta, params.with_umi)
                 if (!fastq_2) {
                     return [ meta.id, meta + [ single_end:true ], [ fastq_1 ] ]
                 } else {
@@ -271,8 +272,33 @@ def validateInputSamplesheet(input) {
         error("Please check input samplesheet -> Multiple runs of a sample must be of the same datatype i.e. single-end or paired-end: ${metas[0].id}")
     }
 
+    def umi_status_ok = metas.collect{ meta -> meta.with_umi }.unique().size == 1
+    if (!umi_status_ok) {
+        error("Please check input samplesheet -> Multiple runs of a sample must have the same with_umi value: ${metas[0].id}")
+    }
+
     return [ metas[0], fastqs ]
 }
+
+def resolveSampleUmi(meta, default_with_umi) {
+    def sample_with_umi = meta.with_umi
+    if (sample_with_umi instanceof List) {
+        sample_with_umi = sample_with_umi ? sample_with_umi[0] : null
+    }
+    if (sample_with_umi == null || sample_with_umi == '') {
+        sample_with_umi = default_with_umi
+    }
+    if (!(sample_with_umi instanceof Boolean)) {
+        sample_with_umi = sample_with_umi.toString().toBoolean()
+    }
+    return meta + [ with_umi: sample_with_umi ]
+}
+
+def samplesheetHasUmi(input, default_with_umi) {
+    samplesheetToList(input, "${projectDir}/assets/schema_input.json")
+        .any { meta, _fastq_1, _fastq_2 -> resolveSampleUmi(meta, default_with_umi).with_umi }
+}
+
 def samplesheetNeedsSalmonForStrandedness(input) {
     samplesheetToList(input, "${projectDir}/assets/schema_input.json")
         .any { meta, _fastq_1, _fastq_2 -> meta.strandedness == 'auto' }
