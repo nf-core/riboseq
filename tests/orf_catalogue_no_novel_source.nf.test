@@ -30,7 +30,10 @@ nextflow_pipeline {
             def catalogue_bed12 = file("${params.outdir}/orf_catalogue/cohort.catalogue.bed12")
             def orf_counts      = file("${params.outdir}/orf_quantification/orf_psite_counts.tsv")
             def hybrid_dir      = file("${params.outdir}/hybrid_star")
-            def salmon_hybrid   = file("${params.outdir}/quantification/salmon_hybrid")
+            // BUILD_FULL_HYBRID_GTF creates quantification/salmon_hybrid/ even though it
+            // publishes nothing without --save_reference, so assert on its contents.
+            def hybrid_rna_counts = file("${params.outdir}/quantification/salmon_hybrid/salmon.merged.hybrid.gene_counts_length_scaled.tsv")
+            def hybrid_star_index = file("${params.outdir}/quantification/salmon_hybrid/star_index")
 
             assertAll(
                 { assert workflow.success },
@@ -40,7 +43,8 @@ nextflow_pipeline {
                 // Caller routing stays gated on a real novel source, so no second STAR pass
                 { assert !hybrid_dir.exists() },
                 // The ORF-DTE denominator reuses the primary Salmon matrix
-                { assert !salmon_hybrid.exists() },
+                { assert !hybrid_rna_counts.exists() },
+                { assert !hybrid_star_index.exists() },
                 { assert snapshot(
                     // pipeline versions.yml file for multiqc from which Nextflow version is removed because we test pipelines on multiple Nextflow versions
                     removeNextflowVersion("$outputDir/pipeline_info/nf_core_riboseq_software_mqc_versions.yml"),

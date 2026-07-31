@@ -856,7 +856,7 @@ workflow RIBOSEQ {
     multiqc_report   = ch_multiqc_report   // channel: /path/to/multiqc_report.html
     versions         = ch_versions         // channel: [ path(versions.yml) ]
     hybrid_gtf       = ch_hybrid_gtf       // channel: path(hybrid_reference.gtf) - canonical + filtered novel; equals canonical when no novel source is configured
-    orf_count_matrix = ch_orf_count_matrix // channel: [ meta, orf_psite_counts.tsv ] - per-ORF P-site count matrix; empty unless extended-ORF + plastid both active
+    orf_count_matrix = ch_orf_count_matrix // channel: [ meta, orf_psite_counts.tsv ] - per-ORF P-site count matrix; empty unless --extended_orf_analysis, a caller and plastid are all active
 }
 
 /*

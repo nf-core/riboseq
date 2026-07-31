@@ -200,11 +200,15 @@ def validateInputParameters() {
         log.warn "--extended_orf_analysis is enabled but --skip_plastid is true. ORF-level P-site quantification needs the plastid wiggle tracks and will be skipped; the ORF catalogue will still be built."
     }
 
-    // A threshold above the enabled caller count yields a header-only consensus view.
     def enabled_caller_count = [
         !params.skip_ribotish, !params.skip_ribocode,
         params.run_ribotricer, params.run_rpbp, params.run_price,
     ].count(true)
+    // With no caller there is no ORF table to catalogue, so nothing downstream runs.
+    if (params.extended_orf_analysis && enabled_caller_count == 0) {
+        log.warn "--extended_orf_analysis is enabled but every ORF caller is disabled. No ORF catalogue, ORF-level P-site quantification or ORF-level differential translation will be produced. Enable at least one of ribotish / ribocode / ribotricer / rpbp / price."
+    }
+    // A threshold above the enabled caller count yields a header-only consensus view.
     if (params.extended_orf_analysis && enabled_caller_count > 0 && params.orf_min_callers > enabled_caller_count) {
         log.warn "--orf_min_callers is ${params.orf_min_callers} but only ${enabled_caller_count} ORF caller(s) are enabled, so no ORF can reach the threshold and the consensus view will be empty. Lower --orf_min_callers or enable more callers."
     }
