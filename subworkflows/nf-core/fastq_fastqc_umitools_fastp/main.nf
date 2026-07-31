@@ -75,21 +75,33 @@ workflow FASTQ_FASTQC_UMITOOLS_FASTP {
     trimmer_reads = reads_only
     umi_reads = channel.empty()
     if (with_umi && !skip_umi_extract) {
+        reads_only
+            .branch { meta, reads_files ->
+                umi: meta.with_umi == null ? with_umi : meta.with_umi
+                    return [ meta, reads_files ]
+                no_umi: true
+                    return [ meta, reads_files ]
+            }
+            .set { reads_by_umi }
+
         UMITOOLS_EXTRACT(
-            reads_only
+            reads_by_umi.umi
         )
-        trimmer_reads = UMITOOLS_EXTRACT.out.reads
+        extracted_umi_reads = UMITOOLS_EXTRACT.out.reads
         umi_reads = UMITOOLS_EXTRACT.out.reads
         umi_log = UMITOOLS_EXTRACT.out.log
 
         // Discard R1 / R2 if required
         if (umi_discard_read in [1, 2]) {
-            UMITOOLS_EXTRACT.out.reads
+            extracted_umi_reads
                 .map { meta, _reads ->
                     meta.single_end ? [meta, _reads] : [meta + [single_end: true], _reads[umi_discard_read % 2]]
                 }
-                .set { trimmer_reads }
+                .set { discarded_umi_reads }
+            extracted_umi_reads = discarded_umi_reads
         }
+
+        trimmer_reads = extracted_umi_reads.mix(reads_by_umi.no_umi)
     }
 
     trim_reads = trimmer_reads

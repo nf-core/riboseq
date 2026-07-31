@@ -1,0 +1,2 @@
+sample,fastq_1,fastq_2,strandedness,type
+SRX11780885,https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/testdata/GSE182201/SRX11780885_SRR15480788_chr20_1.fastq.gz,,unstranded,riboseq

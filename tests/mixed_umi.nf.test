@@ -17,7 +17,6 @@ nextflow_pipeline {
                 umitools_bc_pattern = 'NNNN'
                 save_umi_intermeds = true
                 remove_ribo_rna = false
-                skip_fastqc = true
                 skip_trimming = true
                 skip_linting = true
                 skip_ribotish = true
@@ -35,14 +34,64 @@ nextflow_pipeline {
                 .collect { it.name }
             def aligned_stats = getAllFilesFromDir("${params.outdir}/alignment/star/sorted/samtools_stats")
                 .collect { it.name }
+            def raw_fastqc = getAllFilesFromDir("${params.outdir}/preprocessing/fastqc")
+                .findAll { it.name.contains('_raw') }
+                .collect { it.name }
+
+            assertAll(
+                { assert workflow.success },
+                { assert umi_outputs && umi_outputs.every { it.startsWith('SRX11780879') } },
+                { assert dedup_outputs && dedup_outputs.every { !it.contains('SRX11780885') } },
+                { assert dedup_outputs.any { it.contains('SRX11780879') } },
+                { assert aligned_stats.any { it.contains('SRX11780879') } },
+                { assert aligned_stats.any { it.contains('SRX11780885') } },
+                { assert raw_fastqc.any { it.contains('SRX11780879_raw_1') } },
+                { assert raw_fastqc.any { it.contains('SRX11780879_raw_2') } },
+                { assert raw_fastqc.any { it.contains('SRX11780885_raw') } }
+            )
+        }
+
+        cleanup {
+            if (System.getenv("NFT_PROFILE")?.contains("docker")) {
+                "docker system prune -a -f --volumes".execute()
+            }
+            new File("${launchDir}").deleteDir()
+        }
+    }
+
+    test("Global UMI parameter remains the samplesheet fallback") {
+
+        when {
+            params {
+                outdir = "$outputDir"
+                input = "${projectDir}/tests/samplesheet_global_umi.csv"
+                contrasts = null
+                with_umi = true
+                trimmer = 'fastp'
+                umitools_bc_pattern = 'NNNN'
+                save_umi_intermeds = true
+                remove_ribo_rna = false
+                skip_fastqc = true
+                skip_trimming = true
+                skip_linting = true
+                skip_ribotish = true
+                skip_ribocode = true
+                skip_ribowaltz = true
+                skip_plastid = true
+                skip_coverage_tracks = true
+            }
+        }
+
+        then {
+            def umi_outputs = getAllFilesFromDir("${params.outdir}/preprocessing/umitools")
+                .collect { it.name }
+            def dedup_outputs = getAllFilesFromDir("${params.outdir}/alignment/star/deduplicated")
+                .collect { it.name }
 
             assertAll(
                 { assert workflow.success },
                 { assert umi_outputs && umi_outputs.every { it.startsWith('SRX11780885') } },
-                { assert dedup_outputs && dedup_outputs.every { !it.contains('SRX11780879') } },
-                { assert dedup_outputs.any { it.contains('SRX11780885') } },
-                { assert aligned_stats.any { it.contains('SRX11780879') } },
-                { assert aligned_stats.any { it.contains('SRX11780885') } }
+                { assert dedup_outputs.any { it.contains('SRX11780885') } }
             )
         }
 

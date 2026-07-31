@@ -34,8 +34,6 @@ include { GAWK as FILTER_COUNTS_CANONICAL                      } from '../../mod
 // MODULE: Installed directly from nf-core/modules
 //
 include { MULTIQC                                              } from '../../modules/nf-core/multiqc/main'
-include { CAT_FASTQ as CAT_FASTQ_BEFORE_UMI                    } from '../../modules/nf-core/cat/fastq/main'
-include { UMITOOLS_EXTRACT                                     } from '../../modules/nf-core/umitools/extract/main'
 include { UMITOOLS_PREPAREFORRSEM as UMITOOLS_PREPAREFORSALMON } from '../../modules/nf-core/umitools/prepareforrsem'
 include { ANOTA2SEQ_ANOTA2SEQRUN                               } from '../../modules/nf-core/anota2seq/anota2seqrun'
 include { DESEQ2_DELTATE                                       } from '../../modules/local/deseq2/deltate'
@@ -175,49 +173,8 @@ workflow RIBOSEQ {
     def make_bowtie2_index   = params.remove_ribo_rna && params.ribo_removal_tool == 'bowtie2'
     def any_sample_with_umi  = samplesheetHasUmi(params.input, params.with_umi)
 
-    ch_fastq_for_preprocessing = ch_fastq
-    if (any_sample_with_umi && !params.skip_umi_extract) {
-        ch_fastq
-            .branch { meta, reads ->
-                umi: meta.with_umi
-                    return [ meta, reads ]
-                no_umi: true
-                    return [ meta, reads ]
-            }
-            .set { ch_fastq_by_umi }
-
-        ch_fastq_by_umi.umi
-            .branch { meta, fastqs ->
-                single_run: fastqs.size() == 1
-                    return [ meta, fastqs.flatten() ]
-                multiple_runs: true
-                    return [ meta, fastqs.flatten() ]
-            }
-            .set { ch_umi_fastq_by_run_count }
-
-        CAT_FASTQ_BEFORE_UMI(ch_umi_fastq_by_run_count.multiple_runs)
-
-        ch_umi_fastq_by_run_count.single_run
-            .mix(CAT_FASTQ_BEFORE_UMI.out.reads)
-            .set { ch_umi_fastq }
-
-        UMITOOLS_EXTRACT(ch_umi_fastq)
-
-        ch_extracted_umi_reads = UMITOOLS_EXTRACT.out.reads
-            .map { meta, reads -> [ meta, reads instanceof List ? reads : [ reads ] ] }
-        if (params.umi_discard_read in [1, 2]) {
-            ch_extracted_umi_reads = ch_extracted_umi_reads
-                .map { meta, reads ->
-                    meta.single_end ? [ meta, reads ] : [ meta + [ single_end: true ], [ reads[params.umi_discard_read % 2] ] ]
-                }
-        }
-
-        ch_fastq_for_preprocessing = ch_extracted_umi_reads.mix(ch_fastq_by_umi.no_umi)
-        ch_multiqc_files = ch_multiqc_files.mix(UMITOOLS_EXTRACT.out.log.map { _meta, log -> log })
-    }
-
     FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS (
-        ch_fastq_for_preprocessing,                 // ch_reads
+        ch_fastq,                                   // ch_reads
         ch_fasta,                                   // ch_fasta
         ch_transcript_fasta,                        // ch_transcript_fasta
         ch_gtf,                                     // ch_gtf
@@ -240,7 +197,7 @@ workflow RIBOSEQ {
         params.fastp_merge,                         // fastp_merge
         params.remove_ribo_rna,                     // remove_ribo_rna
         params.ribo_removal_tool,                   // ribo_removal_tool
-        false,                                      // with_umi
+        any_sample_with_umi,                        // with_umi
         params.umi_discard_read,                    // umi_discard_read
         params.save_merged_fastq,                   // save_merged_fastq
         params.stranded_threshold,                  // stranded_threshold
