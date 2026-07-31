@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#194](https://github.com/nf-core/riboseq/pull/194) - Update all nf-core modules and subworkflows to their latest revisions and reconcile the pipeline with the changed component interfaces ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#194](https://github.com/nf-core/riboseq/pull/194) - Raise the minimum Nextflow version to `25.10.0`, required by nf-schema 2.7.2 ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#156](https://github.com/nf-core/riboseq/pull/156) - Template update for nf-core/tools v4.0.2 ([@nf-core-bot](https://github.com/nf-core-bot), [@pinin4fjords](https://github.com/pinin4fjords))
+- [#205](https://github.com/nf-core/riboseq/pull/205) - Template update for nf-core/tools v4.0.3 ([@nf-core-bot](https://github.com/nf-core-bot), [@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Parameters`
 
