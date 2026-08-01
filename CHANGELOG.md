@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#166](https://github.com/nf-core/riboseq/issues/166) - Add per-ORF in-frame P-site quantification, emitting an ORF x sample count matrix ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#168](https://github.com/nf-core/riboseq/issues/168) - Add ORF-level differential translation analysis (anota2seq / deltaTE / DOTSeq) on top of the gene-level DTE ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#146](https://github.com/nf-core/riboseq/issues/146), [#149](https://github.com/nf-core/riboseq/issues/149) - Add per-sample UMI handling through an optional `with_umi` samplesheet column ([@pinin4fjords](https://github.com/pinin4fjords))
+- Add `--smorf_max_aa` (default 100) controlling the catalogue's `is_smorf` flag and which ORFs are eligible for the peptide-level collapse. It never affects `orf_class`
+- Add `uoORF`, `doORF` and `intORF` to the `orf_class` vocabulary, recovering the CDS-overlap and internal distinctions that RiboCode, ribotricer, Ribo-TISH and PRICE already report
+- Add `is_smorf` and `orf_type_native` columns to the normalised and catalogue tables. `orf_type_native` carries each caller's own ORF-type label, so every harmonisation decision is auditable without re-running callers
 
 ### `Fixed`
 
@@ -145,6 +148,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 | `bedGraphToBigWig` |             | 469         |
 | `AGAT`             |             | 1.6.1       |
 | `Trim Galore`      | 2.1.0       | 2.3.0       |
+
+- **Breaking:** `orf_class` is now purely positional and no longer encodes ORF length. The `smORF` value is gone from every catalogue output; a short ORF keeps its positional class (`uORF`, `dORF`, `canonical_cds`, …) and is flagged by the new `is_smorf` column instead. Migrate a filter on `orf_class == "smORF"` to `is_smorf == "1"` (equivalently `aa_length <= 100`, the default `--smorf_max_aa`). The peptide-collapse scope is unchanged at the default threshold
+- **Breaking:** `orf_class` values change for ORFs the callers place relative to the CDS. RiboCode's and ribotricer's `Overlap_uORF`/`Overlap_dORF` were being folded into `uORF`/`dORF` by substring matching and now map to `uoORF`/`doORF`; RiboCode's and Ribo-TISH's `internal` and PRICE's `iORF` now map to `intORF` rather than `other`; PRICE's `uoORF` maps to `uoORF` rather than `uORF` and its `orphan` to `novel_u` rather than `other`. ribotricer's `internal` stays `other` because it is that tool's fall-through rather than a frame-tested call. Anything consuming `orf_class` — including the ORF-level DOTSeq analysis, which matches `uORF`/`dORF` literally — sees the new vocabulary
+- Catalogue row counts change in both directions. ORFs whose callers disagreed on class now merge instead of producing one row per caller, and an ORF two callers size either side of the small-ORF threshold now merges; conversely a short truncated CDS variant is no longer folded into its transcript's full-length CDS, so it survives as its own row
 
 ## v1.2.0 - 2025-12-03
 

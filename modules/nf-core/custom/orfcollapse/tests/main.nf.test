@@ -39,6 +39,9 @@ nextflow_process {
                 { assert snapshot(sanitizeOutput(process.out)).match() },
                 // The two identical smORFs on different strands/loci collapse to one row.
                 { assert rows.size() == 3 },
+                // The collapse must actually fold something: a silently empty
+                // eligible set would leave all four input rows in place.
+                { assert rows.size() < 4 },
                 { assert byId.containsKey('orf_00000001') },
                 { assert !byId.containsKey('orf_00000002') },
                 // The survivor unions both callers' evidence and both samples.

@@ -101,6 +101,7 @@ nextflow_process {
             def n_samples       = cols.indexOf('n_samples')
             def samples         = cols.indexOf('samples')
             def native          = cols.indexOf('orf_type_native')
+            def smorf           = cols.indexOf('is_smorf')
             def mqc_counts = path(process.out.multiqc[0][1]).text.readLines()
                 .findAll { !it.startsWith('#') && !it.startsWith('Class') && it.trim() }
                 .collect { it.split('\t')[1].toInteger() }
@@ -124,6 +125,11 @@ nextflow_process {
                 { assert mqc_counts.sum() == rows.size() },
                 // The caller's own label is preserved for every row.
                 { assert rows.every { it[native] && it[native] != '' } },
+                // is_smorf is a length flag, so it must agree with the
+                // aa_length on its own row and never appear as a class.
+                { assert rows.every { it[smorf] in ['0', '1'] } },
+                { assert rows.every { (it[smorf] == '1') == (it[aa].toInteger() <= 100) } },
+                { assert rows.every { it[cls] != 'smORF' } },
                 // For rows where a caller contributed, the score column must
                 // carry a numeric value (catches the case where a parser
                 // bug populates `1` indicator but no real score).

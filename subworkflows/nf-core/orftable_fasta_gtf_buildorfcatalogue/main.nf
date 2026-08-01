@@ -75,9 +75,9 @@ workflow ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE {
     //    collapses genomically overlapping ORFs, so the same micropeptide
     //    encoded at distinct loci survives as separate rows; the collapse route
     //    clusters peptides by amino-acid identity and folds the small-ORF
-    //    (aa_length <= 100) clusters to one representative each (GENCODE
-    //    Ribo-seq ORF catalogue convention, Mudge et al. 2022). The keep route
-    //    emits the merged catalogue untouched.
+    //    (aa_length <= --smorf-max-aa) clusters to one representative each
+    //    (GENCODE Ribo-seq ORF catalogue convention, Mudge et al. 2022). The
+    //    keep route emits the merged catalogue untouched.
     ch_routed = CUSTOM_ORFMERGE.out.bed12
         .join(CUSTOM_ORFMERGE.out.catalogue_tsv)
         .join(CUSTOM_ORFMERGE.out.orf_to_gene_tsv)

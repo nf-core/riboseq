@@ -12,11 +12,11 @@ doi:10.1038/s41587-022-01369-0; gencode-riboseqORFs collapse_cutoff 0.9), with
 two deliberate departures from that reference:
 
   - GENCODE collapses overlapping ORFs of any size within a shared locus;
-    this restricts collapsing to small ORFs (orf_class == "smORF", i.e.
-    aa_length <= 100) and clusters them locus-agnostically across the whole
+    this restricts collapsing to small ORFs (aa_length <= --smorf-max-aa,
+    default 100) and clusters them locus-agnostically across the whole
     catalogue, since the target case is one micropeptide recurring at several
-    non-overlapping loci. The smORF-only restriction is this pipeline's choice,
-    not a GENCODE property.
+    non-overlapping loci. The small-ORF-only restriction is this pipeline's
+    choice, not a GENCODE property.
   - similarity is MMseqs2 global sequence identity (--min-seq-id 0.9,
     mmseqs/easycluster upstream) rather than GENCODE's longest-shared-substring
     / P-site-overlap metric, so the 0.9 here approximates rather than
@@ -32,10 +32,11 @@ filtering). The filter is applied after the collapse, so the consensus is the
 high-confidence subset of the de-redundified catalogue and a folded
 micropeptide is judged on its combined cross-caller / cross-sample evidence.
 
-Only smORF rows are collapsed; larger ORFs and transcript-anchored classes pass
-through untouched, preserving the deterministic coordinate/transcript merge from
-upstream. Among the smORF members of a cluster the representative is chosen here
-(longest aa_length, ties broken by orf_id) so the result is independent of which
+Only small ORFs are collapsed; larger ORFs pass through untouched, preserving
+the deterministic coordinate/transcript merge from upstream. Eligibility is a
+length test, independent of `orf_class`, so a short uORF and a short novel ORF
+are both candidates. Among the members of a cluster the representative is chosen
+here (longest aa_length, ties broken by orf_id) so the result is independent of which
 sequence MMseqs2 labelled the cluster representative. Catalogue row order is
 preserved; dropped members fold their cross-caller / cross-sample evidence and
 gene mappings into the survivor.
@@ -63,8 +64,7 @@ SCORE_DIRECTIONS = {
     "rpbp": "max",
     "price": "min",
 }
-CLASS_ORDER = ("canonical_cds", "uORF", "dORF", "novel_u", "smORF", "other")
-SMORF_CLASS = "smORF"
+CLASS_ORDER = ("canonical_cds", "uORF", "uoORF", "dORF", "doORF", "intORF", "novel_u", "other")
 
 
 def read_fasta(path):
@@ -142,7 +142,15 @@ def main():
         default=1,
         help="Minimum distinct samples for an ORF to enter the consensus view (default: 1)",
     )
+    parser.add_argument(
+        "--smorf-max-aa",
+        type=int,
+        default=100,
+        help="Maximum aa_length eligible for peptide-level collapse (default: 100)",
+    )
     args = parser.parse_args(shlex.split("${args}"))
+    if args.smorf_max_aa < 1:
+        sys.exit(f"orfcollapse: --smorf-max-aa must be >= 1, got {args.smorf_max_aa}")
 
     prefix = "${prefix}"
 
@@ -170,9 +178,18 @@ def main():
     aa = read_fasta("${aa_fasta}")
     cluster_of = read_clusters("${cluster_tsv}")
 
+    # Eligibility is derived here from aa_length rather than read from a
+    # propagated flag, so the scope cannot silently drift from --smorf-max-aa.
+    def is_small(row):
+        try:
+            aa = int(row.get("aa_length") or 0)
+        except ValueError:
+            return False
+        return 0 < aa <= args.smorf_max_aa
+
     clusters = defaultdict(list)
     for r in rows:
-        if r.get("orf_class") == SMORF_CLASS:
+        if is_small(r):
             clusters[cluster_of.get(r["orf_id"], r["orf_id"])].append(r)
 
     remap, merged_rows, dropped = {}, {}, set()

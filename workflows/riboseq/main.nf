@@ -539,9 +539,9 @@ workflow RIBOSEQ {
     // Cross-sample ORF catalogue. Built once per pipeline run
     // when extended-ORF analysis is enabled AND at least one ORF caller ran.
     // The catalogue normalises each caller's per-sample output into a unified
-    // BED12, merges with class-aware collapse (transcript-ID for canonical
-    // CDS, reciprocal overlap for novel intergenic / smORFs), and emits the
-    // merged BED12 + sidecar TSV + ORF-to-gene mapping + AA FASTA.
+    // BED12, merges by clustering strategy (transcript-anchored for annotated
+    // CDS and UTR-resident ORFs, reciprocal overlap for novel intergenic), and
+    // emits the merged BED12 + sidecar TSV + ORF-to-gene mapping + AA FASTA.
     //
     if (orf_catalogue_active) {
         ch_orf_tables = ORF_CALLER_DISPATCH.out.ribotish_predictions  .map { meta, f -> [ meta, f, 'ribotish'   ] }

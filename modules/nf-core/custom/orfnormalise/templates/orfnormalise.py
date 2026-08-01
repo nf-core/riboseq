@@ -5,16 +5,27 @@ One template, five callers. The `caller` val input (one of ribocode,
 ribotish, ribotricer, rpbp, price) selects the per-caller parser,
 classifier and score mapper.
 
+`orf_class` is purely positional: it records where the ORF sits relative to
+the annotated CDS and never encodes its length. Use the `is_smorf` column to
+select small ORFs.
+
 Harmonised orf_class vocabulary written into the sidecar TSV:
     canonical_cds: ORF maps to an annotated CDS (including truncated /
                    extended variants of one).
-    uORF:          upstream ORF (5'UTR-resident).
-    dORF:          downstream ORF (3'UTR-resident).
+    uORF:          upstream ORF, not overlapping the CDS.
+    uoORF:         upstream ORF overlapping the CDS out of frame.
+    dORF:          downstream ORF, not overlapping the CDS.
+    doORF:         downstream ORF overlapping the CDS out of frame.
+    intORF:        ORF contained within the CDS, out of frame.
     novel_u:       novel / intergenic ORF not assigned to an annotated CDS.
-    smORF:         small ORF (aa_length <= 100). Promoted regardless of
-                   location-based class so downstream tools can treat smORFs
-                   uniformly.
-    other:         internal / overlap / frame variants and anything else.
+    other:         anything a caller cannot place, including ribotricer's
+                   `internal` fall-through and PRICE's `intronic`.
+
+Not every caller can report every class. Ribo-TISH's `5'UTR` covers both uORF
+and uoORF (tisType() tests only the start position) and PRICE's enum has no
+doORF, so absence of a class for one caller is a tool limitation rather than
+evidence about the ORF. `orf_type_native` carries the caller's own label so
+these decisions stay auditable.
 
 Source-column choice for the per-ORF score, ORF-type classification, and
 length-derivation is configurable via ext.args:
@@ -28,6 +39,9 @@ length-derivation is configurable via ext.args:
                              ribotricer, rpbp).
     --aa-length-field NAME   Override a direct aa-length column (ribotish
                              only - the only caller emitting AALen).
+    --smorf-max-aa N         Maximum aa_length flagged in `is_smorf`
+                             (default 100). Affects the flag only, never
+                             `orf_class`.
 
 Defaults are per-caller and listed in DEFAULT_FIELDS below; if a column
 chain is provided, the parser walks it in order. The resolved column
@@ -52,6 +66,10 @@ import yaml
 
 csv.field_size_limit(sys.maxsize)
 
+# Bumped whenever the orf_class vocabulary changes, so a published catalogue
+# self-identifies which vocabulary produced it.
+ORF_CLASS_VOCABULARY = 2
+
 CALLER = "${caller}"
 INPUT = Path("${orfs_table}")
 GTF = Path("${gtf}")
@@ -61,7 +79,7 @@ OUT_TSV = Path("${prefix}.tsv")
 
 TSV_HEADER = (
     "orf_id\\tcaller\\tsample_id\\tchrom\\tstart\\tend\\tstrand\\t"
-    "gene_id\\ttranscript_id\\torf_class\\taa_length\\tscore\\torf_type_native"
+    "gene_id\\ttranscript_id\\torf_class\\taa_length\\tscore\\torf_type_native\\tis_smorf"
 )
 
 # Per-caller default field-name preference chains. Each list is walked in
@@ -345,6 +363,7 @@ def emit_tsv_row(
     aa_length,
     score,
     orf_type_native,
+    is_smorf,
 ):
     return "\\t".join(
         [
@@ -361,11 +380,12 @@ def emit_tsv_row(
             str(aa_length),
             str(score),
             orf_type_native,
+            "1" if is_smorf else "0",
         ]
     )
 
 
-def write_outputs(bed_path, tsv_path, bed_lines, tsv_rows, parser_columns, unmapped):
+def write_outputs(bed_path, tsv_path, bed_lines, tsv_rows, parser_columns, unmapped, smorf_max_aa):
     bed_lines = [line for line in bed_lines if line]
     with open(bed_path, "w") as bh:
         for line in bed_lines:
@@ -374,19 +394,17 @@ def write_outputs(bed_path, tsv_path, bed_lines, tsv_rows, parser_columns, unmap
         pc = " ".join(f"{k}={v}" for k, v in parser_columns.items() if v)
         # An unmapped count above zero means this caller emitted an ORF-type
         # token CLASS_TOKENS does not know, so those rows fell into `other`.
-        provenance = f"# parser_columns: caller={CALLER} {pc} unmapped_orf_type={sum(unmapped.values())}"
+        provenance = (
+            f"# parser_columns: caller={CALLER} {pc}"
+            f" unmapped_orf_type={sum(unmapped.values())}"
+            f" orf_class_vocabulary={ORF_CLASS_VOCABULARY} smorf_max_aa={smorf_max_aa}"
+        )
         if unmapped:
             provenance += f" unmapped_tokens={','.join(sorted(unmapped))}"
         th.write(provenance + "\\n")
         th.write(TSV_HEADER + "\\n")
         for r in tsv_rows:
             th.write(r + "\\n")
-
-
-def reclassify_smorf(orf_class, aa_length):
-    if isinstance(aa_length, int) and 0 < aa_length <= 100:
-        return "smORF"
-    return orf_class
 
 
 # ----------------------------------------------------------------------------
@@ -404,14 +422,14 @@ CLASS_TOKENS = {
         "ccds": "canonical_cds",
         "uorf": "uORF",
         "dorf": "dORF",
-        "overlap_uorf": "uORF",
-        "overlap_dorf": "dORF",
-        "internal": "other",
+        "overlap_uorf": "uoORF",
+        "overlap_dorf": "doORF",
+        "internal": "intORF",
         "novel": "novel_u",
         "intergenic": "novel_u",
     },
     # Ribo-TISH predict.TIS_types. 5'UTR conflates uORF with uoORF and
-    # 3'UTR conflates dORF with doORF; the tool tests only the start
+    # 3'UTR conflates dORF with doORF; tisType() only tests the start
     # position, so the overlap forms are not recoverable here.
     "ribotish": {
         "annotated": "canonical_cds",
@@ -421,21 +439,23 @@ CLASS_TOKENS = {
         "uorf": "uORF",
         "3'utr": "dORF",
         "dorf": "dORF",
-        "internal": "other",
+        "internal": "intORF",
         "novel": "novel_u",
         "intergenic": "novel_u",
     },
     # ribotricer prepare_orfs.check_orf_type. `internal` is that function's
-    # terminal fall-through, not a positive out-of-frame call.
+    # terminal fall-through rather than a positive out-of-frame call, so it
+    # stays `other`: mapping it to intORF would assert a frame relationship
+    # ribotricer never tested.
     "ribotricer": {
         "annotated": "canonical_cds",
         "ccds": "canonical_cds",
         "uorf": "uORF",
         "super_uorf": "uORF",
-        "overlap_uorf": "uORF",
+        "overlap_uorf": "uoORF",
         "dorf": "dORF",
         "super_dorf": "dORF",
-        "overlap_dorf": "dORF",
+        "overlap_dorf": "doORF",
         "internal": "other",
         "novel": "novel_u",
         "intergenic": "novel_u",
@@ -448,26 +468,29 @@ CLASS_TOKENS = {
         "annotated": "canonical_cds",
         "five_prime": "uORF",
         "uorf": "uORF",
+        "five_prime_overlap": "uoORF",
         "three_prime": "dORF",
         "dorf": "dORF",
-        "internal": "other",
+        "three_prime_overlap": "doORF",
+        "internal": "intORF",
         "novel": "novel_u",
         "intergenic": "novel_u",
     },
-    # PRICE PriceOrfType. The enum has no doORF; `orphan` is both the
-    # not-transcript-consistent label and the final fall-through.
+    # PRICE PriceOrfType. The enum has no doORF. `orphan` is both the
+    # not-transcript-consistent label and the final fall-through, so it maps
+    # to novel_u; `intronic` has no positional equivalent and stays `other`.
     "price": {
         "cds": "canonical_cds",
         "ext": "canonical_cds",
         "trunc": "canonical_cds",
         "variant": "canonical_cds",
         "uorf": "uORF",
-        "uoorf": "uORF",
+        "uoorf": "uoORF",
         "dorf": "dORF",
-        "iorf": "other",
+        "iorf": "intORF",
         "ncrna": "novel_u",
         "intronic": "other",
-        "orphan": "other",
+        "orphan": "novel_u",
     },
 }
 
@@ -932,7 +955,15 @@ def main():
     parser.add_argument("--orf-type-field", default=None)
     parser.add_argument("--length-field", default=None)
     parser.add_argument("--aa-length-field", default=None)
+    parser.add_argument(
+        "--smorf-max-aa",
+        type=int,
+        default=100,
+        help="Maximum aa_length flagged as a small ORF in `is_smorf` (default: 100)",
+    )
     args = parser.parse_args(shlex.split("${args}"))
+    if args.smorf_max_aa < 1:
+        sys.exit(f"orfnormalise: --smorf-max-aa must be >= 1, got {args.smorf_max_aa}")
 
     fields = {
         "score": _resolve_chain(CALLER, "score", args.score_field),
@@ -958,7 +989,7 @@ def main():
         orf_class, matched = classify(CALLER, orf_type_native)
         if not matched:
             unmapped[orf_type_native] += 1
-        orf_class = reclassify_smorf(orf_class, int(r["aa_length"]))
+        aa_length = int(r["aa_length"])
         blocks = r["blocks"]
         bed_lines.append(emit_bed12(r["chrom"], blocks, orf_id, int(r["bed_score"]), r["strand"]))
         tsv_rows.append(
@@ -973,13 +1004,14 @@ def main():
                 gene_id=r["gene_id"],
                 transcript_id=r["transcript_id"],
                 orf_class=orf_class,
-                aa_length=int(r["aa_length"]),
+                aa_length=aa_length,
                 score=r["raw_score"],
                 orf_type_native=orf_type_native,
+                is_smorf=0 < aa_length <= args.smorf_max_aa,
             )
         )
 
-    write_outputs(OUT_BED, OUT_TSV, bed_lines, tsv_rows, resolved_columns, unmapped)
+    write_outputs(OUT_BED, OUT_TSV, bed_lines, tsv_rows, resolved_columns, unmapped, args.smorf_max_aa)
     write_versions()
 
 
