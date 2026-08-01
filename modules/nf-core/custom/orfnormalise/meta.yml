@@ -30,7 +30,13 @@ description: |
 
   Output sidecar TSV columns:
     orf_id caller sample_id chrom start end strand gene_id transcript_id
-    orf_class aa_length score
+    orf_class aa_length score orf_type_native
+
+  `orf_type_native` carries the caller's own ORF-type label verbatim, so every
+  harmonisation decision below stays auditable without re-running the caller.
+  ORF-type tokens are matched exactly (casefolded) against each caller's closed
+  vocabulary; the count of tokens matching no entry is reported as
+  `unmapped_orf_type` on the `# parser_columns:` provenance line.
 
   Harmonised `orf_class` vocabulary written into the sidecar TSV:
 

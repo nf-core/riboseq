@@ -113,7 +113,7 @@ def best_score(values, direction):
 
 
 def merge_members(members):
-    """Fold smORF rows sharing an AA cluster into one representative row dict."""
+    """Fold small-ORF rows sharing an AA cluster into one representative row dict."""
     rep = sorted(members, key=lambda r: (-int(r.get("aa_length") or 0), r["orf_id"]))[0]
     out = dict(rep)
     for c in CALLERS:
@@ -122,6 +122,9 @@ def merge_members(members):
     samples = sorted({s for r in members for s in (r.get("samples") or "").split(",") if s})
     out["n_samples"] = str(len(samples))
     out["samples"] = ",".join(samples)
+    if "orf_type_native" in out:
+        natives = sorted({t for r in members for t in (r.get("orf_type_native") or "").split(",") if t})
+        out["orf_type_native"] = ",".join(natives)
     return rep["orf_id"], out
 
 
@@ -146,6 +149,16 @@ def main():
     catalogue = pd.read_csv("${catalogue_tsv}", sep="\\t", comment="#", dtype=str, keep_default_na=False)
     header = list(catalogue.columns)
     rows = catalogue.to_dict("records")
+
+    # The collapse scope is derived from these two columns, so a silent rename
+    # upstream must abort rather than quietly collapse nothing.
+    missing = [c for c in ("orf_class", "aa_length") if c not in header]
+    if missing:
+        sys.exit(f"orfcollapse: catalogue is missing required column(s) {missing}")
+
+    unknown = sorted(set(catalogue["orf_class"]) - set(CLASS_ORDER))
+    if unknown:
+        sys.exit(f"orfcollapse: unknown orf_class value(s) {unknown}; update CLASS_ORDER")
 
     bed_index = {}
     with open("${bed12}") as fh:

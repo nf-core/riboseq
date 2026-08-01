@@ -6,8 +6,11 @@ description: |
   (typically) `bedtools/getfasta` + `seqkit/translate` downstream to obtain
   the AA FASTA.
 
-  Strategy is class-aware (operating on the harmonised `orf_class` written
-  by `custom/orfnormalise`):
+  Rows are partitioned by clustering strategy. The harmonised `orf_class`
+  written by `custom/orfnormalise` selects the strategy but is never part of a
+  grouping key, because callers disagree on class for the same ORF (Ribo-TISH
+  reports `5'UTR` for both uORFs and CDS-overlapping uORFs) and keying on it
+  would emit one catalogue row per disagreeing caller:
 
     - canonical_cds:        collapse by (transcript_id, strand). One
                             canonical CDS per transcript by definition.
@@ -17,7 +20,8 @@ description: |
                             keying on the outer span keeps them in
                             separate clusters while still merging
                             cross-caller calls that agree on coordinates.
-    - novel_u, smORF:       greedy reciprocal-overlap clustering on the
+    - novel_u, smORF:       greedy reciprocal-overlap clustering in a
+                            single pass over both classes, on the
                             outer genomic span at `--reciprocal-overlap`
                             (default 0.8). Catches fuzzy cross-caller
                             matches and exact-coordinate collapses in
@@ -112,7 +116,8 @@ output:
             Per-ORF table with `called_by_<caller>` and `score_<caller>`
             columns for each supported caller, `n_samples` / `samples`
             cross-sample recurrence columns, plus orf_class, aa_length,
-            and host gene_id / transcript_id.
+            host gene_id / transcript_id, and `orf_type_native` listing
+            every caller-native ORF-type label in the cluster.
           pattern: "*.tsv"
           ontologies:
             - edam: http://edamontology.org/format_3475 # TSV

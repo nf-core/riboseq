@@ -47,7 +47,10 @@ nextflow_process {
                 { assert rows.collect { it[cls] }.toSet().any { it != 'other' } },
                 { assert parser_columns_line != null },
                 { assert parser_columns_line.contains('caller=ribocode') },
-                { assert parser_columns_line.contains('score=pval_combined') }
+                { assert parser_columns_line.contains('score=pval_combined') },
+                // Exact-token classification: no native label may go unmapped,
+                // otherwise those rows silently landed in `other`.
+                { assert parser_columns_line.contains('unmapped_orf_type=0') }
             )
         }
     }
@@ -87,7 +90,8 @@ nextflow_process {
                 { assert rows.size() > 0 },
                 { assert rows.every { it[aa].toInteger() > 0 } },
                 { assert rows.every { it[score] && it[score] != '' } },
-                { assert rows.collect { it[cls] }.toSet().any { it != 'other' } }
+                { assert rows.collect { it[cls] }.toSet().any { it != 'other' } },
+                { assert parser_columns_line.contains('unmapped_orf_type=0') }
             )
         }
     }
@@ -115,6 +119,7 @@ nextflow_process {
             def lines     = all_lines.findAll { !it.startsWith('#') }
             def cols      = lines[0].split('\t') as List
             def rows      = lines.drop(1).collect { it.split('\t') }
+            def parser_columns_line = all_lines.find { it.startsWith('# parser_columns:') }
             def aa        = cols.indexOf('aa_length')
             def score     = cols.indexOf('score')
             def cls       = cols.indexOf('orf_class')
@@ -133,7 +138,8 @@ nextflow_process {
                 { assert rows.every { it[aa].toInteger() > 0 } },
                 { assert rows.every { it[score] && it[score] != '' } },
                 { assert rows.collect { it[cls] }.toSet().any { it != 'other' } },
-                { assert block_counts.any { it > 1 } }
+                { assert block_counts.any { it > 1 } },
+                { assert parser_columns_line.contains('unmapped_orf_type=0') }
             )
         }
     }
@@ -175,7 +181,8 @@ nextflow_process {
                 { assert rows.every { it[score] && it[score] != '' && it[score].toDouble() > 0 } },
                 // Rp-Bp's predicted-orfs BED has no orf_type column; defaulting
                 // to 'canonical' should keep every row out of the 'other' bucket.
-                { assert rows.every { it[cls] != 'other' } }
+                { assert rows.every { it[cls] != 'other' } },
+                { assert parser_columns_line.contains('unmapped_orf_type=0') }
             )
         }
     }
@@ -219,7 +226,8 @@ nextflow_process {
                 { assert rows.size() > 0 },
                 { assert rows.every { it[aa].toInteger() > 0 } },
                 { assert rows.collect { it[cls] }.toSet().any { it != 'other' } },
-                { assert block_counts.any { it > 1 } }
+                { assert block_counts.any { it > 1 } },
+                { assert parser_columns_line.contains('unmapped_orf_type=0') }
             )
         }
     }

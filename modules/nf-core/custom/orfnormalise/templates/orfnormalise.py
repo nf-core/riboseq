@@ -44,6 +44,7 @@ import platform
 import re
 import shlex
 import sys
+from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -60,7 +61,7 @@ OUT_TSV = Path("${prefix}.tsv")
 
 TSV_HEADER = (
     "orf_id\\tcaller\\tsample_id\\tchrom\\tstart\\tend\\tstrand\\t"
-    "gene_id\\ttranscript_id\\torf_class\\taa_length\\tscore"
+    "gene_id\\ttranscript_id\\torf_class\\taa_length\\tscore\\torf_type_native"
 )
 
 # Per-caller default field-name preference chains. Each list is walked in
@@ -331,7 +332,19 @@ def emit_bed12(chrom, blocks, name, score, strand):
 
 
 def emit_tsv_row(
-    orf_id, caller, sample_id, chrom, start, end, strand, gene_id, transcript_id, orf_class, aa_length, score
+    orf_id,
+    caller,
+    sample_id,
+    chrom,
+    start,
+    end,
+    strand,
+    gene_id,
+    transcript_id,
+    orf_class,
+    aa_length,
+    score,
+    orf_type_native,
 ):
     return "\\t".join(
         [
@@ -347,18 +360,24 @@ def emit_tsv_row(
             orf_class,
             str(aa_length),
             str(score),
+            orf_type_native,
         ]
     )
 
 
-def write_outputs(bed_path, tsv_path, bed_lines, tsv_rows, parser_columns):
+def write_outputs(bed_path, tsv_path, bed_lines, tsv_rows, parser_columns, unmapped):
     bed_lines = [line for line in bed_lines if line]
     with open(bed_path, "w") as bh:
         for line in bed_lines:
             bh.write(line + "\\n")
     with open(tsv_path, "w") as th:
         pc = " ".join(f"{k}={v}" for k, v in parser_columns.items() if v)
-        th.write(f"# parser_columns: caller={CALLER} {pc}\\n")
+        # An unmapped count above zero means this caller emitted an ORF-type
+        # token CLASS_TOKENS does not know, so those rows fell into `other`.
+        provenance = f"# parser_columns: caller={CALLER} {pc} unmapped_orf_type={sum(unmapped.values())}"
+        if unmapped:
+            provenance += f" unmapped_tokens={','.join(sorted(unmapped))}"
+        th.write(provenance + "\\n")
         th.write(TSV_HEADER + "\\n")
         for r in tsv_rows:
             th.write(r + "\\n")
@@ -373,60 +392,99 @@ def reclassify_smorf(orf_class, aa_length):
 # ----------------------------------------------------------------------------
 # ORF-type classification
 #
-# Substring callers: first rule whose any-of keyword set matches the
-# lower-cased orf_type wins. PRICE uses exact (case-sensitive) tokens.
+# Every caller's ORF-type vocabulary is a closed enum, so tokens are matched
+# exactly (casefolded) rather than by substring. Substring matching mis-fired
+# on the overlap forms, because "uorf" is a substring of "overlap_uorf".
 # ----------------------------------------------------------------------------
 
-SUBSTR_RULES = {
-    "ribotish": [
-        (("5'utr", "uorf"), "uORF"),
-        (("3'utr", "dorf"), "dORF"),
-        (("annotated", "extended", "truncated"), "canonical_cds"),
-        (("novel", "intergenic"), "novel_u"),
-    ],
-    "ribocode": [
-        (("uorf", "5'utr"), "uORF"),
-        (("dorf", "3'utr"), "dORF"),
-        (("annotated", "ccds"), "canonical_cds"),
-        (("internal",), "other"),
-        (("novel", "intergenic"), "novel_u"),
-    ],
-    "ribotricer": [
-        (("uorf",), "uORF"),
-        (("dorf",), "dORF"),
-        (("annotated", "ccds"), "canonical_cds"),
-        (("novel", "intergenic"), "novel_u"),
-    ],
-    "rpbp": [
-        (("five_prime", "uorf"), "uORF"),
-        (("three_prime", "dorf"), "dORF"),
-        (("canonical", "annotated"), "canonical_cds"),
-        (("novel", "intergenic"), "novel_u"),
-    ],
-}
-
-PRICE_EXACT = {
-    "CDS": "canonical_cds",
-    "Ext": "canonical_cds",
-    "Trunc": "canonical_cds",
-    "Variant": "canonical_cds",
-    "uORF": "uORF",
-    "uoORF": "uORF",
-    "dORF": "dORF",
-    "ncRNA": "novel_u",
+CLASS_TOKENS = {
+    # RiboCode detectORF.classfy_orf
+    "ribocode": {
+        "annotated": "canonical_cds",
+        "ccds": "canonical_cds",
+        "uorf": "uORF",
+        "dorf": "dORF",
+        "overlap_uorf": "uORF",
+        "overlap_dorf": "dORF",
+        "internal": "other",
+        "novel": "novel_u",
+        "intergenic": "novel_u",
+    },
+    # Ribo-TISH predict.TIS_types. 5'UTR conflates uORF with uoORF and
+    # 3'UTR conflates dORF with doORF; the tool tests only the start
+    # position, so the overlap forms are not recoverable here.
+    "ribotish": {
+        "annotated": "canonical_cds",
+        "truncated": "canonical_cds",
+        "extended": "canonical_cds",
+        "5'utr": "uORF",
+        "uorf": "uORF",
+        "3'utr": "dORF",
+        "dorf": "dORF",
+        "internal": "other",
+        "novel": "novel_u",
+        "intergenic": "novel_u",
+    },
+    # ribotricer prepare_orfs.check_orf_type. `internal` is that function's
+    # terminal fall-through, not a positive out-of-frame call.
+    "ribotricer": {
+        "annotated": "canonical_cds",
+        "ccds": "canonical_cds",
+        "uorf": "uORF",
+        "super_uorf": "uORF",
+        "overlap_uorf": "uORF",
+        "dorf": "dORF",
+        "super_dorf": "dORF",
+        "overlap_dorf": "dORF",
+        "internal": "other",
+        "novel": "novel_u",
+        "intergenic": "novel_u",
+    },
+    # Rp-Bp defaults.orf_type_name_map. Only "canonical" is reachable today
+    # because parse_rpbp has no type column to read; the rest of the
+    # vocabulary arrives with the orfs-labels file.
+    "rpbp": {
+        "canonical": "canonical_cds",
+        "annotated": "canonical_cds",
+        "five_prime": "uORF",
+        "uorf": "uORF",
+        "three_prime": "dORF",
+        "dorf": "dORF",
+        "internal": "other",
+        "novel": "novel_u",
+        "intergenic": "novel_u",
+    },
+    # PRICE PriceOrfType. The enum has no doORF; `orphan` is both the
+    # not-transcript-consistent label and the final fall-through.
+    "price": {
+        "cds": "canonical_cds",
+        "ext": "canonical_cds",
+        "trunc": "canonical_cds",
+        "variant": "canonical_cds",
+        "uorf": "uORF",
+        "uoorf": "uORF",
+        "dorf": "dORF",
+        "iorf": "other",
+        "ncrna": "novel_u",
+        "intronic": "other",
+        "orphan": "other",
+    },
 }
 
 
 def classify(caller, orf_type):
+    """Map a caller's native ORF-type token to the harmonised class.
+
+    Returns (orf_class, matched); `matched` is False when a non-empty token
+    matched no entry, so unmapped labels can be counted rather than silently
+    absorbed into `other`.
+    """
     if not orf_type:
-        return "other"
-    if caller == "price":
-        return PRICE_EXACT.get(orf_type.strip(), "other")
-    t = orf_type.lower()
-    for keys, cls in SUBSTR_RULES[caller]:
-        if any(k in t for k in keys):
-            return cls
-    return "other"
+        return "other", True
+    cls = CLASS_TOKENS[caller].get(orf_type.strip().casefold())
+    if cls is None:
+        return "other", False
+    return cls, True
 
 
 # ----------------------------------------------------------------------------
@@ -889,13 +947,18 @@ def main():
     bed_lines = []
     tsv_rows = []
     seen = set()
+    unmapped = defaultdict(int)
 
     for r in rows:
         orf_id = r["orf_id"]
         if orf_id in seen:
             continue
         seen.add(orf_id)
-        orf_class = reclassify_smorf(classify(CALLER, r["orf_type"]), int(r["aa_length"]))
+        orf_type_native = (r["orf_type"] or "").strip()
+        orf_class, matched = classify(CALLER, orf_type_native)
+        if not matched:
+            unmapped[orf_type_native] += 1
+        orf_class = reclassify_smorf(orf_class, int(r["aa_length"]))
         blocks = r["blocks"]
         bed_lines.append(emit_bed12(r["chrom"], blocks, orf_id, int(r["bed_score"]), r["strand"]))
         tsv_rows.append(
@@ -912,10 +975,11 @@ def main():
                 orf_class=orf_class,
                 aa_length=int(r["aa_length"]),
                 score=r["raw_score"],
+                orf_type_native=orf_type_native,
             )
         )
 
-    write_outputs(OUT_BED, OUT_TSV, bed_lines, tsv_rows, resolved_columns)
+    write_outputs(OUT_BED, OUT_TSV, bed_lines, tsv_rows, resolved_columns, unmapped)
     write_versions()
 
 

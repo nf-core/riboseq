@@ -1,14 +1,23 @@
 #!/usr/bin/env python3
 """Merge per-sample, per-caller normalised ORF BED12s into a unified catalogue.
 
-Strategy is class-aware (operating on the harmonised `orf_class` from
-custom/orfnormalise):
+Rows are partitioned by clustering *strategy*. The harmonised `orf_class`
+from custom/orfnormalise selects the strategy but is never part of a
+grouping key, because callers disagree on class for the same ORF and keying
+on it would emit one catalogue row per disagreeing caller:
 
-  - canonical_cds, uORF, dORF, other:  collapse by transcript_id (handles
-    multi-exon CDS correctly; uORF/dORF are anchored to a host transcript).
+  - canonical_cds: collapse by (transcript_id, strand). One annotated CDS
+    per transcript, so the span stays out of the key and multi-exon CDSs
+    from different callers still meet.
+  - uORF, dORF, other: collapse by (transcript_id, strand, start, end). A
+    transcript can host several, so the outer span joins the key.
   - novel_u, smORF: greedy reciprocal-overlap clustering on the outer
-    genomic span at `--reciprocal-overlap` (default 0.8). Catches fuzzy
-    cross-caller matches and exact-coordinate collapses in one pass.
+    genomic span at `--reciprocal-overlap` (default 0.8), in a single pass
+    over both classes. Catches fuzzy cross-caller matches and
+    exact-coordinate collapses together.
+
+Every input row must land in exactly one cluster; the run aborts if the
+class vocabulary grows beyond CLASS_ORDER or if any row goes unassigned.
 
 Cross-caller consensus is recorded in two column families on the output
 catalogue TSV:
@@ -59,7 +68,19 @@ SCORE_DIRECTIONS = {
     "price": "min",
 }
 
+# Display order for the MultiQC per-class table.
 CLASS_ORDER = ("canonical_cds", "uORF", "dORF", "novel_u", "smORF", "other")
+
+# Representative preference when a cluster's members disagree on class, most
+# specific first. Must cover exactly CLASS_ORDER; asserted at runtime.
+CLASS_SPECIFICITY = ("canonical_cds", "uORF", "dORF", "novel_u", "smORF", "other")
+
+# Clustering strategy per class. `orf_class` is deliberately not part of any
+# grouping key: callers disagree on class for the same ORF (Ribo-TISH cannot
+# report the CDS-overlapping uORF form at all), so keying on it would split
+# those calls into separate catalogue rows.
+OVERLAP_CLASSES = ("novel_u", "smORF")
+LOOSE_CLASSES = ("canonical_cds",)
 
 
 def group_by(rows, keyfn):
@@ -121,13 +142,12 @@ def cluster_by_reciprocal_overlap(rows, frac=0.8):
 def representative(cluster):
     """Pick a representative row from a cluster.
 
-    Preference order: canonical_cds, then uORF/dORF, then novel_u/smORF,
-    then other; ties broken by longest aa_length.
+    Class preference follows CLASS_SPECIFICITY; ties broken by longest aa_length.
     """
-    rank = {"canonical_cds": 0, "uORF": 1, "dORF": 1, "novel_u": 2, "smORF": 2, "other": 3}
+    rank = {c: i for i, c in enumerate(CLASS_SPECIFICITY)}
     return sorted(
         cluster,
-        key=lambda r: (rank.get(r.get("orf_class", "other"), 3), -int(r.get("aa_length") or 0)),
+        key=lambda r: (rank.get(r.get("orf_class", "other"), len(rank)), -int(r.get("aa_length") or 0)),
     )[0]
 
 
@@ -198,7 +218,7 @@ def write_catalogue(prefix, clusters, bed_index, min_callers=1, min_samples=1):
         ["orf_id", "chrom", "start", "end", "strand", "gene_id", "transcript_id", "orf_class", "aa_length"]
         + [f"called_by_{c}" for c in CALLERS]
         + [f"score_{c}" for c in CALLERS]
-        + ["n_samples", "samples"]
+        + ["n_samples", "samples", "orf_type_native"]
     )
 
     per_class_counts = defaultdict(int)
@@ -256,6 +276,10 @@ def write_catalogue(prefix, clusters, bed_index, min_callers=1, min_samples=1):
 
             sample_ids = sorted({r.get("sample_id", "") for r in cluster if r.get("sample_id")})
             row_out += [str(len(sample_ids)), ",".join(sample_ids)]
+            # Every native label in the cluster, so a cross-caller class
+            # disagreement stays auditable after the harmonised class is picked.
+            natives = sorted({(r.get("orf_type_native") or "").strip() for r in cluster} - {""})
+            row_out += [",".join(natives)]
             row_line = "\\t".join(row_out) + "\\n"
             th.write(row_line)
 
@@ -334,6 +358,9 @@ def main():
     )
     args = parser.parse_args(shlex.split("${args}"))
 
+    if set(CLASS_SPECIFICITY) != set(CLASS_ORDER):
+        sys.exit("orfmerge: CLASS_SPECIFICITY and CLASS_ORDER must cover the same classes")
+
     bed_paths = sorted(Path(p) for p in glob.glob("beds/*"))
     tsv_paths = sorted(Path(p) for p in glob.glob("tsvs/*"))
 
@@ -349,21 +376,32 @@ def main():
     for r in rows:
         by_class[r.get("orf_class", "other")].append(r)
 
+    unknown = sorted(set(by_class) - set(CLASS_ORDER))
+    if unknown:
+        sys.exit(f"orfmerge: unknown orf_class value(s) {unknown}; update CLASS_ORDER")
+
     clusters = []
-    # canonical CDS: one per transcript by definition - collapse by (tid, strand).
-    clusters.extend(group_by(by_class.get("canonical_cds", []), lambda r: (r.get("transcript_id") or "", r["strand"])))
-    # uORF/dORF/other: a transcript can host multiple distinct ones, so
-    # additionally key on the outer span to keep them separate.
-    for cls in ("uORF", "dORF", "other"):
-        clusters.extend(
-            group_by(
-                by_class.get(cls, []),
-                lambda r: (r.get("transcript_id") or "", r["strand"], int(r["start"]), int(r["end"])),
-            )
+    # Not transcript-anchored: one reciprocal-overlap pass over the union of
+    # these classes, so calls disagreeing on class still reach one cluster.
+    non_anchored = [r for cls in OVERLAP_CLASSES for r in by_class.get(cls, [])]
+    clusters.extend(cluster_by_reciprocal_overlap(non_anchored, frac=args.reciprocal_overlap))
+    # One canonical CDS per transcript, so the span stays out of the key.
+    loose = [r for cls in LOOSE_CLASSES for r in by_class.get(cls, [])]
+    clusters.extend(group_by(loose, lambda r: (r.get("transcript_id") or "", r["strand"])))
+    # Transcript-anchored, but a transcript can host several, so the outer
+    # span joins the key.
+    keyed = set(OVERLAP_CLASSES) | set(LOOSE_CLASSES)
+    anchored = [r for cls, rows_c in by_class.items() if cls not in keyed for r in rows_c]
+    clusters.extend(
+        group_by(
+            anchored,
+            lambda r: (r.get("transcript_id") or "", r["strand"], int(r["start"]), int(r["end"])),
         )
-    # novel_u / smORF: not transcript-anchored - reciprocal-overlap clustering.
-    for cls in ("novel_u", "smORF"):
-        clusters.extend(cluster_by_reciprocal_overlap(by_class.get(cls, []), frac=args.reciprocal_overlap))
+    )
+
+    assigned = sum(len(c) for c in clusters)
+    if assigned != len(rows):
+        sys.exit(f"orfmerge: clustering dropped rows ({assigned} of {len(rows)} assigned)")
 
     write_catalogue(prefix, clusters, bed_index, min_callers=args.min_callers, min_samples=args.min_samples)
     write_versions()
