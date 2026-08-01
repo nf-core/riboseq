@@ -66,6 +66,11 @@ SCORE_DIRECTIONS = {
 }
 CLASS_ORDER = ("canonical_cds", "uORF", "uoORF", "dORF", "doORF", "intORF", "novel_u", "other")
 
+# Survivor preference when a peptide cluster spans more than one class, most
+# specific first. Mirrors orfmerge's CLASS_SPECIFICITY so an annotated CDS is
+# never deleted by a longer novel ORF that happens to share its peptide.
+CLASS_SPECIFICITY = ("canonical_cds", "uoORF", "uORF", "doORF", "dORF", "intORF", "novel_u", "other")
+
 
 def read_fasta(path):
     seqs = {}
@@ -114,7 +119,15 @@ def best_score(values, direction):
 
 def merge_members(members):
     """Fold small-ORF rows sharing an AA cluster into one representative row dict."""
-    rep = sorted(members, key=lambda r: (-int(r.get("aa_length") or 0), r["orf_id"]))[0]
+    rank = {c: i for i, c in enumerate(CLASS_SPECIFICITY)}
+    rep = sorted(
+        members,
+        key=lambda r: (
+            rank.get(r.get("orf_class", "other"), len(rank)),
+            -int(r.get("aa_length") or 0),
+            r["orf_id"],
+        ),
+    )[0]
     out = dict(rep)
     for c in CALLERS:
         out[f"called_by_{c}"] = "1" if any(r.get(f"called_by_{c}") == "1" for r in members) else "0"

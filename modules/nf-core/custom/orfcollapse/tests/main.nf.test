@@ -28,6 +28,7 @@ nextflow_process {
         }
 
         then {
+            def input_rows = path(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/orf_catalogue/cohort.catalogue.tsv").text.readLines().findAll { !it.startsWith('#') && it.trim() }.size() - 1
             def out  = path(process.out.catalogue_tsv[0][1]).text.readLines()
             def cols = out[0].split('\t') as List
             def rows = out.drop(1).collect { it.split('\t') }
@@ -39,9 +40,9 @@ nextflow_process {
                 { assert snapshot(sanitizeOutput(process.out)).match() },
                 // The two identical smORFs on different strands/loci collapse to one row.
                 { assert rows.size() == 3 },
-                // The collapse must actually fold something: a silently empty
-                // eligible set would leave all four input rows in place.
-                { assert rows.size() < 4 },
+                // Guards a silently empty eligible set, which would pass the
+                // input through unchanged.
+                { assert rows.size() < input_rows },
                 { assert byId.containsKey('orf_00000001') },
                 { assert !byId.containsKey('orf_00000002') },
                 // The survivor unions both callers' evidence and both samples.

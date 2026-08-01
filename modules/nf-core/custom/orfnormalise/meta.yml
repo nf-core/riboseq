@@ -42,6 +42,12 @@ description: |
   the annotated CDS and never encodes its length. Select small ORFs with the
   `is_smorf` column (`aa_length` <= `--smorf-max-aa`, default 100).
 
+  `aa_length` is derived as `(nucleotide_length - 3) // 3` for every caller
+  except Ribo-TISH, whose `AALen` column is taken verbatim. If `AALen` counts
+  the stop codon, `is_smorf` is caller-dependent by one residue exactly at the
+  `--smorf-max-aa` boundary. Not reconciled: it needs a Ribo-TISH run whose
+  nucleotide lengths can be compared against `AALen` directly.
+
   Harmonised `orf_class` vocabulary written into the sidecar TSV:
 
     - canonical_cds: ORF maps to an annotated CDS (including truncated /
@@ -202,7 +208,8 @@ output:
           description: |
             Per-ORF metadata sidecar with columns: orf_id, caller,
             sample_id, chrom, start, end, strand, gene_id, transcript_id,
-            orf_class, aa_length, score (native).
+            orf_class, aa_length, score (native), orf_type_native
+            (the caller's own ORF-type label), is_smorf.
           pattern: "*.tsv"
           ontologies:
             - edam: http://edamontology.org/format_3475 # TSV

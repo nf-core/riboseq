@@ -94,48 +94,50 @@ def group_by(rows, keyfn):
 
 
 def cluster_by_reciprocal_overlap(rows, frac=0.8):
-    """Greedy clustering by reciprocal overlap >= ``frac`` on the outer span.
+    """Greedy clustering by reciprocal exonic overlap >= ``frac``.
 
-    Used to merge cross-caller calls of the same biological ORF when they
-    don't share a transcript_id (e.g. novel intergenic from different
-    callers). O(N^2) worst case but bounded by per-run ORF counts.
+    Overlap is measured on summed exon-block intersection, not on the outer
+    genomic span: for a spliced ORF the span is mostly intron, which makes
+    span-based overlap insensitive to real differences in coding sequence
+    (two ORFs differing by a quarter of their codons can still score >0.99).
 
-    Greedy and order-dependent: at the default frac=0.8 a chain A-B-C
-    where A overlaps B at 0.85, B overlaps C at 0.85, but A overlaps C
-    at 0.75 can either land as {A, B, C} or {A, B} + {C} depending on
-    iteration order. Acceptable in practice (overlap chains that
-    straddle the threshold are rare at frac=0.8) but worth flagging for
-    consumers that want strictly transitive clustering.
+    Linkage is complete, not single: a row joins a cluster only if it meets
+    ``frac`` against *every* member. Single-linkage would chain biologically
+    distinct ORFs on one transcript together through an intermediate that
+    overlaps both, folding a uORF and a dORF into one row.
+
+    O(N^2) in the bucket, bounded by per-run ORF counts. Seed order is
+    deterministic, so the outcome is reproducible across runs.
     """
     clusters = []
     assigned = [False] * len(rows)
     order = sorted(
         range(len(rows)),
-        key=lambda i: (rows[i]["chrom"], rows[i]["strand"], int(rows[i]["start"])),
+        key=lambda i: (rows[i]["chrom"], rows[i]["strand"], int(rows[i]["start"]), rows[i].get("orf_id", "")),
     )
+    lengths = {i: blocks_length(rows[i]["_blocks"]) for i in order}
     for i in order:
         if assigned[i]:
             continue
         ri = rows[i]
-        ri_start, ri_end = int(ri["start"]), int(ri["end"])
-        ri_len = ri_end - ri_start
         cluster = [ri]
+        members = [i]
         assigned[i] = True
         for j in order:
-            if assigned[j]:
+            if assigned[j] or lengths[j] <= 0:
                 continue
             rj = rows[j]
             if rj["chrom"] != ri["chrom"] or rj["strand"] != ri["strand"]:
                 continue
-            rj_start, rj_end = int(rj["start"]), int(rj["end"])
-            if rj_start >= ri_end or rj_end <= ri_start:
-                continue
-            ov = min(ri_end, rj_end) - max(ri_start, rj_start)
-            if ov <= 0:
-                continue
-            rj_len = rj_end - rj_start
-            if ri_len > 0 and rj_len > 0 and ov / ri_len >= frac and ov / rj_len >= frac:
+            if all(
+                lengths[m] > 0
+                and (ov := blocks_intersection(rows[m]["_blocks"], rj["_blocks"])) > 0
+                and ov / lengths[m] >= frac
+                and ov / lengths[j] >= frac
+                for m in members
+            ):
                 cluster.append(rj)
+                members.append(j)
                 assigned[j] = True
         clusters.append(cluster)
     return clusters
@@ -144,12 +146,17 @@ def cluster_by_reciprocal_overlap(rows, frac=0.8):
 def representative(cluster):
     """Pick a representative row from a cluster.
 
-    Class preference follows CLASS_SPECIFICITY; ties broken by longest aa_length.
+    Class preference follows CLASS_SPECIFICITY, then longest aa_length, then
+    orf_id so the pick does not depend on input file order.
     """
     rank = {c: i for i, c in enumerate(CLASS_SPECIFICITY)}
     return sorted(
         cluster,
-        key=lambda r: (rank.get(r.get("orf_class", "other"), len(rank)), -int(r.get("aa_length") or 0)),
+        key=lambda r: (
+            rank.get(r.get("orf_class", "other"), len(rank)),
+            -int(r.get("aa_length") or 0),
+            r.get("orf_id", ""),
+        ),
     )[0]
 
 
@@ -201,7 +208,49 @@ def load_normalised(tsv_paths, bed_paths):
                 orf_id = parts[3]
                 if orf_id not in bed_index:
                     bed_index[orf_id] = line.rstrip("\\n")
+    # Attach exon blocks so clustering can measure overlap on coding sequence
+    # rather than on the outer span, which for a spliced ORF is mostly intron.
+    for r in rows:
+        r["_blocks"] = bed_blocks(bed_index.get(r["orf_id"])) or [(int(r["start"]), int(r["end"]))]
     return rows, bed_index
+
+
+def bed_blocks(bed_line):
+    """Exon blocks as 0-based half-open (start, end) pairs from a BED12 line."""
+    if not bed_line:
+        return []
+    parts = bed_line.split("\\t")
+    if len(parts) < 12:
+        return []
+    try:
+        chrom_start = int(parts[1])
+        sizes = [int(x) for x in parts[10].rstrip(",").split(",") if x]
+        starts = [int(x) for x in parts[11].rstrip(",").split(",") if x != ""]
+    except ValueError:
+        return []
+    if not sizes or len(sizes) != len(starts):
+        return []
+    return sorted((chrom_start + s, chrom_start + s + sz) for s, sz in zip(starts, sizes))
+
+
+def blocks_length(blocks):
+    return sum(e - s for s, e in blocks)
+
+
+def blocks_intersection(a, b):
+    """Summed length of the intersection of two sorted block lists."""
+    total = 0
+    i = j = 0
+    while i < len(a) and j < len(b):
+        lo = max(a[i][0], b[j][0])
+        hi = min(a[i][1], b[j][1])
+        if hi > lo:
+            total += hi - lo
+        if a[i][1] <= b[j][1]:
+            i += 1
+        else:
+            j += 1
+    return total
 
 
 def write_catalogue(prefix, clusters, bed_index, min_callers=1, min_samples=1):
@@ -377,6 +426,13 @@ def main():
         write_versions()
         return 0
 
+    # Every column the catalogue propagates, so an orfnormalise version skew
+    # aborts rather than emitting empty orf_type_native and is_smorf=0.
+    required = ("orf_class", "aa_length", "orf_type_native", "is_smorf")
+    missing = sorted({c for r in rows for c in required if c not in r})
+    if missing:
+        sys.exit(f"orfmerge: normalised TSV is missing required column(s) {missing}")
+
     by_class = defaultdict(list)
     for r in rows:
         by_class[r.get("orf_class", "other")].append(r)
@@ -390,16 +446,16 @@ def main():
     # these classes, so calls disagreeing on class still reach one cluster.
     non_anchored = [r for cls in OVERLAP_CLASSES for r in by_class.get(cls, [])]
     clusters.extend(cluster_by_reciprocal_overlap(non_anchored, frac=args.reciprocal_overlap))
-    # Grouped by transcript, then overlap-clustered within the transcript.
-    # Grouping on (transcript_id, strand) alone would fold a short truncated
-    # CDS variant into the full-length CDS and emit only the longest, so the
-    # overlap pass keeps genuinely different ORFs on one transcript apart
-    # while still merging cross-caller calls whose bounds differ slightly.
+    # One annotated CDS per transcript, so the span stays out of the key --
+    # but grouping on (transcript_id, strand) alone would fold a short
+    # truncated variant into the full-length CDS and emit only the longest, so
+    # cluster on exonic overlap within the transcript.
     loose = [r for cls in LOOSE_CLASSES for r in by_class.get(cls, [])]
     for grp in group_by(loose, lambda r: (r.get("transcript_id") or "", r["strand"])):
         clusters.extend(cluster_by_reciprocal_overlap(grp, frac=args.reciprocal_overlap))
-    # Transcript-anchored, but a transcript can host several, so the outer
-    # span joins the key.
+    # Transcript-anchored and non-unique per transcript, so the outer span
+    # joins the key. Overlap clustering cannot be used here: it merges nested
+    # ORFs, folding a uORF that covers most of the CDS into the CDS itself.
     keyed = set(OVERLAP_CLASSES) | set(LOOSE_CLASSES)
     anchored = [r for cls, rows_c in by_class.items() if cls not in keyed for r in rows_c]
     clusters.extend(

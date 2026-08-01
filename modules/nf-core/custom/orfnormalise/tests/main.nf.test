@@ -54,7 +54,7 @@ nextflow_process {
                 { assert parser_columns_line.contains('unmapped_orf_type=0') },
                 // orf_class is positional only; length lives in is_smorf.
                 { assert rows.every { it[cls] != 'smORF' } },
-                { assert rows.every { (it[smorf] == '1') == (it[aa].toInteger() <= 100) } }
+                { assert rows.every { (it[smorf] == '1') == (it[aa].toInteger() in 1..100) } }
             )
         }
     }
@@ -98,7 +98,7 @@ nextflow_process {
                 { assert rows.collect { it[cls] }.toSet().any { it != 'other' } },
                 { assert parser_columns_line.contains('unmapped_orf_type=0') },
                 { assert rows.every { it[cls] != 'smORF' } },
-                { assert rows.every { (it[smorf] == '1') == (it[aa].toInteger() <= 100) } }
+                { assert rows.every { (it[smorf] == '1') == (it[aa].toInteger() in 1..100) } }
             )
         }
     }
@@ -221,6 +221,7 @@ nextflow_process {
             def parser_columns_line = all_lines.find { it.startsWith('# parser_columns:') }
             def aa    = cols.indexOf('aa_length')
             def cls   = cols.indexOf('orf_class')
+            def smorf = cols.indexOf('is_smorf')
             // Verify PRICE's multi-exon Location decoding: at least one BED12
             // record should have blockCount > 1 (Location field encodes
             // intron-spliced blocks via pipe separators).
@@ -237,7 +238,7 @@ nextflow_process {
                 { assert block_counts.any { it > 1 } },
                 { assert parser_columns_line.contains('unmapped_orf_type=0') },
                 { assert rows.every { it[cls] != 'smORF' } },
-                { assert rows.every { (it[smorf] == '1') == (it[aa].toInteger() <= 100) } }
+                { assert rows.every { (it[smorf] == '1') == (it[aa].toInteger() in 1..100) } }
             )
         }
     }
@@ -307,6 +308,90 @@ nextflow_process {
                 // Override resolves to RiboPvalue (not the default FisherPvalue),
                 // and the provenance header reflects that.
                 { assert parser_columns_line.contains('score=RiboPvalue') }
+            )
+        }
+    }
+
+    test("is_smorf flips at smorf_max_aa while orf_class does not") {
+
+        when {
+            process {
+                """
+                input[0] = channel
+                    .of(
+                        'ORF_ID\tORF_type\ttranscript_id\tgene_id\tchrom\tstrand\tORF_length\tORF_tstart\tORF_tstop\tpval_combined',
+                        'boundary_100\tuORF\tt1\tg1\tchr1\t+\t303\t1\t303\t0.001',
+                        'boundary_101\tuORF\tt1\tg1\tchr1\t+\t306\t1\t306\t0.002'
+                    )
+                    .collectFile(name: 'boundary.ribocode.txt', newLine: true, sort: false)
+                    .map { orfs -> [[id: 'sample1'], orfs, 'ribocode'] }
+                input[1] = channel
+                    .of('chr1\ttest\texon\t1001\t2000\t.\t+\t.\tgene_id "g1"; transcript_id "t1";')
+                    .collectFile(name: 'boundary.gtf', newLine: true)
+                    .map { gtf -> [[id: 'reference'], gtf] }
+                """
+            }
+        }
+
+        then {
+            def lines = path(process.out.tsv[0][1]).text.readLines().findAll { !it.startsWith('#') }
+            def cols  = lines[0].split('\t') as List
+            def byId  = lines.drop(1).collect { it.split('\t') }.collectEntries { [(it[cols.indexOf('orf_id')]): it] }
+            def aa    = cols.indexOf('aa_length')
+            def cls   = cols.indexOf('orf_class')
+            def smorf = cols.indexOf('is_smorf')
+            def a     = byId['ribocode|boundary_100']
+            def b     = byId['ribocode|boundary_101']
+            assertAll(
+                { assert process.success },
+                { assert a[aa] == '100' && b[aa] == '101' },
+                // The length flag moves across the default 100 aa boundary...
+                { assert a[smorf] == '1' && b[smorf] == '0' },
+                // ...while the positional class is unaffected by length.
+                { assert a[cls] == 'uORF' && b[cls] == 'uORF' }
+            )
+        }
+    }
+
+    test("smorf-max-aa override widens is_smorf without touching orf_class") {
+
+        config "./smorf_max_aa.config"
+
+        when {
+            process {
+                """
+                input[0] = channel
+                    .of(
+                        'ORF_ID\tORF_type\ttranscript_id\tgene_id\tchrom\tstrand\tORF_length\tORF_tstart\tORF_tstop\tpval_combined',
+                        'boundary_100\tuORF\tt1\tg1\tchr1\t+\t303\t1\t303\t0.001',
+                        'boundary_101\tuORF\tt1\tg1\tchr1\t+\t306\t1\t306\t0.002'
+                    )
+                    .collectFile(name: 'boundary.ribocode.txt', newLine: true, sort: false)
+                    .map { orfs -> [[id: 'sample1'], orfs, 'ribocode'] }
+                input[1] = channel
+                    .of('chr1\ttest\texon\t1001\t2000\t.\t+\t.\tgene_id "g1"; transcript_id "t1";')
+                    .collectFile(name: 'boundary.gtf', newLine: true)
+                    .map { gtf -> [[id: 'reference'], gtf] }
+                """
+            }
+        }
+
+        then {
+            def lines = path(process.out.tsv[0][1]).text.readLines().findAll { !it.startsWith('#') }
+            def cols  = lines[0].split('\t') as List
+            def byId  = lines.drop(1).collect { it.split('\t') }.collectEntries { [(it[cols.indexOf('orf_id')]): it] }
+            def aa    = cols.indexOf('aa_length')
+            def cls   = cols.indexOf('orf_class')
+            def smorf = cols.indexOf('is_smorf')
+            def a     = byId['ribocode|boundary_100']
+            def b     = byId['ribocode|boundary_101']
+            def parser_columns_line = path(process.out.tsv[0][1]).text.readLines().find { it.startsWith('# parser_columns:') }
+            assertAll(
+                { assert process.success },
+                // At --smorf-max-aa 150 both ORFs are small; both classes stay uORF.
+                { assert a[smorf] == '1' && b[smorf] == '1' },
+                { assert a[cls] == 'uORF' && b[cls] == 'uORF' },
+                { assert parser_columns_line.contains('smorf_max_aa=150') }
             )
         }
     }
