@@ -100,11 +100,10 @@ nextflow_process {
             def score_ribocode  = cols.indexOf('score_ribocode')
             def n_samples       = cols.indexOf('n_samples')
             def samples         = cols.indexOf('samples')
-            def native          = cols.indexOf('orf_type_native')
+            def native_col          = cols.indexOf('orf_type_native')
             def smorf           = cols.indexOf('is_smorf')
-            def mqc_counts = path(process.out.multiqc[0][1]).text.readLines()
-                .findAll { !it.startsWith('#') && !it.startsWith('Class') && it.trim() }
-                .collect { it.split('\t')[1].toInteger() }
+            def mqc_lines  = path(process.out.multiqc[0][1]).text.readLines().findAll { !it.startsWith('#') && !it.startsWith('Class') && it.trim() }
+            def mqc_counts = mqc_lines.collect { it.split('\t')[1].toInteger() }
             assertAll(
                 { assert process.success },
                 { assert snapshot(process.out).match() },
@@ -116,15 +115,15 @@ nextflow_process {
                 { assert rows.every { it[called_ribotish] == '1' || it[called_ribocode] == '1' } },
                 { assert rows.any { it[called_ribotish] == '1' } },
                 { assert rows.any { it[called_ribocode] == '1' } },
-                // Cross-caller merging must actually happen: at least one
-                // cluster carries both callers. The `||` assertion above is
-                // satisfied by zero merging, so this is the real guard.
-                { assert rows.any { it[called_ribotish] == '1' && it[called_ribocode] == '1' } },
+                // The `||` assertion above is satisfied by zero merging, but this
+                // fixture's Ribo-TISH and RiboCode calls never share a transcript
+                // and span, so cross-caller merging cannot be asserted here. The
+                // synthetic class-disagreement test below covers it instead.
                 // Every class in the catalogue must appear in the MultiQC
                 // table, so CLASS_ORDER cannot silently omit one.
                 { assert mqc_counts.sum() == rows.size() },
                 // The caller's own label is preserved for every row.
-                { assert rows.every { it[native] && it[native] != '' } },
+                { assert rows.every { it[native_col] && it[native_col] != '' } },
                 // is_smorf is a length flag, so it must agree with the
                 // aa_length on its own row and never appear as a class.
                 { assert rows.every { it[smorf] in ['0', '1'] } },
@@ -207,7 +206,7 @@ nextflow_process {
                 def tsvs = channel
                     .of(
                             'orf_id\tcaller\tsample_id\tchrom\tstart\tend\tstrand\tgene_id\ttranscript_id\torf_class\taa_length\tscore\torf_type_native\tis_smorf',
-                            'ribotish|a\tribotish\ts1\tchr1\t1000\t1300\t+\tg1\tt1\tuORF\t99\t0.01\t5'UTR\t1',
+                            "ribotish|a\tribotish\ts1\tchr1\t1000\t1300\t+\tg1\tt1\tuORF\t99\t0.01\t5'UTR\t1",
                             'ribocode|b\tribocode\ts1\tchr1\t1000\t1300\t+\tg1\tt1\tuoORF\t99\t0.01\tOverlap_uORF\t1'
                     )
                     .collectFile(name: 'synthetic.tsv', newLine: true, sort: false)
@@ -221,7 +220,7 @@ nextflow_process {
             def cols  = lines[0].split('\t') as List
             def rows  = lines.drop(1).collect { it.split('\t') }
             def cls   = cols.indexOf('orf_class')
-            def native = cols.indexOf('orf_type_native')
+            def native_col = cols.indexOf('orf_type_native')
             def rt    = cols.indexOf('called_by_ribotish')
             def rc    = cols.indexOf('called_by_ribocode')
             def aa    = cols.indexOf('aa_length')
@@ -233,7 +232,7 @@ nextflow_process {
                 { assert rows[0][rt] == '1' && rows[0][rc] == '1' },
                 // CLASS_SPECIFICITY picks the more specific call.
                 { assert rows[0][cls] == 'uoORF' },
-                { assert rows[0][native] == "5'UTR,Overlap_uORF" }
+                { assert rows[0][native_col] == "5'UTR,Overlap_uORF" }
             )
         }
     }
@@ -268,7 +267,7 @@ nextflow_process {
             def cols  = lines[0].split('\t') as List
             def rows  = lines.drop(1).collect { it.split('\t') }
             def cls   = cols.indexOf('orf_class')
-            def native = cols.indexOf('orf_type_native')
+            def native_col = cols.indexOf('orf_type_native')
             def rt    = cols.indexOf('called_by_ribotish')
             def rc    = cols.indexOf('called_by_ribocode')
             def aa    = cols.indexOf('aa_length')
@@ -277,9 +276,9 @@ nextflow_process {
                 // The two full-length CDS calls differ by 30 nt (0.97 exonic
                 // overlap) and merge; the 32 aa truncation is 0.11 and does not.
                 { assert rows.size() == 2 },
-                { assert rows.count { it[native].contains('Trunc') } == 1 },
-                { assert rows.find { it[native].contains('Trunc') }[aa] == '32' },
-                { assert rows.find { it[native] == 'CDS,annotated' } != null }
+                { assert rows.count { it[native_col].contains('Trunc') } == 1 },
+                { assert rows.find { it[native_col].contains('Trunc') }[aa] == '32' },
+                { assert rows.find { it[native_col] == 'CDS,annotated' } != null }
             )
         }
     }
@@ -298,7 +297,7 @@ nextflow_process {
                 def tsvs = channel
                     .of(
                             'orf_id\tcaller\tsample_id\tchrom\tstart\tend\tstrand\tgene_id\ttranscript_id\torf_class\taa_length\tscore\torf_type_native\tis_smorf',
-                            'ribotish|u1\tribotish\ts1\tchr1\t1000\t1090\t+\tg1\tt1\tuORF\t29\t0.01\t5'UTR\t1',
+                            "ribotish|u1\tribotish\ts1\tchr1\t1000\t1090\t+\tg1\tt1\tuORF\t29\t0.01\t5'UTR\t1",
                             'ribocode|u2\tribocode\ts1\tchr1\t1000\t1096\t+\tg1\tt1\tuORF\t31\t0.01\tuORF\t1'
                     )
                     .collectFile(name: 'synthetic.tsv', newLine: true, sort: false)
@@ -312,7 +311,7 @@ nextflow_process {
             def cols  = lines[0].split('\t') as List
             def rows  = lines.drop(1).collect { it.split('\t') }
             def cls   = cols.indexOf('orf_class')
-            def native = cols.indexOf('orf_type_native')
+            def native_col = cols.indexOf('orf_type_native')
             def rt    = cols.indexOf('called_by_ribotish')
             def rc    = cols.indexOf('called_by_ribocode')
             def aa    = cols.indexOf('aa_length')
