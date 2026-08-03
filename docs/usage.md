@@ -239,7 +239,7 @@ The pipeline supports UMIs to increase the accuracy of the quantification. UMIs 
 
 To take UMIs into consideration for every sample in a workflow run, specify the `--with_umi` parameter. For a mixture of UMI and non-UMI libraries, add a `with_umi` column to the samplesheet and set each row to `true` or `false`. A samplesheet value overrides the global parameter for that sample. Multiple sequencing runs belonging to one sample must use the same value.
 
-The pipeline supports UMIs embedded within a read's sequence and UMIs whose sequence is given inside the read's name. Please consult your kit's manual and/or contact your sequencing provider regarding the exact specification. UMI extraction and deduplication options remain global across the UMI-enabled samples, so a single run cannot combine libraries that require different barcode patterns or grouping methods.
+The pipeline supports UMIs embedded within a read's sequence and UMIs whose sequence is given inside the read's name. Please consult your kit's manual and/or contact your sequencing provider regarding the exact specification. UMI extraction, `--umi_discard_read`, and deduplication apply only to UMI-enabled samples. Their settings remain global across those samples, so a single run cannot combine libraries that require different barcode patterns or grouping methods.
 
 For example, this samplesheet extracts and deduplicates the Ribo-seq library while processing the matched RNA-seq library without UMI handling:
 

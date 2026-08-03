@@ -6,7 +6,7 @@ nextflow_pipeline {
     tag "pipeline_riboseq"
     tag "mixed_umi"
 
-    test("UMI Ribo-seq with non-UMI RNA-seq") {
+    test("Single-end UMI Ribo-seq with paired-end non-UMI RNA-seq") {
 
         when {
             params {
@@ -15,6 +15,7 @@ nextflow_pipeline {
                 contrasts = null
                 with_umi = false
                 umitools_bc_pattern = 'NNNN'
+                umi_discard_read = 2
                 save_umi_intermeds = true
                 remove_ribo_rna = false
                 skip_trimming = true
@@ -40,9 +41,9 @@ nextflow_pipeline {
 
             assertAll(
                 { assert workflow.success },
-                { assert umi_outputs && umi_outputs.every { it.startsWith('SRX11780879') } },
-                { assert dedup_outputs && dedup_outputs.every { !it.contains('SRX11780885') } },
-                { assert dedup_outputs.any { it.contains('SRX11780879') } },
+                { assert umi_outputs && umi_outputs.every { it.startsWith('SRX11780885') } },
+                { assert dedup_outputs && dedup_outputs.every { !it.contains('SRX11780879') } },
+                { assert dedup_outputs.any { it.contains('SRX11780885') } },
                 { assert aligned_stats.any { it.contains('SRX11780879') } },
                 { assert aligned_stats.any { it.contains('SRX11780885') } },
                 { assert raw_fastqc.any { it.contains('SRX11780879_raw_1') } },
@@ -90,8 +91,10 @@ nextflow_pipeline {
 
             assertAll(
                 { assert workflow.success },
-                { assert umi_outputs && umi_outputs.every { it.startsWith('SRX11780885') } },
-                { assert dedup_outputs.any { it.contains('SRX11780885') } }
+                { assert umi_outputs.any { it.startsWith('SRX11780885') } },
+                { assert umi_outputs.any { it.startsWith('SRX11780879') } },
+                { assert dedup_outputs.any { it.contains('SRX11780885') } },
+                { assert dedup_outputs.any { it.contains('SRX11780879') } }
             )
         }
 
