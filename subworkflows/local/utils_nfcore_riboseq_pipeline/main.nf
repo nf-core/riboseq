@@ -309,8 +309,8 @@ def samplesheetUmiSampleIds(samplesheet_rows, default_with_umi) {
 }
 
 def trimFailuresMultiqcTsv(trim_read_counts, min_trimmed_reads) {
-    def failures = trim_read_counts.findAll { meta, num_reads -> num_reads <= min_trimmed_reads.toFloat() }
-        .collect { meta, num_reads -> "${meta.id}\t${num_reads}" }
+    def failures = trim_read_counts.findAll { row -> row[1] <= min_trimmed_reads.toFloat() }
+        .collect { row -> "${row[0].id}\t${row[1]}" }
 
     failures ? "Sample\tReads after trimming\n${failures.join('\n')}" : ''
 }

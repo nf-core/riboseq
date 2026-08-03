@@ -251,7 +251,7 @@ workflow RIBOSEQ {
 
     FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS_UMI.out.trim_read_count
         .mix(FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS_NO_UMI.out.trim_read_count)
-        .collect()
+        .collect(flat: false)
         .map { trim_read_counts -> trimFailuresMultiqcTsv(trim_read_counts, params.min_trimmed_reads) }
         .collectFile(name: 'fail_trimmed_samples_mqc.tsv')
         .set { ch_fail_trimming_multiqc }
