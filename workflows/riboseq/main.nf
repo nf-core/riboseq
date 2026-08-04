@@ -245,14 +245,15 @@ workflow RIBOSEQ {
         params.unstranded_threshold                 // unstranded_threshold
     )
 
-    def ch_preprocessing_multiqc = FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS_UMI.out.multiqc_files
+    FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS_UMI.out.multiqc_files
         .mix(FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS_NO_UMI.out.multiqc_files)
         .filter { _meta, file -> file.name != 'fail_trimmed_samples_mqc.tsv' }
         .map { _meta, file -> file }
+        .set { ch_preprocessing_multiqc }
 
     FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS_UMI.out.trim_read_count
         .mix(FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS_NO_UMI.out.trim_read_count)
-        .collect(flat: false)
+        .toList()
         .map { trim_read_counts ->
             def failures = trim_read_counts
                 .findAll { _meta, num_reads -> num_reads <= params.min_trimmed_reads.toFloat() }

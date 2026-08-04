@@ -8,11 +8,16 @@ nextflow_pipeline {
 
     test("Single-end UMI Ribo-seq with paired-end non-UMI RNA-seq") {
 
+        setup {
+            def test_config = new ConfigSlurper().parse(new File("${projectDir}/conf/test.config").toURI().toURL())
+            params.input = test_config.params.input
+        }
+
         when {
             params {
                 outdir = "$outputDir"
                 input = {
-                    def source_rows = 'https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/samplesheet/samplesheet.csv'.toURL().readLines()
+                    def source_rows = params.input.toURL().readLines()
                     def samplesheet = new File("${launchDir}/samplesheet_mixed_umi.csv")
                     def header = source_rows.find { it.startsWith('"sample"') } + ',"with_umi"'
                     def riboseq = source_rows.find { it.startsWith('"SRX11780885"') }.replace(',"auto",', ',"unstranded",') + ',"true"'
@@ -37,26 +42,25 @@ nextflow_pipeline {
         }
 
         then {
-            def umi_outputs = getAllFilesFromDir("${params.outdir}/preprocessing/umitools")
-                .collect { it.name }
-            def dedup_outputs = getAllFilesFromDir("${params.outdir}/alignment/star/deduplicated")
-                .collect { it.name }
-            def aligned_stats = getAllFilesFromDir("${params.outdir}/alignment/star/sorted/samtools_stats")
-                .collect { it.name }
-            def raw_fastqc = getAllFilesFromDir("${params.outdir}/preprocessing/fastqc")
-                .findAll { it.name.contains('_raw') }
-                .collect { it.name }
-
+            // stable_name: All files + folders in ${params.outdir}/ with a stable name
+            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
+            // stable_path: All files in ${params.outdir}/ with stable content
+            def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore', ignore: [
+                'alignment/star/deduplicated/log/*',
+                'multiqc/star/multiqc_report_data/multiqc_samtools_stats.txt',
+                'multiqc/star/multiqc_report_data/samtools-stats-dp.txt',
+                'multiqc/star/multiqc_report_data/samtools_alignment_plot.txt',
+            ])
             assertAll(
                 { assert workflow.success },
-                { assert umi_outputs && umi_outputs.every { it.startsWith('SRX11780885') } },
-                { assert dedup_outputs && dedup_outputs.every { !it.contains('SRX11780879') } },
-                { assert dedup_outputs.any { it.contains('SRX11780885') } },
-                { assert aligned_stats.any { it.contains('SRX11780879') } },
-                { assert aligned_stats.any { it.contains('SRX11780885') } },
-                { assert raw_fastqc.any { it.contains('SRX11780879_raw_1') } },
-                { assert raw_fastqc.any { it.contains('SRX11780879_raw_2') } },
-                { assert raw_fastqc.any { it.contains('SRX11780885_raw') } }
+                { assert snapshot(
+                    // pipeline versions.yml file for multiqc from which Nextflow version is removed because we test pipelines on multiple Nextflow versions
+                    removeNextflowVersion("$outputDir/pipeline_info/nf_core_riboseq_software_mqc_versions.yml"),
+                    // All stable path name, with a relative path
+                    stable_name,
+                    // All files with stable contents
+                    stable_path
+                ).match() }
             )
         }
 
