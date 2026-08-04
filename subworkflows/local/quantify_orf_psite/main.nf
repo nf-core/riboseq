@@ -9,7 +9,7 @@
 //      count matrix, zero-filled for ORFs absent from a sample.
 //
 // Gating is done at the call site in workflows/riboseq/main.nf:
-//   --extended_orf_analysis = true  AND  catalogue exists  AND  plastid is enabled.
+//   --extended_orf_analysis = true  AND  a caller ran  AND  plastid is enabled.
 //
 // The matrix is the input for the downstream DTE step. This
 // subworkflow does not run DTE itself.
