@@ -3,4 +3,3 @@ pipeline_riboseq:
   - "**.config"
   - "**.nf.test"
   - "**.json"
-  - "**.csv"

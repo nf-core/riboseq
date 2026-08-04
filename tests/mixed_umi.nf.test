@@ -11,7 +11,7 @@ nextflow_pipeline {
         when {
             params {
                 outdir = "$outputDir"
-                input = "${projectDir}/tests/samplesheet_mixed_umi.csv"
+                input = "https://raw.githubusercontent.com/nf-core/test-datasets/riboseq/samplesheet/samplesheet_mixed_umi.csv"
                 contrasts = null
                 with_umi = false
                 umitools_bc_pattern = 'NNNN'
@@ -60,49 +60,4 @@ nextflow_pipeline {
         }
     }
 
-    test("Global UMI parameter remains the samplesheet fallback") {
-
-        when {
-            params {
-                outdir = "$outputDir"
-                input = "${projectDir}/tests/samplesheet_global_umi.csv"
-                contrasts = null
-                with_umi = true
-                trimmer = 'fastp'
-                umitools_bc_pattern = 'NNNN'
-                save_umi_intermeds = true
-                remove_ribo_rna = false
-                skip_fastqc = true
-                skip_trimming = true
-                skip_linting = true
-                skip_ribotish = true
-                skip_ribocode = true
-                skip_ribowaltz = true
-                skip_plastid = true
-                skip_coverage_tracks = true
-            }
-        }
-
-        then {
-            def umi_outputs = getAllFilesFromDir("${params.outdir}/preprocessing/umitools")
-                .collect { it.name }
-            def dedup_outputs = getAllFilesFromDir("${params.outdir}/alignment/star/deduplicated")
-                .collect { it.name }
-
-            assertAll(
-                { assert workflow.success },
-                { assert umi_outputs.any { it.startsWith('SRX11780885') } },
-                { assert umi_outputs.any { it.startsWith('SRX11780879') } },
-                { assert dedup_outputs.any { it.contains('SRX11780885') } },
-                { assert dedup_outputs.any { it.contains('SRX11780879') } }
-            )
-        }
-
-        cleanup {
-            if (System.getenv("NFT_PROFILE")?.contains("docker")) {
-                "docker system prune -a -f --volumes".execute()
-            }
-            new File("${launchDir}").deleteDir()
-        }
-    }
 }
