@@ -66,8 +66,7 @@ include { paramsSummaryMultiqc     } from '../../subworkflows/nf-core/utils_nfco
 include { softwareVersionsToYAML   } from '../../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText   } from '../../subworkflows/local/utils_nfcore_riboseq_pipeline'
 include { validateInputSamplesheet } from '../../subworkflows/local/utils_nfcore_riboseq_pipeline'
-include { samplesheetUmiSampleIds } from '../../subworkflows/local/utils_nfcore_riboseq_pipeline'
-include { trimFailuresMultiqcTsv  } from '../../subworkflows/local/utils_nfcore_riboseq_pipeline'
+include { resolveSampleUmi         } from '../../subworkflows/local/utils_nfcore_riboseq_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -143,8 +142,10 @@ workflow RIBOSEQ {
     // Create input channel from input file provided through params.input
     //
     def samplesheet_rows = samplesheetToList(params.input, "${projectDir}/assets/schema_input.json")
-    def umi_sample_ids = samplesheetUmiSampleIds(samplesheet_rows, params.with_umi)
-    def any_sample_with_umi = !umi_sample_ids.isEmpty()
+    def umi_sample_ids = samplesheet_rows
+        .findAll { meta, _fastq_1, _fastq_2 -> resolveSampleUmi(meta, params.with_umi) }
+        .collect { meta, _fastq_1, _fastq_2 -> meta.id }
+        .unique()
 
     channel
         .fromList(samplesheet_rows)
@@ -252,7 +253,12 @@ workflow RIBOSEQ {
     FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS_UMI.out.trim_read_count
         .mix(FASTQ_QC_TRIM_FILTER_SETSTRANDEDNESS_NO_UMI.out.trim_read_count)
         .collect(flat: false)
-        .map { trim_read_counts -> trimFailuresMultiqcTsv(trim_read_counts, params.min_trimmed_reads) }
+        .map { trim_read_counts ->
+            def failures = trim_read_counts
+                .findAll { _meta, num_reads -> num_reads <= params.min_trimmed_reads.toFloat() }
+                .collect { meta, num_reads -> "${meta.id}\t${num_reads}" }
+            failures ? "Sample\tReads after trimming\n${failures.join('\n')}" : ''
+        }
         .collectFile(name: 'fail_trimmed_samples_mqc.tsv')
         .set { ch_fail_trimming_multiqc }
 
@@ -322,7 +328,7 @@ workflow RIBOSEQ {
     // SUBWORKFLOW: Remove duplicate reads from BAM file based on UMIs
     //
 
-    if (any_sample_with_umi) {
+    if (umi_sample_ids) {
 
         ch_genome_bam_without_umi        = ch_genome_bam.filter { meta, _bam -> !umi_sample_ids.contains(meta.id) }
         ch_genome_bam_index_without_umi  = ch_genome_bam_index.filter { meta, _index -> !umi_sample_ids.contains(meta.id) }
@@ -454,7 +460,7 @@ workflow RIBOSEQ {
         // PCR duplicates on both annotations. Only the transcriptome BAM is
         // consumed downstream; the genome dedup is run to keep accounting
         // identical to the primary path.
-        if (any_sample_with_umi) {
+        if (umi_sample_ids) {
             ch_hybrid_transcriptome_bam_without_umi = EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcriptome_bam
                 .filter { meta, _bam -> !umi_sample_ids.contains(meta.id) }
 
@@ -783,7 +789,7 @@ workflow RIBOSEQ {
 
                 ch_full_hybrid_transcriptome_bam = FASTQ_ALIGN_STAR_FULL_HYBRID.out.orig_bam_transcript
 
-                if (any_sample_with_umi) {
+                if (umi_sample_ids) {
                     ch_full_hybrid_transcriptome_bam_without_umi = FASTQ_ALIGN_STAR_FULL_HYBRID.out.orig_bam_transcript
                         .filter { meta, _bam -> !umi_sample_ids.contains(meta.id) }
 

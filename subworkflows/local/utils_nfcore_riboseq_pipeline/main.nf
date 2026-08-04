@@ -292,8 +292,7 @@ def validateInputSamplesheet(input, default_with_umi) {
         error("Please check input samplesheet -> Multiple runs of a sample must have the same with_umi value: ${metas[0].id}")
     }
 
-    def clean_meta = new LinkedHashMap(metas[0])
-    clean_meta.remove('with_umi')
+    def clean_meta = metas[0].findAll { key, _value -> key != 'with_umi' }
     return [ clean_meta, fastqs ]
 }
 
@@ -309,26 +308,6 @@ def resolveSampleUmi(meta, default_with_umi) {
         error("Please check input samplesheet -> with_umi must be true or false for sample: ${meta.id}")
     }
     return sample_with_umi
-}
-
-def samplesheetUmiSampleIds(samplesheet_rows, default_with_umi) {
-    samplesheet_rows
-        .groupBy { meta, _fastq_1, _fastq_2 -> meta.id }
-        .findAll { sample_id, rows ->
-            def statuses = rows.collect { meta, _fastq_1, _fastq_2 -> resolveSampleUmi(meta, default_with_umi) }.unique()
-            if (statuses.size() != 1) {
-                error("Please check input samplesheet -> Multiple runs of a sample must have the same with_umi value: ${sample_id}")
-            }
-            statuses[0]
-        }
-        .keySet() as Set
-}
-
-def trimFailuresMultiqcTsv(trim_read_counts, min_trimmed_reads) {
-    def failures = trim_read_counts.findAll { row -> row[1] <= min_trimmed_reads.toFloat() }
-        .collect { row -> "${row[0].id}\t${row[1]}" }
-
-    failures ? "Sample\tReads after trimming\n${failures.join('\n')}" : ''
 }
 
 def samplesheetNeedsSalmonForStrandedness(input) {
