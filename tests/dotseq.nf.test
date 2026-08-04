@@ -25,7 +25,7 @@ nextflow_pipeline {
         }
 
         then {
-            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}', 'alignment/hybrid_star/**'])
+            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
             def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore_orf')
 
             def dotseq_dir = file("${params.outdir}/translational_efficiency/orf_level/dotseq")

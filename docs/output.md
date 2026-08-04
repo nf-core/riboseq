@@ -456,8 +456,12 @@ If RiboCode is not needed for your analysis, you can skip it entirely with `--sk
   - `*.predicted-orfs.bed.gz`: per-sample predicted-ORF BED with Bayes factor scores (column 5) after the final-prediction-set filter (`--select-longest-by-stop --select-best-overlapping`).
   - `*.predicted-orfs.dna.fa`: per-sample predicted-ORF nucleotide FASTA matching the BED.
   - `*.predicted-orfs.protein.fa`: per-sample predicted-ORF protein FASTA matching the BED.
-  - `*.annotated.bed.gz`, `*.orfs-genomic.annotated.bed.gz`, `*.orfs-exons.annotated.bed.gz`: intermediate genome/ORF annotation BEDs from `prepare-rpbp-genome`.
+  - `*.annotated.bed.gz`, `*.orfs-genomic.annotated.bed.gz`, `*.orfs-exons.annotated.bed.gz`: intermediate genome/ORF annotation BEDs from `prepare-rpbp-genome` (only published when `--save_reference` is set).
+  - `*.metagene.csv.gz`: per-sample metagene profile around annotated translation starts.
   - `*.metagene-bayes.csv.gz`: per-sample metagene periodicity Bayes factors.
+  - `*.offsets.csv.gz`: per-sample periodic offsets selected from the metagene Bayes factors.
+  - `*.lengths-offsets.tsv`: per-sample periodic read lengths and offsets used for ORF profiling.
+  - `*.profiles.mtx.gz`: per-sample sparse ORF profile matrix.
   - `*.bayes-factors.bed.gz`: per-sample ORF-level Bayes factors, upstream of the final-prediction-set filter above.
 
 </details>
