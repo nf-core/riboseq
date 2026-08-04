@@ -18,8 +18,9 @@ nextflow_pipeline {
                 // ribotricer and rpbp left at their defaults - chr20 test
                 // data is too sparse for ribotricer's periodicity inference,
                 // and rpbp's MCMC runtime is incompatible with unit-test
-                // budget. Default ribotish + ribocode is enough to supply
-                // the ORF catalogue that DOTSeq consumes.
+                // budget. -profile test sets skip_ribocode, so this runs
+                // single-caller on ribotish, which is enough to supply the
+                // ORF catalogue that DOTSeq consumes.
             }
         }
 

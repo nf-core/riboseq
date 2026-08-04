@@ -1,0 +1,66 @@
+nextflow_pipeline {
+
+    name "Test pipeline with --extended_orf_analysis and no novel-transcript source"
+    script "../main.nf"
+    tag "pipeline"
+    tag "pipeline_riboseq"
+    tag "extended_orf_analysis"
+    tag "orf_catalogue"
+
+    test("-profile test --extended_orf_analysis true with no novel-transcript source") {
+
+        when {
+            params {
+                outdir                = "$outputDir"
+                extended_orf_analysis = true
+                skip_stringtie        = true
+                // novel_gtf deliberately unset to exercise catalogue construction
+                // without a novel-transcript source. -profile test supplies contrasts
+                // and leaves skip_plastid false, exercising ORF quantification and
+                // ORF-level DTE.
+            }
+        }
+
+        then {
+            // stable_name: All files + folders in ${params.outdir}/ with a stable name
+            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
+            // stable_path: All files in ${params.outdir}/ with stable content
+            def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore_orf')
+
+            def catalogue_bed12 = file("${params.outdir}/orf_catalogue/cohort.catalogue.bed12")
+            def orf_counts      = file("${params.outdir}/orf_quantification/orf_psite_counts.tsv")
+            def hybrid_dir      = file("${params.outdir}/hybrid_star")
+            // BUILD_FULL_HYBRID_GTF creates quantification/salmon_hybrid/ even though it
+            // publishes nothing without --save_reference, so assert on its contents.
+            def hybrid_rna_counts = file("${params.outdir}/quantification/salmon_hybrid/salmon.merged.hybrid.gene_counts_length_scaled.tsv")
+            def hybrid_star_index = file("${params.outdir}/quantification/salmon_hybrid/star_index")
+
+            assertAll(
+                { assert workflow.success },
+                // The catalogue and its quantification are built without a novel source
+                { assert catalogue_bed12.exists() && catalogue_bed12.size() > 0 },
+                { assert orf_counts.exists() && orf_counts.size() > 0 },
+                // Caller routing stays gated on a real novel source, so no second STAR pass
+                { assert !hybrid_dir.exists() },
+                // The ORF-DTE denominator reuses the primary Salmon matrix
+                { assert !hybrid_rna_counts.exists() },
+                { assert !hybrid_star_index.exists() },
+                { assert snapshot(
+                    // pipeline versions.yml file for multiqc from which Nextflow version is removed because we test pipelines on multiple Nextflow versions
+                    removeNextflowVersion("$outputDir/pipeline_info/nf_core_riboseq_software_mqc_versions.yml"),
+                    // All stable path name, with a relative path
+                    stable_name,
+                    // All files with stable contents
+                    stable_path
+                ).match() }
+            )
+        }
+
+        cleanup {
+            if (System.getenv("NFT_PROFILE")?.contains("docker")) {
+                "docker system prune -a -f --volumes".execute()
+            }
+            new File("${launchDir}").deleteDir()
+        }
+    }
+}

@@ -191,15 +191,33 @@ def validateInputParameters() {
     dotseqPrerequisitesError()
     kallistoPrerequisitesError()
 
-    // --extended_orf_analysis is a no-op without a novel-transcript source
-    // (StringTie or a user-supplied --novel_gtf); warn rather than error so
-    // flags can be composed incrementally.
+    // Without a novel source, caller routing is a no-op; catalogue construction is independent.
     def novel_source_configured = !params.skip_stringtie || params.novel_gtf
     if (params.extended_orf_analysis && !novel_source_configured) {
-        log.warn "--extended_orf_analysis is enabled but no novel-transcript source is configured (--skip_stringtie is true and --novel_gtf is unset). The flag has no effect; ORF callers will run against the canonical GTF as usual."
+        log.warn "--extended_orf_analysis is enabled but no novel-transcript source is configured (--skip_stringtie is true and --novel_gtf is unset). ORF callers will run against their usual annotation rather than a hybrid one; the ORF catalogue is still built."
     }
-    if (params.extended_orf_analysis && novel_source_configured && params.skip_plastid) {
+    if (params.extended_orf_analysis && params.skip_plastid) {
         log.warn "--extended_orf_analysis is enabled but --skip_plastid is true. ORF-level P-site quantification needs the plastid wiggle tracks and will be skipped; the ORF catalogue will still be built."
+    }
+
+    def enabled_caller_count = [
+        !params.skip_ribotish, !params.skip_ribocode,
+        params.run_ribotricer, params.run_rpbp, params.run_price,
+    ].count(true)
+    // With no caller there is no ORF table to catalogue, so nothing downstream runs.
+    if (params.extended_orf_analysis && enabled_caller_count == 0) {
+        log.warn "--extended_orf_analysis is enabled but every ORF caller is disabled. No ORF catalogue, ORF-level P-site quantification or ORF-level differential translation will be produced. Enable at least one of ribotish / ribocode / ribotricer / rpbp / price."
+    }
+    // A threshold above the enabled caller count yields a header-only consensus view.
+    if (params.extended_orf_analysis && enabled_caller_count > 0 && params.orf_min_callers > enabled_caller_count) {
+        log.warn "--orf_min_callers is ${params.orf_min_callers} but only ${enabled_caller_count} ORF caller(s) are enabled, so no ORF can reach the threshold and the consensus view will be empty. Lower --orf_min_callers or enable more callers."
+    }
+
+    // Without a novel source the ORF-DTE denominator is the primary Salmon matrix, keyed on
+    // --gtf gene ids, while catalogue host genes also come from --canonical_gtf.
+    if (params.extended_orf_analysis && enabled_caller_count > 0 && !novel_source_configured
+        && params.canonical_gtf && !params.skip_plastid && params.contrasts) {
+        log.warn "--canonical_gtf is supplied with no novel-transcript source, so ORF-level differential translation reuses the primary Salmon matrix, whose gene ids come from --gtf alone. Any ORF whose host gene exists only in --canonical_gtf has no row in that matrix and will be dropped from the ORF-level results; DTE_COUNTS_PREP reports the count on stderr. Set --skip_stringtie false or --novel_gtf to quantify the denominator against the full annotation instead."
     }
 }
 
@@ -244,14 +262,12 @@ def kallistoPrerequisitesError() {
 def dotseqPrerequisitesError() {
     if (!('dotseq' in params.translational_efficiency_method.tokenize(',')*.trim())) return
 
-    def novel_source_configured = !params.skip_stringtie || params.novel_gtf
-    def extended_orf_active     = params.extended_orf_analysis && novel_source_configured
-    def any_caller_enabled      = !params.skip_ribotish || !params.skip_ribocode || params.run_ribotricer || params.run_rpbp || params.run_price
+    def any_caller_enabled   = !params.skip_ribotish || !params.skip_ribocode || params.run_ribotricer || params.run_rpbp || params.run_price
+    def orf_catalogue_active = params.extended_orf_analysis && any_caller_enabled
 
-    if (!extended_orf_active || !any_caller_enabled || params.skip_plastid || !params.contrasts) {
+    if (!orf_catalogue_active || params.skip_plastid || !params.contrasts) {
         def missing = []
         if (!params.extended_orf_analysis) missing << "--extended_orf_analysis true"
-        else if (!novel_source_configured) missing << "a novel-transcript source (set --novel_gtf or leave --skip_stringtie false)"
         if (!any_caller_enabled)           missing << "at least one ORF caller (do not skip both ribocode and ribotish, or opt into ribotricer / rpbp / price)"
         if (params.skip_plastid)           missing << "--skip_plastid false"
         if (!params.contrasts)             missing << "--contrasts"
