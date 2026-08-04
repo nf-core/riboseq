@@ -320,9 +320,15 @@ workflow RIBOSEQ {
     ch_transcriptome_bai       = FASTQ_ALIGN_STAR.out.index_transcript
 
     ch_multiqc_files = ch_multiqc_files
-        .mix(FASTQ_ALIGN_STAR.out.stats.collect{it[1]})
-        .mix(FASTQ_ALIGN_STAR.out.flagstat.collect{it[1]})
-        .mix(FASTQ_ALIGN_STAR.out.idxstats.collect{it[1]})
+        .mix(FASTQ_ALIGN_STAR.out.stats
+            .filter { meta, _file -> !umi_sample_ids.contains(meta.id) }
+            .collect { _meta, file -> file })
+        .mix(FASTQ_ALIGN_STAR.out.flagstat
+            .filter { meta, _file -> !umi_sample_ids.contains(meta.id) }
+            .collect { _meta, file -> file })
+        .mix(FASTQ_ALIGN_STAR.out.idxstats
+            .filter { meta, _file -> !umi_sample_ids.contains(meta.id) }
+            .collect { _meta, file -> file })
         .mix(FASTQ_ALIGN_STAR.out.log_final.collect{it[1]})
 
     //

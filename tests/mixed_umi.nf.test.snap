@@ -386,6 +386,7 @@
                 "multiqc_fastqc.txt:md5,4df74bb164c259f33ccd64c20e0ad35b",
                 "multiqc_samtools_flagstat.txt:md5,5a7842a70ddf9187fed6a915ad81cfd8",
                 "multiqc_samtools_idxstats.txt:md5,5237b8d85f6734b706530f91b7994e3c",
+                "multiqc_samtools_stats.txt:md5,8c6f65521dd581e46c767f0deef7142b",
                 "multiqc_star.txt:md5,8b971eb70f2c733fc5b4cd3d95af673e",
                 "multiqc_umitools_dedup.txt:md5,eb4d20e6702be3a5a1cb10a2d31b1639",
                 "multiqc_umitools_extract.txt:md5,01eca952b70286ccfcfe0ac1685e202b",
@@ -394,6 +395,8 @@
                 "samtools-idxstats-mapped-reads-plot_Normalised_Counts.txt:md5,21075aa6ae24f3f551a6bbcb7e6259b8",
                 "samtools-idxstats-mapped-reads-plot_Observed_over_Expected_Counts.txt:md5,21075aa6ae24f3f551a6bbcb7e6259b8",
                 "samtools-idxstats-mapped-reads-plot_Raw_Counts.txt:md5,ac340ce52399bc65bc4d6f16feb61e95",
+                "samtools-stats-dp.txt:md5,636feda84eea6c01ccb8286311d05c58",
+                "samtools_alignment_plot.txt:md5,531484a1b6a246ed89d7b307792c15aa",
                 "samtools_insert_size.txt:md5,0745b2e9f8b17650ba0f06b10240b556",
                 "star_alignment_plot.txt:md5,eeea24fb2342201ad4b92f353457cb27",
                 "star_summary_table.txt:md5,b6c7e70f88a7c9f013907f79bdc3c897",
@@ -413,7 +416,7 @@
                 "tx2gene.tsv:md5,ca8bc3fbff91c83c6545743011e589d7"
             ]
         ],
-        "timestamp": "2026-08-04T17:55:36.638544162",
+        "timestamp": "2026-08-04T18:57:05.131486353",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "25.10.4"
