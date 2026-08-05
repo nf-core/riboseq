@@ -120,7 +120,7 @@ workflow PIPELINE_INITIALISATION {
         }
         .groupTuple()
         .map { samplesheet ->
-            validateInputSamplesheet(samplesheet)
+            validateInputSamplesheet(samplesheet, params.with_umi)
         }
         .map {
             meta, fastqs ->
@@ -278,7 +278,7 @@ def dotseqPrerequisitesError() {
 //
 // Validate channels from input samplesheet
 //
-def validateInputSamplesheet(input) {
+def validateInputSamplesheet(input, default_with_umi) {
     def (metas, fastqs) = input[1..2]
 
     // Check that multiple runs of the same sample are of the same datatype i.e. single-end / paired-end
@@ -287,8 +287,29 @@ def validateInputSamplesheet(input) {
         error("Please check input samplesheet -> Multiple runs of a sample must be of the same datatype i.e. single-end or paired-end: ${metas[0].id}")
     }
 
-    return [ metas[0], fastqs ]
+    def umi_status_ok = metas.collect { meta -> resolveSampleUmi(meta, default_with_umi) }.unique().size == 1
+    if (!umi_status_ok) {
+        error("Please check input samplesheet -> Multiple runs of a sample must have the same with_umi value: ${metas[0].id}")
+    }
+
+    def clean_meta = metas[0].findAll { key, _value -> key != 'with_umi' }
+    return [ clean_meta, fastqs ]
 }
+
+def resolveSampleUmi(meta, default_with_umi) {
+    def sample_with_umi = meta.with_umi
+    if (sample_with_umi instanceof List) {
+        sample_with_umi = sample_with_umi ? sample_with_umi[0] : null
+    }
+    if (sample_with_umi == null || sample_with_umi == '') {
+        sample_with_umi = default_with_umi
+    }
+    if (!(sample_with_umi instanceof Boolean)) {
+        error("Please check input samplesheet -> with_umi must be true or false for sample: ${meta.id}")
+    }
+    return sample_with_umi
+}
+
 def samplesheetNeedsSalmonForStrandedness(input) {
     samplesheetToList(input, "${projectDir}/assets/schema_input.json")
         .any { meta, _fastq_1, _fastq_2 -> meta.strandedness == 'auto' }

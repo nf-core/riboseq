@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#167](https://github.com/nf-core/riboseq/issues/167) - Add a cross-caller cohort ORF catalogue under `--extended_orf_analysis`, with smORF peptide collapse (`--skip_orf_collapse`) and a consensus view (`--orf_min_callers`/`--orf_min_samples`) ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#166](https://github.com/nf-core/riboseq/issues/166) - Add per-ORF in-frame P-site quantification, emitting an ORF x sample count matrix ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#168](https://github.com/nf-core/riboseq/issues/168) - Add ORF-level differential translation analysis (anota2seq / deltaTE / DOTSeq) on top of the gene-level DTE ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#146](https://github.com/nf-core/riboseq/issues/146), [#149](https://github.com/nf-core/riboseq/issues/149) - Add per-sample UMI handling through an optional `with_umi` samplesheet column ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Fixed`
 
