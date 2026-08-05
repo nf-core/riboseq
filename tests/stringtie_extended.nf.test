@@ -26,12 +26,12 @@ nextflow_pipeline {
             // stable_path: All files in ${params.outdir}/ with stable content
             def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore_orf')
 
-            def hybrid_gtf            = file("${params.outdir}/stringtie/hybrid_reference.gtf")
+            def hybrid_gtf            = file("${params.outdir}/transcript_assembly/stringtie/hybrid_reference.gtf")
             def ribotish_pred_all     = file("${params.outdir}/orf_predictions/ribotish_all/allsamples_pred.txt")
 
             // An ORF whose gene id is missing from the RNA-seq matrix is
             // dropped from the ORF-level DTE join without an error.
-            def orf_to_gene = file("${params.outdir}/orf_catalogue/cohort.catalogue.orf_to_gene.tsv").readLines()
+            def orf_to_gene = file("${params.outdir}/orf_predictions/catalogue/cohort.catalogue.orf_to_gene.tsv").readLines()
             def catalogue_genes = orf_to_gene.drop(1)
                 .collect { it.split('\t', -1)[1] }
                 .findAll { it }

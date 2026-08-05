@@ -28,8 +28,8 @@ nextflow_pipeline {
             def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
             def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore_orf')
 
-            def dotseq_dir = file("${params.outdir}/dte/orf_level/dotseq")
-            def hybrid_gtf = file("${params.outdir}/stringtie/hybrid_reference.gtf")
+            def dotseq_dir = file("${params.outdir}/translational_efficiency/orf_level/dotseq")
+            def hybrid_gtf = file("${params.outdir}/transcript_assembly/stringtie/hybrid_reference.gtf")
             assertAll(
                 { assert workflow.success },
                 { assert dotseq_dir.exists() && dotseq_dir.list().length > 0 },
