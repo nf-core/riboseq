@@ -39,6 +39,11 @@
                 "enum": ["riboseq", "rnaseq", "tiseq"],
                 "meta": ["sample_type"]
             },
+            "with_umi": {
+                "type": "boolean",
+                "errorMessage": "with_umi must be true or false",
+                "meta": ["with_umi"]
+            },
             "trim_length": {
                 "anyOf": [
                     { "type": "integer", "minimum": 15 },

@@ -295,7 +295,7 @@
                 "with_umi": {
                     "type": "boolean",
                     "fa_icon": "fas fa-barcode",
-                    "description": "Enable UMI-based read deduplication."
+                    "description": "Enable UMI extraction and UMI-based read deduplication for all samples unless overridden by the optional `with_umi` samplesheet column."
                 },
                 "umi_dedup_tool": {
                     "type": "string",

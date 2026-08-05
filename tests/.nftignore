@@ -1,6 +1,7 @@
 .DS_Store
 alignment/star/**/*.bam.stats
 alignment/star/**/*.{bam,bam.bai}
+alignment/star/deduplicated/log/*.log
 alignment/star/deduplicated/umicollapse/*_UMICollapse.log
 alignment/star/log/*.Log.{final.out,out,progress.out}
 multiqc/multiqc_plots/{svg,pdf,png}/*.{svg,pdf,png}

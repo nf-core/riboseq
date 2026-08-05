@@ -104,6 +104,7 @@ SRX11780890,SRX11780890_SRR15480793_chr20_1.fastq.gz,,auto,riboseq,Ribo-seq_P400
 | `fastq_2`      | Full path to FastQ file for Illumina short reads 2. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
 | `strandedness` | Sample strand-specificity. Must be one of `unstranded`, `forward`, `reverse` or `auto`.                                                                                                |
 | `type`         | Type of sample. Must be one of `riboseq`, `rnaseq` or `tiseq`                                                                                                                          |
+| `with_umi`     | (Optional) Whether the sample contains UMIs. Must be `true` or `false`. Overrides the global `--with_umi` setting for this sample.                                                     |
 | `trim_length`  | (Optional) Target read length for read length equalisation. See [Read length equalisation](#read-length-equalisation).                                                                 |
 
 An [example samplesheet](../assets/samplesheet.csv) has been provided with the pipeline.
@@ -236,7 +237,28 @@ The pipeline currently uses [STAR](https://github.com/alexdobin/STAR) to map the
 
 The pipeline supports UMIs to increase the accuracy of the quantification. UMIs are short sequences used to uniquely tag each molecule in a sample library and facilitate the accurate identification of read duplicates. They must be added during library preparation and prior to sequencing, therefore require appropriate arrangements with your sequencing provider.
 
-To take UMIs into consideration during a workflow run, specify the `--with_umi` parameter. The pipeline currently supports UMIs, which are embedded within a read's sequence and UMIs, whose sequence is given inside the read's name. Please consult your kit's manual and/or contact your sequencing provider regarding the exact specification.
+To take UMIs into consideration for every sample in a workflow run, specify the `--with_umi` parameter. For a mixture of UMI and non-UMI libraries, add a `with_umi` column to the samplesheet and set each row to `true` or `false`. A samplesheet value overrides the global parameter for that sample. Multiple sequencing runs belonging to one sample must use the same value.
+
+The pipeline supports UMIs embedded within a read's sequence and UMIs whose sequence is given inside the read's name. Please consult your kit's manual and/or contact your sequencing provider regarding the exact specification. UMI extraction, `--umi_discard_read`, and deduplication apply only to UMI-enabled samples. Their settings remain global across those samples, so a single run cannot combine libraries that require different barcode patterns or grouping methods.
+
+For example, this samplesheet extracts and deduplicates the Ribo-seq library while processing the matched RNA-seq library without UMI handling:
+
+```csv
+sample,fastq_1,fastq_2,strandedness,type,with_umi
+sample_ribo,ribo_R1.fastq.gz,,forward,riboseq,true
+sample_rna,rna_R1.fastq.gz,rna_R2.fastq.gz,reverse,rnaseq,false
+```
+
+The samplesheet column and global parameter interact as follows:
+
+| Configuration                                       | Result                                                                  |
+| --------------------------------------------------- | ----------------------------------------------------------------------- |
+| No `with_umi` column                                | Every sample uses the global `--with_umi` value.                        |
+| `with_umi` is `true` or `false` for a sample        | The samplesheet value overrides the global value for that sample.       |
+| `--with_umi` with selected samples set to `false`   | UMI processing applies to all samples except those explicitly disabled. |
+| No `--with_umi` with selected samples set to `true` | UMI processing applies only to the samples explicitly enabled.          |
+
+If UMIs are already embedded in the read names, mark the applicable samples with `with_umi=true` and use `--skip_umi_extract`. The pipeline will skip sequence extraction but will still deduplicate the marked samples by UMI.
 
 The `--umitools_grouping_method` parameter affects [how similar, but non-identical UMIs](https://umi-tools.readthedocs.io/en/latest/reference/dedup.html#method) are treated. `directional`, the default setting, is most accurate, but computationally very demanding. Consider `percentile` or `unique` if processing many samples.
 
