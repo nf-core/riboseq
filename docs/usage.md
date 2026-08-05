@@ -104,6 +104,7 @@ SRX11780890,SRX11780890_SRR15480793_chr20_1.fastq.gz,,auto,riboseq,Ribo-seq_P400
 | `fastq_2`      | Full path to FastQ file for Illumina short reads 2. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
 | `strandedness` | Sample strand-specificity. Must be one of `unstranded`, `forward`, `reverse` or `auto`.                                                                                                |
 | `type`         | Type of sample. Must be one of `riboseq`, `rnaseq` or `tiseq`                                                                                                                          |
+| `with_umi`     | (Optional) Whether the sample contains UMIs. Must be `true` or `false`. Overrides the global `--with_umi` setting for this sample.                                                     |
 | `trim_length`  | (Optional) Target read length for read length equalisation. See [Read length equalisation](#read-length-equalisation).                                                                 |
 
 An [example samplesheet](../assets/samplesheet.csv) has been provided with the pipeline.
@@ -236,7 +237,28 @@ The pipeline currently uses [STAR](https://github.com/alexdobin/STAR) to map the
 
 The pipeline supports UMIs to increase the accuracy of the quantification. UMIs are short sequences used to uniquely tag each molecule in a sample library and facilitate the accurate identification of read duplicates. They must be added during library preparation and prior to sequencing, therefore require appropriate arrangements with your sequencing provider.
 
-To take UMIs into consideration during a workflow run, specify the `--with_umi` parameter. The pipeline currently supports UMIs, which are embedded within a read's sequence and UMIs, whose sequence is given inside the read's name. Please consult your kit's manual and/or contact your sequencing provider regarding the exact specification.
+To take UMIs into consideration for every sample in a workflow run, specify the `--with_umi` parameter. For a mixture of UMI and non-UMI libraries, add a `with_umi` column to the samplesheet and set each row to `true` or `false`. A samplesheet value overrides the global parameter for that sample. Multiple sequencing runs belonging to one sample must use the same value.
+
+The pipeline supports UMIs embedded within a read's sequence and UMIs whose sequence is given inside the read's name. Please consult your kit's manual and/or contact your sequencing provider regarding the exact specification. UMI extraction, `--umi_discard_read`, and deduplication apply only to UMI-enabled samples. Their settings remain global across those samples, so a single run cannot combine libraries that require different barcode patterns or grouping methods.
+
+For example, this samplesheet extracts and deduplicates the Ribo-seq library while processing the matched RNA-seq library without UMI handling:
+
+```csv
+sample,fastq_1,fastq_2,strandedness,type,with_umi
+sample_ribo,ribo_R1.fastq.gz,,forward,riboseq,true
+sample_rna,rna_R1.fastq.gz,rna_R2.fastq.gz,reverse,rnaseq,false
+```
+
+The samplesheet column and global parameter interact as follows:
+
+| Configuration                                       | Result                                                                  |
+| --------------------------------------------------- | ----------------------------------------------------------------------- |
+| No `with_umi` column                                | Every sample uses the global `--with_umi` value.                        |
+| `with_umi` is `true` or `false` for a sample        | The samplesheet value overrides the global value for that sample.       |
+| `--with_umi` with selected samples set to `false`   | UMI processing applies to all samples except those explicitly disabled. |
+| No `--with_umi` with selected samples set to `true` | UMI processing applies only to the samples explicitly enabled.          |
+
+If UMIs are already embedded in the read names, mark the applicable samples with `with_umi=true` and use `--skip_umi_extract`. The pipeline will skip sequence extraction but will still deduplicate the marked samples by UMI.
 
 The `--umitools_grouping_method` parameter affects [how similar, but non-identical UMIs](https://umi-tools.readthedocs.io/en/latest/reference/dedup.html#method) are treated. `directional`, the default setting, is most accurate, but computationally very demanding. Consider `percentile` or `unique` if processing many samples.
 
@@ -434,7 +456,7 @@ When `--extended_orf_analysis true` is set with `--te_quantification_method plas
 - `deltate`: DESeq2 with a `~ condition + seq_type + condition:seq_type` interaction model.
 - `dotseq` (ORF-level only): DOTSeq's ORF-level differential translation efficiency (DESeq2 + ashr) AND its DOTSeq-specific DOU contrast - a per-gene beta-binomial GLM modelling whether each ORF gains or loses a share of its parent gene's ribosome occupancy across conditions (the question "is this ORF gaining ribosomes at the expense of its siblings?", which DTE alone can't answer). Selecting `dotseq` requires `--extended_orf_analysis true` and an enabled ORF caller; the gene-level fit is skipped.
 
-A pre-processing step joins the per-ORF P-site count matrix (`<outdir>/orf_quantification/orf_psite_counts.tsv`) with a gene-level RNA-seq matrix via `orf_to_gene.tsv` from the catalogue, producing one combined count table whose rows are ORFs and whose RNA columns hold the host gene's count replicated across all ORFs sharing that gene. The selected method is then fitted, treating each ORF row as a feature. Results land under `<outdir>/dte/orf_level/<method>/`, alongside the shared combined input matrix (`<outdir>/dte/orf_level/orf_combined_counts.tsv`).
+A pre-processing step joins the per-ORF P-site count matrix (`<outdir>/quantification/orf_level/orf_psite_counts.tsv`) with a gene-level RNA-seq matrix via `orf_to_gene.tsv` from the catalogue, producing one combined count table whose rows are ORFs and whose RNA columns hold the host gene's count replicated across all ORFs sharing that gene. The selected method is then fitted, treating each ORF row as a feature. Results land under `<outdir>/translational_efficiency/orf_level/<method>/`, alongside the shared combined input matrix (`<outdir>/translational_efficiency/orf_level/orf_combined_counts.tsv`).
 
 Which RNA-seq matrix supplies the denominator depends on whether a novel-transcript source is configured.
 
@@ -585,7 +607,7 @@ This describes how to compare groups of samples between treatment groups, and be
 
 ## Novel transcript discovery (StringTie / user-supplied GTF)
 
-The pipeline can extend the canonical reference annotation with novel intergenic transcripts, either by running [StringTie](https://ccb.jhu.edu/software/stringtie/) reference-guided assembly or by accepting a user-supplied GTF via `--novel_gtf`. The two sources feed the same downstream filtering chain and produce a hybrid annotation at `<outdir>/stringtie/hybrid_reference.gtf` (canonical backbone + filtered novel transcripts, sorted by genomic position).
+The pipeline can extend the canonical reference annotation with novel intergenic transcripts, either by running [StringTie](https://ccb.jhu.edu/software/stringtie/) reference-guided assembly or by accepting a user-supplied GTF via `--novel_gtf`. The two sources feed the same downstream filtering chain and produce a hybrid annotation at `<outdir>/transcript_assembly/stringtie/hybrid_reference.gtf` (canonical backbone + filtered novel transcripts, sorted by genomic position).
 
 ### Source 1: StringTie assembly
 
@@ -620,7 +642,7 @@ The hybrid GTF is exposed as a workflow channel (`hybrid_gtf` emit) and is wired
 
 ## Extended ORF discovery
 
-By default, all ORF callers run against the canonical backbone GTF so the pipeline produces well-characterised annotated-ORF calls. To discover novel ORFs in the novel intergenic transcripts produced by StringTie or supplied via `--novel_gtf`, set `--extended_orf_analysis true`. This routes the hybrid GTF (`<outdir>/stringtie/hybrid_reference.gtf`) into the ORF callers:
+By default, all ORF callers run against the canonical backbone GTF so the pipeline produces well-characterised annotated-ORF calls. To discover novel ORFs in the novel intergenic transcripts produced by StringTie or supplied via `--novel_gtf`, set `--extended_orf_analysis true`. This routes the hybrid GTF (`<outdir>/transcript_assembly/stringtie/hybrid_reference.gtf`) into the ORF callers:
 
 - **Ribo-TISH `predict`**: hybrid GTF on `-g` (discovery target); canonical backbone on `-a` (background and ORF classification).
 - **Ribotricer `prepare-orfs`**: hybrid GTF directly (Ribotricer has no secondary-annotation concept; CDS-absent novel transcripts are auto-labelled `novel`).
@@ -640,7 +662,7 @@ RiboCode (and STAR `--quantMode TranscriptomeSAM` in general) needs a transcript
 2. Rebuilds a STAR index against the original genome FASTA, using the hybrid GTF as `--sjdbGTFfile`.
 3. Re-aligns the Ribo-seq reads against that hybrid index to obtain a hybrid transcriptome BAM, which is then fed to RiboCode in place of the reference transcriptome BAM.
 
-The second pass roughly doubles STAR alignment compute for Ribo-seq samples and consumes additional disk for the hybrid index and BAMs. It runs only when `--extended_orf_analysis true` and a novel-transcript source are configured, and is restricted to Ribo-seq samples (RNA-seq and TI-seq do not feed RiboCode). The hybrid transcriptome FASTA and hybrid STAR index are each built once per pipeline run. Outputs are published under `<outdir>/hybrid_star/`.
+The second pass roughly doubles STAR alignment compute for Ribo-seq samples and consumes additional disk for the hybrid index and BAMs. It runs only when `--extended_orf_analysis true` and a novel-transcript source are configured, and is restricted to Ribo-seq samples (RNA-seq and TI-seq do not feed RiboCode). The hybrid transcriptome FASTA and hybrid STAR index are each built once per pipeline run. Outputs are published under `<outdir>/alignment/hybrid_star/` (and `<outdir>/genome/index/hybrid_star/` for the hybrid STAR index, when `--save_reference` is set).
 
 **riboWaltz stays on the primary reference-transcriptome BAM by design.** riboWaltz is a QC/calibration tool and its CDS-dependent plots (frame distribution, start/stop metaprofiles) are driven by annotated CDS-bearing transcripts. Routing CDS-absent novel transcripts through riboWaltz would dilute its diagnostic plots without contributing to ORF discovery (riboWaltz does not call ORFs). Salmon likewise stays on the primary reference transcriptome, and plastid P-site quantification on the canonical backbone, regardless of `--extended_orf_analysis`.
 
@@ -650,7 +672,7 @@ The default `--extended_orf_analysis false` keeps the pre-#165 behaviour unchang
 
 ### Cross-sample ORF catalogue
 
-When `--extended_orf_analysis true` is set and at least one ORF caller is enabled, the pipeline produces a cohort-level ORF catalogue under `<outdir>/orf_catalogue/`. The catalogue normalises each per-sample, per-caller output into a unified BED12 (genomic blocks, multi-exon-aware), then merges across samples and callers with a class-aware strategy:
+When `--extended_orf_analysis true` is set and at least one ORF caller is enabled, the pipeline produces a cohort-level ORF catalogue under `<outdir>/orf_predictions/catalogue/`. The catalogue normalises each per-sample, per-caller output into a unified BED12 (genomic blocks, multi-exon-aware), then merges across samples and callers with a class-aware strategy:
 
 - annotated multi-exon CDS are collapsed by `transcript_id` to preserve intron-chain identity;
 - single-exon novel intergenic ORFs are clustered by 80% reciprocal overlap on the outer genomic span;
@@ -661,13 +683,13 @@ Host gene and transcript ids are resolved against the union of the full multi-is
 
 The catalogue runs once per pipeline invocation (cohort-level, not per sample) and gates on `--extended_orf_analysis true` plus a non-empty enabled-caller set. The default-off path keeps the pre-#167 behaviour unchanged.
 
-Alongside the full catalogue, a consensus view is published under `<outdir>/orf_catalogue/consensus/` containing only ORFs supported by at least `--orf_min_callers` distinct callers and recurring in at least `--orf_min_samples` samples (both default 1, so the consensus view equals the full catalogue out of the box). Raise either threshold (e.g. `--orf_min_callers 2`) for a higher-confidence catalogue that tames downstream ORF-level multiple testing; the full unfiltered catalogue is always published regardless. The threshold is applied after the smORF collapse, so the consensus is the high-confidence subset of the de-redundified catalogue and a micropeptide folded across several loci is judged on its combined cross-caller / cross-sample evidence (when `--skip_orf_collapse` is set it comes from the merged catalogue instead).
+Alongside the full catalogue, a consensus view is published under `<outdir>/orf_predictions/catalogue/consensus/` containing only ORFs supported by at least `--orf_min_callers` distinct callers and recurring in at least `--orf_min_samples` samples (both default 1, so the consensus view equals the full catalogue out of the box). Raise either threshold (e.g. `--orf_min_callers 2`) for a higher-confidence catalogue that tames downstream ORF-level multiple testing; the full unfiltered catalogue is always published regardless. The threshold is applied after the smORF collapse, so the consensus is the high-confidence subset of the de-redundified catalogue and a micropeptide folded across several loci is judged on its combined cross-caller / cross-sample evidence (when `--skip_orf_collapse` is set it comes from the merged catalogue instead).
 
 See [ORF catalogue (cross-sample)](output.md#orf-catalogue-cross-sample) in the output docs for the full list of published files.
 
 ### Per-ORF P-site quantification
 
-When the cohort catalogue is built and plastid is enabled (`--skip_plastid false`, the default), the pipeline also produces a per-ORF in-frame P-site count matrix at `<outdir>/orf_quantification/orf_psite_counts.tsv`. This is an ORF x sample matrix of raw integer counts, complementing the gene-level matrix at `<outdir>/quantification/inframe_psite/gene_counts.tsv`. Frames for catalogue ORFs are defined by each ORF's own start codon (ATG = frame 0), not by the GTF `phase` field, so novel transcripts and non-canonical starts are handled correctly. The matrix is the input for the per-ORF translational-efficiency analysis tracked in #168; gene-level DTE is unchanged by this addition.
+When the cohort catalogue is built and plastid is enabled (`--skip_plastid false`, the default), the pipeline also produces a per-ORF in-frame P-site count matrix at `<outdir>/quantification/orf_level/orf_psite_counts.tsv`. This is an ORF x sample matrix of raw integer counts, complementing the gene-level matrix at `<outdir>/quantification/inframe_psite/gene_counts.tsv`. Frames for catalogue ORFs are defined by each ORF's own start codon (ATG = frame 0), not by the GTF `phase` field, so novel transcripts and non-canonical starts are handled correctly. The matrix is the input for the per-ORF translational-efficiency analysis tracked in #168; gene-level DTE is unchanged by this addition.
 
 When `--skip_plastid true` is set together with `--extended_orf_analysis true`, the catalogue is still built but the per-ORF count matrix is skipped (the plastid wiggle tracks are not available), and a runtime warning is emitted.
 

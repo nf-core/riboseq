@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#167](https://github.com/nf-core/riboseq/issues/167) - Add a cross-caller cohort ORF catalogue under `--extended_orf_analysis`, with smORF peptide collapse (`--skip_orf_collapse`) and a consensus view (`--orf_min_callers`/`--orf_min_samples`) ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#166](https://github.com/nf-core/riboseq/issues/166) - Add per-ORF in-frame P-site quantification, emitting an ORF x sample count matrix ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#168](https://github.com/nf-core/riboseq/issues/168) - Add ORF-level differential translation analysis (anota2seq / deltaTE / DOTSeq) on top of the gene-level DTE ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#146](https://github.com/nf-core/riboseq/issues/146), [#149](https://github.com/nf-core/riboseq/issues/149) - Add per-sample UMI handling through an optional `with_umi` samplesheet column ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Fixed`
 
@@ -71,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#163](https://github.com/nf-core/riboseq/issues/163) - Demote Ribotricer from the default ORF caller set to opt-in: replace `--skip_ribotricer` (default `false`) with `--run_ribotricer` (default `false`), warn at runtime when enabled, and exclude its score column from cross-caller rank aggregation. The default caller set is now Ribo-TISH + RiboCode; agreement logic is parameterised on the runtime-enabled caller set ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#194](https://github.com/nf-core/riboseq/pull/194) - Update all nf-core modules and subworkflows to their latest revisions and reconcile the pipeline with the changed component interfaces ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#194](https://github.com/nf-core/riboseq/pull/194) - Raise the minimum Nextflow version to `25.10.0`, required by nf-schema 2.7.2 ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#196](https://github.com/nf-core/riboseq/issues/196) - **Breaking:** reorganise outputs into category-based directories for alignment, reference indexes, ORF prediction, quantification, transcript assembly and translational efficiency ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#156](https://github.com/nf-core/riboseq/pull/156) - Template update for nf-core/tools v4.0.2 ([@nf-core-bot](https://github.com/nf-core-bot), [@pinin4fjords](https://github.com/pinin4fjords))
 - [#210](https://github.com/nf-core/riboseq/pull/210)
   - Update trimgalore module to 2.3.0 (nf-core/modules#12331) ([@FelixKrueger](https://github.com/FelixKrueger))

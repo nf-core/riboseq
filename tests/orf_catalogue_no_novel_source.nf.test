@@ -27,9 +27,9 @@ nextflow_pipeline {
             // stable_path: All files in ${params.outdir}/ with stable content
             def stable_path = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore_orf')
 
-            def catalogue_bed12 = file("${params.outdir}/orf_catalogue/cohort.catalogue.bed12")
-            def orf_counts      = file("${params.outdir}/orf_quantification/orf_psite_counts.tsv")
-            def hybrid_dir      = file("${params.outdir}/hybrid_star")
+            def catalogue_bed12 = file("${params.outdir}/orf_predictions/catalogue/cohort.catalogue.bed12")
+            def orf_counts      = file("${params.outdir}/quantification/orf_level/orf_psite_counts.tsv")
+            def hybrid_dir      = file("${params.outdir}/alignment/hybrid_star")
             // BUILD_FULL_HYBRID_GTF creates quantification/salmon_hybrid/ even though it
             // publishes nothing without --save_reference, so assert on its contents.
             def hybrid_rna_counts = file("${params.outdir}/quantification/salmon_hybrid/salmon.merged.hybrid.gene_counts_length_scaled.tsv")
