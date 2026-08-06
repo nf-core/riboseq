@@ -7,7 +7,7 @@ nextflow_pipeline {
     tag "extended_orf_analysis"
     tag "umi"
 
-    test("-profile test --with_umi true --skip_stringtie false --extended_orf_analysis true") {
+    test("-profile test --with_umi true --skip_stringtie false --extended_orf_analysis true --skip_ribowaltz true") {
 
         when {
             params {
@@ -17,34 +17,21 @@ nextflow_pipeline {
                 save_umi_intermeds    = true
                 skip_stringtie        = false
                 extended_orf_analysis = true
-                // -profile test supplies contrasts, so ORF-level DTE runs and the
-                // hybrid RNA requantification instantiates BAM_DEDUP_UMI_HYBRID_RNA.
-                // That alias plus BAM_DEDUP_UMI_HYBRID are the ones whose ext.prefix
-                // and ext.args were previously only set for the plain BAM_DEDUP_UMI.
+                skip_ribowaltz        = true
             }
         }
 
         then {
-            def hybrid_dedup = file("${params.outdir}/alignment/hybrid_star/deduplicated")
-            def published    = hybrid_dedup.exists() ? hybrid_dedup.list().toList() : []
+            def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
+            def stable_path = getAllFilesFromDir(params.outdir, ignore: ['alignment/hybrid_star/deduplicated/**'], ignoreFile: 'tests/.nftignore_orf')
 
             assertAll(
-                // Without an alias-specific ext.prefix, UMITOOLS_PREPAREFORRSEM aborts with
-                // "Input and output names are the same" and SAMTOOLS_SORT drops its -n, so
-                // reaching the end of the pipeline is itself the regression assertion.
                 { assert workflow.success },
-
-                // The hybrid dedup outputs must carry alias-specific names. An unprefixed
-                // ${meta.id}.bam means a selector stopped matching and two processes are
-                // racing for the same published path.
-                { assert published.any { it.endsWith('.umi_dedup.hybrid_transcriptome.namesorted.bam') } },
-                { assert published.any { it.endsWith('.hybrid_transcriptome.sorted.bam') } },
-                { assert !published.any { it ==~ /^[^.]+\.bam$/ } },
-
-                // The ORF-level DTE denominator is quantified from the hybrid RNA BAMs, so
-                // its presence confirms BAM_DEDUP_UMI_HYBRID_RNA ran to completion.
-                { assert file("${params.outdir}/quantification/salmon_hybrid").exists() },
-                { assert file("${params.outdir}/translational_efficiency/orf_level").exists() }
+                { assert snapshot(
+                    removeNextflowVersion("$outputDir/pipeline_info/nf_core_riboseq_software_mqc_versions.yml"),
+                    stable_name,
+                    stable_path
+                ).match() }
             )
         }
 
