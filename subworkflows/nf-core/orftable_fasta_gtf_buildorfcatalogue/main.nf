@@ -21,8 +21,8 @@ workflow ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE {
                    //          all caller outputs flow through one channel with the
                    //          caller id carried as a per-record val (not in meta).
     ch_fasta       // channel: [ val(meta), path(fasta) ]   - reference genome FASTA
-    ch_gtf         // channel: [ val(meta), path(gtf)   ]   - reference GTF (used by
-                   //          ribocode/ribotish normalisers; ignored by rpbp/price)
+    ch_gtf         // channel: [ val(meta), path(gtf)   ]   - reference GTF (read by
+                   //          every normaliser except ribotricer)
     val_collapse   // boolean: cluster catalogue peptides by amino-acid identity
                    //          and fold duplicate small ORFs to one representative
                    //          each. When false the merged catalogue is emitted
@@ -75,9 +75,9 @@ workflow ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE {
     //    collapses genomically overlapping ORFs, so the same micropeptide
     //    encoded at distinct loci survives as separate rows; the collapse route
     //    clusters peptides by amino-acid identity and folds the small-ORF
-    //    (aa_length <= --smorf-max-aa) clusters to one representative each
-    //    (GENCODE Ribo-seq ORF catalogue convention, Mudge et al. 2022). The
-    //    keep route emits the merged catalogue untouched.
+    //    (aa_length <= 100) clusters to one representative each (GENCODE
+    //    Ribo-seq ORF catalogue convention, Mudge et al. 2022). The keep route
+    //    emits the merged catalogue untouched.
     ch_routed = CUSTOM_ORFMERGE.out.bed12
         .join(CUSTOM_ORFMERGE.out.catalogue_tsv)
         .join(CUSTOM_ORFMERGE.out.orf_to_gene_tsv)
