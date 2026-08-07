@@ -1,6 +1,7 @@
 .DS_Store
 alignment/star/**/*.bam.stats
 alignment/star/**/*.{bam,bam.bai}
+alignment/star/deduplicated/log/*.log
 alignment/star/deduplicated/umicollapse/*_UMICollapse.log
 alignment/star/log/*.Log.{final.out,out,progress.out}
 multiqc/multiqc_plots/{svg,pdf,png}/*.{svg,pdf,png}
@@ -10,6 +11,8 @@ multiqc/star/multiqc_general_stats.txt
 multiqc/star/multiqc_report.html
 multiqc/star/multiqc_report_data/fastqc-1_top_overrepresented_sequences_table.txt
 multiqc/star/multiqc_report_data/fastqc_top_overrepresented_sequences_table.txt
+multiqc/star/multiqc_report_data/*_sequence_duplication_levels_plot.txt
+multiqc/star/multiqc_report_data/multiqc_fastqc_fastqc-*.txt
 multiqc/star/multiqc_report_data/llms-full.txt
 multiqc/star/multiqc_report_data/multiqc.log
 multiqc/star/multiqc_report_data/multiqc.parquet
@@ -18,8 +21,10 @@ multiqc/star/multiqc_report_data/multiqc_general_stats.txt
 multiqc/star/multiqc_report_data/multiqc_software_versions.txt
 multiqc/star/multiqc_report_data/multiqc_salmon.txt
 multiqc/star/multiqc_report_data/multiqc_salmon_salmon-1.txt
+multiqc/star/multiqc_report_data/multiqc_sortmerna.txt
 multiqc/star/multiqc_report_data/multiqc_sources.txt
 multiqc/star/multiqc_report_data/salmon_plot.txt
+multiqc/star/multiqc_report_data/sortmerna-detailed-plot.txt
 multiqc/star/multiqc_report_plots/{svg,pdf,png}/*.{svg,pdf,png}
 pipeline_info/*.{html,json,txt,yml}
 preprocessing/fastqc/*_fastqc.{html,zip}
@@ -58,6 +63,7 @@ quantification/salmon_te_pseudo/*/quant.sf
 quantification/salmon_te_pseudo/*.rds
 quantification/salmon_te_pseudo/**/*.rds
 quantification/salmon_te_pseudo/salmon.merged.te_pseudo.*.tsv
+quantification/inframe_psite/*
 riboseq_qc/ribotish/*_qual.pdf
 psites/ribowaltz/**/*.pdf
 psites/plastid/*/*
