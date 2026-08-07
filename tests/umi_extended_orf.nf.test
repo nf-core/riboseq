@@ -11,13 +11,15 @@ nextflow_pipeline {
 
         when {
             params {
-                outdir                = "$outputDir"
-                with_umi              = true
-                umitools_bc_pattern   = 'NNNN'
-                save_umi_intermeds    = true
-                skip_stringtie        = false
-                extended_orf_analysis = true
-                skip_ribowaltz        = true
+                outdir                          = "$outputDir"
+                with_umi                        = true
+                umitools_bc_pattern             = 'NNNN'
+                save_umi_intermeds              = true
+                skip_stringtie                  = false
+                extended_orf_analysis           = true
+                skip_ribowaltz                  = true
+                // gene-level anota2seq cannot fit the UMI-deduplicated test data
+                translational_efficiency_method = 'dotseq'
             }
         }
 
