@@ -33,6 +33,7 @@ multiqc/star/multiqc_report.html
 multiqc/star/multiqc_report_data/fastqc-1_top_overrepresented_sequences_table.txt
 multiqc/star/multiqc_report_data/fastqc_top_overrepresented_sequences_table.txt
 multiqc/star/multiqc_report_data/*_sequence_duplication_levels_plot.txt
+multiqc/star/multiqc_report_data/multiqc_fastqc.txt
 multiqc/star/multiqc_report_data/multiqc_fastqc_fastqc-*.txt
 multiqc/star/multiqc_report_data/llms-full.txt
 multiqc/star/multiqc_report_data/multiqc.log

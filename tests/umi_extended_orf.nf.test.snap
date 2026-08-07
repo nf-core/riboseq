@@ -1639,7 +1639,6 @@
         "fastqc_sequence_counts_plot.txt:md5,0787933737089fe25ea59969497b5fe5",
         "fastqc_sequence_length_distribution_plot.txt:md5,83842358ac68365fa7ae42de4f7f46ce",
         "multiqc_citations.txt:md5,ad4233f481cd1e7c3956111e20f668b3",
-        "multiqc_fastqc.txt:md5,8ed10b7d8513885e65a8143c0fe1c15e",
         "multiqc_ribotish.txt:md5,9351ff28988db4b9055992b8e6a6f9b7",
         "multiqc_umitools_dedup.txt:md5,5e0c3d08b9138fe8a5f67b95e0fa416d",
         "multiqc_umitools_extract.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
