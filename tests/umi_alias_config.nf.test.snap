@@ -1,0 +1,21 @@
+{
+    "BAM_DEDUP_UMI hybrid aliases": {
+        "content": [
+            "test.umi_dedup.hybrid_transcriptome.filtered.bam",
+            "test.umi_dedup.transcriptome.sorted.bam",
+            "test.umi_dedup.hybrid_transcriptome.namesorted.bam",
+            "test.umi_dedup.hybrid_transcriptome.filtered.bam",
+            "test.umi_dedup.hybrid_transcriptome.filtered.bam",
+            "test.umi_dedup.transcriptome.sorted.bam",
+            "test.umi_dedup.hybrid_transcriptome.namesorted.bam",
+            "test.umi_dedup.hybrid_transcriptome.filtered.bam",
+            "fe38ce657d4208a850702bdbfaa062ca",
+            "fe38ce657d4208a850702bdbfaa062ca"
+        ],
+        "timestamp": "2026-08-07T15:08:02.70498441",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}
