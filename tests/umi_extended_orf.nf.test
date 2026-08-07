@@ -1,25 +1,79 @@
 nextflow_pipeline {
 
-    name "Test pipeline with --with_umi, a novel-transcript source and ORF-level DTE"
+    name "Test pipeline with pre-extracted UMI RNA-seq and paired-end Ribo-seq"
     script "../main.nf"
     tag "pipeline"
     tag "pipeline_riboseq"
     tag "extended_orf_analysis"
     tag "umi"
 
-    test("-profile test --with_umi true --skip_stringtie false --extended_orf_analysis true --skip_ribowaltz true") {
+    test("-profile test --skip_umi_extract true --skip_stringtie false --extended_orf_analysis true --skip_ribowaltz true") {
+
+        setup {
+            def test_config = new ConfigSlurper().parse(new File("${projectDir}/conf/test.config").toURI().toURL())
+            def source_rows = test_config.params.input.toURL().readLines()
+            def umi_samples = ['SRX11780879', 'SRX11780885']
+
+            def encode_umi = { long value ->
+                def bases = new char[12]
+                for (int index = bases.length - 1; index >= 0; index--) {
+                    bases[index] = 'ACGT'.charAt((int) (value % 4))
+                    value = value.intdiv(4)
+                }
+                new String(bases)
+            }
+
+            def add_umis = { source, target_name ->
+                def target = new File("${launchDir}/${target_name}")
+                def input = new java.util.zip.GZIPInputStream(source.toURL().openStream())
+                def output = new java.util.zip.GZIPOutputStream(new FileOutputStream(target))
+                input.withReader { reader ->
+                    output.withWriter { writer ->
+                        long line_number = 0
+                        reader.eachLine { line ->
+                            line_number++
+                            if (line_number % 4 == 1) {
+                                def separator = line.indexOf(' ')
+                                def read_name = separator < 0 ? line : line.substring(0, separator)
+                                def description = separator < 0 ? '' : line.substring(separator)
+                                line = "${read_name}_${encode_umi((line_number + 3).intdiv(4))}${description}"
+                            }
+                            writer.write(line)
+                            writer.write('\n')
+                        }
+                    }
+                }
+                target.absolutePath
+            }
+
+            def umi_source_row = source_rows.find { it.startsWith('"SRX11780879"') }
+            def umi_source = umi_source_row.substring(1, umi_source_row.length() - 1).split('","', -1) as List
+            def umi_reads = [
+                add_umis(umi_source[1], 'SRX11780879_1.umi.fastq.gz'),
+                add_umis(umi_source[2], 'SRX11780879_2.umi.fastq.gz')
+            ]
+
+            def samplesheet = new File("${launchDir}/samplesheet_umi_extended_orf.csv")
+            def rows = source_rows.tail().collect { row ->
+                def fields = row.substring(1, row.length() - 1).split('","', -1) as List
+                if (fields[0] in umi_samples) {
+                    fields[1] = umi_reads[0]
+                    fields[2] = umi_reads[1]
+                }
+                (fields + [(fields[0] in umi_samples).toString()]).collect { "\"${it}\"" }.join(',')
+            }
+            samplesheet.text = [source_rows.head() + ',"with_umi"', *rows].join('\n') + '\n'
+            params.input = samplesheet.absolutePath
+        }
 
         when {
             params {
-                outdir                          = "$outputDir"
-                with_umi                        = true
-                umitools_bc_pattern             = 'NNNN'
-                save_umi_intermeds              = true
-                skip_stringtie                  = false
-                extended_orf_analysis           = true
-                skip_ribowaltz                  = true
-                // gene-level anota2seq cannot fit the UMI-deduplicated test data
-                translational_efficiency_method = 'dotseq'
+                outdir                = "$outputDir"
+                skip_umi_extract      = true
+                save_umi_intermeds    = true
+                skip_stringtie        = false
+                extended_orf_analysis = true
+                skip_ribowaltz        = true
             }
         }
 
