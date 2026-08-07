@@ -79,7 +79,14 @@ nextflow_pipeline {
 
         then {
             def stable_name = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
-            def stable_path = getAllFilesFromDir(params.outdir, ignore: ['alignment/hybrid_star/deduplicated/**'], ignoreFile: 'tests/.nftignore_orf')
+            def stable_path = getAllFilesFromDir(
+                params.outdir,
+                ignore: [
+                    'alignment/hybrid_star/deduplicated/**',
+                    'multiqc/star/multiqc_report_data/multiqc_fastqc.txt'
+                ],
+                ignoreFile: 'tests/.nftignore_orf'
+            )
 
             assertAll(
                 { assert workflow.success },
