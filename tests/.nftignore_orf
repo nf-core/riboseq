@@ -9,6 +9,8 @@
 alignment/star/**/*.bam.stats
 alignment/star/**/*.{bam,bam.bai}
 alignment/star/deduplicated/umicollapse/*_UMICollapse.log
+alignment/star/deduplicated/log/*.log
+alignment/star/deduplicated/samtools_stats/*.umi_dedup.transcriptome.sorted.bam.{flagstat,idxstats}
 alignment/star/log/*.Log.{final.out,out,progress.out}
 alignment/hybrid_star/log/*.Log.{final.out,out,progress.out}
 alignment/hybrid_star/log/SRX*.hybrid.SJ.out.tab
