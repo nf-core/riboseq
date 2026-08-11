@@ -1,6 +1,7 @@
 name: Run nf-test
 on:
   pull_request:
+    types: [opened, synchronize, reopened] # GitHub's defaults; named so the nf-core lint sees a non-empty subtree
   release:
     types: [published]
   workflow_dispatch:
