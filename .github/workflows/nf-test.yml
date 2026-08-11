@@ -1,7 +1,6 @@
 name: Run nf-test
 on:
   pull_request:
-    types: [opened, synchronize, reopened] # GitHub's defaults; named so the nf-core lint sees a non-empty subtree
   release:
     types: [published]
   workflow_dispatch:
@@ -122,7 +121,7 @@ jobs:
           path: pr-comment-fragment/
 
   confirm-pass:
-    needs: [nf-test]
+    needs: [nf-test-changes, nf-test]
     if: always()
     runs-on: "ubuntu-latest" # temporarily using GitHub-hosted runners while self-hosted runners are down
     steps:

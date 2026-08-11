@@ -59,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#207](https://github.com/nf-core/riboseq/pull/207) - Resolve ORF catalogue gene ids against the union of the full multi-isoform annotation and the novel transcripts instead of the canonical backbone, so ORFs called on non-representative isoforms (PRICE and Rp-Bp are handed the full annotation by design) keep a gene id that joins against the ORF-level DTE RNA denominator ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#209](https://github.com/nf-core/riboseq/pull/209) - Give Rp-Bp and PRICE the full reference with the novel intergenic genes appended under `--extended_orf_analysis`, so both bring novel transcripts into scope without collapsing to the one-transcript-per-gene backbone the hybrid GTF is built on ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#217](https://github.com/nf-core/riboseq/pull/217) - Re-pin `gedi/indexgenome` and `gedi/price` (nf-core/modules#12451) so the GEDI index carries its FASTA and the `.oml`'s absolute paths are repointed at read time, fixing `--run_price` failing in PRICE's `PriceCodonInference` where the path GEDI recorded for the staged input was never materialised ([@FelixKrueger](https://github.com/FelixKrueger), [@pinin4fjords](https://github.com/pinin4fjords))
+- [#228](https://github.com/nf-core/riboseq/pull/228) - Let the `nf-test` workflow report `confirm-pass` on docs-only PRs, which previously left them permanently blocked ([@FelixKrueger](https://github.com/FelixKrueger))
 
 ### `Removed`
 
