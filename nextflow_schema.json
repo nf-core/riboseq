@@ -830,8 +830,8 @@
                 },
                 "skip_orf_collapse": {
                     "type": "boolean",
-                    "description": "Skip the peptide-level smORF deduplication of the cross-sample ORF catalogue.",
-                    "help_text": "By default the catalogue clusters its amino-acid sequences with MMseqs2 (`--min-seq-id 0.9 -c 0.8`) and folds each multi-member smORF (aa_length <= 100) cluster down to one representative, following the GENCODE Ribo-seq ORF catalogue convention (Mudge et al. 2022). Set true to publish the coordinate-merged catalogue without this sequence-level collapse, e.g. when you want to inspect every redundant copy. Has no effect unless `--extended_orf_analysis true`.",
+                    "description": "Skip the peptide-level small-ORF deduplication of the cross-sample ORF catalogue.",
+                    "help_text": "By default the catalogue clusters its amino-acid sequences with MMseqs2 (`--min-seq-id 0.9 -c 0.8`) and folds each multi-member small-ORF cluster (`aa_length` <= `--smorf_max_aa`) down to one representative, following the GENCODE Ribo-seq ORF catalogue convention (Mudge et al. 2022). Set true to publish the coordinate-merged catalogue without this sequence-level collapse, e.g. when you want to inspect every redundant copy. Has no effect unless `--extended_orf_analysis true`.",
                     "fa_icon": "fas fa-layer-group"
                 },
                 "orf_min_callers": {
@@ -849,6 +849,14 @@
                     "description": "Minimum number of samples an ORF must recur in to enter the consensus catalogue view.",
                     "help_text": "Companion to `--orf_min_callers`. The consensus view (`orf_predictions/catalogue/consensus/`) retains only ORFs seen in at least this many distinct samples. Default 1 applies no recurrence filter.",
                     "fa_icon": "fas fa-vials"
+                },
+                "smorf_max_aa": {
+                    "type": "integer",
+                    "default": 100,
+                    "minimum": 1,
+                    "description": "Maximum amino-acid length flagged as a small ORF in the catalogue's `is_smorf` column.",
+                    "help_text": "Controls the `is_smorf` flag and which ORFs are eligible for the peptide-level collapse. It never affects `orf_class`, which is purely positional. The default 100 aa follows the GENCODE Ribo-seq ORF catalogue convention (Mudge et al. 2022). Raise it (e.g. 150) to widen the microprotein window, which flags more ORFs as small and brings more of them into the MMseqs2 collapse.",
+                    "fa_icon": "fas fa-ruler-horizontal"
                 }
             }
         },
