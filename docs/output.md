@@ -20,7 +20,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
   - [Preprocessing](#preprocessing)
     - [cat](#cat)
     - [FastQC](#fastqc)
-    - [UMI-tools extract](#umi-tools-extract)
+    - [UMI-tools extract](#umi-dedup)
     - [TrimGalore](#trimgalore)
     - [fastp](#fastp)
     - [BBSplit](#bbsplit)
@@ -28,6 +28,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
   - [Alignment](#alignment)
     - [STAR](#star)
   - [UMI-tools deduplication](#umi-tools-deduplication)
+  - [Coverage tracks](#coverage-tracks)
   - [Riboseq-specific QC](#riboseq-specific-qc)
     - [Ribo-TISH quality](#ribo-tish-quality)
     - [Ribotricer detect-orfs QC outputs](#ribotricer-detect-orfs-qc-outputs)
@@ -36,6 +37,8 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
     - [Ribo-TISH predict](#ribo-tish-predict)
     - [Ribotricer detect-orfs](#ribotricer-detect-orfs)
     - [RiboCode](#ribocode)
+    - [Rp-Bp](#rp-bp)
+    - [PRICE](#price)
   - [P-site identification](#p-site-identification)
     - [riboWaltz](#ribowaltz)
     - [plastid](#plastid)
@@ -124,9 +127,9 @@ To facilitate processing of input data which has the UMI barcode already embedde
 
 </details>
 
-[Trim Galore!](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/) is a wrapper tool around Cutadapt and FastQC to peform quality and adapter trimming on FastQ files. Trim Galore! will automatically detect and trim the appropriate adapter sequence. It is the default trimming tool used by this pipeline, however you can use fastp instead by specifying the `--trimmer fastp` parameter. You can specify additional options for Trim Galore! via the `--extra_trimgalore_args` parameters.
+[Trim Galore!](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/) performs quality and adapter trimming on FastQ files, and will automatically detect and trim the appropriate adapter sequence. The 2.x series is a self-contained Rust program with both adapter trimming and FastQC reporting built in, so it no longer wraps external Cutadapt or FastQC installations. It is the default trimming tool used by this pipeline, however you can use fastp instead by specifying the `--trimmer fastp` parameter. You can specify additional options for Trim Galore! via the `--extra_trimgalore_args` parameters.
 
-> **NB:** TrimGalore! will only run using multiple cores if you are able to use more than > 5 and > 6 CPUs for single- and paired-end data, respectively. The total cores available to TrimGalore! will also be capped at 4 (7 and 8 CPUs in total for single- and paired-end data, respectively) because there is no longer a run-time benefit. See [release notes](https://github.com/FelixKrueger/TrimGalore/blob/master/Changelog.md#version-060-release-on-1-mar-2019) and [discussion whilst adding this logic to the nf-core/atacseq pipeline](https://github.com/nf-core/atacseq/pull/65).
+> **NB:** The pipeline reserves threads for Trim Galore!'s non-worker roles, passing `--cores` as `task.cpus - 3` for single-end and `task.cpus - 4` for paired-end data, clamped to between 1 and 8. Multi-core trimming therefore requires more than 4 CPUs for single-end data and more than 5 for paired-end data, and the cap of 8 worker cores is reached at 11 and 12 CPUs respectively. Trim Galore! 2.x uses an N+4 thread model (N workers plus two decompressors, a batcher and a writer) and scales near-linearly up to `--cores 8`, beyond which gzip output I/O usually becomes the limiting factor rather than worker capacity. See the [Trim Galore! changelog](https://github.com/FelixKrueger/TrimGalore/blob/master/CHANGELOG.md) and the [discussion whilst adding this logic to the nf-core/atacseq pipeline](https://github.com/nf-core/atacseq/pull/65).
 
 ![MultiQC - cutadapt trimmed sequence length plot](images/mqc_cutadapt_trimmed.png)
 
@@ -283,6 +286,15 @@ The content of the files above is explained in more detail in the [UMI-tools doc
 
 After extracting the UMI information from the read sequence (see [UMI-tools extract](#umi-tools-extract)), the second step in the removal of UMI barcodes involves deduplicating the reads based on both mapping and UMI barcode information. UMI deduplication can be carried out either with [UMI-tools](https://github.com/CGATOxford/UMI-tools) or [UMICollapse](https://github.com/Daniel-Liu-c0deb0t/UMICollapse), set via the `umi_dedup_tool` parameter. The output BAM files are the same, though UMI-tools has some additional outputs, as described above. Either method will generate a filtered BAM file after the removal of PCR duplicates.
 
+## Coverage tracks
+
+The pipeline produces coverage tracks in bigWig format. In the case of stranded libraries, two tracks are created per sample - one for the coverage of the forward strand and one for the reverse strand. In the case of unstranded libraries, only one track is created.
+
+- `coverage`
+  - `<SAMPLE>.forward.bigWig`: Coverage on the forward strand (only created for stranded libraries)
+  - `<SAMPLE>.reverse.bigWig`: Coverage on the reverse strand (only created for stranded libraries)
+  - `<SAMPLE>.unstranded.bigWig`: Sum of coverage of forward and reverse strand (only created for unstranded libraries)
+
 ## Riboseq-specific QC
 
 Read distribution metrics around annotated protein coding regions or based on alignments alone, plus related metrics.
@@ -306,6 +318,8 @@ Read distribution metrics around annotated protein coding regions or based on al
 
 ### Ribotricer detect-orfs QC outputs
 
+Produced only when `--run_ribotricer true` is set. Ribotricer is opt-in because its ORF-score column is rank-unstable across biological replicates; its binary calls are still usable but its scores are excluded from cross-caller rank aggregation.
+
 <details markdown="1">
 <summary>Output files</summary>
 
@@ -327,6 +341,59 @@ Read distribution metrics around annotated protein coding regions or based on al
   - `*.pdf`: Metaplot showing read density around start and stop codons
   </details>
 
+The metaplots step automatically determines which read lengths show 3-nucleotide periodicity and computes P-site offsets for each. These are written to the config file, which is then used by RiboCode for ORF detection.
+
+:::note
+If this step fails with `ERROR: metaplots created config file with no data`, it means none of the read lengths in your data passed the periodicity significance tests. This is a [known issue](https://github.com/xryanglab/RiboCode/issues/62) with RiboCode's default thresholds. You can relax them via:
+
+```bash
+--extra_ribocode_metaplots_args '-pv1 0.05 -pv2 0.05 -f0_percent 0.5'
+```
+
+Check the metaplots PDF output to verify that your data shows reasonable periodicity before relaxing thresholds further. The riboWaltz QC plots (frame distribution and metaprofiles) can also help you assess data quality.
+:::
+
+## Novel transcript discovery (StringTie / hybrid GTF)
+
+When `--skip_stringtie false` is set, [StringTie](https://ccb.jhu.edu/software/stringtie/) is run per sample in reference-guided mode on RNA-seq BAMs and the per-sample assemblies are merged. Alternatively, when `--novel_gtf` is supplied, StringTie is skipped and the user-supplied GTF is used as the novel-transcript source. Either source is then classified against the reference with [gffcompare](https://ccb.jhu.edu/software/stringtie/gffcompare.shtml), filtered to the user-configured class codes (`--gffcompare_class_codes`, default `u`), optionally cleaned with an rRNA/repeat blacklist (`--rrna_blacklist`), and concatenated with the canonical reference to produce a hybrid annotation.
+
+The hybrid GTF is published as a side product and exposed on the `hybrid_gtf` workflow channel. With no novel-transcript source configured, the channel equals the canonical backbone. When `--extended_orf_analysis true` is set, the genome-BAM ORF callers (Ribo-TISH `predict`, Ribotricer) and RiboCode consume the hybrid GTF; RiboCode additionally consumes a hybrid transcriptome BAM from a second STAR pass (see [Hybrid STAR alignment](#hybrid-star-alignment) below).
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `transcript_assembly/stringtie/`
+  - `<SAMPLE>.denovo.transcripts.gtf`: Per-sample reference-guided assembly (only produced when StringTie ran; the `.denovo` prefix marks these as inputs to the merge step).
+  - `stringtie_merge.gtf`: Merged annotation produced by `stringtie --merge` across all per-sample assemblies. Novel transcripts appear with `MSTRG.*` IDs. Absent when `--novel_gtf` is used.
+  - `gffcompare/`: Full gffcompare output (`*.annotated.gtf`, `*.stats`, `*.tracking`, `*.loci`, etc.) classifying novel transcripts against the full reference annotation.
+  - `stringtie_merge_filtered.gtf` (`novel_gtf_filtered.gtf` when `--novel_gtf` is used): Novel transcripts retained after the gffcompare class-code filter (default class `u` = intergenic only).
+  - `stringtie_merge_blacklisted.gtf` (`novel_gtf_blacklisted.gtf` when `--novel_gtf` is used): Class-filtered novel transcripts after the optional rRNA/repeat blacklist intersect (only present when `--rrna_blacklist` is supplied).
+  - `hybrid_reference.gtf`: Canonical reference records followed by the filtered novel records, with a synthesised `gene` row for each novel gene absent from the canonical backbone. Exposed as the `hybrid_gtf` workflow emit channel.
+
+</details>
+
+## Hybrid STAR alignment
+
+When `--extended_orf_analysis true` is set (and a novel-transcript source is configured), the pipeline runs a second STAR pass against a hybrid transcriptome so RiboCode can see novel intergenic transcripts. The hybrid transcriptome FASTA is extracted from the hybrid GTF with `gffread -w`, a hybrid STAR index is built against the original genome FASTA with the hybrid GTF as `--sjdbGTFfile`, and the Ribo-seq reads are re-aligned against that index. See [Extended ORF discovery in usage.md](usage.md#extended-orf-discovery) for the rationale and cost trade-off.
+
+The second pass runs only on Ribo-seq samples (RNA-seq and TI-seq do not feed RiboCode). riboWaltz and Salmon continue to read the primary reference-transcriptome BAM, and plastid P-site quantification the canonical backbone, regardless of `--extended_orf_analysis`.
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `alignment/hybrid_star/`
+  - `hybrid_transcriptome.fasta`: Spliced transcript sequences extracted from the hybrid GTF (only published when `--save_reference` is set).
+  - `original/`: Original (unsorted) hybrid genome and transcriptome BAMs from STAR (only published when `--save_align_intermeds` is set).
+  - `sorted/`: Coordinate-sorted hybrid BAMs and their indices (only published when `--save_align_intermeds` is set).
+  - `sorted/samtools_stats/`: `samtools stats`, `flagstat`, `idxstats` for the hybrid alignments.
+  - `log/`: STAR log files (`*.Log.final.out`, `*.Log.out`, `*.Log.progress.out`, `*.SJ.out.tab`) for the hybrid pass.
+  - `unmapped/`: Unmapped reads from the hybrid pass (only published when `--save_unaligned` is set).
+  - `deduplicated/`: UMI-deduplicated hybrid BAMs, indices and dedup logs (only published when `--save_align_intermeds` or `--save_umi_intermeds` is set).
+- `genome/index/hybrid_star/star/`
+  - Hybrid STAR index (only published when `--save_reference` is set).
+
+</details>
+
 ## ORF predictions
 
 ### Ribo-TISH predict
@@ -344,15 +411,20 @@ Read distribution metrics around annotated protein coding regions or based on al
   - `allsamples_transprofile.py` RPF P-site profile for each transcript from Ribo-TISH ran over all samples at once
   </details>
 
+When `--extended_orf_analysis true` is set (and a novel-transcript source is configured), Ribo-TISH `predict` runs against the hybrid GTF with the canonical backbone supplied as the secondary annotation (`-a`). The output tables then include rows for novel intergenic ORFs alongside annotated ORFs; novel calls are reported with `TisType=Novel` and classified against the canonical backbone. See [Extended ORF discovery in usage.md](usage.md#extended-orf-discovery).
+
 ### Ribotricer detect-orfs
 
 <details markdown="1">
 <summary>Output files</summary>
 
 - `orf_predictions/ribotricer/`
+  - `*_candidate_orfs.tsv`: Candidate ORF index generated from the reference annotation
   - `*_translating_ORFs.tsv` TSV with ORFs assessed as translating in the assocciated BAM file
   - `*_psite_offsets.txt`: If the P-site offsets are not provided, txt file containing the derived relative offsets
   </details>
+
+When `--extended_orf_analysis true` is set (and a novel-transcript source is configured), Ribotricer `prepare-orfs` runs against the hybrid GTF. The translating-ORFs TSV then includes novel intergenic ORFs (Ribotricer auto-labels CDS-absent transcripts as `novel` ORF type). See [Extended ORF discovery in usage.md](usage.md#extended-orf-discovery).
 
 ### RiboCode
 
@@ -362,7 +434,100 @@ Read distribution metrics around annotated protein coding regions or based on al
 - `orf_predictions/ribocode/`
   - `*.txt`: ORF predictions with coordinates, read counts, and translation scores
   - `*_collapsed.txt`: Collapsed ORF predictions removing redundant isoforms
+  - `*_updated.gtf`: GTF with start/stop codon annotations added by `GTFupdate`, used to prepare the RiboCode transcript index.
+  - `annotation/`: Transcript index (sequences, CDS positions, pyfasta sidecars) built by `prepare_transcripts`, consumed by the RiboCode ORF-calling step.
   </details>
+
+RiboCode uses the P-site offsets from the metaplots step to identify translated ORFs. If RiboCode fails with `Error, can not determine the P-site locations`, this means the metaplots config file had no valid entries. See the [metaplots troubleshooting note above](#ribocode-metaplots) for how to address this.
+
+When `--extended_orf_analysis true` is set (and a novel-transcript source is configured), RiboCode is fed the hybrid GTF as its annotation source and the hybrid transcriptome BAM from the [second STAR pass](#hybrid-star-alignment). The ORF prediction tables then include rows for novel intergenic transcripts alongside annotated ORFs. See [Extended ORF discovery in usage.md](usage.md#extended-orf-discovery).
+
+:::warning
+The `-f0_percent`, `-pv1`, and `-pv2` parameters belong to the **metaplots** step, not to RiboCode itself. Pass them via `--extra_ribocode_metaplots_args`, not via RiboCode's own ext.args.
+:::
+
+If RiboCode is not needed for your analysis, you can skip it entirely with `--skip_ribocode`.
+
+### Rp-Bp
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `orf_predictions/rpbp/`
+  - `*.predicted-orfs.bed.gz`: per-sample predicted-ORF BED with Bayes factor scores (column 5) after the final-prediction-set filter (`--select-longest-by-stop --select-best-overlapping`).
+  - `*.predicted-orfs.dna.fa`: per-sample predicted-ORF nucleotide FASTA matching the BED.
+  - `*.predicted-orfs.protein.fa`: per-sample predicted-ORF protein FASTA matching the BED.
+  - `*.annotated.bed.gz`, `*.orfs-genomic.annotated.bed.gz`, `*.orfs-exons.annotated.bed.gz`: intermediate genome/ORF annotation BEDs from `prepare-rpbp-genome` (only published when `--save_reference` is set).
+  - `*.metagene.csv.gz`: per-sample metagene profile around annotated translation starts.
+  - `*.metagene-bayes.csv.gz`: per-sample metagene periodicity Bayes factors.
+  - `*.offsets.csv.gz`: per-sample periodic offsets selected from the metagene Bayes factors.
+  - `*.lengths-offsets.tsv`: per-sample periodic read lengths and offsets used for ORF profiling.
+  - `*.profiles.mtx.gz`: per-sample sparse ORF profile matrix.
+  - `*.bayes-factors.bed.gz`: per-sample ORF-level Bayes factors, upstream of the final-prediction-set filter above.
+
+</details>
+
+Produced only when `--run_rpbp true` is set. Rp-Bp's Bayesian fit is slow (~20-24h per replicate at genome-wide scale); see [Rp-Bp in usage.md](usage.md#rp-bp-opt-in-overnight). Rp-Bp's Bayes factor is stable across replicates and is retained in the cross-caller rank-aggregation set. When `--extended_orf_analysis true` is set, Rp-Bp consumes the full reference with the novel intergenic genes appended, and so reports novel intergenic ORFs alongside annotated ones.
+
+### PRICE
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `genome/index/price/`: Gedi `.oml` genome index plus binary sidecar files (built once per reference by `gedi -e IndexGenome`). Only published when `--save_reference` is set; PRICE itself always reads the index from the work directory.
+- `orf_predictions/price/`
+  - `${prefix}.orfs.tsv`: cohort-level PRICE ORF table (Gene, Id, Location, Type, Start, Range, p value, per-condition + Total counts).
+  - `${prefix}.orfs.cit`, `${prefix}.orfs.cit.metadata.json`, `${prefix}.signal.tsv`, `${prefix}.param`: PRICE companion artefacts (CIT index, signal-to-noise data, parameter log).
+
+</details>
+
+Produced only when `--run_price true` is set. PRICE is invoked once across the riboseq cohort (it estimates a shared codon-position model by EM). When `--extended_orf_analysis true` is set, the IndexGenome step builds the index from the full reference with the novel intergenic genes appended, so PRICE can discover ORFs on novel intergenic transcripts.
+
+### ORF catalogue (cross-sample)
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `orf_predictions/catalogue/normalised/`
+  - `*.normalised.bed12`: per-sample, per-caller BED12 of called ORFs in genomic coordinates (multi-exon blocks for spliced ORFs).
+  - `*.normalised.tsv`: matching sidecar with caller, sample id, ORF class (`canonical_cds`, `uORF`, `uoORF`, `dORF`, `doORF`, `intORF`, `novel_u`, `other`), amino-acid length, the caller's score, the caller's own label in `orf_type_native`, and the `is_smorf` length flag.
+- `orf_predictions/catalogue/`
+  - `*.catalogue.bed12`: merged, deduplicated ORF catalogue (BED12, stable `orf_NNNNNNNN` ids in column 4).
+  - `*.catalogue.tsv`: per-ORF table with `called_by_<caller>` binary columns for every caller in the runtime-enabled set and `score_<caller>` columns for Ribo-TISH / RiboCode / Rp-Bp / PRICE (Ribotricer scores are excluded). Includes `orf_class`, `aa_length`, `is_smorf`, host `gene_id` and `transcript_id`, plus `orf_type_native` listing every caller-native label in the cluster.
+  - `*.orf_to_gene.tsv`: ORF-to-gene mapping. An ORF that maps to multiple host transcripts/genes gets multiple rows here; downstream gene-level aggregation collapses by `gene_id`.
+  - `*.catalogue.aa.fasta`: amino-acid FASTA of every catalogue ORF, keyed by `orf_NNNNNNNN`. Produced by `bedtools getfasta` on the merged BED12 followed by `seqkit translate`.
+  - `*.catalogue.mqc.tsv`: per-class ORF counts surfaced as a MultiQC custom-content table.
+- `orf_predictions/catalogue/consensus/`
+  - `*.consensus.bed12`, `*.consensus.tsv`, `*.consensus.orf_to_gene.tsv`: the catalogue filtered to ORFs supported by at least `--orf_min_callers` distinct callers and recurring in at least `--orf_min_samples` samples. Identical to the full catalogue at the defaults (1/1); raise either for a higher-confidence subset. The full catalogue above is always published regardless.
+
+</details>
+
+Produced only when `--extended_orf_analysis true` is set and at least one ORF caller is enabled. The catalogue runs once per pipeline invocation (cohort-level, not per sample) and merges per-sample per-caller calls by clustering strategy. `orf_class` selects the strategy but is never part of a grouping key, because callers disagree on class for the same ORF and keying on it would emit one row per disagreeing caller:
+
+- **Annotated CDS** are grouped by `transcript_id` and then clustered by 80% reciprocal overlap within the transcript, so different intron chains aren't merged into a single entry while a short truncated variant still stays a separate row from the full-length CDS.
+- **Transcript-anchored ORFs** (`uORF`, `uoORF`, `dORF`, `doORF`, `intORF`, `other`) are collapsed by transcript, strand and outer span.
+- **Novel intergenic ORFs** are clustered by 80% reciprocal overlap on the outer genomic span.
+- **Small ORFs** (`is_smorf`, i.e. `aa_length` ≤ `--smorf_max_aa`, default 100) are additionally peptide-level deduplicated with MMseqs2 (`--min-seq-id 0.9 -c 0.8`) on the `*.catalogue.aa.fasta` (from `bedtools getfasta` + `seqkit translate`), folding each multi-member cluster to one representative (GENCODE convention, Mudge et al. 2022). `--skip_orf_collapse` publishes the coordinate-merged catalogue without this step.
+- **Cross-caller consensus** is recorded by setting `called_by_<caller> = 1` for every caller that contributed a member of the cluster, plus a per-caller score column.
+
+`orf_class` is purely positional and never encodes length; use `is_smorf` to select small ORFs. Not every caller can report every class — Ribo-TISH's `5'UTR` covers both `uORF` and `uoORF`, and PRICE's vocabulary has no `doORF` — so a class missing for one caller is a tool limitation rather than evidence about the ORF. `orf_type_native` preserves each caller's own label so these decisions stay auditable.
+
+Host `gene_id` and `transcript_id` are resolved, and transcript-coordinate calls lifted to the genome, against the union of the full multi-isoform annotation (`--gtf`) and the filtered novel transcripts. The callers do not all receive the same annotation (PRICE takes the full multi-isoform reference, the genome-BAM callers the canonical backbone), so only that union covers every transcript an ORF can be reported on. It is also the reference the ORF-level DTE RNA denominator is quantified against, so catalogue gene ids join directly against that matrix.
+
+### Per-ORF P-site quantification
+
+When `--extended_orf_analysis true` is set together with plastid (i.e. `--skip_plastid false`, the default), the cohort catalogue is also used to count in-frame P-sites at ORF resolution. The output is a single matrix with one row per catalogue ORF and one column per Ribo-seq sample.
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `quantification/orf_level/`
+  - `*.orf_inframe_psites.bed`: cohort-level BED6 of codon-start positions, one row per in-frame nucleotide per ORF. Frame is defined by each ORF's own start codon (the A of ATG = frame 0), not by the GTF `phase` field. Generated once per pipeline run from `orf_catalogue.bed12`.
+  - `orf_psite_counts.tsv`: ORF x sample raw in-frame P-site count matrix. First column `orf_id`; remaining columns are sample ids in lexicographic order. Zero-filled for ORFs absent from a sample. Produced once per pipeline run from the per-sample bedtools-intersect counts.
+
+</details>
+
+This sits alongside the gene-level matrix (`quantification/inframe_psite/gene_counts.tsv`) - the gene-level path still drives translational-efficiency analysis in this release; the ORF matrix is consumed by the per-ORF DTE step tracked separately. Same-frame overlapping ORFs (e.g. nested same-frame uORFs / N-terminally extended isoforms) currently double-count shared codon-start positions; this matches the literature default for the bedtools-intersect counting approach and will be revisited if it becomes empirically significant.
 
 ## P-site identification
 
@@ -447,6 +612,29 @@ Raw outputs from Salmon are available for each sample:
 
   </details>
 
+When the parameter `--te_quantification_method plastid_psite` is used, the following additional outputs are generated:
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `quantification/inframe_psite/`
+  - `gene_counts.tsv`: Count matrix containing alignment-based RNA-seq expression quantification and Ribo-seq quantification based on in-frame P-sites.
+
+  </details>
+
+When the parameter `--te_quantification_method pseudo` is used, reads are quantified directly against the transcriptome by the tool named in `--pseudo_aligner`, and the results are written to a directory named after it:
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `quantification/salmon_te_pseudo/` or `quantification/kallisto_te_pseudo/`
+  - `<SAMPLE>/`: Raw per-sample output from Salmon or kallisto.
+  - `*.merged.te_pseudo.*`: tximport gene- and transcript-level matrices across all samples, in the same layout as `quantification/salmon/` above.
+  - `*.merged.gene_counts.te_pseudo.SummarizedExperiment.rds` / `*.merged.transcript_counts.te_pseudo.SummarizedExperiment.rds`: SummarizedExperiment containers for the merged matrices.
+  - `tx2gene.tsv`: Tab-delimited transcript to gene id mapping used for the summarisation.
+
+  </details>
+
 ## Translational efficiency
 
 The pipeline supports two methods for translational efficiency analysis: anota2seq (default) and deltaTE. The method used depends on the `--translational_efficiency_method` parameter.
@@ -499,6 +687,39 @@ When using `--translational_efficiency_method deltate`, the pipeline produces th
   - `*.pca_rna.png`: PCA plot for RNA-seq samples.
   - `*.heatmap.png`: Heatmap of top differentially translated genes (DTEGs).
   - `*.DESeqDataSet.rds`: Serialised DESeqDataSet object containing analysis results.
+  - `*.R_sessionInfo.log`: R session information for reproducibility.
+
+</details>
+
+### ORF-level DTE outputs
+
+When `--extended_orf_analysis true` is set with `--te_quantification_method plastid_psite`, the pipeline produces two additional output directories alongside the gene-level anota2seq / deltaTE results. See [Translational efficiency / ORF-level differential translation](usage.md#orf-level-differential-translation) for the analysis rationale and the row-independence caveat.
+
+The RNA-seq denominator is quantified against the full reference transcriptome augmented with the novel intergenic transcripts, using the same STAR-alignment then Salmon path as the primary quantification, so ORFs on novel genes keep a host-gene RNA-seq row and are retained in the analysis. Quantifying against the canonical reference alone would leave every novel-gene ORF without a denominator and silently drop it, so only novel ORFs on known genes would survive. Canonical genes keep their full-isoform counts (the one-transcript-per-gene backbone used for ORF calling would undercount multi-isoform genes). The hybrid RNA-seq gene matrices are published under `quantification/salmon_hybrid/` (same Salmon layout as `quantification/salmon/`, filenames prefixed `salmon.merged.hybrid.`).
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `translational_efficiency/orf_level/`
+  - `orf_combined_counts.tsv`: Combined ORF x sample count matrix produced by the join step. Rows are ORFs; columns are Ribo-seq samples (per-ORF P-site counts) followed by RNA-seq samples (host gene's count from the hybrid-transcriptome quantification, replicated across all ORFs mapping to that gene). This is the input fed to the selected DTE method (`--translational_efficiency_method`) for the ORF-level fit.
+- `translational_efficiency/orf_level/deltate/` (when `--translational_efficiency_method deltate`):
+  - `*.translation.deltate.results.tsv`, `*.translated_mRNA.deltate.results.tsv`, `*.total_mRNA.deltate.results.tsv`: deltaTE result tables at ORF resolution (one set per contrast). The first column header is `gene_id` for compatibility with the gene-level path but the rows are ORF ids.
+  - `*.dtegs.deltate.genes.tsv` and the four classified ORF lists (`*.mRNA_abundance`, `*.translation`, `*.intensified`, `*.buffering`): ORF ids assigned to each deltaTE category.
+  - `*.fold_change.png`, `*.interaction_p_distribution.png`, `*.pca_ribo.png`, `*.pca_rna.png`, `*.heatmap.png` (plus their `.tsv` underlying data files): the same deltaTE diagnostic plots as the gene-level path, computed at ORF resolution.
+  - `*.DESeqDataSet.rds`: serialised DESeq2 objects for downstream inspection.
+  - `*.R_sessionInfo.log`: R session information for reproducibility.
+- `translational_efficiency/orf_level/anota2seq/` (when `--translational_efficiency_method anota2seq`, the default):
+  - `*.translated_mRNA.anota2seq.results.tsv`, `*.total_mRNA.anota2seq.results.tsv`, `*.translation.anota2seq.results.tsv`, `*.buffering.anota2seq.results.tsv`, `*.mRNA_abundance.anota2seq.results.tsv`: anota2seq result tables at ORF resolution (one set per contrast); rows are ORF ids.
+  - `*.fold_change.png`, `*.interaction_p_distribution.pdf`, `*.residual_distribution_summary.jpeg`, `*.residual_vs_fitted.jpeg`, `*.rvm_fit_for_*.jpg`, `*.simulated_vs_obt_dfbetas_without_interaction.pdf`: anota2seq diagnostic plots, computed at ORF resolution. Inspect the residual and RVM fit plots before interpreting results: per-ORF inputs typically have more sparse rows than per-gene inputs and the QC plots surface any failure of the APV / RVM assumptions.
+  - `*.Anota2seqDataSet.rds`: serialised Anota2seqDataSet object.
+  - `*.R_sessionInfo.log`: R session information for reproducibility.
+- `translational_efficiency/orf_level/dotseq/` (when `--translational_efficiency_method dotseq`):
+  - `*.translation.dotseq.results.tsv`: per-ORF differential translation efficiency from DOTSeq's DTE interaction term (DESeq2 + ashr shrinkage); rows are ORF ids. Same biological quantity as the anota2seq / deltate `translation` table at gene resolution.
+  - `*.dou.dotseq.results.tsv`: per-ORF Differential ORF Usage (DOU) results, DOTSeq's per-gene beta-binomial GLM modelling changes in Ribo / RNA proportion across an ORF and its sibling ORFs (shrunk with ashr). DOU has no anota2seq / deltate counterpart and answers a different question to DTE: not "does this ORF's translation change?" but "does this ORF gain or lose share of its parent gene's ribosome occupancy?".
+  - `*.dou_strategy.dotseq.results.tsv`, `*.dte_strategy.dotseq.results.tsv`: per-condition Ribo-vs-RNA strategy contrasts, when DOTSeq emits them.
+  - `*.volcano.png`, `*.composite.png`, `*.venn.png`, `*.heatmap.png`: DOTSeq `plotDOT()` outputs visualising the DOU + DTE joint result space.
+  - `*.interaction_p_distribution.png`: histogram of the DTE adjusted p-values.
+  - `*.DOTSeqDataSets.rds`: serialised DOTSeqDataSets object containing both DOU and DTE fits.
   - `*.R_sessionInfo.log`: R session information for reproducibility.
 
 </details>
@@ -635,9 +856,12 @@ Results generated by MultiQC collate pipeline QC from supported tools i.e. FastQ
 
 - `genome/`
   - `*.fa`, `*.gtf`, `*.gff`, `*.bed`, `.tsv`: If the `--save_reference` parameter is provided then all of the genome reference files will be placed in this directory.
+  - `*.canonical_agat.longest.gff`, `*.canonical.gtf`: The canonical (one-transcript-per-gene) annotation backbone used by the genome-coordinate ORF callers (Ribo-TISH, Ribotricer), plastid P-site quantification and the translational-efficiency analysis. Only present when `--save_reference` is set and a `--canonical_gtf` was not supplied directly (i.e. derived via AGAT longest-CDS-isoform extraction from `--gtf`).
 - `genome/index/`
   - `star/`: Directory containing STAR indices.
   - `hisat2/`: Directory containing HISAT2 indices.
+  - `hybrid_star/`: Directory containing the hybrid-reference STAR index.
+  - `price/`: Directory containing the PRICE genome index.
 
 </details>
 

@@ -1,0 +1,35 @@
+{
+    "stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "cohort"
+                        },
+                        "orf_combined_counts.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    "versions.yml:md5,0bc0f283fad20d33f22f43d29d877c4b"
+                ],
+                "counts": [
+                    [
+                        {
+                            "id": "cohort"
+                        },
+                        "orf_combined_counts.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,0bc0f283fad20d33f22f43d29d877c4b"
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.4"
+        },
+        "timestamp": "2026-05-21T22:58:00.832873"
+    }
+}

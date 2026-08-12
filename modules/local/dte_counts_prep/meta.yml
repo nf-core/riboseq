@@ -1,0 +1,78 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: dte_counts_prep
+description: |
+  Combine two count matrices into a single matrix indexed by the
+  primary (finer-grained) feature. Each row of the secondary matrix is
+  replicated across every primary row that maps to it. The two sample
+  sets must be disjoint; the output column order is `primary samples`
+  then `secondary samples`. The shape is suitable for downstream DESeq2
+  joint analyses that expect one combined count table.
+
+  Note: when several primary rows share one secondary row, the
+  secondary columns become perfectly correlated for those rows.
+  Downstream row-independence assumptions are weakened; that caveat
+  travels with the caller.
+keywords:
+  - counts
+  - matrix
+  - join
+  - aggregation
+  - dte
+tools:
+  - python:
+      description: |
+        Bundled Python template (templates/dte_counts_prep.py) using
+        pandas for the row expansion and pyyaml for the versions emit.
+      homepage: https://www.python.org/
+      documentation: https://docs.python.org/3/
+      licence: ["PSF"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: Cohort-level metadata
+    - primary_counts:
+        type: file
+        description: |
+          Matrix at the desired output resolution. First column is the
+          primary id (default `orf_id`), remaining columns are samples.
+        pattern: "*.tsv"
+        ontologies: []
+    - secondary_counts:
+        type: file
+        description: |
+          Matrix at the coarser resolution. First column is the secondary
+          id (default `gene_id`), remaining columns are samples. An
+          optional label column (default `gene_name`) is auto-dropped.
+        pattern: "*.tsv"
+        ontologies: []
+    - mapping:
+        type: file
+        description: |
+          TSV with at least the primary and secondary id columns. First
+          mapping per primary id wins (downstream deterministic).
+        pattern: "*.tsv"
+        ontologies: []
+output:
+  counts:
+    - - meta:
+          type: map
+          description: Cohort-level metadata
+      - "${prefix}.tsv":
+          type: file
+          description: |
+            Combined matrix indexed by the primary id; columns are
+            primary samples followed by secondary samples.
+          pattern: "*.tsv"
+          ontologies: []
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@pinin4fjords"
+maintainers:
+  - "@pinin4fjords"

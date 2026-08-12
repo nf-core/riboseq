@@ -22,7 +22,6 @@ workflow FASTQ_EQUALISE_READ_LENGTHS {
     equalise_read_lengths_target    // integer: Global target length (optional fallback)
 
     main:
-    ch_versions = Channel.empty()
 
     // Branch reads by sample type
     ch_reads
@@ -126,12 +125,6 @@ workflow FASTQ_EQUALISE_READ_LENGTHS {
     // Run trimgalore hardtrim on rnaseq samples
     TRIMGALORE_HARDTRIM(ch_rnaseq_for_hardtrim)
 
-    // Collect versions - use ifEmpty to handle processes that may not run
-    ch_versions = ch_versions
-        .mix(SEQKIT_STATS.out.versions.first().ifEmpty([]))
-        .mix(TRIMGALORE_HARDTRIM.out.versions.first().ifEmpty([]))
-        .filter { it }  // Remove empty elements
-
     // Combine trimmed rnaseq with riboseq and other samples (normalizing meta)
     // Normalize trim_length in meta (convert empty list to null), but only if it exists
     ch_reads_out = TRIMGALORE_HARDTRIM.out.reads
@@ -152,5 +145,4 @@ workflow FASTQ_EQUALISE_READ_LENGTHS {
     reads           = ch_reads_out                          // channel: [ val(meta), [ path(reads) ] ]
     riboseq_stats   = SEQKIT_STATS.out.stats                // channel: [ val(meta), path(stats) ] - empty if all samples have explicit trim_length
     trim_log        = TRIMGALORE_HARDTRIM.out.log           // channel: [ val(meta), path(log) ] - may be empty in hardtrim mode
-    versions        = ch_versions                           // channel: [ versions.yml ]
 }

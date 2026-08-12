@@ -125,6 +125,14 @@
                     "fa_icon": "fas fa-bezier-curve",
                     "description": "Path to directory or tar.gz archive for pre-built Salmon index."
                 },
+                "kallisto_index": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "fa_icon": "fas fa-bezier-curve",
+                    "description": "Path to a pre-built kallisto index file.",
+                    "help_text": "Only used with `--pseudo_aligner kallisto` and `--te_quantification_method pseudo`. This is the single index file written by `kallisto index -i`, not a directory. It must have been built with a k-mer size appropriate for Ribo-seq read lengths; see `--pseudo_aligner_kmer_size`."
+                },
                 "gencode": {
                     "type": "boolean",
                     "fa_icon": "fas fa-code-branch",
@@ -143,6 +151,16 @@
                     "description": "Define the attribute type used to group features in the GTF file when running Salmon.",
                     "fa_icon": "fas fa-layer-group"
                 },
+                "canonical_gtf": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.gtf(\\.gz)?$",
+                    "description": "Optional one-transcript-per-gene canonical GTF used as the annotation backbone for the genome-coordinate ORF callers (Ribo-TISH, Ribotricer), plastid P-site quantification and DTE.",
+                    "fa_icon": "fas fa-code-branch",
+                    "help_text": "When supplied, this GTF replaces the full multi-isoform `--gtf` as the annotation backbone for the genome-coordinate ORF callers (Ribo-TISH, Ribotricer), plastid P-site quantification and the translational-efficiency analysis. The full `--gtf` is retained both for genome-guided alignment (STAR/Salmon) and for the transcriptome-coordinate tools (RiboCode, riboWaltz, Salmon), whose input is the reference-transcriptome BAM and so must match the full multi-isoform transcript set. When omitted, the pipeline falls back to AGAT longest-CDS-isoform extraction from the full GTF; if that is unavailable, the full GTF is used as the backbone (with a multi-isoform ambiguity warning). Recommended sources: MANE Select for human (https://ftp.ncbi.nlm.nih.gov/refseq/MANE/MANE_human/current/), or `grep 'tag \"Ensembl_canonical\"' input.gtf > canonical.gtf` for any Ensembl organism at release ≥104."
+                },
                 "igenomes_ignore": {
                     "type": "boolean",
                     "description": "Do not load the iGenomes reference config.",
@@ -152,7 +170,6 @@
                 },
                 "igenomes_base": {
                     "type": "string",
-                    "format": "directory-path",
                     "description": "The base path to the igenomes reference files",
                     "fa_icon": "fas fa-ban",
                     "hidden": true,
@@ -258,6 +275,13 @@
                     "fa_icon": "fas fa-database",
                     "description": "Text file containing paths to fasta files (one per line) that will be used to create the database for rRNA removal.",
                     "help_text": "By default, [rRNA databases](https://github.com/biocore/sortmerna/tree/master/data/rRNA_databases) defined in the SortMeRNA GitHub repo are used. You can see an example in the pipeline Github repository in `assets/rrna-default-dbs.txt`. This is used by SortMeRNA and Bowtie2 (RiboDetector does not require a reference database).\nPlease note that commercial/non-academic entities require [`licensing for SILVA`](https://www.arb-silva.de/silva-license-information) for these default databases."
+                },
+                "ribodetector_chunk_size": {
+                    "type": "integer",
+                    "default": 100,
+                    "fa_icon": "fas fa-memory",
+                    "description": "Chunk size for RiboDetector to control memory usage.",
+                    "help_text": "Sets the number of read chunks processed at a time by RiboDetector, where each chunk contains 1024 reads. For example, chunk_size=100 means 102,400 reads are loaded into memory at once. Lower values reduce memory consumption. The default of 100 typically results in ~8GB memory usage and keeps memory manageable without affecting throughput. Only used when 'ribo_removal_tool' is set to 'ribodetector'."
                 }
             },
             "fa_icon": "fas fa-trash-alt"
@@ -271,7 +295,7 @@
                 "with_umi": {
                     "type": "boolean",
                     "fa_icon": "fas fa-barcode",
-                    "description": "Enable UMI-based read deduplication."
+                    "description": "Enable UMI extraction and UMI-based read deduplication for all samples unless overridden by the optional `with_umi` samplesheet column."
                 },
                 "umi_dedup_tool": {
                     "type": "string",
@@ -320,6 +344,13 @@
                     "fa_icon": "fas fa-barcode",
                     "help_text": "It can be quite time consuming generating these output stats - see [#827](https://github.com/nf-core/rnaseq/issues/827).",
                     "description": "Generate output stats when running \"umi_tools dedup\"."
+                },
+                "umitools_dedup_primary_only": {
+                    "type": "boolean",
+                    "default": true,
+                    "fa_icon": "fas fa-filter",
+                    "description": "Filter to primary alignments before UMI-tools dedup.",
+                    "help_text": "When enabled, secondary and supplementary alignments (SAM flag 0x900) are removed before running UMI-tools dedup. This ensures dedup statistics reflect only primary alignments and are consistent with the rest of the QC flow (raw reads > trimmed > non-rRNA > aligned > deduplicated)."
                 }
             },
             "fa_icon": "fas fa-barcode"
@@ -339,22 +370,30 @@
                 },
                 "pseudo_aligner": {
                     "type": "string",
-                    "description": "Specifies the pseudo aligner to use - available options are 'salmon' or 'kallisto'. Runs in addition to the main aligner.",
+                    "default": "salmon",
+                    "description": "Pseudo-aligner used for translational efficiency quantification under `--te_quantification_method pseudo`.",
+                    "help_text": "Only takes effect when `--te_quantification_method pseudo` is set. It does not change the primary STAR alignment, the alignment-mode Salmon quantification of the transcriptome BAM, or strandedness inference, all of which always use STAR and Salmon. With `kallisto`, single-end libraries additionally require `--kallisto_quant_fraglen` and `--kallisto_quant_fraglen_sd`.",
                     "fa_icon": "fas fa-fish",
                     "enum": ["salmon", "kallisto"]
-                },
-                "skip_pseudo_alignment": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Skip pseudo alignment and quantification.",
-                    "fa_icon": "fas fa-forward"
                 },
                 "pseudo_aligner_kmer_size": {
                     "type": "integer",
                     "default": 23,
+                    "minimum": 1,
                     "description": "Kmer length passed to Salmon indexing for pseudo-alignment quantification.",
                     "help_text": "This parameter controls the k-mer size when building the Salmon index. In this pipeline, it primarily affects the TE pseudo-alignment method (--te_quantification_method pseudo). The default of 23 is suitable for short Ribo-seq reads. It is also used internally for strandedness detection, where the exact value is less critical.",
                     "fa_icon": "fas fa-ruler-horizontal"
+                },
+                "kallisto_quant_fraglen": {
+                    "type": "integer",
+                    "fa_icon": "fas fa-ruler-horizontal",
+                    "description": "Estimated average fragment length required by kallisto for single-end libraries.",
+                    "help_text": "kallisto cannot infer the fragment length distribution from single-end reads and refuses to run without it. Required whenever `--pseudo_aligner kallisto` is combined with `--te_quantification_method pseudo`, because Ribo-seq libraries are single-end."
+                },
+                "kallisto_quant_fraglen_sd": {
+                    "type": "integer",
+                    "fa_icon": "fas fa-ruler-horizontal",
+                    "description": "Estimated standard deviation of the fragment length required by kallisto for single-end libraries."
                 },
                 "bam_csi_index": {
                     "type": "boolean",
@@ -390,13 +429,6 @@
                         "U"
                     ]
                 },
-                "min_mapped_reads": {
-                    "type": "number",
-                    "default": 5.0,
-                    "fa_icon": "fas fa-percentage",
-                    "description": "Minimum percentage of uniquely mapped reads below which samples are removed from further processing.",
-                    "help_text": "Some downstream steps in the pipeline will fail if this threshold is too low."
-                },
                 "seq_center": {
                     "type": "string",
                     "description": "Sequencing center information to be added to read group of BAM files.",
@@ -410,6 +442,11 @@
                 "extra_salmon_quant_args": {
                     "type": "string",
                     "description": "Extra arguments to pass to Salmon quant command in addition to defaults defined by the pipeline.",
+                    "fa_icon": "fas fa-plus"
+                },
+                "extra_kallisto_quant_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to the kallisto quant command in addition to defaults defined by the pipeline.",
                     "fa_icon": "fas fa-plus"
                 },
                 "stranded_threshold": {
@@ -478,13 +515,26 @@
                 "translational_efficiency_method": {
                     "type": "string",
                     "default": "anota2seq",
-                    "description": "Method to use for translational efficiency analysis.",
-                    "enum": ["anota2seq", "deltate"],
+                    "description": "Comma-separated list of translational efficiency methods to run; any of `anota2seq`, `deltate`, `dotseq`. Each runs independently. `dotseq` is ORF-level only (no gene-level fit) and requires `--extended_orf_analysis true`.",
+                    "pattern": "^(anota2seq|deltate|dotseq)(,(anota2seq|deltate|dotseq))*$",
                     "fa_icon": "fas fa-balance-scale"
                 },
                 "extra_deltate_args": {
                     "type": "string",
                     "description": "Extra arguments to pass to deltaTE (DESeq2) in addition to defaults defined by the pipeline."
+                },
+                "extra_orf_deltate_args": {
+                    "type": "string",
+                    "description": "Extra arguments forwarded to the deltaTE DESeq2 module for the ORF-level call. Accepts the same options as the gene-level deltaTE module.",
+                    "help_text": "The ORF-level analysis runs the same deltaTE DESeq2 module as the gene-level path after a join step expands the gene-level RNA-seq matrix onto ORF rows via `orf_to_gene.tsv`. ORFs whose host gene is absent from the RNA-seq matrix, and novel intergenic ORFs with no host gene, are dropped at the join step."
+                },
+                "extra_orf_anota2seq_run_args": {
+                    "type": "string",
+                    "description": "Extra arguments forwarded to anota2seq for the ORF-level call. Accepts the same options as the gene-level `--extra_anota2seq_run_args`."
+                },
+                "extra_dotseq_args": {
+                    "type": "string",
+                    "description": "Extra arguments forwarded to the DOTSeq R template (ORF-level DTE + DOU). Accepts any of the template's `--key value` options, e.g. `--min_count`, `--stringent`, `--dispersion_modeling`, `--nullweight`, `--top_hits`."
                 },
                 "te_lfc_threshold": {
                     "type": "number",
@@ -547,11 +597,29 @@
                 },
                 "te_quantification_method": {
                     "type": "string",
-                    "default": "alignment",
-                    "enum": ["alignment", "pseudo"],
-                    "description": "Quantification method for translational efficiency analysis: 'alignment' (STAR → Salmon) or 'pseudo' (Salmon pseudo-alignment).",
-                    "help_text": "Choose 'alignment' for STAR alignment followed by Salmon in alignment-based mode (default). Choose 'pseudo' for direct Salmon pseudo-alignment, an experimental alternative that uses the same k-mer index for both modalities and may help reduce length-related quantification biases without requiring read trimming.",
+                    "default": "plastid_psite",
+                    "enum": ["alignment", "pseudo", "plastid_psite"],
+                    "description": "Quantification method for translational efficiency analysis: 'plastid_psite' (in-frame P-site counts from plastid, default), 'alignment' (STAR -> Salmon) or 'pseudo' (Salmon pseudo-alignment).",
+                    "help_text": "Default is 'plastid_psite': Ribo-seq reads are counted only when their inferred P-site coincides with an in-frame codon position in an annotated CDS (derived from plastid wiggle tracks). This is the scientifically appropriate quantity for Ribo-seq, because Salmon's underlying assumptions (uniform coverage, fragment-length distribution, multi-mapping resolution from longer/paired reads) are violated by short, length-constrained Ribo-seq footprints (see Ribomap, Bioinformatics 2016). Choose 'alignment' to keep STAR alignment followed by Salmon in alignment-based mode, e.g. for backward compatibility, comparison with prior runs, or downstream tools that expect Salmon-format transcript-level counts. Choose 'pseudo' for direct Salmon pseudo-alignment from reads, an experimental alternative that uses the same k-mer index for both modalities and may help reduce length-related quantification biases without requiring read trimming.",
                     "fa_icon": "fas fa-calculator"
+                },
+                "extra_stringtie_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to per-sample StringTie in addition to defaults defined by the pipeline."
+                },
+                "extra_stringtie_merge_args": {
+                    "type": "string",
+                    "description": "Extra arguments to pass to StringTie --merge (e.g. `-T 1 -f 0.1` to tighten the merged annotation)."
+                },
+                "extra_price_indexgenome_args": {
+                    "type": "string",
+                    "description": "Extra CLI arguments passed to `gedi -e IndexGenome`.",
+                    "fa_icon": "fas fa-terminal"
+                },
+                "extra_price_price_args": {
+                    "type": "string",
+                    "description": "Extra CLI arguments passed to `gedi -e Price`.",
+                    "fa_icon": "fas fa-terminal"
                 }
             }
         },
@@ -583,8 +651,8 @@
                 },
                 "save_reference": {
                     "type": "boolean",
-                    "description": "If generated by the pipeline save the STAR index in the results directory.",
-                    "help_text": "If an alignment index is generated by the pipeline use this parameter to save it to your results folder. These can then be used for future pipeline runs, reducing processing times.",
+                    "description": "Save reference files and indexes generated by the pipeline in the results directory.",
+                    "help_text": "Use this parameter to save generated reference files and indexes to your results folder. These can then be used for future pipeline runs, reducing processing times.",
                     "fa_icon": "fas fa-save"
                 },
                 "save_trimmed": {
@@ -647,11 +715,6 @@
                     "help_text": "Use this if your input FastQ files have already been trimmed outside of the workflow or if you're very confident that there is no adapter contamination in your data.",
                     "fa_icon": "fas fa-fast-forward"
                 },
-                "skip_alignment": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-fast-forward",
-                    "description": "Skip all of the alignment-based processes within the pipeline."
-                },
                 "skip_markduplicates": {
                     "type": "boolean",
                     "fa_icon": "fas fa-fast-forward",
@@ -672,14 +735,20 @@
                     "fa_icon": "fas fa-fast-forward",
                     "description": "Skip all QC steps except for MultiQC."
                 },
+                "skip_coverage_tracks": {
+                    "type": "boolean",
+                    "description": "Skip bigWig coverage track generation.",
+                    "fa_icon": "fas fa-fast-forward"
+                },
                 "skip_ribotish": {
                     "type": "boolean",
                     "description": "Skip Ribo-TISH.",
                     "fa_icon": "fas fa-fast-forward"
                 },
-                "skip_ribotricer": {
+                "run_ribotricer": {
                     "type": "boolean",
-                    "description": "Skip Riboricer.",
+                    "description": "Opt in to running Ribotricer as an additional ORF caller.",
+                    "help_text": "Ribotricer is disabled by default because benchmark data (FK/NGB, May 2026) showed its ORF-score column is rank-unstable across biological replicates (mean Spearman 0.288 vs Jaccard 0.770). Its binary call set is reproducible, but the score should not be used as a primary ranking source. Enable with `--run_ribotricer true` if you need its calls; the pipeline will warn at runtime and exclude its score column from any cross-caller rank aggregation.",
                     "fa_icon": "fas fa-fast-forward"
                 },
                 "skip_ribocode": {
@@ -696,6 +765,98 @@
                     "type": "boolean",
                     "description": "Skip plastid.",
                     "fa_icon": "fas fa-fast-forward"
+                },
+                "skip_stringtie": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Skip StringTie reference-guided transcript assembly and merge.",
+                    "help_text": "When `false`, the pipeline runs StringTie per sample (reference-guided) then merges per-sample GTFs into a unified annotation. RNA-seq BAMs are used for assembly. Merged transcripts are classified with gffcompare and filtered to class codes set by `--gffcompare_class_codes`. The filtered novel GTF is concatenated with `--canonical_gtf` to produce `<outdir>/transcript_assembly/stringtie/hybrid_reference.gtf`. Ignored when `--novel_gtf` is supplied.",
+                    "fa_icon": "fas fa-fast-forward"
+                },
+                "novel_gtf": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.gtf(\\.gz)?$",
+                    "description": "Optional user-supplied novel-transcript GTF. When provided, StringTie assembly is skipped and this GTF is used directly as the source of novel transcripts.",
+                    "help_text": "Useful when you already have a curated cell-type-specific annotation (e.g. from long-read RNA-seq or a published ORF catalogue). The supplied GTF is still passed through the gffcompare class-code filter (`--gffcompare_class_codes`, default `u` = intergenic only) so users can submit annotations containing any class of transcript and have the pipeline retain only the intergenic ones.",
+                    "fa_icon": "fas fa-file-import"
+                },
+                "gffcompare_class_codes": {
+                    "type": "string",
+                    "default": "u",
+                    "description": "Comma-separated gffcompare class codes to retain when filtering novel transcripts.",
+                    "help_text": "Default `u` keeps only unambiguously intergenic transcripts. Stranded users may add `x` (antisense overlap with a known locus) via `--gffcompare_class_codes 'u,x'` to recover translated antisense transcripts; this is unsafe for non-stranded or partially-stranded protocols. See https://ccb.jhu.edu/software/stringtie/gffcompare.shtml for the full class-code list.",
+                    "fa_icon": "fas fa-filter"
+                },
+                "rrna_blacklist": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.bed(\\.gz)?$",
+                    "description": "Optional BED file of rRNA/repeat regions to exclude from the novel-transcript GTF (strand-aware intersect).",
+                    "help_text": "When supplied, novel transcripts overlapping the blacklist on the same strand are removed via `bedtools intersect -v -s`. UCSC publishes ready-made blacklists for hg38 and mm10; for other organisms you must construct one yourself or omit this parameter (the step is skipped silently).",
+                    "fa_icon": "fas fa-ban"
+                },
+                "extended_orf_analysis": {
+                    "type": "boolean",
+                    "description": "Discover novel ORFs in novel intergenic transcripts (from StringTie or user-supplied --novel_gtf) by feeding the hybrid GTF to genome-BAM ORF callers (Ribo-TISH predict, Ribotricer). Also enables the cross-caller ORF catalogue and ORF-level quantification, which do not need a novel-transcript source. Default false for backward compatibility.",
+                    "help_text": "When true and a novel-transcript source is enabled (--skip_stringtie false or --novel_gtf), the hybrid GTF (<outdir>/transcript_assembly/stringtie/hybrid_reference.gtf) is passed to Ribo-TISH predict (-g) and Ribotricer prepare-orfs so that novel intergenic ORFs are within scope. RiboCode, riboWaltz and Salmon continue to read the reference transcriptome, and plastid P-site quantification the canonical backbone, regardless of this flag (RiboCode's transcriptome-coordinate BAM is keyed to the reference transcriptome FASTA used at alignment time). This flag also gates the cross-caller ORF catalogue, per-ORF P-site quantification and ORF-level differential translation, none of which need novel transcripts. When true but no novel-transcript source is configured, hybrid routing into the callers is a no-op and a warning is emitted, but the catalogue is still built against the full reference annotation.",
+                    "fa_icon": "fas fa-expand-arrows-alt"
+                },
+                "run_price": {
+                    "type": "boolean",
+                    "description": "Opt in to running PRICE as an additional ORF caller (Bayesian, slow).",
+                    "help_text": "PRICE (Probabilistic inference of codon activities, Erhard et al. 2018) is a Bayesian ORF caller distributed as part of the Gedi Java framework (`gedi -e Price`). It is opt-in because the EM fit dominates runtime at full scale. PRICE is invoked once across the riboseq cohort (it estimates a shared codon-position model) so the whole BAM cohort is staged into a single task; expect higher disk I/O than per-sample callers on local executors. PRICE joins the cross-caller ORF catalogue alongside Ribo-TISH, RiboCode and Ribotricer.",
+                    "fa_icon": "fas fa-fast-forward"
+                },
+                "run_rpbp": {
+                    "type": "boolean",
+                    "description": "Opt in to running Rp-Bp as an additional ORF caller (Bayesian, slow).",
+                    "help_text": "Rp-Bp (Malone et al. 2017) is a Bayesian-strict ORF caller that complements RiboCode's permissive canonical-CDS calls. Runtime is on the order of 20-24h per replicate at genome-wide scale because the MCMC fit dominates, hence it is opt-in. Plan accordingly. Rp-Bp's score column (Bayes factor) participates in the cross-caller rank aggregation alongside RiboCode and Ribo-TISH.",
+                    "fa_icon": "fas fa-fast-forward"
+                },
+                "extra_rpbp_preparegenome_args": {
+                    "type": "string",
+                    "description": "Extra CLI arguments passed to `prepare-rpbp-genome`.",
+                    "fa_icon": "fas fa-terminal"
+                },
+                "extra_rpbp_predictorfs_args": {
+                    "type": "string",
+                    "description": "Extra CLI arguments passed to `select-final-prediction-set`.",
+                    "fa_icon": "fas fa-terminal"
+                },
+                "skip_orf_collapse": {
+                    "type": "boolean",
+                    "description": "Skip the peptide-level small-ORF deduplication of the cross-sample ORF catalogue.",
+                    "help_text": "By default the catalogue clusters its amino-acid sequences with MMseqs2 (`--min-seq-id 0.9 -c 0.8`) and folds each multi-member small-ORF cluster (`aa_length` <= `--smorf_max_aa`) down to one representative, following the GENCODE Ribo-seq ORF catalogue convention (Mudge et al. 2022). Set true to publish the coordinate-merged catalogue without this sequence-level collapse, e.g. when you want to inspect every redundant copy. Has no effect unless `--extended_orf_analysis true`.",
+                    "fa_icon": "fas fa-layer-group"
+                },
+                "orf_min_callers": {
+                    "type": "integer",
+                    "default": 1,
+                    "minimum": 1,
+                    "description": "Minimum number of ORF callers that must agree for an ORF to enter the consensus catalogue view.",
+                    "help_text": "The full catalogue is an unfiltered cross-caller/cross-sample union and is always published. In addition, a consensus view (`orf_predictions/catalogue/consensus/`) is published containing only ORFs supported by at least this many distinct callers (and at least `--orf_min_samples` samples). Default 1 applies no caller filter, so the consensus view equals the full merged catalogue. Set 2 or higher for a higher-confidence catalogue that tames downstream ORF-level multiple testing.",
+                    "fa_icon": "fas fa-users"
+                },
+                "orf_min_samples": {
+                    "type": "integer",
+                    "default": 1,
+                    "minimum": 1,
+                    "description": "Minimum number of samples an ORF must recur in to enter the consensus catalogue view.",
+                    "help_text": "Companion to `--orf_min_callers`. The consensus view (`orf_predictions/catalogue/consensus/`) retains only ORFs seen in at least this many distinct samples. Default 1 applies no recurrence filter.",
+                    "fa_icon": "fas fa-vials"
+                },
+                "smorf_max_aa": {
+                    "type": "integer",
+                    "default": 100,
+                    "minimum": 1,
+                    "description": "Maximum amino-acid length flagged as a small ORF in the catalogue's `is_smorf` column.",
+                    "help_text": "Controls the `is_smorf` flag and which ORFs are eligible for the peptide-level collapse. It never affects `orf_class`, which is purely positional. The default 100 aa follows the GENCODE Ribo-seq ORF catalogue convention (Mudge et al. 2022). Raise it (e.g. 150) to widen the microprotein window, which flags more ORFs as small and brings more of them into the MMseqs2 collapse.",
+                    "fa_icon": "fas fa-ruler-horizontal"
                 }
             }
         },
@@ -801,13 +962,6 @@
                     "type": "boolean",
                     "description": "Do not use coloured log outputs.",
                     "fa_icon": "fas fa-palette",
-                    "hidden": true
-                },
-                "hook_url": {
-                    "type": "string",
-                    "description": "Incoming hook URL for messaging service",
-                    "fa_icon": "fas fa-people-group",
-                    "help_text": "Incoming hook URL for messaging service. Currently, MS Teams and Slack are supported.",
                     "hidden": true
                 },
                 "multiqc_config": {

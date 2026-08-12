@@ -10,6 +10,13 @@ report_section_order:
 
 export_plots: true
 
+# Use the log filename (not its content) for SortMeRNA sample names.
+# SortMeRNA logs two "Reads file:" lines for paired-end data and the
+# parser picks the second (R2), giving a spurious _2 suffix that then
+# becomes the primary row of every table_sample_merge group.
+use_filename_as_sample_name:
+  - sortmerna
+
 # Group paired-end reads together in the general stats table
 table_sample_merge:
   "Read 1":
@@ -46,11 +53,11 @@ run_modules:
   - rseqc
   - qualimap
   - ribotish
+  - ribowaltz
 
 # Order of modules
 top_modules:
   - "fail_trimmed_samples"
-  - "fail_mapped_samples"
   - "fail_strand_check"
   - "star_rsem_deseq2_pca"
   - "star_rsem_deseq2_clustering"
@@ -65,7 +72,7 @@ module_order:
       name: "FastQC (raw)"
       info: "This section of the report shows FastQC results before adapter trimming."
       path_filters:
-        - "*_raw_fastqc.zip"
+        - "*_raw*fastqc.zip"
   - cutadapt
   - fastp
   - seqkit:
@@ -82,7 +89,12 @@ module_order:
       name: "FastQC (trimmed)"
       info: "This section of the report shows FastQC results after adapter trimming."
       path_filters:
-        - "*_trimmed_fastqc.zip"
+        - "*_trimmed*fastqc.zip"
+  - fastqc:
+      name: "FastQC (filtered)"
+      info: "This section of the report shows FastQC results after contaminant and/or rRNA removal."
+      path_filters:
+        - "*_filtered*fastqc.zip"
   - bbmap
   - bowtie2:
       anchor: "bowtie2_rrna"
@@ -96,11 +108,37 @@ module_order:
   - umitools
   - umicollapse
   - ribotish
+  - ribowaltz
 
 # Don't show % Dups in the General Stats table (we have this from Picard)
 table_columns_visible:
   fastqc:
     percent_duplicates: false
+
+# Disambiguate the duplicate Dups / GC / Seqs columns contributed by both
+# FastQC instances in module_order.
+table_columns_name:
+  "FastQC (raw)":
+    percent_duplicates: "Dups (raw)"
+    percent_gc: "GC (raw)"
+    avg_sequence_length: "Avg len (raw)"
+    median_sequence_length: "Median len (raw)"
+    percent_fails: "Failed (raw)"
+    total_sequences: "Seqs (raw)"
+  "FastQC (trimmed)":
+    percent_duplicates: "Dups (trim)"
+    percent_gc: "GC (trim)"
+    avg_sequence_length: "Avg len (trim)"
+    median_sequence_length: "Median len (trim)"
+    percent_fails: "Failed (trim)"
+    total_sequences: "Seqs (trim)"
+  "FastQC (filtered)":
+    percent_duplicates: "Dups (filt)"
+    percent_gc: "GC (filt)"
+    avg_sequence_length: "Avg len (filt)"
+    median_sequence_length: "Median len (filt)"
+    percent_fails: "Failed (filt)"
+    total_sequences: "Seqs (filt)"
 
 extra_fn_clean_exts:
   - ".umi_dedup"
@@ -108,6 +146,24 @@ extra_fn_clean_exts:
   - ".markdup"
   - "_primary"
   - ".genome"
+  - ".sortmerna"
+  # Strip the FastQC raw/trimmed/filtered prefixes (set as ext.prefix in
+  # conf/modules.config) so each FastQC section folds into the sample's
+  # main general-stats row.
+  - type: remove
+    pattern: "_raw"
+  - type: remove
+    pattern: "_trimmed"
+  - type: remove
+    pattern: "_filtered"
+
+# RIBOWALTZ uses ext.prefix = '<id>.ribowaltz' so the riboWaltz MultiQC plugin's
+# default fast filename pre-filter (`*ribowaltz*…`) matches. The in-file 'sample'
+# column inside the QC TSVs inherits that prefix, so strip the suffix back off
+# here to keep general-stats rows merged with the rest of the modules.
+sample_names_replace_regex: True
+sample_names_replace:
+  "^(.+)\\.ribowaltz$": "\\1"
 
 # Customise the module search patterns to speed up execution time
 #  - Skip module sub-tools that we are not interested in
@@ -222,15 +278,6 @@ custom_data:
       table_title: "Samples failed trimming threshold"
       namespace: "Samples failed trimming threshold"
       format: "{:.0f}"
-  fail_mapped_samples:
-    section_name: "WARNING: Fail Alignment Check"
-    description: "List of samples that failed the STAR minimum mapped reads threshold specified via the '--min_mapped_reads' parameter, and hence were ignored for the downstream processing steps."
-    plot_type: "table"
-    pconfig:
-      id: "fail_mapped_samples_table"
-      table_title: "Samples failed mapping threshold"
-      namespace: "Samples failed mapping threshold"
-      format: "{:.2f}"
   fail_strand_check:
     section_name: "WARNING: Fail Strand Check"
     description: "List of samples that failed the strandedness check between that provided in the samplesheet and calculated by the <a href='http://rseqc.sourceforge.net/#infer-experiment-py'>RSeQC infer_experiment.py</a> tool."
