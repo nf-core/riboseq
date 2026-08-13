@@ -1,12 +1,6 @@
 name: Run nf-test
 on:
   pull_request:
-    paths-ignore:
-      - "docs/**"
-      - "**/meta.yml"
-      - "**/*.md"
-      - "**/*.png"
-      - "**/*.svg"
   release:
     types: [published]
   workflow_dispatch:
@@ -127,7 +121,7 @@ jobs:
           path: pr-comment-fragment/
 
   confirm-pass:
-    needs: [nf-test]
+    needs: [nf-test-changes, nf-test]
     if: always()
     runs-on: "ubuntu-latest" # temporarily using GitHub-hosted runners while self-hosted runners are down
     steps:
