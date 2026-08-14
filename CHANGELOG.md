@@ -61,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#217](https://github.com/nf-core/riboseq/pull/217) - Re-pin `gedi/indexgenome` and `gedi/price` (nf-core/modules#12451) so the GEDI index carries its FASTA and the `.oml`'s absolute paths are repointed at read time, fixing `--run_price` failing in PRICE's `PriceCodonInference` where the path GEDI recorded for the staged input was never materialised ([@FelixKrueger](https://github.com/FelixKrueger), [@pinin4fjords](https://github.com/pinin4fjords))
 - [#228](https://github.com/nf-core/riboseq/pull/228) - Let the `nf-test` workflow report `confirm-pass` on docs-only PRs, which previously left them permanently blocked ([@FelixKrueger](https://github.com/FelixKrueger))
 - [#229](https://github.com/nf-core/riboseq/pull/229) - Raise `CUSTOM_ORFMERGE`'s wall-clock limit so a genome-scale cohort merge completes on its first attempt ([@FelixKrueger](https://github.com/FelixKrueger))
+- [#230](https://github.com/nf-core/riboseq/pull/230) - Raise `DESEQ2_DELTATE_ORF`'s wall-clock limit so genome-scale ORF-level deltaTE contrasts complete on their first attempt ([@FelixKrueger](https://github.com/FelixKrueger))
 
 ### `Removed`
 
