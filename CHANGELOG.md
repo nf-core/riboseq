@@ -5,6 +5,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v2.0.0 - 2026-08-27
 
+### `Credits`
+
+Special thanks to the following for their contributions to this release:
+
+- [@bediagan](https://github.com/bediagan)
+- [Evangelos Karatzas](https://github.com/vagkaratzas)
+- [Felix Krueger](https://github.com/FelixKrueger)
+- [Friederike Hanssen](https://github.com/FriederikeHanssen)
+- [Ira A Iosub](https://github.com/iraiosub)
+- [Jack Tierney](https://github.com/JackCurragh)
+- [Jonathan Manning](https://github.com/pinin4fjords)
+- [Luisa Santus](https://github.com/luisas)
+- [Matthias Hörtenhuber](https://github.com/mashehu)
+- [Maxime U Garcia](https://github.com/maxulysse)
+- [Sebastian Uhrig](https://github.com/suhrig)
+
 ### `Added`
 
 - [#125](https://github.com/nf-core/riboseq/pull/125) - Add rRNA removal tool selection with support for SortMeRNA (default), Bowtie2, and RiboDetector ([@pinin4fjords](https://github.com/pinin4fjords))
