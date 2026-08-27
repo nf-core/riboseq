@@ -72,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### `Changed`
 
 - [#129](https://github.com/nf-core/riboseq/pull/129) - Bump pipeline version to 1.3.0dev ([@iraiosub](https://github.com/iraiosub))
+- [#231](https://github.com/nf-core/riboseq/pull/231) - Bump pipeline version to 2.0.0 ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#152](https://github.com/nf-core/riboseq/pull/152) - Update ribodetector module to 0.3.3 (nf-core/modules#11131) ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#154](https://github.com/nf-core/riboseq/pull/154) - Add riboWaltz QC plots to the MultiQC report via a new MultiQC riboWaltz module ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#160](https://github.com/nf-core/riboseq/issues/160) - Change the default `--te_quantification_method` from `alignment` (STAR + Salmon) to `plastid_psite` (in-frame P-site counts). **Breaking:** per-gene counts are not comparable to Salmon-based runs; pass `--te_quantification_method alignment` to restore the previous behaviour. ([@pinin4fjords](https://github.com/pinin4fjords))
