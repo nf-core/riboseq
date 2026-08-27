@@ -141,7 +141,7 @@
                     "ucsc": 482
                 },
                 "Workflow": {
-                    "nf-core/riboseq": "v1.3.0dev"
+                    "nf-core/riboseq": "v2.0.0"
                 }
             },
             [

@@ -21,8 +21,8 @@
         {
             "@id": "./",
             "@type": "Dataset",
-            "creativeWorkStatus": "InProgress",
-            "datePublished": "2026-07-31T10:40:05+00:00",
+            "creativeWorkStatus": "Stable",
+            "datePublished": "2026-08-27T12:57:11+00:00",
             "description": "<h1>\n  <picture>\n    <source media=\"(prefers-color-scheme: dark)\" srcset=\"docs/images/nf-core-riboseq_logo_dark.png\">\n    <img alt=\"nf-core/riboseq\" src=\"docs/images/nf-core-riboseq_logo_light.png\">\n  </picture>\n</h1>\n\n[![Open in GitHub Codespaces](https://img.shields.io/badge/Open_In_GitHub_Codespaces-black?labelColor=grey&logo=github)](https://github.com/codespaces/new/nf-core/riboseq)\n[![GitHub Actions CI Status](https://github.com/nf-core/riboseq/actions/workflows/nf-test.yml/badge.svg)](https://github.com/nf-core/riboseq/actions/workflows/nf-test.yml)\n[![GitHub Actions Linting Status](https://github.com/nf-core/riboseq/actions/workflows/linting.yml/badge.svg)](https://github.com/nf-core/riboseq/actions/workflows/linting.yml)[![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/riboseq/results)[![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.10966364-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.10966364)\n[![nf-test](https://img.shields.io/badge/unit_tests-nf--test-337ab7.svg)](https://www.nf-test.com)\n\n[![Nextflow](https://img.shields.io/badge/version-%E2%89%A525.10.4-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)](https://www.nextflow.io/)\n[![nf-core template version](https://img.shields.io/badge/nf--core_template-4.0.3-green?style=flat&logo=nfcore&logoColor=white&color=%2324B064&link=https%3A%2F%2Fnf-co.re)](https://github.com/nf-core/tools/releases/tag/4.0.3)\n[![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)\n[![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)\n[![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)\n[![Launch on Seqera Platform](https://img.shields.io/badge/Launch%20%F0%9F%9A%80-Seqera%20Platform-%234256e7)](https://cloud.seqera.io/launch?pipeline=https://github.com/nf-core/riboseq)\n\n[![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23riboseq-4A154B?labelColor=000000&logo=slack)](https://nfcore.slack.com/channels/riboseq)[![Follow on Bluesky](https://img.shields.io/badge/bluesky-%40nf__core-1185fe?labelColor=000000&logo=bluesky)](https://bsky.app/profile/nf-co.re)[![Follow on Mastodon](https://img.shields.io/badge/mastodon-nf__core-6364ff?labelColor=FFFFFF&logo=mastodon)](https://mstdn.science/@nf_core)[![Watch on YouTube](http://img.shields.io/badge/youtube-nf--core-FF0000?labelColor=000000&logo=youtube)](https://www.youtube.com/c/nf-core)\n\n## Introduction\n\n**nf-core/riboseq** is a bioinformatics pipeline for analysis of Ribo-seq data. It borrows heavily from nf-core/rnaseq in the preprocessing stages:\n\n![nf-core/riboseq metro map](docs/images/nf-core-riboseq_metro_map.png)\n\n1. Merge re-sequenced FastQ files ([`cat`](http://www.linfo.org/cat.html))\n2. Sub-sample FastQ files and auto-infer strandedness ([`fq`](https://github.com/stjude-rust-labs/fq), [`Salmon`](https://combine-lab.github.io/salmon/))\n3. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))\n4. UMI extraction ([`UMI-tools`](https://github.com/CGATOxford/UMI-tools))\n5. Adapter and quality trimming ([`Trim Galore!`](https://github.com/FelixKrueger/TrimGalore))\n6. Removal of genome contaminants ([`BBSplit`](http://seqanswers.com/forums/showthread.php?t=41288))\n7. Removal of ribosomal RNA ([`SortMeRNA`](https://github.com/biocore/sortmerna))\n8. Genome alignment of reads, outputting both genome and transcriptome alignments with [`STAR`](https://github.com/alexdobin/STAR)\n9. Sort and index alignments ([`SAMtools`](https://sourceforge.net/projects/samtools/files/samtools/))\n10. UMI-based deduplication ([`UMI-tools`](https://github.com/CGATOxford/UMI-tools))\n\nDifferences occur in the downstream analysis steps. Currently these specialist steps are:\n\n1. Check reads distribution around annotated protein coding regions on user provided transcripts, show frame bias and estimate P-site offset for different group of reads ([`Ribo-TISH`](https://github.com/zhpn1024/ribotish))\n2. (default, optional) Predict translated open reading frames and/ or translation initiation sites _de novo_ from alignment data ([`Ribo-TISH`](https://github.com/zhpn1024/ribotish))\n3. (opt-in, `--run_ribotricer`) Derive candidate ORFs from reference data and detect translated ORFs from that list ([`Ribotricer`](https://github.com/smithlabcode/ribotricer)). Disabled by default: benchmarking found its ORF-score column is rank-unstable across biological replicates, so it is excluded from the default caller set and from cross-caller rank aggregation when enabled.\n4. (default, optional) Identify translated ORFs using P-site periodicity and read density ([`RiboCode`](https://github.com/zhengtaoxiao/RiboCode))\n5. (default, optional) Derive P-sites and QC from transcriptome alignments ([`riboWaltz`](https://github.com/LabTranslationalArchitectomics/riboWaltz), [`plastid`](https://plastid.readthedocs.io/en/latest/index.html))\n6. (optional) Use a translational efficiency approach to study the dynamics of transcription and translation, with [anota2seq](https://bioconductor.org/packages/release/bioc/html/anota2seq.html). **requires matched RNA-seq and Ribo-seq data**\n\n## Usage\n\n> [!NOTE]\n> If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/get_started/environment_setup/overview) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/get_started/run-your-first-pipeline) with `-profile test` before running the workflow on actual data.\n\nFirst, prepare a samplesheet with your input data that looks as follows:\n\n`samplesheet.csv`:\n\n```csv\nsample,fastq_1,fastq_2,strandedness,type\nCONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz,forward,riboseq\n```\n\nEach row represents a fastq file (single-end) or a pair of fastq files (paired end). Each row should have a 'type' value of `riboseq`, `tiseq` or `rnaseq`. Future iterations of the workflow will conduct paired analysis of matched riboseq and rnaseq samples to accomplish analysis types such as 'translational efficiency, but in the current version you should set this to `riboseq` or `tiseq` for reglar Ribo-seq or TI-seq data respectively.\n\nNow, you can run the pipeline using:\n\n```bash\nnextflow run nf-core/riboseq \\\n   -profile <docker/singularity/.../institute> \\\n   --input samplesheet.csv \\\n   --outdir <OUTDIR>\n```\n\n### Including a translational efficiency analysis\n\n![anota2seq - fold change plot](docs/images/fc.png)\n\nIn the translational efficiency analysis provided by [anota2seq](https://bioconductor.org/packages/release/bioc/html/anota2seq.html), we use matched pairs of Ribo-seq and RNA-seq data to study the relationship between transcription and translation as they differ between two treatment groups. For example the test data for this workflow has a contrasts file like:\n\n```csv\nid,variable,reference,target,batch,pair\ntreated_vs_control,treatment,control,treated,,pair\n```\n\nThis describes how to compare groups of samples between treament groups, and between RNA-seq and Ribo-seq. In order the columns are:\n\n- `id`: a unique identifier to use for the contrast\n- 'variable`: which vaiable (column) of the sample sheet should be used to separate the treatment groups?\n- `reference`: which value of the variable column should be used to select samples to be used as the reference/ base group?\n- `target`: which value of the variable column should be used to select samples to be used as the target/treated group?\n- `batch`: (optional) specify a variable in the sample sheet that defines sample batches\n- `pair`: (optional) specify a variable in the sample sheet that defines sample pairing between RNA-seq and Ribo-seq samples. If not specified, it is assumed that the two types of sample are ordered the same.\n\n> [!WARNING]\n> Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_; see [docs](https://nf-co.re/docs/running/run-pipelines#using-parameter-files).\n\nFor more details and further functionality, please refer to the [usage documentation](https://nf-co.re/riboseq/usage) and the [parameter documentation](https://nf-co.re/riboseq/parameters).\n\n## Pipeline output\n\nTo see the results of an example test run with a full size dataset refer to the [results](https://nf-co.re/riboseq/results) tab on the nf-core website pipeline page.\nFor more details about the output files and reports, please refer to the\n[output documentation](https://nf-co.re/riboseq/output).\n\n## Credits\n\nnf-core/riboseq was originally written by [Jonathan Manning](https://github.com/pinin4fjords) (Bioinformatics Engineer at Seqera) with support from [Altos Labs](https://www.altoslabs.com/) and in discussion with [Felix Krueger](https://github.com/FelixKrueger) and [Christel Krueger](https://github.com/ChristelKrueger). We thank the following people for their input:\n\n- Anne Bresciani (ZS)\n- [Felipe Almeida](https://github.com/fmalmeida) (ZS)\n- [Mikhail Osipovitch](https://github.com/mosi223) (ZS)\n- [Edward Wallace](https://github.com/ewallace) (University of Edinburgh)\n- [Jack Tierney](https://github.com/JackCurragh) (University College Cork)\n- [Maxime U Garcia](https://github.com/maxulysse) (Seqera)\n- [Ira A Iosub](https://github.com/iraiosub) (The Francis Crick Institute)\n- [Sebastian Uhrig](https://github.com/suhrig) (Freelance bioinformatician)\n\n## Contributions and Support\n\nIf you would like to contribute to this pipeline, please see the [contributing guidelines](docs/CONTRIBUTING.md).\n\nFor further information or help, don't hesitate to get in touch on the [Slack `#riboseq` channel](https://nfcore.slack.com/channels/riboseq) (you can join with [this invite](https://nf-co.re/join/slack)).\n\n## Citations\n\nIf you use nf-core/riboseq for your analysis, please cite it using the following doi: [10.5281/zenodo.10966364](https://doi.org/10.5281/zenodo.10966364)\n\nAn extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.\n\nYou can cite the `nf-core` publication as follows:\n\n> **The nf-core framework for community-curated bioinformatics pipelines.**\n>\n> Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.\n>\n> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).\n",
             "hasPart": [
                 {
@@ -108,7 +108,7 @@
             },
             "mentions": [
                 {
-                    "@id": "#2062f847-6930-4438-bedc-832d1fd7a593"
+                    "@id": "#17f27568-2110-4e70-acaf-317e34187353"
                 }
             ],
             "name": "nf-core/riboseq"
@@ -142,17 +142,17 @@
             ],
             "contributor": [
                 {
-                    "@id": "#118af157-4b2a-4c57-9102-a963f1246acd"
+                    "@id": "#45c104db-dd59-4a82-be07-5a45d2c58df5"
                 },
                 {
-                    "@id": "#2be15d4f-a15f-4da0-bfd5-e4b2ef7a1587"
+                    "@id": "#aca38086-cf28-4f49-86d4-634b91e82a82"
                 },
                 {
                     "@id": "https://orcid.org/0000-0003-2827-9261"
                 }
             ],
             "dateCreated": "",
-            "dateModified": "2026-07-31T11:40:05Z",
+            "dateModified": "2026-08-27T13:57:11Z",
             "dct:conformsTo": "https://bioschemas.org/profiles/ComputationalWorkflow/1.0-RELEASE/",
             "image": {
                 "@id": "docs/images/nf-core-riboseq_metro_map.png"
@@ -175,10 +175,10 @@
             },
             "url": [
                 "https://github.com/nf-core/riboseq",
-                "https://nf-co.re/riboseq/dev/"
+                "https://nf-co.re/riboseq/2.0.0/"
             ],
             "version": [
-                "1.3.0dev"
+                "2.0.0"
             ]
         },
         {
@@ -202,11 +202,11 @@
             "name": "Workflow diagram"
         },
         {
-            "@id": "#2062f847-6930-4438-bedc-832d1fd7a593",
+            "@id": "#17f27568-2110-4e70-acaf-317e34187353",
             "@type": "TestSuite",
             "instance": [
                 {
-                    "@id": "#0079c168-5d9c-4b4e-bbe8-5f9cb61852fd"
+                    "@id": "#b2d2f213-28b7-4b49-b07f-86fece8ee4b5"
                 }
             ],
             "mainEntity": {
@@ -215,7 +215,7 @@
             "name": "Test suite for nf-core/riboseq"
         },
         {
-            "@id": "#0079c168-5d9c-4b4e-bbe8-5f9cb61852fd",
+            "@id": "#b2d2f213-28b7-4b49-b07f-86fece8ee4b5",
             "@type": "TestInstance",
             "name": "GitHub Actions workflow for testing nf-core/riboseq",
             "resource": "repos/nf-core/riboseq/actions/workflows/nf-test.yml",
@@ -362,7 +362,7 @@
             "url": "https://github.com/pinin4fjords"
         },
         {
-            "@id": "#118af157-4b2a-4c57-9102-a963f1246acd",
+            "@id": "#45c104db-dd59-4a82-be07-5a45d2c58df5",
             "@type": "Person",
             "affiliation": "Altos Labs",
             "email": "fkrueger@altoslabs.com",
@@ -370,7 +370,7 @@
             "url": "https://github.com/FelixKrueger"
         },
         {
-            "@id": "#2be15d4f-a15f-4da0-bfd5-e4b2ef7a1587",
+            "@id": "#aca38086-cf28-4f49-86d4-634b91e82a82",
             "@type": "Person",
             "affiliation": "CRT Genomic Data Science, University College Cork",
             "email": "43453737+JackCurragh@users.noreply.github.com",
