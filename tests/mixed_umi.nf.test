@@ -1,0 +1,70 @@
+nextflow_pipeline {
+
+    name "Test pipeline with mixed per-sample UMI status"
+    script "../main.nf"
+    tag "pipeline"
+    tag "pipeline_riboseq"
+    tag "mixed_umi"
+
+    test("Single-end UMI Ribo-seq with paired-end non-UMI RNA-seq") {
+
+        setup {
+            def test_config = new ConfigSlurper().parse(new File("${projectDir}/conf/test.config").toURI().toURL())
+            params.input = test_config.params.input
+        }
+
+        when {
+            params {
+                outdir = "$outputDir"
+                input = {
+                    def source_rows = params.input.toURL().readLines()
+                    def samplesheet = new File("${launchDir}/samplesheet_mixed_umi.csv")
+                    def header = source_rows.find { it.startsWith('"sample"') } + ',"with_umi"'
+                    def riboseq = source_rows.find { it.startsWith('"SRX11780885"') }.replace(',"auto",', ',"unstranded",') + ',"true"'
+                    def rnaseq = source_rows.find { it.startsWith('"SRX11780879"') }.replace(',"auto",', ',"unstranded",') + ',""'
+                    samplesheet.text = [ header, riboseq, rnaseq ].join('\n') + '\n'
+                    samplesheet.absolutePath
+                }()
+                contrasts = null
+                with_umi = false
+                umitools_bc_pattern = 'NNNN'
+                umi_discard_read = 2
+                save_umi_intermeds = true
+                remove_ribo_rna = false
+                skip_trimming = true
+                skip_linting = true
+                skip_ribotish = true
+                skip_ribocode = true
+                skip_ribowaltz = true
+                skip_plastid = true
+                skip_coverage_tracks = true
+            }
+        }
+
+        then {
+            // stable_path: All files + folders in ${params.outdir}/ with a stable path (including file name)
+            def stable_path = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
+            // stable_content: All files in ${params.outdir}/ with stable content
+            def stable_content = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(
+                    // pipeline versions.yml file for multiqc from which Nextflow version is removed because we test pipelines on multiple Nextflow versions
+                    removeNextflowVersion("$outputDir/pipeline_info/nf_core_riboseq_software_mqc_versions.yml"),
+                    // All stable path name, with a relative path
+                    stable_path,
+                    // All files with stable contents
+                    stable_content
+                ).match() }
+            )
+        }
+
+        cleanup {
+            if (System.getenv("NFT_PROFILE")?.contains("docker")) {
+                "docker system prune -a -f --volumes".execute()
+            }
+            new File("${launchDir}").deleteDir()
+        }
+    }
+
+}

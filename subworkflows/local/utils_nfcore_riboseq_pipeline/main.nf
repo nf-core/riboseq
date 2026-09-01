@@ -120,7 +120,7 @@ workflow PIPELINE_INITIALISATION {
         }
         .groupTuple()
         .map { samplesheet ->
-            validateInputSamplesheet(samplesheet)
+            validateInputSamplesheet(samplesheet, params.with_umi)
         }
         .map {
             meta, fastqs ->
@@ -170,7 +170,6 @@ workflow PIPELINE_COMPLETION {
         }
 
         completionSummary(monochrome_logs)
-
     }
 
     workflow.onError {
@@ -188,12 +187,98 @@ workflow PIPELINE_COMPLETION {
 //
 def validateInputParameters() {
     genomeExistsError()
+    removedParamsError()
+    dotseqPrerequisitesError()
+    kallistoPrerequisitesError()
+
+    // Without a novel source, caller routing is a no-op; catalogue construction is independent.
+    def novel_source_configured = !params.skip_stringtie || params.novel_gtf
+    if (params.extended_orf_analysis && !novel_source_configured) {
+        log.warn "--extended_orf_analysis is enabled but no novel-transcript source is configured (--skip_stringtie is true and --novel_gtf is unset). ORF callers will run against their usual annotation rather than a hybrid one; the ORF catalogue is still built."
+    }
+    if (params.extended_orf_analysis && params.skip_plastid) {
+        log.warn "--extended_orf_analysis is enabled but --skip_plastid is true. ORF-level P-site quantification needs the plastid wiggle tracks and will be skipped; the ORF catalogue will still be built."
+    }
+
+    def enabled_caller_count = [
+        !params.skip_ribotish, !params.skip_ribocode,
+        params.run_ribotricer, params.run_rpbp, params.run_price,
+    ].count(true)
+    // With no caller there is no ORF table to catalogue, so nothing downstream runs.
+    if (params.extended_orf_analysis && enabled_caller_count == 0) {
+        log.warn "--extended_orf_analysis is enabled but every ORF caller is disabled. No ORF catalogue, ORF-level P-site quantification or ORF-level differential translation will be produced. Enable at least one of ribotish / ribocode / ribotricer / rpbp / price."
+    }
+    // A threshold above the enabled caller count yields a header-only consensus view.
+    if (params.extended_orf_analysis && enabled_caller_count > 0 && params.orf_min_callers > enabled_caller_count) {
+        log.warn "--orf_min_callers is ${params.orf_min_callers} but only ${enabled_caller_count} ORF caller(s) are enabled, so no ORF can reach the threshold and the consensus view will be empty. Lower --orf_min_callers or enable more callers."
+    }
+
+    // Without a novel source the ORF-DTE denominator is the primary Salmon matrix, keyed on
+    // --gtf gene ids, while catalogue host genes also come from --canonical_gtf.
+    if (params.extended_orf_analysis && enabled_caller_count > 0 && !novel_source_configured
+        && params.canonical_gtf && !params.skip_plastid && params.contrasts) {
+        log.warn "--canonical_gtf is supplied with no novel-transcript source, so ORF-level differential translation reuses the primary Salmon matrix, whose gene ids come from --gtf alone. Any ORF whose host gene exists only in --canonical_gtf has no row in that matrix and will be dropped from the ORF-level results; DTE_COUNTS_PREP reports the count on stderr. Set --skip_stringtie false or --novel_gtf to quantify the denominator against the full annotation instead."
+    }
+}
+
+//
+// Exit pipeline on removed parameters. Schema validation only warns about
+// unrecognised parameters, too quiet for flags whose purpose was to suppress
+// work the pipeline does regardless.
+//
+def removedParamsError() {
+    def removed = [
+        'min_mapped_reads'     : 'it was never applied to any sample',
+        'skip_pseudo_alignment': 'pseudo-alignment is selected with --te_quantification_method and --pseudo_aligner',
+        'skip_alignment'       : 'the pipeline has no index-only mode; every downstream stage needs the alignment',
+    ]
+
+    def supplied = removed.findAll { name, _reason -> params.containsKey(name) }
+    if (supplied) {
+        error("The following parameters have been removed:\n" + supplied.collect { name, reason -> "  --${name}: ${reason}" }.join('\n'))
+    }
+}
+
+//
+// Exit pipeline if kallisto is selected as the pseudo-aligner without what it
+// needs: fragment length stats (single-end libraries) and a valid k-mer size.
+//
+def kallistoPrerequisitesError() {
+    if (params.pseudo_aligner != 'kallisto' || params.te_quantification_method != 'pseudo') return
+
+    if (!params.kallisto_quant_fraglen || !params.kallisto_quant_fraglen_sd) {
+        error("--pseudo_aligner kallisto requires --kallisto_quant_fraglen and --kallisto_quant_fraglen_sd, which kallisto needs to quantify single-end libraries. Set both, or use --pseudo_aligner salmon.")
+    }
+
+    if (!params.kallisto_index && (params.pseudo_aligner_kmer_size % 2 == 0 || params.pseudo_aligner_kmer_size > 31)) {
+        error("--pseudo_aligner_kmer_size ${params.pseudo_aligner_kmer_size} is invalid for kallisto index building: kallisto requires an odd k-mer size no greater than 31. Set --pseudo_aligner_kmer_size to an odd value <= 31, or supply a pre-built --kallisto_index.")
+    }
+}
+
+//
+// Exit pipeline if --translational_efficiency_method dotseq is selected
+// without the ORF-level prerequisites that DOTSeq needs.
+//
+def dotseqPrerequisitesError() {
+    if (!('dotseq' in params.translational_efficiency_method.tokenize(',')*.trim())) return
+
+    def any_caller_enabled   = !params.skip_ribotish || !params.skip_ribocode || params.run_ribotricer || params.run_rpbp || params.run_price
+    def orf_catalogue_active = params.extended_orf_analysis && any_caller_enabled
+
+    if (!orf_catalogue_active || params.skip_plastid || !params.contrasts) {
+        def missing = []
+        if (!params.extended_orf_analysis) missing << "--extended_orf_analysis true"
+        if (!any_caller_enabled)           missing << "at least one ORF caller (do not skip both ribocode and ribotish, or opt into ribotricer / rpbp / price)"
+        if (params.skip_plastid)           missing << "--skip_plastid false"
+        if (!params.contrasts)             missing << "--contrasts"
+        error("--translational_efficiency_method dotseq runs only at the ORF level and requires: ${missing.join('; ')}. Pick anota2seq or deltate for the gene-level path, or wire up the ORF prerequisites.")
+    }
 }
 
 //
 // Validate channels from input samplesheet
 //
-def validateInputSamplesheet(input) {
+def validateInputSamplesheet(input, default_with_umi) {
     def (metas, fastqs) = input[1..2]
 
     // Check that multiple runs of the same sample are of the same datatype i.e. single-end / paired-end
@@ -202,8 +287,34 @@ def validateInputSamplesheet(input) {
         error("Please check input samplesheet -> Multiple runs of a sample must be of the same datatype i.e. single-end or paired-end: ${metas[0].id}")
     }
 
-    return [ metas[0], fastqs ]
+    def umi_status_ok = metas.collect { meta -> resolveSampleUmi(meta, default_with_umi) }.unique().size == 1
+    if (!umi_status_ok) {
+        error("Please check input samplesheet -> Multiple runs of a sample must have the same with_umi value: ${metas[0].id}")
+    }
+
+    def clean_meta = metas[0].findAll { key, _value -> key != 'with_umi' }
+    return [ clean_meta, fastqs ]
 }
+
+def resolveSampleUmi(meta, default_with_umi) {
+    def sample_with_umi = meta.with_umi
+    if (sample_with_umi instanceof List) {
+        sample_with_umi = sample_with_umi ? sample_with_umi[0] : null
+    }
+    if (sample_with_umi == null || sample_with_umi == '') {
+        sample_with_umi = default_with_umi
+    }
+    if (!(sample_with_umi instanceof Boolean)) {
+        error("Please check input samplesheet -> with_umi must be true or false for sample: ${meta.id}")
+    }
+    return sample_with_umi
+}
+
+def samplesheetNeedsSalmonForStrandedness(input) {
+    samplesheetToList(input, "${projectDir}/assets/schema_input.json")
+        .any { meta, _fastq_1, _fastq_2 -> meta.strandedness == 'auto' }
+}
+
 //
 // Get attribute from genome config file e.g. fasta
 //
@@ -293,4 +404,26 @@ def methodsDescriptionText(mqc_methods_yaml) {
     def description_html = engine.createTemplate(methods_text).make(meta)
 
     return description_html.toString()
+}
+
+//
+// Function to generate an error if contigs in genome fasta file > 512 Mbp
+//
+def checkMaxContigSize(fai_file) {
+    def max_size = 512000000
+    fai_file.eachLine { line ->
+        def lspl  = line.split('\t')
+        def chrom = lspl[0]
+        def size  = lspl[1]
+        if (size.toInteger() > max_size) {
+            def error_string = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" +
+                "  Contig longer than ${max_size}bp found in reference genome!\n\n" +
+                "  ${chrom}: ${size}\n\n" +
+                "  Provide the '--bam_csi_index' parameter to use a CSI instead of BAI index.\n\n" +
+                "  Please see:\n" +
+                "  https://github.com/nf-core/rnaseq/issues/744\n" +
+                "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+            error(error_string)
+        }
+    }
 }

@@ -1,12 +1,12 @@
 lint:
   actions_nf_test: false
+  merge_markers:
+    - modules/nf-core/bowtie2/align/tests/main.nf.test.snap
   files_unchanged:
     - .gitignore
     - assets/nf-core-riboseq_logo_light.png
     - docs/images/nf-core-riboseq_logo_dark.png
     - docs/images/nf-core-riboseq_logo_light.png
-  merge_markers:
-    - modules/nf-core/bowtie2/align/tests/main.nf.test.snap
   nextflow_config:
     - config_defaults:
         - params.ribo_database_manifest
@@ -21,4 +21,4 @@ template:
   name: riboseq
   org: nf-core
   outdir: .
-  version: 1.3.0dev
+  version: 2.0.0
