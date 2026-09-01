@@ -3,7 +3,23 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v1.3.0dev
+## v2.0.0 - 2026-08-27
+
+### `Credits`
+
+Special thanks to the following for their contributions to this release:
+
+- [@bediagan](https://github.com/bediagan)
+- [Evangelos Karatzas](https://github.com/vagkaratzas)
+- [Felix Krueger](https://github.com/FelixKrueger)
+- [Friederike Hanssen](https://github.com/FriederikeHanssen)
+- [Ira A Iosub](https://github.com/iraiosub)
+- [Jack Tierney](https://github.com/JackCurragh)
+- [Jonathan Manning](https://github.com/pinin4fjords)
+- [Luisa Santus](https://github.com/luisas)
+- [Matthias Hörtenhuber](https://github.com/mashehu)
+- [Maxime U Garcia](https://github.com/maxulysse)
+- [Sebastian Uhrig](https://github.com/suhrig)
 
 ### `Added`
 
@@ -91,6 +107,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#226](https://github.com/nf-core/riboseq/pull/226) - **Breaking:** some `orf_class` values change, notably `Overlap_uORF`/`Overlap_dORF` to `uoORF`/`doORF` and `internal`/`iORF` to `intORF`; see `docs/output.md` for the full vocabulary ([@FelixKrueger](https://github.com/FelixKrueger))
 - [#226](https://github.com/nf-core/riboseq/pull/226) - Catalogue row counts change in both directions as a result of the merge and collapse changes ([@FelixKrueger](https://github.com/FelixKrueger))
 - [#226](https://github.com/nf-core/riboseq/pull/226) - Cross-caller clustering now measures reciprocal overlap on exon blocks rather than the outer genomic span, and uses complete linkage ([@FelixKrueger](https://github.com/FelixKrueger))
+- [#231](https://github.com/nf-core/riboseq/pull/231) - Bump pipeline version to 2.0.0 ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Parameters`
 
