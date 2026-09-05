@@ -1,5 +1,6 @@
 %%metro title: nf-core/riboseq
 %%metro logo: docs/images/nf-core-riboseq_logo_light.png | docs/images/nf-core-riboseq_logo_dark.png
+%%metro logo_scale: 1.15
 %%metro center_ports: true
 %%metro style: nfcore
 %%metro diamond_style: symmetric
@@ -9,6 +10,8 @@
 %%metro file: orf_catalogue | BED | ORF catalogue
 %%metro file: bigwig_out | BW | Coverage
 %%metro file: counts_out | TSV | Gene counts
+%%metro file: psite_orf_out | TSV | ORF P-site counts
+%%metro file: psite_gene_out | TSV | Gene P-site counts
 %%metro file: te_out | TSV | TE results
 %%metro file: report_final | HTML | MultiQC
 %%metro line: riboseq | Ribo-seq | #e6007e
@@ -19,7 +22,7 @@
 %%metro grid: preprocessing, alignment, novel_transcripts | 0,0
 %%metro grid: orf_calling, psite_id, te, reporting | 0,1
 %%metro x_spacing: 70
-%%metro legend: br
+%%metro legend: br | 10,130
 
 %% Process mappings for live-progress mode (nf-metro serve / nf-metro check-mapping).
 %% process_scope factors out the shared FQN prefix so each value is the tail
@@ -123,6 +126,8 @@ graph LR
         umi_dedup[UMI-tools dedup]
         genomecov[BEDTools\ngenomecov]
         salmon_quant[Salmon]
+        bigwig_out[ ]
+        counts_out[ ]
 
         star -->|riboseq,rnaseq,tiseq| umi_dedup
         umi_dedup -->|riboseq,rnaseq,tiseq| genomecov
@@ -135,6 +140,7 @@ graph LR
         stringtie[StringTie]
         gffcompare[gffcompare]
         hybrid_merge[Merge &\nfilter GTF]
+        hybrid_gtf_out[ ]
 
         stringtie -->|rnaseq| gffcompare
         gffcompare -->|rnaseq| hybrid_merge
@@ -150,6 +156,7 @@ graph LR
         rpbp[Rp-Bp]
         price[PRICE]
         orf_merge[Merge ORF\ncatalogue]
+        orf_catalogue[ ]
 
         star_hybrid -->|riboseq| ribocode
         ribotish -->|riboseq| orf_merge
@@ -166,11 +173,15 @@ graph LR
         plastid_wiggle[plastid\nwiggle]
         quantify_orf_psite[Quantify ORF\nP-sites]
         psite_counts_gene[Gene in-frame\nP-sites]
+        psite_orf_out[ ]
+        psite_gene_out[ ]
 
-        ribowaltz -->|riboseq| quantify_orf_psite
+        ribowaltz -->|riboseq| plastid_psite
         plastid_psite -->|riboseq| plastid_wiggle
         plastid_wiggle -->|riboseq| quantify_orf_psite
         plastid_wiggle -->|riboseq| psite_counts_gene
+        quantify_orf_psite -->|riboseq| psite_orf_out
+        psite_counts_gene -->|riboseq| psite_gene_out
     end
 
     subgraph te [Translational efficiency]
@@ -179,19 +190,23 @@ graph LR
         anota2seq[anota2seq]
         deltate[DESeq2 deltaTE]
         dotseq[DOTSeq]
+        _te_merge[ ]
+        te_out[ ]
 
         te_prep_gene -->|riboseq,rnaseq| anota2seq
         te_prep_gene -->|riboseq,rnaseq| deltate
         te_prep_orf -->|riboseq,rnaseq| anota2seq
         te_prep_orf -->|riboseq,rnaseq| deltate
         te_prep_orf -->|riboseq,rnaseq| dotseq
-        anota2seq -->|riboseq,rnaseq| te_out
-        deltate -->|riboseq,rnaseq| te_out
-        dotseq -->|riboseq,rnaseq| te_out
+        anota2seq -->|riboseq,rnaseq| _te_merge
+        deltate -->|riboseq,rnaseq| _te_merge
+        dotseq -->|riboseq,rnaseq| _te_merge
+        _te_merge -->|riboseq,rnaseq| te_out
     end
 
     subgraph reporting [Reporting]
         multiqc_final[MultiQC]
+        report_final[ ]
 
         multiqc_final -->|riboseq,rnaseq| report_final
     end
@@ -205,13 +220,12 @@ graph LR
     umi_dedup -->|riboseq| rpbp
     umi_dedup -->|riboseq| price
     umi_dedup -->|riboseq| ribowaltz
-    umi_dedup -->|riboseq| plastid_psite
-    orf_merge -->|riboseq| quantify_orf_psite
+    orf_merge -->|riboseq| ribowaltz
     salmon_quant -->|rnaseq| te_prep_gene
     salmon_quant -->|rnaseq| te_prep_orf
     psite_counts_gene -->|riboseq| te_prep_gene
     quantify_orf_psite -->|riboseq| te_prep_orf
-    ribowaltz -->|riboseq| multiqc_final
+    _te_merge -->|riboseq,rnaseq| multiqc_final
     hybrid_merge -->|annotation| star_hybrid
     hybrid_merge -->|annotation| ribotish
     hybrid_merge -->|annotation| ribotricer
