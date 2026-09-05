@@ -3,6 +3,12 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.0.1dev
+
+### `Changed`
+
+- [#233](https://github.com/nf-core/riboseq/pull/233) - Replace the hand-crafted workflow diagram with an [nf-metro](https://github.com/pinin4fjords/nf-metro)-rendered metro map, generated from a new `assets/metro_map.mmd` source with `%%metro process:` mappings for `nf-metro serve` live-progress overlays ([@pinin4fjords](https://github.com/pinin4fjords))
+
 ## v2.0.0 - 2026-08-27
 
 ### `Credits`
