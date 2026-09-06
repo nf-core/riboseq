@@ -46,21 +46,15 @@ workflow QUANTIFY_ORF_PSITE {
     // 3. Collect all per-sample TSVs into one list, then pair with the
     //    cohort-level catalogue BED on a synthetic key so the pairing does not
     //    depend on emission order.
-    ch_sample_ids_collected = QUANTIFY_INFRAME_PSITE_PLASTID.out.counts
-        .map { meta, _tsv -> meta.id }
-        .collect()
-        .map { ids -> [ 'allsamples', ids ] }
-
-    ch_tsvs_collected = QUANTIFY_INFRAME_PSITE_PLASTID.out.counts
-        .map { _meta, tsv -> tsv }
-        .collect()
-        .map { tsvs -> [ 'allsamples', tsvs ] }
+    ch_ids_and_tsvs_collected = QUANTIFY_INFRAME_PSITE_PLASTID.out.counts
+        .map { meta, tsv -> [ meta.id, tsv ] }
+        .collect( flat: false )
+        .map { pairs -> [ 'allsamples', pairs*.getAt(0), pairs*.getAt(1) ] }
 
     ch_bed_keyed = ch_catalogue_bed
         .map { _meta, bed -> [ 'allsamples', bed ] }
 
-    ch_matrix_in = ch_sample_ids_collected
-        .combine( ch_tsvs_collected, by: 0 )
+    ch_matrix_in = ch_ids_and_tsvs_collected
         .combine( ch_bed_keyed, by: 0 )
         .map { _key, ids, tsvs, bed -> [ [ id: 'allsamples' ], ids, tsvs, bed ] }
 

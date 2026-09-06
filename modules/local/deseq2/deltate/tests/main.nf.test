@@ -68,6 +68,51 @@ nextflow_process {
         }
     }
 
+    test("human - tsv - with batch column") {
+
+        config "./nextflow_batch_col.config"
+
+        when {
+            process {
+                """
+                def samplesheet_batch = file('samplesheet_batch.csv')
+                samplesheet_batch.text = '"sample","type","treatment","pair"\\n' +
+                    '"SRX11780879","rnaseq","control",1\\n' +
+                    '"SRX11780880","rnaseq","control",2\\n' +
+                    '"SRX11780881","rnaseq","control",1\\n' +
+                    '"SRX11780882","rnaseq","treatment",2\\n' +
+                    '"SRX11780883","rnaseq","treatment",1\\n' +
+                    '"SRX11780884","rnaseq","treatment",2\\n' +
+                    '"SRX11780885","riboseq","control",1\\n' +
+                    '"SRX11780886","riboseq","control",2\\n' +
+                    '"SRX11780887","riboseq","control",1\\n' +
+                    '"SRX11780888","riboseq","treatment",2\\n' +
+                    '"SRX11780889","riboseq","treatment",1\\n' +
+                    '"SRX11780890","riboseq","treatment",2\\n'
+
+                input[0] = [
+                    [ id:'treatment_vs_control' ],
+                    'treatment',
+                    'control',
+                    'treatment'
+                ]
+                input[1] = [
+                    [ id:'test' ],
+                    samplesheet_batch,
+                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/salmon.merged.gene_counts_length_scaled.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.dtegs[0][1]).exists() }
+            )
+        }
+    }
+
     test("human - tsv - stub") {
 
         options "-stub"
