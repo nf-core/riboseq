@@ -1,0 +1,72 @@
+nextflow_process {
+
+    name "Test Process QUANTIFY_INFRAME_PSITE_PLASTID"
+    script "../main.nf"
+    process "QUANTIFY_INFRAME_PSITE_PLASTID"
+
+    tag "modules"
+    tag "modules_local"
+    tag "quantify_inframe_psite_plastid"
+
+    test("synthetic data - bedGraph") {
+        when {
+            process {
+                """
+                def forward_bedgraph = file('forward.bedGraph')
+                forward_bedgraph.text = "chr1\\t99\\t100\\t5\\nchr1\\t102\\t103\\t3\\nchr1\\t105\\t106\\t7\\n"
+
+                def reverse_bedgraph = file('reverse.bedGraph')
+                reverse_bedgraph.text = "chr1\\t202\\t203\\t4\\nchr1\\t205\\t206\\t6\\n"
+
+                def inframe_psites = file('inframe_psites.bed')
+                inframe_psites.text = "chr1\\t99\\t100\\tgeneA\\t0\\t+\\nchr1\\t102\\t103\\tgeneA\\t0\\t+\\nchr1\\t105\\t106\\tgeneA\\t0\\t+\\nchr1\\t108\\t109\\tgeneA\\t0\\t+\\nchr1\\t202\\t203\\tgeneB\\t0\\t-\\nchr1\\t205\\t206\\tgeneB\\t0\\t-\\nchr1\\t208\\t209\\tgeneB\\t0\\t-\\n"
+
+                input[0] = Channel.of([ [id:'sample1'], forward_bedgraph, reverse_bedgraph])
+                input[1] = Channel.of([ [feature:'gene'], inframe_psites])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.counts.size() == 1 },
+                { assert file(process.out.counts[0][1]).name == 'sample1.gene_inframe_psite_counts.tsv' },
+                { assert snapshot(
+                    process.out.counts,
+                    process.out.versions
+                ).match() }
+            )
+        }
+    }
+
+    test("synthetic data - stub") {
+        options "-stub-run"
+
+        when {
+            process {
+                """
+                def forward_bedgraph = file('forward.bedGraph')
+                forward_bedgraph.text = "chr1\\t99\\t100\\t5\\nchr1\\t102\\t103\\t3\\nchr1\\t105\\t106\\t7\\n"
+
+                def reverse_bedgraph = file('reverse.bedGraph')
+                reverse_bedgraph.text = "chr1\\t202\\t203\\t4\\nchr1\\t205\\t206\\t6\\n"
+
+                def inframe_psites = file('inframe_psites.bed')
+                inframe_psites.text = "chr1\\t99\\t100\\tgeneA\\t0\\t+\\nchr1\\t102\\t103\\tgeneA\\t0\\t+\\nchr1\\t105\\t106\\tgeneA\\t0\\t+\\nchr1\\t108\\t109\\tgeneA\\t0\\t+\\nchr1\\t202\\t203\\tgeneB\\t0\\t-\\nchr1\\t205\\t206\\tgeneB\\t0\\t-\\nchr1\\t208\\t209\\tgeneB\\t0\\t-\\n"
+
+                input[0] = Channel.of([ [id:'sample1'], forward_bedgraph, reverse_bedgraph])
+                input[1] = Channel.of([ [feature:'gene'], inframe_psites])
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert file(process.out.counts[0][1]).name == 'sample1.gene_inframe_psite_counts.tsv' },
+                { assert snapshot(process.out.versions).match() }
+            )
+        }
+    }
+}

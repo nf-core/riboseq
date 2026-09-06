@@ -1,26 +1,59 @@
 {
-    "versions": {
+    "sarscov2 stub": {
         "content": [
-            [
-                "versions.yml:md5,85337fa0a286ea35073ee5260974e307"
-            ]
+            "[complete_ref_lens.bin, ctable.bin, ctg_offsets.bin, duplicate_clusters.tsv, info.json, mphf.bin, pos.bin, pre_indexing.log, rank.bin, refAccumLengths.bin, ref_indexing.log, reflengths.bin, refseq.bin, seq.bin, versionInfo.json]",
+            {
+                "versions_salmon": [
+                    [
+                        "SALMON_INDEX",
+                        "salmon",
+                        "1.10.3"
+                    ]
+                ]
+            }
         ],
         "meta": {
-            "nf-test": "0.9.0",
-            "nextflow": "24.04.4"
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.3"
         },
-        "timestamp": "2024-10-18T10:00:47.087293189"
+        "timestamp": "2026-02-02T16:08:35.725968411"
     },
-    "versions stub": {
+    "sarscov2": {
         "content": [
-            [
-                "versions.yml:md5,85337fa0a286ea35073ee5260974e307"
-            ]
+            "[complete_ref_lens.bin, ctable.bin, ctg_offsets.bin, duplicate_clusters.tsv, info.json, mphf.bin, pos.bin, pre_indexing.log, rank.bin, refAccumLengths.bin, ref_indexing.log, reflengths.bin, refseq.bin, seq.bin, versionInfo.json]",
+            {
+                "versions_salmon": [
+                    [
+                        "SALMON_INDEX",
+                        "salmon",
+                        "1.10.3"
+                    ]
+                ]
+            }
         ],
         "meta": {
-            "nf-test": "0.9.0",
-            "nextflow": "24.04.4"
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.3"
         },
-        "timestamp": "2024-10-18T10:01:03.89824494"
+        "timestamp": "2026-02-02T16:08:25.230161687"
+    },
+    "sarscov2 transcriptome only": {
+        "content": [
+            "[complete_ref_lens.bin, ctable.bin, ctg_offsets.bin, duplicate_clusters.tsv, info.json, mphf.bin, pos.bin, pre_indexing.log, rank.bin, refAccumLengths.bin, ref_indexing.log, reflengths.bin, refseq.bin, seq.bin, versionInfo.json]",
+            {
+                "versions_salmon": [
+                    [
+                        "SALMON_INDEX",
+                        "salmon",
+                        "1.10.3"
+                    ]
+                ]
+            }
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.3"
+        },
+        "timestamp": "2026-02-02T16:08:30.548863827"
     }
 }

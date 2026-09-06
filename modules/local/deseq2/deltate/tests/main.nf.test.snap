@@ -1,0 +1,40 @@
+{
+    "human - tsv": {
+        "content": [
+            [
+                "versions.yml:md5,638df019e877240aa60f1b79467314b3"
+            ],
+            "treatment_vs_control.translation.deltate.results.tsv",
+            "treatment_vs_control.translated_mRNA.deltate.results.tsv",
+            "treatment_vs_control.total_mRNA.deltate.results.tsv",
+            "treatment_vs_control.dtegs.deltate.genes.tsv",
+            "treatment_vs_control.mRNA_abundance.deltate.genes.tsv",
+            "treatment_vs_control.translation.deltate.genes.tsv",
+            "treatment_vs_control.intensified.deltate.genes.tsv",
+            "treatment_vs_control.buffering.deltate.genes.tsv",
+            "treatment_vs_control.fold_change.png",
+            "treatment_vs_control.pca_ribo.png",
+            "treatment_vs_control.pca_ribo.tsv",
+            "treatment_vs_control.pca_rna.png",
+            "treatment_vs_control.pca_rna.tsv",
+            "treatment_vs_control.DESeqDataSet.rds"
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.2"
+        },
+        "timestamp": "2025-12-16T09:34:46.046053116"
+    },
+    "human - tsv - stub": {
+        "content": [
+            [
+                "versions.yml:md5,b0d4631389ec57a553a6c6c8087deaf5"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "25.10.2"
+        },
+        "timestamp": "2025-12-05T14:27:24.264899754"
+    }
+}
