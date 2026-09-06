@@ -108,6 +108,7 @@ Special thanks to the following for their contributions to this release:
 - [#226](https://github.com/nf-core/riboseq/pull/226) - Catalogue row counts change in both directions as a result of the merge and collapse changes ([@FelixKrueger](https://github.com/FelixKrueger))
 - [#226](https://github.com/nf-core/riboseq/pull/226) - Cross-caller clustering now measures reciprocal overlap on exon blocks rather than the outer genomic span, and uses complete linkage ([@FelixKrueger](https://github.com/FelixKrueger))
 - [#231](https://github.com/nf-core/riboseq/pull/231) - Bump pipeline version to 2.0.0 ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#233](https://github.com/nf-core/riboseq/pull/233) - Replace the hand-crafted workflow diagram with an [nf-metro](https://github.com/pinin4fjords/nf-metro)-rendered metro map, generated from a new `assets/metro_map.mmd` source with `%%metro process:` mappings for `nf-metro serve` live-progress overlays ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Parameters`
 
