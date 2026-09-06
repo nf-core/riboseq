@@ -19,7 +19,7 @@ process ORF_COUNT_MATRIX {
 
     script:
     prefix = task.ext.prefix ?: "orf_psite_counts"
-    sample_ids_csv = sample_ids.join(',')
+    sample_ids_b64 = groovy.json.JsonOutput.toJson(sample_ids).bytes.encodeBase64().toString()
     template 'build_orf_count_matrix.py'
 
     stub:

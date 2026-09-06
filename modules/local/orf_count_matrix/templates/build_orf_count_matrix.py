@@ -10,6 +10,8 @@ in catalogue order, zero-filled for any ORF or sample with no matching
 counts, so the matrix is keyed on the catalogue and the full sample list.
 """
 
+import base64
+import json
 import platform
 from pathlib import Path
 
@@ -24,7 +26,7 @@ catalogue_orfs = (
     pd.read_csv("$orf_catalogue_bed12", sep="\\t", header=None, comment="#", usecols=[3])[3].drop_duplicates().tolist()
 )
 
-expected_samples = sorted(s for s in "$sample_ids_csv".split(",") if s)
+expected_samples = sorted(json.loads(base64.b64decode("$sample_ids_b64").decode()))
 
 matrix = (
     counts.pivot_table(index="orf_id", columns="sample", values="count", aggfunc="sum", fill_value=0)

@@ -45,4 +45,37 @@ nextflow_process {
             )
         }
     }
+
+    test("a sample id containing a comma is not corrupted") {
+        when {
+            process {
+                """
+                def sampleA_counts = file('sampleA.tsv')
+                sampleA_counts.text = "sample,A\\torf1\\t5\\n"
+
+                def sampleB_counts = file('sampleB.tsv')
+                sampleB_counts.text = "sampleB\\torf1\\t2\\n"
+
+                def catalogue_bed12 = file('catalogue.bed12')
+                catalogue_bed12.text = "chr1\\t0\\t100\\torf1\\t0\\t+\\n"
+
+                input[0] = Channel.of([
+                    [id:'allsamples'],
+                    ['sample,A', 'sampleB'],
+                    [sampleA_counts, sampleB_counts],
+                    catalogue_bed12
+                ])
+                """
+            }
+        }
+
+        then {
+            def matrix = path(process.out.matrix[0][1]).readLines()
+            assertAll(
+                { assert process.success },
+                { assert matrix[0] == 'orf_id\tsample,A\tsampleB' },
+                { assert matrix[1] == 'orf1\t5\t2' }
+            )
+        }
+    }
 }
