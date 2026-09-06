@@ -1,0 +1,48 @@
+nextflow_process {
+
+    name "Test Process ORF_COUNT_MATRIX"
+    script "../main.nf"
+    process "ORF_COUNT_MATRIX"
+
+    tag "modules"
+    tag "modules_local"
+    tag "orf_count_matrix"
+
+    test("one sample with zero counts is still zero-filled, not dropped") {
+        when {
+            process {
+                """
+                def sampleA_counts = file('sampleA.tsv')
+                sampleA_counts.text = "sampleA\\torf1\\t5\\nsampleA\\torf2\\t3\\n"
+
+                def sampleB_counts = file('sampleB.tsv')
+                sampleB_counts.text = ""
+
+                def catalogue_bed12 = file('catalogue.bed12')
+                catalogue_bed12.text = "chr1\\t0\\t100\\torf1\\t0\\t+\\n" +
+                    "chr1\\t100\\t200\\torf2\\t0\\t+\\n" +
+                    "chr1\\t200\\t300\\torf3\\t0\\t+\\n"
+
+                input[0] = Channel.of([
+                    [id:'allsamples'],
+                    ['sampleA', 'sampleB'],
+                    [sampleA_counts, sampleB_counts],
+                    catalogue_bed12
+                ])
+                """
+            }
+        }
+
+        then {
+            def matrix = path(process.out.matrix[0][1]).readLines()
+            assertAll(
+                { assert process.success },
+                { assert matrix[0] == 'orf_id\tsampleA\tsampleB' },
+                { assert matrix[1] == 'orf1\t5\t0' },
+                { assert matrix[2] == 'orf2\t3\t0' },
+                { assert matrix[3] == 'orf3\t0\t0' },
+                { assert snapshot(process.out.versions).match() }
+            )
+        }
+    }
+}

@@ -213,6 +213,19 @@ output:
         - count:
             type: integer
             description: Number of reads after trimming
+  - trim_reads_merged:
+      description: |
+        fastp's merged overlapping read pairs, produced only when `trimmer == 'fastp'` and
+        `fastp_merge == true`. Empty otherwise. These reads are excluded from `reads`;
+        callers that want to use them downstream must consume this channel separately.
+      structure:
+        - meta:
+            type: map
+            description: Metadata for the merged reads
+        - reads:
+            type: file
+            description: fastp merged FastQ file
+            pattern: "*.merged.fastq.gz"
   - lint_log:
       description: Log files from FastQ linting
       structure:
