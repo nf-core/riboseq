@@ -376,6 +376,13 @@ sample_sheet <- sample_sheet |>
     distinct(across(all_of(opt\$sample_id_col)), .keep_all = TRUE) |>
     column_to_rownames(opt\$sample_id_col)
 
+contrast_levels <- c(opt\$reference_level, opt\$target_level)
+missing_levels <- setdiff(contrast_levels, unique(as.character(sample_sheet[[opt\$contrast_variable]])))
+if (length(missing_levels) > 0) {
+    stop(paste("Contrast level(s) not present in", opt\$contrast_variable, ":", paste(missing_levels, collapse = ", ")))
+}
+sample_sheet <- sample_sheet[as.character(sample_sheet[[opt\$contrast_variable]]) %in% contrast_levels, , drop = FALSE]
+
 missing_samples <- setdiff(rownames(sample_sheet), colnames(count_table))
 if (length(missing_samples) > 0) {
     stop(paste(length(missing_samples), "samples missing from count table"))

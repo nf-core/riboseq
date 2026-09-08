@@ -2,12 +2,16 @@
 """Pivot per-sample ORF P-site count TSVs into a single ORF x sample matrix.
 
 Per-sample input is `sample_id<TAB>orf_id<TAB>count` (sample_id is identical
-on every row, prepended upstream by the per-sample counter). Output rows
-follow the BED12 catalogue's 4th column in catalogue order; ORFs absent
-from a sample are zero-filled, and ORFs absent from every sample still
-appear as a row of zeros so the matrix is keyed on the catalogue.
+on every row, prepended upstream by the per-sample counter); a sample with
+zero in-frame P-sites produces an empty file with no sample_id at all, so
+the expected sample list is passed in separately rather than inferred from
+the concatenated rows. Output rows follow the BED12 catalogue's 4th column
+in catalogue order, zero-filled for any ORF or sample with no matching
+counts, so the matrix is keyed on the catalogue and the full sample list.
 """
 
+import base64
+import json
 import platform
 from pathlib import Path
 
@@ -22,9 +26,11 @@ catalogue_orfs = (
     pd.read_csv("$orf_catalogue_bed12", sep="\\t", header=None, comment="#", usecols=[3])[3].drop_duplicates().tolist()
 )
 
+expected_samples = sorted(json.loads(base64.b64decode("$sample_ids_b64").decode()))
+
 matrix = (
     counts.pivot_table(index="orf_id", columns="sample", values="count", aggfunc="sum", fill_value=0)
-    .reindex(catalogue_orfs, fill_value=0)
+    .reindex(index=catalogue_orfs, columns=expected_samples, fill_value=0)
     .astype(int)
 )
 matrix.to_csv("${prefix}.tsv", sep="\\t")
