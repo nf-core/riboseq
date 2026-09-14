@@ -3,16 +3,6 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v2.0.1dev - [unreleased<!-- TODO nf-core: replace with date on release -->]
-
-### `Fixed`
-
-- [#236](https://github.com/nf-core/riboseq/pull/236) - Fix `QUANTIFY_INFRAME_PSITE_PLASTID`'s singularity container URL, which used `==` instead of `:` as the tag separator and 404'd against depot.galaxyproject.org ([@pinin4fjords](https://github.com/pinin4fjords))
-
-### `Changed`
-
-- Template update for nf-core/tools v4.1.0 ([@nf-core-bot](https://github.com/nf-core-bot), [@pinin4fjords](https://github.com/pinin4fjords))
-
 ## v2.0.0 - 2026-08-27
 
 ### `Credits`
@@ -88,6 +78,16 @@ Special thanks to the following for their contributions to this release:
 - [#228](https://github.com/nf-core/riboseq/pull/228) - Let the `nf-test` workflow report `confirm-pass` on docs-only PRs, which previously left them permanently blocked ([@FelixKrueger](https://github.com/FelixKrueger))
 - [#229](https://github.com/nf-core/riboseq/pull/229) - Raise `CUSTOM_ORFMERGE`'s wall-clock limit so a genome-scale cohort merge completes on its first attempt ([@FelixKrueger](https://github.com/FelixKrueger))
 - [#230](https://github.com/nf-core/riboseq/pull/230) - Pin `DESEQ2_DELTATE_ORF`'s cpus and raise its wall-clock limit so genome-scale ORF-level deltaTE contrasts complete on their first attempt ([@FelixKrueger](https://github.com/FelixKrueger))
+- [#235](https://github.com/nf-core/riboseq/pull/235)
+  - Fix `--skip_gtf_transcript_filter`'s `ext.args`, which used `?:` instead of `? :` for a boolean flag: the transcript-ID filter was silently skipped by default and crashed the process if the flag was explicitly set
+  - Fix gene-level `DESEQ2_DELTATE` passing `--samples_batch_col`, a flag its R template doesn't recognise (`--batch_col` does); any run with a batch column crashed
+  - Fix `deseq2_deltate.R` fitting the interaction model on the whole sample sheet instead of subsetting to the two contrast levels, unlike anota2seq/DOTSeq; harmless with two levels, wrong with 3+ levels sharing a `contrast_variable`
+  - Fix `orf_count_matrix`: a sample with zero P-sites produced an empty file with no `sample_id`, so it vanished from the ORF x sample matrix instead of showing as zero-filled
+  - Fix `RIBOCODE_METAPLOTS` aborting the whole run on sparse periodicity data even though `orf_caller_dispatch` already has warn-and-skip logic for exactly that case
+  - Fix `fastq_qc_trim_filter_setstrandedness` silently dropping fastp's merged read pairs instead of exposing them as an output (nf-core/modules#12895)
+  - Fix `orftable_fasta_gtf_buildorfcatalogue` mislabelling `sample_id` with the caller name appended, which inflated `n_samples`/`--orf_min_samples` counting for ORFs called by multiple callers on the same sample (nf-core/modules#12896)
+  - Revert the temporary GitHub-hosted CI runner swap back to the self-hosted fleet, now that it's back; GitHub's `ubuntu-latest` image restricts unprivileged user namespaces, which broke Singularity outright ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#236](https://github.com/nf-core/riboseq/pull/236) - Fix `QUANTIFY_INFRAME_PSITE_PLASTID`'s singularity container URL, which used `==` instead of `:` as the tag separator and 404'd against depot.galaxyproject.org ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Removed`
 
@@ -119,6 +119,7 @@ Special thanks to the following for their contributions to this release:
 - [#226](https://github.com/nf-core/riboseq/pull/226) - Cross-caller clustering now measures reciprocal overlap on exon blocks rather than the outer genomic span, and uses complete linkage ([@FelixKrueger](https://github.com/FelixKrueger))
 - [#231](https://github.com/nf-core/riboseq/pull/231) - Bump pipeline version to 2.0.0 ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#233](https://github.com/nf-core/riboseq/pull/233) - Replace the hand-crafted workflow diagram with an [nf-metro](https://github.com/pinin4fjords/nf-metro)-rendered metro map, generated from a new `assets/metro_map.mmd` source with `%%metro process:` mappings for `nf-metro serve` live-progress overlays ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#232](https://github.com/nf-core/riboseq/pull/232) - Template update for nf-core/tools v4.1.0 ([@nf-core-bot](https://github.com/nf-core-bot), [@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Parameters`
 
