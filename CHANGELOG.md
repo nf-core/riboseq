@@ -3,12 +3,6 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v2.0.1dev - [unreleased<!-- TODO nf-core: replace with date on release -->]
-
-### `Changed`
-
-- Template update for nf-core/tools v4.1.0 ([@nf-core-bot](https://github.com/nf-core-bot), [@pinin4fjords](https://github.com/pinin4fjords))
-
 ## v2.0.0 - 2026-08-27
 
 ### `Credits`
@@ -84,6 +78,8 @@ Special thanks to the following for their contributions to this release:
 - [#228](https://github.com/nf-core/riboseq/pull/228) - Let the `nf-test` workflow report `confirm-pass` on docs-only PRs, which previously left them permanently blocked ([@FelixKrueger](https://github.com/FelixKrueger))
 - [#229](https://github.com/nf-core/riboseq/pull/229) - Raise `CUSTOM_ORFMERGE`'s wall-clock limit so a genome-scale cohort merge completes on its first attempt ([@FelixKrueger](https://github.com/FelixKrueger))
 - [#230](https://github.com/nf-core/riboseq/pull/230) - Pin `DESEQ2_DELTATE_ORF`'s cpus and raise its wall-clock limit so genome-scale ORF-level deltaTE contrasts complete on their first attempt ([@FelixKrueger](https://github.com/FelixKrueger))
+- [#235](https://github.com/nf-core/riboseq/pull/235) - Post-release-review cleanup: `--skip_gtf_transcript_filter` Elvis-operator bug, `DESEQ2_DELTATE` batch-column flag name, deltaTE contrast subsetting, `orf_count_matrix` zero-fill for zero-P-site samples, `RIBOCODE_METAPLOTS` abort-vs-skip, and two vendored-subworkflow fixes (nf-core/modules#12895, #12896); reverted the temporary CI runner swap ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#236](https://github.com/nf-core/riboseq/pull/236) - Fix `QUANTIFY_INFRAME_PSITE_PLASTID`'s singularity container URL, which used `==` instead of `:` as the tag separator and 404'd against depot.galaxyproject.org ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Removed`
 
@@ -115,6 +111,7 @@ Special thanks to the following for their contributions to this release:
 - [#226](https://github.com/nf-core/riboseq/pull/226) - Cross-caller clustering now measures reciprocal overlap on exon blocks rather than the outer genomic span, and uses complete linkage ([@FelixKrueger](https://github.com/FelixKrueger))
 - [#231](https://github.com/nf-core/riboseq/pull/231) - Bump pipeline version to 2.0.0 ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#233](https://github.com/nf-core/riboseq/pull/233) - Replace the hand-crafted workflow diagram with an [nf-metro](https://github.com/pinin4fjords/nf-metro)-rendered metro map, generated from a new `assets/metro_map.mmd` source with `%%metro process:` mappings for `nf-metro serve` live-progress overlays ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#232](https://github.com/nf-core/riboseq/pull/232) - Template update for nf-core/tools v4.1.0 ([@nf-core-bot](https://github.com/nf-core-bot), [@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Parameters`
 

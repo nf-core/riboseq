@@ -8,8 +8,8 @@ process QUANTIFY_INFRAME_PSITE_PLASTID {
     label 'process_single'
 
     conda "bioconda::bedtools=2.31.1"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/bedtools==2.31.1--h13024bc_3' :
+    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/bedtools:2.31.1--h13024bc_3' :
         'biocontainers/bedtools:2.31.1--h13024bc_3' }"
 
     input:
