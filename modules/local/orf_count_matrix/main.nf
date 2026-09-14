@@ -8,7 +8,7 @@ process ORF_COUNT_MATRIX {
         'community.wave.seqera.io/library/python_pandas_pyyaml:3ce680b21acf323f' }"
 
     input:
-    tuple val(meta), path(per_sample_counts, stageAs: 'counts/*'), path(orf_catalogue_bed12)
+    tuple val(meta), val(sample_ids), path(per_sample_counts, stageAs: 'counts/*'), path(orf_catalogue_bed12)
 
     output:
     tuple val(meta), path("*.tsv"), emit: matrix
@@ -19,6 +19,7 @@ process ORF_COUNT_MATRIX {
 
     script:
     prefix = task.ext.prefix ?: "orf_psite_counts"
+    sample_ids_b64 = groovy.json.JsonOutput.toJson(sample_ids).bytes.encodeBase64().toString()
     template 'build_orf_count_matrix.py'
 
     stub:

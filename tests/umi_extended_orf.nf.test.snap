@@ -1651,22 +1651,22 @@
                 "cohort.catalogue.fasta:md5,6926c6385abc9c3c54773ca98bb424ea",
                 "cohort.catalogue.mqc.tsv:md5,c8b1a375e5fd4dbdf70a25299d57e28b",
                 "cohort.catalogue.orf_to_gene.tsv:md5,453474ab0d70cebf8056777ecb24c998",
-                "cohort.catalogue.tsv:md5,1de90758e4e0e49f7206e2a78f8180ed",
+                "cohort.catalogue.tsv:md5,19fcaf3e14e2c8f39e356746b8231b8e",
                 "cohort.catalogue.consensus.bed12:md5,0b7b47ca5d3c8408a63301da6ddcfe5d",
                 "cohort.catalogue.consensus.orf_to_gene.tsv:md5,453474ab0d70cebf8056777ecb24c998",
-                "cohort.catalogue.consensus.tsv:md5,1de90758e4e0e49f7206e2a78f8180ed",
+                "cohort.catalogue.consensus.tsv:md5,19fcaf3e14e2c8f39e356746b8231b8e",
                 "SRX11780885.ribotish.normalised.bed12:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "SRX11780885.ribotish.normalised.tsv:md5,c8b443b91724ffad37fd7758ad63fc2d",
                 "SRX11780886.ribotish.normalised.bed12:md5,f3d79b0905fb064eacea7a4c786e6a9e",
-                "SRX11780886.ribotish.normalised.tsv:md5,0a559fd03950f3e1cf2b30efeb5ec5c4",
+                "SRX11780886.ribotish.normalised.tsv:md5,87254ecdc9fea4b43c3f6a06da8211f6",
                 "SRX11780887.ribotish.normalised.bed12:md5,71f7540a0b7b72ad0fba6d0efb600df4",
-                "SRX11780887.ribotish.normalised.tsv:md5,7eca9d5e8b5702f92e7839f6a0750c57",
+                "SRX11780887.ribotish.normalised.tsv:md5,8b5c0e23fec34cddeadc1b9535c299d8",
                 "SRX11780888.ribotish.normalised.bed12:md5,0cbae09fb77c8221e78a3090106b5e17",
-                "SRX11780888.ribotish.normalised.tsv:md5,1e2f5891d7db52f1afb8606f34104983",
+                "SRX11780888.ribotish.normalised.tsv:md5,ff895057dd023c965dd4749d9c649172",
                 "SRX11780889.ribotish.normalised.bed12:md5,614fe652a2ee788b594e05330f86ddf5",
-                "SRX11780889.ribotish.normalised.tsv:md5,bbec3954df818e7f63b4814db84a5189",
+                "SRX11780889.ribotish.normalised.tsv:md5,d54ecc43434bf35c5355247017f2280a",
                 "SRX11780890.ribotish.normalised.bed12:md5,220eaac88be55768233c637f3e3cbe79",
-                "SRX11780890.ribotish.normalised.tsv:md5,eacff97dfb3e6bbfb333c7cefb59fdd4",
+                "SRX11780890.ribotish.normalised.tsv:md5,7eebec0bc1a6fcf83b6df7cfb821b5d7",
                 "SRX11780885_all.txt:md5,5b20c196f6f55f78bc4984d00c602892",
                 "SRX11780885_pred.txt:md5,5b20c196f6f55f78bc4984d00c602892",
                 "SRX11780886_all.txt:md5,aef11a9444b5a51ddd850b5b201a1ec8",
@@ -1753,10 +1753,10 @@
                 "SRX11780890_qual.txt:md5,9caaf68044fd714a3265f63c920e75d5"
             ]
         ],
-        "timestamp": "2026-08-10T23:16:24.620487912",
+        "timestamp": "2026-09-06T23:04:59.102601775",
         "meta": {
-            "nf-test": "0.9.4",
-            "nextflow": "25.10.4"
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.6"
         }
     }
 }

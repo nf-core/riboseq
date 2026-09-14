@@ -23,6 +23,12 @@ input:
   - - meta:
         type: map
         description: Cohort-level metadata
+    - sample_ids:
+        type: string
+        description: |
+          Sample ids covered by `per_sample_counts`, in the same order used to build it.
+          Needed because a sample with zero in-frame P-sites produces an empty TSV with
+          no sample_id column value of its own.
     - per_sample_counts:
         type: file
         description: |
