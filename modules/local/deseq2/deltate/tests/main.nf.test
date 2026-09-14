@@ -32,37 +32,24 @@ nextflow_process {
         then {
             assertAll(
                 { assert process.success },
-                { assert path(process.out.translation[0][1]).exists() },
-                { assert path(process.out.translated_mrna[0][1]).exists() },
-                { assert path(process.out.total_mrna[0][1]).exists() },
-                { assert path(process.out.dtegs[0][1]).exists() },
-                { assert path(process.out.mrna_abundance[0][1]).exists() },
-                { assert path(process.out.buffering[0][1]).exists() },
-                { assert path(process.out.translation_genes[0][1]).exists() },
-                { assert path(process.out.intensified[0][1]).exists() },
-                { assert path(process.out.fold_change_plot[0][1]).exists() },
-                { assert path(process.out.pca_ribo[0][1]).exists() },
-                { assert path(process.out.pca_ribo[0][2]).exists() },
-                { assert path(process.out.pca_rna[0][1]).exists() },
-                { assert path(process.out.pca_rna[0][2]).exists() },
-                { assert path(process.out.rdata[0][1]).exists() },
                 { assert path(process.out.session_info[0][1]).getText().contains('DESeq2') },
                 { assert snapshot(
-                    process.out.versions,
-                    file(process.out.translation[0][1]).name,
-                    file(process.out.translated_mrna[0][1]).name,
-                    file(process.out.total_mrna[0][1]).name,
-                    file(process.out.dtegs[0][1]).name,
-                    file(process.out.mrna_abundance[0][1]).name,
-                    file(process.out.translation_genes[0][1]).name,
-                    file(process.out.intensified[0][1]).name,
-                    file(process.out.buffering[0][1]).name,
-                    file(process.out.fold_change_plot[0][1]).name,
-                    file(process.out.pca_ribo[0][1]).name,
-                    file(process.out.pca_ribo[0][2]).name,
-                    file(process.out.pca_rna[0][1]).name,
-                    file(process.out.pca_rna[0][2]).name,
-                    file(process.out.rdata[0][1]).name
+                    sanitizeOutput(
+                        process.out,
+                        unstableKeys: [
+                            "fold_change_plot",
+                            "interaction_p_distribution_plot",
+                            "residual_distribution_summary_plot",
+                            "residual_vs_fitted_plot",
+                            "effect_size_rna_vs_ribo_plot",
+                            "effect_size_volcano_plot",
+                            "pca_ribo",
+                            "pca_rna",
+                            "heatmap",
+                            "rdata",
+                            "session_info"
+                        ]
+                    )
                 ).match() }
             )
         }
