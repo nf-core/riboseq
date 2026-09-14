@@ -31,21 +31,28 @@
 2. Sub-sample FastQ files and auto-infer strandedness ([`fq`](https://github.com/stjude-rust-labs/fq), [`Salmon`](https://combine-lab.github.io/salmon/))
 3. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
 4. UMI extraction ([`UMI-tools`](https://github.com/CGATOxford/UMI-tools))
-5. Adapter and quality trimming ([`Trim Galore!`](https://github.com/FelixKrueger/TrimGalore))
-6. Removal of genome contaminants ([`BBSplit`](http://seqanswers.com/forums/showthread.php?t=41288))
-7. Removal of ribosomal RNA ([`SortMeRNA`](https://github.com/biocore/sortmerna))
-8. Genome alignment of reads, outputting both genome and transcriptome alignments with [`STAR`](https://github.com/alexdobin/STAR)
-9. Sort and index alignments ([`SAMtools`](https://sourceforge.net/projects/samtools/files/samtools/))
-10. UMI-based deduplication ([`UMI-tools`](https://github.com/CGATOxford/UMI-tools))
+5. Adapter and quality trimming (`--trimmer`: [`Trim Galore!`](https://github.com/FelixKrueger/TrimGalore) (default) or [`fastp`](https://github.com/OpenGene/fastp))
+6. (optional, `--equalise_read_lengths`) Hard-trim RNA-seq reads to match the Ribo-seq read-length distribution before alignment-based TE quantification
+7. Removal of genome contaminants ([`BBSplit`](http://seqanswers.com/forums/showthread.php?t=41288))
+8. Removal of ribosomal RNA (`--ribo_removal_tool`: [`SortMeRNA`](https://github.com/biocore/sortmerna) (default), [`Bowtie2`](https://github.com/BenLangmead/bowtie2) or [`RiboDetector`](https://github.com/hzi-bifo/RiboDetector))
+9. Genome alignment of reads, outputting both genome and transcriptome alignments with [`STAR`](https://github.com/alexdobin/STAR); a second alignment against a hybrid canonical + novel-transcript reference when `--extended_orf_analysis` is set with a novel-transcript source
+10. Sort and index alignments ([`SAMtools`](https://sourceforge.net/projects/samtools/files/samtools/))
+11. UMI-based deduplication (`--umi_dedup_tool`: [`UMI-tools`](https://github.com/CGATOxford/UMI-tools) (default) or [`UMICollapse`](https://github.com/Daniel-Liu-c0deb0t/UMICollapse))
+12. (optional, `--skip_coverage_tracks false`) Genome-browser bigWig coverage tracks ([`bedGraphToBigWig`](https://genome.ucsc.edu/goldenPath/help/bigWig.html))
 
 Differences occur in the downstream analysis steps. Currently these specialist steps are:
 
 1. Check reads distribution around annotated protein coding regions on user provided transcripts, show frame bias and estimate P-site offset for different group of reads ([`Ribo-TISH`](https://github.com/zhpn1024/ribotish))
-2. (default, optional) Predict translated open reading frames and/ or translation initiation sites _de novo_ from alignment data ([`Ribo-TISH`](https://github.com/zhpn1024/ribotish))
+2. (default, optional) Predict translated open reading frames and/or translation initiation sites _de novo_ from alignment data ([`Ribo-TISH`](https://github.com/zhpn1024/ribotish))
 3. (opt-in, `--run_ribotricer`) Derive candidate ORFs from reference data and detect translated ORFs from that list ([`Ribotricer`](https://github.com/smithlabcode/ribotricer)). Disabled by default: benchmarking found its ORF-score column is rank-unstable across biological replicates, so it is excluded from the default caller set and from cross-caller rank aggregation when enabled.
 4. (default, optional) Identify translated ORFs using P-site periodicity and read density ([`RiboCode`](https://github.com/zhengtaoxiao/RiboCode))
-5. (default, optional) Derive P-sites and QC from transcriptome alignments ([`riboWaltz`](https://github.com/LabTranslationalArchitectomics/riboWaltz), [`plastid`](https://plastid.readthedocs.io/en/latest/index.html))
-6. (optional) Use a translational efficiency approach to study the dynamics of transcription and translation, with [anota2seq](https://bioconductor.org/packages/release/bioc/html/anota2seq.html). **requires matched RNA-seq and Ribo-seq data**
+5. (opt-in, `--run_price`) Predict ORFs from genome-level alignments with a codon-resolution generative model ([`PRICE`](https://github.com/erhard-lab/gedi)/GEDI)
+6. (opt-in, `--run_rpbp`) Bayesian prediction of translated ORFs from ribosome profiling ([`Rp-Bp`](https://github.com/dieterich-lab/rp-bp))
+7. (optional, `--novel_gtf` or StringTie) Novel-transcript discovery, merging a reference-guided assembly with the canonical annotation into a hybrid GTF used by the genome-coordinate ORF callers ([`StringTie`](https://ccb.jhu.edu/software/stringtie/), [`gffcompare`](https://ccb.jhu.edu/software/stringtie/gffcompare.shtml))
+8. (opt-in, `--extended_orf_analysis`) Build a cross-caller cohort ORF catalogue with smORF peptide collapse and a consensus view across enabled callers ([`MMseqs2`](https://github.com/soedinglab/MMseqs2))
+9. (default, optional) Derive P-sites and QC from transcriptome alignments ([`riboWaltz`](https://github.com/LabTranslationalArchitectomics/riboWaltz), [`plastid`](https://plastid.readthedocs.io/en/latest/index.html)); plastid P-sites also feed the default gene- and ORF-level quantification (`--te_quantification_method plastid_psite`)
+10. (opt-in, `--extended_orf_analysis`) Per-ORF in-frame P-site quantification, emitting an ORF x sample count matrix
+11. (optional) Use a translational efficiency approach to study the dynamics of transcription and translation between matched RNA-seq and Ribo-seq data, at the gene level (`--translational_efficiency_method`: [anota2seq](https://bioconductor.org/packages/release/bioc/html/anota2seq.html) (default) or deltaTE (DESeq2)) and, when an ORF catalogue is built, at the ORF level (adding [DOTSeq](https://bioconductor.org/packages/release/bioc/html/DOTSeq.html)). **requires matched RNA-seq and Ribo-seq data**
 
 ## Usage
 
@@ -61,7 +68,7 @@ sample,fastq_1,fastq_2,strandedness,type
 CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz,forward,riboseq
 ```
 
-Each row represents a fastq file (single-end) or a pair of fastq files (paired end). Each row should have a 'type' value of `riboseq`, `tiseq` or `rnaseq`. Future iterations of the workflow will conduct paired analysis of matched riboseq and rnaseq samples to accomplish analysis types such as 'translational efficiency, but in the current version you should set this to `riboseq` or `tiseq` for reglar Ribo-seq or TI-seq data respectively.
+Each row represents a fastq file (single-end) or a pair of fastq files (paired end). Each row should have a 'type' value of `riboseq`, `tiseq` or `rnaseq`. Set this to `riboseq` or `tiseq` for regular Ribo-seq or TI-seq data respectively; set it to `rnaseq` for matched RNA-seq samples used in the translational efficiency analysis described below.
 
 Now, you can run the pipeline using:
 
@@ -83,10 +90,10 @@ id,variable,reference,target,batch,pair
 treated_vs_control,treatment,control,treated,,pair
 ```
 
-This describes how to compare groups of samples between treament groups, and between RNA-seq and Ribo-seq. In order the columns are:
+This describes how to compare groups of samples between treatment groups, and between RNA-seq and Ribo-seq. In order the columns are:
 
 - `id`: a unique identifier to use for the contrast
-- 'variable`: which vaiable (column) of the sample sheet should be used to separate the treatment groups?
+- `variable`: which variable (column) of the sample sheet should be used to separate the treatment groups?
 - `reference`: which value of the variable column should be used to select samples to be used as the reference/ base group?
 - `target`: which value of the variable column should be used to select samples to be used as the target/treated group?
 - `batch`: (optional) specify a variable in the sample sheet that defines sample batches

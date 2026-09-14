@@ -121,6 +121,9 @@ Special thanks to the following for their contributions to this release:
 | `--min_mapped_reads`      |                                          |
 | `--skip_pseudo_alignment` |                                          |
 | `--skip_alignment`        |                                          |
+| `--hook_url`              |                                          |
+|                           | `--te_quantification_method`             |
+|                           | `--pseudo_aligner`                       |
 |                           | `--kallisto_index`                       |
 |                           | `--kallisto_quant_fraglen`               |
 |                           | `--kallisto_quant_fraglen_sd`            |
@@ -165,18 +168,42 @@ Special thanks to the following for their contributions to this release:
 |                           | `--extra_orf_anota2seq_run_args`         |
 |                           | `--extra_dotseq_args`                    |
 |                           | `--smorf_max_aa`                         |
+|                           | `--skip_orf_collapse`                    |
+|                           | `--orf_min_callers`                      |
+|                           | `--orf_min_samples`                      |
+|                           | `--umitools_dedup_primary_only`          |
 
 ### `Dependencies`
 
 | Dependency         | Old version | New version |
 | ------------------ | ----------- | ----------- |
+| `Nextflow`         | 25.04.8     | 25.10.4     |
 | `MultiQC`          | 1.32        | 1.35        |
 | `nf-schema`        | 2.5.1       | 2.7.2       |
 | `plastid`          |             | 0.6.1       |
 | `bedtools`         |             | 2.31.1      |
-| `bedGraphToBigWig` |             | 469         |
+| `bedGraphToBigWig` |             | 482         |
 | `AGAT`             |             | 1.6.1       |
-| `Trim Galore`      | 2.1.0       | 2.3.0       |
+| `Trim Galore`      | 0.6.10      | 2.3.0       |
+| `bbmap`            | 39.10       | 39.18       |
+| `cutadapt`         | 4.6         | 5.2         |
+| `fastp`            | 1.0.1       | 1.1.0       |
+| `ribotish`         | 0.2.7       | 0.2.8       |
+| `samtools`         | 1.21        | 1.23.1      |
+| `htslib`           | 1.21        | 1.23.1      |
+| `umi_tools`        | 1.1.5       | 1.1.6       |
+| `Bowtie2`          |             | 2.5.4       |
+| `RiboDetector`     |             | 0.3.3       |
+| `RiboCode`         |             | 1.2.15      |
+| `Rp-Bp`            |             | 4.0.1       |
+| `GEDI` (PRICE)     |             | 1.0.6a      |
+| `StringTie`        |             | 2.2.3       |
+| `gffcompare`       |             | 0.12.6      |
+| `MMseqs2`          |             | 18.8cc5c    |
+| `DOTSeq`           |             | 1.0.0       |
+| `DESeq2`           |             | 1.42.0      |
+| `seqkit`           |             | 2.13.0      |
+| `kallisto`         |             | 0.51.1      |
 
 ## v1.2.0 - 2025-12-03
 

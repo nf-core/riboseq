@@ -1,4 +1,6 @@
 #!/usr/bin/awk -f
+# Copyright (c) The nf-core/riboseq team. Distributed under the MIT licence.
+#
 # Convert GTF CDS segments to a BED file of in-frame p-site positions.
 #
 # For each CDS entry in the GTF file, this script calculates the positions

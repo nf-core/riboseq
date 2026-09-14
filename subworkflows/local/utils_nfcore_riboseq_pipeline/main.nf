@@ -199,6 +199,9 @@ def validateInputParameters() {
     if (params.extended_orf_analysis && params.skip_plastid) {
         log.warn "--extended_orf_analysis is enabled but --skip_plastid is true. ORF-level P-site quantification needs the plastid wiggle tracks and will be skipped; the ORF catalogue will still be built."
     }
+    if (params.te_quantification_method == 'plastid_psite' && params.skip_plastid) {
+        log.warn "--te_quantification_method plastid_psite requires plastid P-site tracks, but --skip_plastid is true. Gene-level TE falls back to the alignment-based (Salmon) count matrix instead. Set --skip_plastid false, or choose --te_quantification_method alignment or pseudo explicitly."
+    }
 
     def enabled_caller_count = [
         !params.skip_ribotish, !params.skip_ribocode,

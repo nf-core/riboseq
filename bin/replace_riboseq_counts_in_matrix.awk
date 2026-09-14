@@ -1,4 +1,6 @@
 #!/usr/bin/awk -f
+# Copyright (c) The nf-core/riboseq team. Distributed under the MIT licence.
+#
 # Replace Ribo-seq counts in a count matrix with in-frame p-site counts.
 #
 # The first input file contains the p-site counts as three columns:
