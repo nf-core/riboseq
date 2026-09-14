@@ -5,6 +5,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v2.0.1dev - [unreleased<!-- TODO nf-core: replace with date on release -->]
 
+### `Fixed`
+
+- [#236](https://github.com/nf-core/riboseq/pull/236) - Fix `QUANTIFY_INFRAME_PSITE_PLASTID`'s singularity container URL, which used `==` instead of `:` as the tag separator and 404'd against depot.galaxyproject.org ([@pinin4fjords](https://github.com/pinin4fjords))
+
 ### `Changed`
 
 - Template update for nf-core/tools v4.1.0 ([@nf-core-bot](https://github.com/nf-core-bot), [@pinin4fjords](https://github.com/pinin4fjords))
