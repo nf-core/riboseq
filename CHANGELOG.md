@@ -80,6 +80,7 @@ Special thanks to the following for their contributions to this release:
 - [#230](https://github.com/nf-core/riboseq/pull/230) - Pin `DESEQ2_DELTATE_ORF`'s cpus and raise its wall-clock limit so genome-scale ORF-level deltaTE contrasts complete on their first attempt ([@FelixKrueger](https://github.com/FelixKrueger))
 - [#235](https://github.com/nf-core/riboseq/pull/235) - Post-release-review cleanup: `--skip_gtf_transcript_filter` Elvis-operator bug, `DESEQ2_DELTATE` batch-column flag name, deltaTE contrast subsetting, `orf_count_matrix` zero-fill for zero-P-site samples, `RIBOCODE_METAPLOTS` abort-vs-skip, and two vendored-subworkflow fixes (nf-core/modules#12895, #12896); reverted the temporary CI runner swap ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#236](https://github.com/nf-core/riboseq/pull/236) - Fix `QUANTIFY_INFRAME_PSITE_PLASTID`'s singularity container URL, which used `==` instead of `:` as the tag separator and 404'd against depot.galaxyproject.org ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#237](https://github.com/nf-core/riboseq/pull/237) - Address #234 release-PR review feedback: complete the `CHANGELOG`/`CITATIONS` tables, fix stale `README`/`docs/output.md` content and paths, add the missing `quantify_inframe_psite_plastid` meta.yml, pin `r-base` in the local `deseq2/deltate` environment, warn on `--te_quantification_method plastid_psite` with `--skip_plastid`, and drop implicit `it` from `conf/modules.config` `saveAs` closures ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Removed`
 
