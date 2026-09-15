@@ -26,7 +26,7 @@ workflow QUANTIFY_ORF_PSITE {
 
     main:
 
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     // 1. Expand catalogue to codon-start BED6 (cohort-level, runs once).
     CUSTOM_BED12CODONPOSITIONS ( ch_catalogue_bed )

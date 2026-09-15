@@ -58,7 +58,7 @@ workflow NFCORE_RIBOSEQ {
 
     main:
 
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     //
     // SUBWORKFLOW: Prepare reference genome files
@@ -100,21 +100,21 @@ workflow NFCORE_RIBOSEQ {
         PREPARE_GENOME
             .out
             .fai
-            .map { checkMaxContigSize(it) }
+            .map { fai -> checkMaxContigSize(fai) }
     }
 
     //
     // WORKFLOW: Run nf-core/riboseq workflow
     //
-    ch_samplesheet = Channel.value(file(params.input, checkIfExists: true))
+    ch_samplesheet = channel.value(file(params.input, checkIfExists: true))
     if (params.contrasts){
-        ch_contrasts_file = Channel.value(file(params.contrasts))
+        ch_contrasts_file = channel.value(file(params.contrasts))
     } else {
         ch_contrasts_file = []
     }
 
     // Bowtie2 index for rRNA removal is built on-the-fly within the subworkflow
-    ch_bowtie2_index = Channel.empty()
+    ch_bowtie2_index = channel.empty()
 
     RIBOSEQ (
         ch_samplesheet,

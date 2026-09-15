@@ -24,9 +24,9 @@ include { RIBOCODE_GTFUPDATE                              } from '../../../modul
 include { RIBOCODE_PREPARE                                } from '../../../modules/nf-core/ribocode/prepare'
 include { RIBOCODE_METAPLOTS                              } from '../../../modules/nf-core/ribocode/metaplots'
 include { RIBOCODE_RIBOCODE                               } from '../../../modules/nf-core/ribocode/ribocode'
-include { FASTA_GTF_BAM_RPBP                              } from '../../nf-core/fasta_gtf_bam_rpbp/main'
-include { GEDI_INDEXGENOME                                } from '../../../modules/nf-core/gedi/indexgenome/main'
-include { GEDI_PRICE                                      } from '../../../modules/nf-core/gedi/price/main'
+include { FASTA_GTF_BAM_RPBP                              } from '../../nf-core/fasta_gtf_bam_rpbp'
+include { GEDI_INDEXGENOME                                } from '../../../modules/nf-core/gedi/indexgenome'
+include { GEDI_PRICE                                      } from '../../../modules/nf-core/gedi/price'
 
 workflow ORF_CALLER_DISPATCH {
 
@@ -46,8 +46,8 @@ workflow ORF_CALLER_DISPATCH {
 
     main:
 
-    ch_versions      = Channel.empty()
-    ch_multiqc_files = Channel.empty()
+    ch_versions      = channel.empty()
+    ch_multiqc_files = channel.empty()
 
     // Annotation channels. Canonical for ORF calling / P-site / DTE; the full
     // ch_gtf is reserved for genome-guided alignment elsewhere in the pipeline.
@@ -75,14 +75,14 @@ workflow ORF_CALLER_DISPATCH {
     //
     // Ribo-TISH
     //
-    ch_ribotish_predictions = Channel.empty()
+    ch_ribotish_predictions = channel.empty()
     if (!params.skip_ribotish) {
         RIBOTISH_QUALITY_RIBOSEQ(
             ch_bams_for_analysis,
-            ch_canonical_gtf.map { [ [:], it ] }
+            ch_canonical_gtf.map { gtf -> [ [:], gtf ] }
         )
         ch_versions      = ch_versions.mix(RIBOTISH_QUALITY_RIBOSEQ.out.versions)
-        ch_multiqc_files = ch_multiqc_files.mix(RIBOTISH_QUALITY_RIBOSEQ.out.distribution.collect{it[1]})
+        ch_multiqc_files = ch_multiqc_files.mix(RIBOTISH_QUALITY_RIBOSEQ.out.distribution.collect{ tup -> tup[1] })
 
         ribotish_predict_inputs = ch_bams_for_analysis
             .join(RIBOTISH_QUALITY_RIBOSEQ.out.offset)
@@ -126,7 +126,7 @@ workflow ORF_CALLER_DISPATCH {
     //
     // Ribotricer
     //
-    ch_ribotricer_predictions = Channel.empty()
+    ch_ribotricer_predictions = channel.empty()
     if (params.run_ribotricer) {
         log.warn "Ribotricer is enabled via --run_ribotricer. Its per-ORF scores are unstable across biological replicates, so its binary calls contribute to cross-caller agreement but its scores are excluded from the rank aggregation."
 
@@ -150,7 +150,7 @@ workflow ORF_CALLER_DISPATCH {
     //
     // Rp-Bp
     //
-    ch_rpbp_predictions = Channel.empty()
+    ch_rpbp_predictions = channel.empty()
     if (params.run_rpbp) {
         log.warn "Rp-Bp is enabled via --run_rpbp. Expect roughly 20-24h per replicate at genome-wide scale because the Bayesian MCMC fit dominates; plan compute accordingly. Its score column (Bayes factor) is stable and is retained in the cross-caller rank aggregation."
 
@@ -171,7 +171,7 @@ workflow ORF_CALLER_DISPATCH {
     //
     // PRICE
     //
-    ch_price_predictions = Channel.empty()
+    ch_price_predictions = channel.empty()
     if (params.run_price) {
         log.warn "PRICE is enabled via --run_price. PRICE (Erhard et al. 2018) estimates a shared cohort-level codon-position model via EM and is opt-in because its genome-wide runtime is substantial. Plan compute accordingly."
 
@@ -200,7 +200,7 @@ workflow ORF_CALLER_DISPATCH {
     //
     // RiboCode
     //
-    ch_ribocode_predictions = Channel.empty()
+    ch_ribocode_predictions = channel.empty()
     if (!params.skip_ribocode) {
         // RiboCode requires transcriptome-coordinate BAMs. When extended-ORF
         // analysis is active, swap in the hybrid transcriptome BAM
@@ -225,12 +225,12 @@ workflow ORF_CALLER_DISPATCH {
         // Step 1: Update GTF annotation
         def ribocode_gtf_meta_id = extended_orf_active ? 'hybrid_reference' : 'reference'
         RIBOCODE_GTFUPDATE(
-            ch_ribocode_gtf_source.map { [ [id: ribocode_gtf_meta_id], it ] }
+            ch_ribocode_gtf_source.map { gtf -> [ [id: ribocode_gtf_meta_id], gtf ] }
         )
 
         // Step 2: Prepare annotation files
         RIBOCODE_PREPARE(
-            ch_fasta.map { [ [:], it ] },
+            ch_fasta.map { fasta -> [ [:], fasta ] },
             RIBOCODE_GTFUPDATE.out.gtf
         )
 

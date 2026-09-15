@@ -8,8 +8,8 @@
 //
 
 include { SAMTOOLS_VIEW as SAMTOOLS_VIEW_SPLIT_BY_STRAND } from '../../../modules/nf-core/samtools/view'
-include { BEDTOOLS_GENOMECOV                             } from '../../../modules/nf-core/bedtools/genomecov/main'
-include { UCSC_BEDGRAPHTOBIGWIG                          } from '../../../modules/nf-core/ucsc/bedgraphtobigwig/main'
+include { BEDTOOLS_GENOMECOV                             } from '../../../modules/nf-core/bedtools/genomecov'
+include { UCSC_BEDGRAPHTOBIGWIG                          } from '../../../modules/nf-core/ucsc/bedgraphtobigwig'
 
 // A filter for samtools view which splits alignments by first-of-pair strand,
 // taking into consideration the strandedness of the library. Used by
