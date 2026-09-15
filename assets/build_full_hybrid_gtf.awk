@@ -1,4 +1,5 @@
 #!/usr/bin/awk -f
+# Copyright (c) The nf-core/riboseq team. Distributed under the MIT licence.
 #
 # Build a full-reference + novel transcriptome annotation: every row of the
 # full reference GTF (first file), then the rows of the hybrid GTF (second

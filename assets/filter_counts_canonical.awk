@@ -1,4 +1,6 @@
 #!/usr/bin/awk -f
+# Copyright (c) The nf-core/riboseq team. Distributed under the MIT licence.
+#
 # Filter a gene-keyed counts TSV down to the gene_id set found in a
 # canonical GTF. The header row is preserved; data rows are emitted only
 # when column 1 (gene_id) appears as a `gene` or `transcript` feature in

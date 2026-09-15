@@ -3,7 +3,7 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v2.0.0 - 2026-08-27
+## v2.0.0 - 2026-09-15
 
 ### `Credits`
 
@@ -80,6 +80,7 @@ Special thanks to the following for their contributions to this release:
 - [#230](https://github.com/nf-core/riboseq/pull/230) - Pin `DESEQ2_DELTATE_ORF`'s cpus and raise its wall-clock limit so genome-scale ORF-level deltaTE contrasts complete on their first attempt ([@FelixKrueger](https://github.com/FelixKrueger))
 - [#235](https://github.com/nf-core/riboseq/pull/235) - Post-release-review cleanup: `--skip_gtf_transcript_filter` Elvis-operator bug, `DESEQ2_DELTATE` batch-column flag name, deltaTE contrast subsetting, `orf_count_matrix` zero-fill for zero-P-site samples, `RIBOCODE_METAPLOTS` abort-vs-skip, and two vendored-subworkflow fixes (nf-core/modules#12895, #12896); reverted the temporary CI runner swap ([@pinin4fjords](https://github.com/pinin4fjords))
 - [#236](https://github.com/nf-core/riboseq/pull/236) - Fix `QUANTIFY_INFRAME_PSITE_PLASTID`'s singularity container URL, which used `==` instead of `:` as the tag separator and 404'd against depot.galaxyproject.org ([@pinin4fjords](https://github.com/pinin4fjords))
+- [#237](https://github.com/nf-core/riboseq/pull/237) - Address #234 release-PR review feedback: complete the `CHANGELOG`/`CITATIONS` tables, fix stale `README`/`docs/output.md` content and paths, add the missing `quantify_inframe_psite_plastid` meta.yml, pin `r-base` in the local `deseq2/deltate` environment, warn on `--te_quantification_method plastid_psite` with `--skip_plastid`, and drop implicit `it` from `conf/modules.config` `saveAs` closures ([@pinin4fjords](https://github.com/pinin4fjords))
 
 ### `Removed`
 
@@ -121,6 +122,9 @@ Special thanks to the following for their contributions to this release:
 | `--min_mapped_reads`      |                                          |
 | `--skip_pseudo_alignment` |                                          |
 | `--skip_alignment`        |                                          |
+| `--hook_url`              |                                          |
+|                           | `--te_quantification_method`             |
+|                           | `--pseudo_aligner`                       |
 |                           | `--kallisto_index`                       |
 |                           | `--kallisto_quant_fraglen`               |
 |                           | `--kallisto_quant_fraglen_sd`            |
@@ -165,18 +169,42 @@ Special thanks to the following for their contributions to this release:
 |                           | `--extra_orf_anota2seq_run_args`         |
 |                           | `--extra_dotseq_args`                    |
 |                           | `--smorf_max_aa`                         |
+|                           | `--skip_orf_collapse`                    |
+|                           | `--orf_min_callers`                      |
+|                           | `--orf_min_samples`                      |
+|                           | `--umitools_dedup_primary_only`          |
 
 ### `Dependencies`
 
 | Dependency         | Old version | New version |
 | ------------------ | ----------- | ----------- |
+| `Nextflow`         | 25.04.8     | 25.10.4     |
 | `MultiQC`          | 1.32        | 1.35        |
 | `nf-schema`        | 2.5.1       | 2.7.2       |
 | `plastid`          |             | 0.6.1       |
 | `bedtools`         |             | 2.31.1      |
-| `bedGraphToBigWig` |             | 469         |
+| `bedGraphToBigWig` |             | 482         |
 | `AGAT`             |             | 1.6.1       |
-| `Trim Galore`      | 2.1.0       | 2.3.0       |
+| `Trim Galore`      | 0.6.10      | 2.3.0       |
+| `bbmap`            | 39.10       | 39.18       |
+| `cutadapt`         | 4.6         | 5.2         |
+| `fastp`            | 1.0.1       | 1.1.0       |
+| `ribotish`         | 0.2.7       | 0.2.8       |
+| `samtools`         | 1.21        | 1.23.1      |
+| `htslib`           | 1.21        | 1.23.1      |
+| `umi_tools`        | 1.1.5       | 1.1.6       |
+| `Bowtie2`          |             | 2.5.4       |
+| `RiboDetector`     |             | 0.3.3       |
+| `RiboCode`         |             | 1.2.15      |
+| `Rp-Bp`            |             | 4.0.1       |
+| `GEDI` (PRICE)     |             | 1.0.6a      |
+| `StringTie`        |             | 2.2.3       |
+| `gffcompare`       |             | 0.12.6      |
+| `MMseqs2`          |             | 18.8cc5c    |
+| `DOTSeq`           |             | 1.0.0       |
+| `DESeq2`           |             | 1.42.0      |
+| `seqkit`           |             | 2.13.0      |
+| `kallisto`         |             | 0.51.1      |
 
 ## v1.2.0 - 2025-12-03
 

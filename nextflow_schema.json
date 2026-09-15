@@ -764,6 +764,7 @@
                 "skip_plastid": {
                     "type": "boolean",
                     "description": "Skip plastid.",
+                    "help_text": "Also disables per-ORF P-site quantification, and, when `--te_quantification_method plastid_psite` (the default), makes gene-level TE fall back to the alignment-based (Salmon) count matrix instead.",
                     "fa_icon": "fas fa-fast-forward"
                 },
                 "skip_stringtie": {
