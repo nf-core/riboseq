@@ -1,0 +1,133 @@
+nextflow_process {
+
+    name "Test Process DESEQ2_DELTATE"
+    script "../main.nf"
+    process "DESEQ2_DELTATE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "deseq2"
+    tag "deseq2/deltate"
+
+    test("human - tsv") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'treatment_vs_control' ],
+                    'treatment',
+                    'control',
+                    'treatment'
+                ]
+                input[1] = [
+                    [ id:'test' ],
+                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/samplesheet.csv", checkIfExists: true),
+                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/salmon.merged.gene_counts_length_scaled.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.session_info[0][1]).getText().contains('DESeq2') },
+                { assert snapshot(
+                    sanitizeOutput(
+                        process.out,
+                        unstableKeys: [
+                            "fold_change_plot",
+                            "interaction_p_distribution_plot",
+                            "residual_distribution_summary_plot",
+                            "residual_vs_fitted_plot",
+                            "effect_size_rna_vs_ribo_plot",
+                            "effect_size_volcano_plot",
+                            "pca_ribo",
+                            "pca_rna",
+                            "heatmap",
+                            "rdata",
+                            "session_info"
+                        ]
+                    )
+                ).match() }
+            )
+        }
+    }
+
+    test("human - tsv - with batch column") {
+
+        config "./nextflow_batch_col.config"
+
+        when {
+            process {
+                """
+                def samplesheet_batch = file('samplesheet_batch.csv')
+                samplesheet_batch.text = '"sample","type","treatment","pair"\\n' +
+                    '"SRX11780879","rnaseq","control",1\\n' +
+                    '"SRX11780880","rnaseq","control",2\\n' +
+                    '"SRX11780881","rnaseq","control",1\\n' +
+                    '"SRX11780882","rnaseq","treatment",2\\n' +
+                    '"SRX11780883","rnaseq","treatment",1\\n' +
+                    '"SRX11780884","rnaseq","treatment",2\\n' +
+                    '"SRX11780885","riboseq","control",1\\n' +
+                    '"SRX11780886","riboseq","control",2\\n' +
+                    '"SRX11780887","riboseq","control",1\\n' +
+                    '"SRX11780888","riboseq","treatment",2\\n' +
+                    '"SRX11780889","riboseq","treatment",1\\n' +
+                    '"SRX11780890","riboseq","treatment",2\\n'
+
+                input[0] = [
+                    [ id:'treatment_vs_control' ],
+                    'treatment',
+                    'control',
+                    'treatment'
+                ]
+                input[1] = [
+                    [ id:'test' ],
+                    samplesheet_batch,
+                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/salmon.merged.gene_counts_length_scaled.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.dtegs[0][1]).exists() }
+            )
+        }
+    }
+
+    test("human - tsv - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'treatment_vs_control' ],
+                    'treatment',
+                    'control',
+                    'treatment'
+                ]
+                input[1] = [
+                    [ id:'test' ],
+                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/samplesheet.csv", checkIfExists: true),
+                    file(params.modules_testdata_base_path + "genomics/homo_sapiens/riboseq_expression/salmon.merged.gene_counts_length_scaled.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.versions).match() }
+            )
+        }
+    }
+
+}

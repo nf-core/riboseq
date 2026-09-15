@@ -1,0 +1,54 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "fastq_equalise_read_lengths"
+description: |
+  Equalise RNA-seq read lengths to match Ribo-seq read lengths before quantification.
+  This subworkflow measures Ribo-seq read lengths using seqkit stats, then trims
+  RNA-seq reads to match using TrimGalore's hardtrim5 option. For paired-end RNA-seq,
+  only R1 is retained.
+keywords:
+  - trimming
+  - read length
+  - riboseq
+  - rnaseq
+  - translational efficiency
+components:
+  - seqkit/stats
+  - trimgalore
+input:
+  - ch_reads:
+      type: channel
+      description: |
+        Channel of reads with sample metadata including sample_type (riboseq/rnaseq),
+        optional pair identifier, and optional trim_length.
+        Structure: [ val(meta), [ path(reads) ] ]
+  - equalise_read_lengths_target:
+      type: integer
+      description: |
+        Global target read length in bp. Used as fallback when RNA-seq samples
+        have no paired Ribo-seq sample and no per-sample trim_length specified.
+output:
+  - reads:
+      type: channel
+      description: |
+        Channel of processed reads. RNA-seq samples are trimmed to match Ribo-seq
+        lengths and converted to single-end. Ribo-seq and other samples pass through unchanged.
+        Structure: [ val(meta), [ path(reads) ] ]
+  - riboseq_stats:
+      type: channel
+      description: |
+        Seqkit stats output for Ribo-seq samples containing read length statistics.
+        Structure: [ val(meta), path(stats) ]
+  - trim_log:
+      type: channel
+      description: |
+        TrimGalore log files for trimmed RNA-seq samples.
+        Structure: [ val(meta), path(log) ]
+  - versions:
+      type: channel
+      description: |
+        File containing software versions.
+        Structure: [ path(versions.yml) ]
+authors:
+  - "@pinin4fjords"
+maintainers:
+  - "@pinin4fjords"

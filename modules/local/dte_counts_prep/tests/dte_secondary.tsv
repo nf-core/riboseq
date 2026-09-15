@@ -1,0 +1,5 @@
+gene_id	gene_name	ribo1	rna1	rna2
+geneX	GX	99	100	200
+geneY	GY	99	30	40
+geneH	GH	0	1000	2000
+geneL	GL	0	1	2
