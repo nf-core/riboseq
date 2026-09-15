@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Changed`
 
+- [#240](https://github.com/nf-core/riboseq/pull/240) - Bump pipeline version to 2.1.0dev ([@pinin4fjords](https://github.com/pinin4fjords))
+
 ### `Fixed`
 
 ### `Dependencies`
