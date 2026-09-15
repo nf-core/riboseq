@@ -53,17 +53,17 @@ workflow EXTENDED_ORF_SECOND_PASS_ALIGN {
 
     FASTQ_ALIGN_STAR_HYBRID(
         ch_reads_for_hybrid_alignment,
-        ch_hybrid_star_index.map { [ [:], it ] },
-        ch_hybrid_gtf.map { [ [:], it ] },
+        ch_hybrid_star_index.map { index -> [ [:], index ] },
+        ch_hybrid_gtf.map { gtf -> [ [:], gtf ] },
         star_ignore_sjdbgtf,
-        ch_fasta.map { [ [:], it, [] ] },
-        ch_hybrid_transcriptome_fasta.map { [ [:], it, [] ] }
+        ch_fasta.map { fasta -> [ [:], fasta, [] ] },
+        ch_hybrid_transcriptome_fasta.map { fasta -> [ [:], fasta, [] ] }
     )
 
-    ch_multiqc_files = FASTQ_ALIGN_STAR_HYBRID.out.stats.collect{it[1]}
-        .mix(FASTQ_ALIGN_STAR_HYBRID.out.flagstat.collect{it[1]})
-        .mix(FASTQ_ALIGN_STAR_HYBRID.out.idxstats.collect{it[1]})
-        .mix(FASTQ_ALIGN_STAR_HYBRID.out.log_final.collect{it[1]})
+    ch_multiqc_files = FASTQ_ALIGN_STAR_HYBRID.out.stats.collect{ tup -> tup[1] }
+        .mix(FASTQ_ALIGN_STAR_HYBRID.out.flagstat.collect{ tup -> tup[1] })
+        .mix(FASTQ_ALIGN_STAR_HYBRID.out.idxstats.collect{ tup -> tup[1] })
+        .mix(FASTQ_ALIGN_STAR_HYBRID.out.log_final.collect{ tup -> tup[1] })
 
     emit:
     transcriptome_bam = FASTQ_ALIGN_STAR_HYBRID.out.orig_bam_transcript // [ meta, bam ]

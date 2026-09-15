@@ -65,18 +65,18 @@ workflow FASTQ_EQUALISE_READ_LENGTHS {
     // Only run seqkit stats if there are samples that need pairing
     // Filter riboseq samples to only those with pair values that match rnaseq samples needing pairing
     ch_rnaseq_pairs_needed = ch_rnaseq_first_pass.needs_pairing
-        .filter { meta, reads -> meta.pair != null }
-        .map { meta, reads -> meta.pair }
+        .filter { meta, _reads -> meta.pair != null }
+        .map { meta, _reads -> meta.pair }
         .collect()
         .map { pairs_list -> [pairs_list] }  // Wrap in list to prevent spreading in combine
         .ifEmpty([[]])
 
     ch_riboseq_to_stats = ch_reads_by_type.riboseq
         .combine(ch_rnaseq_pairs_needed)
-        .filter { meta, reads, pairs_needed ->
+        .filter { meta, _reads, pairs_needed ->
             meta.pair != null && pairs_needed.contains(meta.pair)
         }
-        .map { meta, reads, pairs_needed -> [ meta, reads ] }
+        .map { meta, reads, _pairs_needed -> [ meta, reads ] }
 
     // Run seqkit stats only on riboseq samples that have matching rnaseq pairs needing length
     SEQKIT_STATS(ch_riboseq_to_stats)
@@ -89,7 +89,7 @@ workflow FASTQ_EQUALISE_READ_LENGTHS {
             if (lines.size() > 1) {
                 def header = lines[0].split('\t')
                 def values = lines[1].split('\t')
-                def avg_len_idx = header.findIndexOf { it == 'avg_len' }
+                def avg_len_idx = header.findIndexOf { col -> col == 'avg_len' }
                 def avg_len = avg_len_idx >= 0 ? Math.round(values[avg_len_idx].toFloat()) : null
                 return [ meta.pair, meta_trim_len ?: avg_len ]
             }
@@ -100,7 +100,7 @@ workflow FASTQ_EQUALISE_READ_LENGTHS {
     ch_rnaseq_from_pairing = ch_rnaseq_first_pass.needs_pairing
         .map { meta, reads -> [ meta.pair ?: 'NO_PAIR', meta, reads ] }
         .join(ch_riboseq_lengths, by: 0, remainder: true)
-        .map { pair, meta, reads, riboseq_trim_len ->
+        .map { _pair, meta, reads, riboseq_trim_len ->
             if (riboseq_trim_len == null) {
                 error "RNA-seq sample '${meta.id}' (pair: ${meta.pair ?: 'none'}) has no matching Ribo-seq sample and no --equalise_read_lengths_target specified"
             }

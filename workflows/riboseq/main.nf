@@ -84,7 +84,7 @@ workflow RIBOSEQ {
     ch_gtf              // channel: path(genome.gtf)              - full multi-isoform, used for genome-guided alignment
     ch_canonical_gtf    // channel: path(canonical.gtf)           - one-transcript-per-gene backbone for genome-coordinate ORF calling (Ribo-TISH, Ribotricer), plastid P-site quantification, DTE
     ch_fai              // channel: path(genome.fai)
-    ch_chrom_sizes      // channel: path(genome.sizes)
+    _ch_chrom_sizes     // channel: path(genome.sizes) - unused; kept for positional signature symmetry with PREPARE_GENOME.out
     ch_transcript_fasta // channel: path(transcript.fasta)
     ch_star_index       // channel: path(star/index/)
     ch_salmon_index       // channel: path(salmon/index/)
@@ -138,8 +138,8 @@ workflow RIBOSEQ {
                 }
         }
         .groupTuple()
-        .map {
-            validateInputSamplesheet(it, params.with_umi)
+        .map { row ->
+            validateInputSamplesheet(row, params.with_umi)
         }
         .set { ch_fastq }
 
@@ -274,7 +274,7 @@ workflow RIBOSEQ {
             params.equalise_read_lengths_target
         )
         ch_reads_for_alignment = FASTQ_EQUALISE_READ_LENGTHS.out.reads
-        ch_multiqc_files = ch_multiqc_files.mix(FASTQ_EQUALISE_READ_LENGTHS.out.riboseq_stats.collect{it[1]})
+        ch_multiqc_files = ch_multiqc_files.mix(FASTQ_EQUALISE_READ_LENGTHS.out.riboseq_stats.collect{ tup -> tup[1] })
     }
 
     //
@@ -283,12 +283,12 @@ workflow RIBOSEQ {
     //
 
     ch_fasta_fai            = ch_fasta.combine(ch_fai).map { fasta, fai -> [ [:], fasta, fai ] }.first()
-    ch_transcript_fasta_fai = ch_transcript_fasta.map { [ [:], it, [] ] }
+    ch_transcript_fasta_fai = ch_transcript_fasta.map { fasta -> [ [:], fasta, [] ] }
 
     FASTQ_ALIGN_STAR(
         ch_reads_for_alignment,
-        ch_star_index.map { [ [:], it ] },
-        ch_gtf.map { [ [:], it ] },
+        ch_star_index.map { index -> [ [:], index ] },
+        ch_gtf.map { gtf -> [ [:], gtf ] },
         params.star_ignore_sjdbgtf,
         ch_fasta_fai,
         ch_transcript_fasta_fai
@@ -297,7 +297,6 @@ workflow RIBOSEQ {
     ch_genome_bam              = FASTQ_ALIGN_STAR.out.bam
     ch_genome_bam_index        = FASTQ_ALIGN_STAR.out.index
     ch_transcriptome_bam       = FASTQ_ALIGN_STAR.out.orig_bam_transcript
-    ch_transcriptome_bai       = FASTQ_ALIGN_STAR.out.index_transcript
 
     ch_multiqc_files = ch_multiqc_files
         .mix(FASTQ_ALIGN_STAR.out.stats
@@ -309,7 +308,7 @@ workflow RIBOSEQ {
         .mix(FASTQ_ALIGN_STAR.out.idxstats
             .filter { meta, _file -> !umi_sample_ids.contains(meta.id) }
             .collect { _meta, file -> file })
-        .mix(FASTQ_ALIGN_STAR.out.log_final.collect{it[1]})
+        .mix(FASTQ_ALIGN_STAR.out.log_final.collect{ tup -> tup[1] })
 
     //
     // SUBWORKFLOW: Remove duplicate reads from BAM file based on UMIs
@@ -459,7 +458,7 @@ workflow RIBOSEQ {
                 params.umi_dedup_tool,
                 params.umitools_dedup_stats,
                 EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcriptome_bam.filter { meta, _bam -> umi_sample_ids.contains(meta.id) },
-                EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcript_fasta.map { [ [:], it, [] ] },
+                EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcript_fasta.map { fasta -> [ [:], fasta, [] ] },
                 params.umitools_dedup_primary_only
             )
             ch_hybrid_transcriptome_bam = BAM_DEDUP_UMI_HYBRID.out.transcriptome_bam
@@ -536,7 +535,7 @@ workflow RIBOSEQ {
             ch_full_hybrid_gtf.map { gtf   -> [ [id: 'reference'], gtf   ] },
             !params.skip_orf_collapse
         )
-        ch_multiqc_files = ch_multiqc_files.mix(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.multiqc.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(ORFTABLE_FASTA_GTF_BUILDORFCATALOGUE.out.multiqc.collect{ tup -> tup[1] }.ifEmpty([]))
     }
 
     //
@@ -558,20 +557,20 @@ workflow RIBOSEQ {
     if (!params.skip_ribowaltz) {
         RIBOWALTZ(
             ch_transcriptome_bam_by_type.riboseq,
-            ch_gtf.map { [ [:], it ] },
-            ch_fasta.map { [ [:], it ] })
+            ch_gtf.map { gtf -> [ [:], gtf ] },
+            ch_fasta.map { fasta -> [ [:], fasta ] })
 
         ch_versions = ch_versions.mix(RIBOWALTZ.out.versions)
-        ch_multiqc_files = ch_multiqc_files.mix(RIBOWALTZ.out.ribowaltz_qc_data.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(RIBOWALTZ.out.ribowaltz_qc_data.collect{ tup -> tup[1] }.ifEmpty([]))
     }
 
     // ORF-level count matrix; populated below when extended ORF analysis is
     // active and plastid is enabled. Consumed by the downstream DTE step.
-    ch_orf_count_matrix = Channel.empty()
+    ch_orf_count_matrix = channel.empty()
 
     if (!params.skip_plastid) {
 
-        PLASTID_METAGENE_GENERATE(ch_canonical_gtf.map { [ [:], it ] })
+        PLASTID_METAGENE_GENERATE(ch_canonical_gtf.map { gtf -> [ [:], gtf ] })
         ch_versions = ch_versions.mix(PLASTID_METAGENE_GENERATE.out.versions)
 
         PLASTID_PSITE(
@@ -613,7 +612,7 @@ workflow RIBOSEQ {
     // Salmon transcriptome quantification uses the full GTF: tx2gene must match
     // the transcript fasta the Salmon index was built against.
     QUANTIFY_STAR_SALMON (
-        ch_samplesheet.map { [ [:], it ] },
+        ch_samplesheet.map { ss -> [ [:], ss ] },
         ch_transcriptome_bam,
         [],
         ch_transcript_fasta,
@@ -627,7 +626,7 @@ workflow RIBOSEQ {
         null,
         false
     )
-    ch_multiqc_files = ch_multiqc_files.mix(QUANTIFY_STAR_SALMON.out.multiqc.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(QUANTIFY_STAR_SALMON.out.multiqc.collect{ tup -> tup[1] }.ifEmpty([]))
 
     //
     // SUBWORKFLOW: Pseudo-alignment quantification for TE analysis (when enabled)
@@ -639,12 +638,12 @@ workflow RIBOSEQ {
     if (params.te_quantification_method == 'pseudo' && ch_contrasts_file) {
         // Filter reads to only riboseq and rnaseq for TE pseudo-alignment
         ch_reads_for_te = ch_reads_for_alignment
-            .filter { meta, reads -> meta.sample_type in ['riboseq', 'rnaseq'] }
+            .filter { meta, _reads -> meta.sample_type in ['riboseq', 'rnaseq'] }
 
         def ch_pseudo_index_te = params.pseudo_aligner == 'kallisto' ? ch_kallisto_index_te : ch_salmon_index
 
         QUANTIFY_PSEUDO_TE (
-            ch_samplesheet.map { [ [:], it ] },
+            ch_samplesheet.map { ss -> [ [:], ss ] },
             ch_reads_for_te,
             ch_pseudo_index_te,
             ch_transcript_fasta,
@@ -658,7 +657,7 @@ workflow RIBOSEQ {
             params.kallisto_quant_fraglen_sd,
             false
         )
-        ch_multiqc_files = ch_multiqc_files.mix(QUANTIFY_PSEUDO_TE.out.multiqc.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(QUANTIFY_PSEUDO_TE.out.multiqc.collect{ tup -> tup[1] }.ifEmpty([]))
         ch_te_counts = QUANTIFY_PSEUDO_TE.out.counts_gene_length_scaled
     }
 
@@ -683,12 +682,12 @@ workflow RIBOSEQ {
 
         // Merge per-sample p-site counts into a single file
         ch_psite_counts_merged = QUANTIFY_INFRAME_PSITE_PLASTID.out.counts
-            .collectFile(name: 'gene_inframe_psite_counts.tsv') { meta, file -> file }
+            .collectFile(name: 'gene_inframe_psite_counts.tsv') { _meta, file -> file }
             .map { file -> [ [:], file ] }
 
         REPLACE_RIBOSEQ_COUNTS_IN_MATRIX(
             ch_psite_counts_merged
-                .combine(QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled.map{ meta, counts -> counts })
+                .combine(QUANTIFY_STAR_SALMON.out.counts_gene_length_scaled.map{ _meta, counts -> counts })
                 .map { meta, psite_counts, salmon_counts -> [meta, [psite_counts, salmon_counts]] },
             file("${projectDir}/bin/replace_riboseq_counts_in_matrix.awk"),
             false
@@ -719,11 +718,11 @@ workflow RIBOSEQ {
 
         ch_contrasts = ch_contrasts_file
             .splitCsv ( header:true, sep:',' )
-            .map{[it, it.variable, it.reference, it.target]}
+            .map{ row -> [row, row.variable, row.reference, row.target]}
 
         ch_samplesheet_matrix = ch_te_counts
             .combine(ch_samplesheet)
-            .map{[it[0], it[2], it[1]]}
+            .map{ tup -> [tup[0], tup[2], tup[1]]}
             .first()
 
         // --translational_efficiency_method accepts a comma-separated list; each
@@ -768,10 +767,10 @@ workflow RIBOSEQ {
                 FASTQ_ALIGN_STAR_FULL_HYBRID(
                     ch_rnaseq_reads,
                     STAR_GENOMEGENERATE_FULL_HYBRID.out.index.map { _meta, index -> [ [:], index ] }.first(),
-                    ch_full_hybrid_gtf.map { [ [:], it ] },
+                    ch_full_hybrid_gtf.map { gtf -> [ [:], gtf ] },
                     params.star_ignore_sjdbgtf,
                     ch_fasta_fai,
-                    ch_full_hybrid_transcript_fasta.map { [ [:], it, [] ] }
+                    ch_full_hybrid_transcript_fasta.map { fasta -> [ [:], fasta, [] ] }
                 )
 
                 ch_full_hybrid_transcriptome_bam = FASTQ_ALIGN_STAR_FULL_HYBRID.out.orig_bam_transcript
@@ -788,7 +787,7 @@ workflow RIBOSEQ {
                         params.umi_dedup_tool,
                         params.umitools_dedup_stats,
                         FASTQ_ALIGN_STAR_FULL_HYBRID.out.orig_bam_transcript.filter { meta, _bam -> umi_sample_ids.contains(meta.id) },
-                        ch_full_hybrid_transcript_fasta.map { [ [:], it, [] ] },
+                        ch_full_hybrid_transcript_fasta.map { fasta -> [ [:], fasta, [] ] },
                         params.umitools_dedup_primary_only
                     )
                     ch_full_hybrid_transcriptome_bam = BAM_DEDUP_UMI_HYBRID_RNA.out.transcriptome_bam
@@ -796,7 +795,7 @@ workflow RIBOSEQ {
                 }
 
                 QUANTIFY_HYBRID_RNA(
-                    ch_samplesheet.map { [ [:], it ] },
+                    ch_samplesheet.map { ss -> [ [:], ss ] },
                     ch_full_hybrid_transcriptome_bam,
                     [],
                     ch_full_hybrid_transcript_fasta,
@@ -880,7 +879,7 @@ workflow RIBOSEQ {
             "${process}:\n${tool_versions.join('\n')}"
         }
 
-    ch_versions = ch_versions.filter{it != null}
+    ch_versions = ch_versions.filter{ v -> v != null}
 
     softwareVersionsToYAML(ch_versions.mix(topic_versions.versions_file))
         .mix(topic_versions_string)

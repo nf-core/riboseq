@@ -12,7 +12,7 @@
 //
 
 include { BAM_STRINGTIE_MERGE        } from '../../nf-core/bam_stringtie_merge'
-include { GTF_HYBRIDMERGE_GFFCOMPARE } from '../../nf-core/gtf_hybridmerge_gffcompare/main'
+include { GTF_HYBRIDMERGE_GFFCOMPARE } from '../../nf-core/gtf_hybridmerge_gffcompare'
 
 workflow NOVEL_TRANSCRIPT_DISCOVERY {
 
@@ -28,10 +28,10 @@ workflow NOVEL_TRANSCRIPT_DISCOVERY {
 
     main:
 
-    ch_novel_pre_filter = Channel.empty()
+    ch_novel_pre_filter = channel.empty()
 
     if (user_novel_gtf) {
-        ch_novel_pre_filter = Channel
+        ch_novel_pre_filter = channel
             .fromPath(user_novel_gtf, checkIfExists: true)
             .combine(ch_strandedness)
             .map { gtf, strand -> [ [id: 'novel_gtf', strandedness: strand], gtf ] }
@@ -56,8 +56,8 @@ workflow NOVEL_TRANSCRIPT_DISCOVERY {
     // (optional) bedtools intersect + gawk concat.
     //
     ch_blacklist_bed = rrna_blacklist
-        ? Channel.fromPath(rrna_blacklist, checkIfExists: true).map { bed -> [ [id: 'rrna_blacklist'], bed ] }
-        : Channel.empty()
+        ? channel.fromPath(rrna_blacklist, checkIfExists: true).map { bed -> [ [id: 'rrna_blacklist'], bed ] }
+        : channel.empty()
 
     if (!rrna_blacklist) {
         log.info "No rRNA/repeat blacklist supplied via --rrna_blacklist; skipping post-assembly blacklist intersect."
@@ -67,7 +67,7 @@ workflow NOVEL_TRANSCRIPT_DISCOVERY {
         ch_novel_pre_filter,
         ch_gtf.map { gtf -> [ [:], gtf ] },
         ch_canonical_gtf.map { gtf -> [ [id: 'hybrid_reference'], gtf ] },
-        Channel.value(gffcompare_class_codes),
+        channel.value(gffcompare_class_codes),
         ch_blacklist_bed
     )
 
