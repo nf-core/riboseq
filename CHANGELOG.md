@@ -3,6 +3,20 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.1.0 - xxxx-xx-xx
+
+### `Added`
+
+### `Changed`
+
+- [#240](https://github.com/nf-core/riboseq/pull/240) - Bump pipeline version to 2.1.0dev ([@pinin4fjords](https://github.com/pinin4fjords))
+
+### `Fixed`
+
+### `Dependencies`
+
+### `Deprecated`
+
 ## v2.0.0 - 2026-09-15
 
 ### `Credits`
