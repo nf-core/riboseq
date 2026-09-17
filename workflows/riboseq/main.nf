@@ -400,10 +400,14 @@ workflow RIBOSEQ {
 
     //
     // Extended ORF discovery: second STAR pass against a hybrid transcriptome.
-    // RiboCode requires a transcriptome-coordinate BAM keyed to
-    // whichever transcriptome FASTA was used at alignment time. To bring novel
-    // intergenic transcripts into RiboCode, we rebuild the transcriptome FASTA
-    // from the hybrid GTF and re-align Ribo-seq reads against it.
+    // RiboCode requires a transcriptome-coordinate BAM keyed to whichever
+    // transcriptome FASTA was used at alignment time, so we rebuild the
+    // transcriptome FASTA from the hybrid GTF and re-align Ribo-seq reads
+    // against it. The same hybrid genome BAM also feeds the genome-BAM ORF
+    // callers (Ribo-TISH, Ribotricer, Rp-Bp, PRICE): a splice junction unique
+    // to a novel transcript is absent from the primary alignment's
+    // splice-junction database, so reads spanning it can be missed or
+    // misplaced there.
     //
     // Compute cost: roughly doubles STAR alignment work for Ribo-seq samples.
     // The hybrid transcriptome FASTA and hybrid STAR index are each built once
@@ -429,6 +433,7 @@ workflow RIBOSEQ {
     def orf_catalogue_active = (params.extended_orf_analysis && enabled_orf_callers) as boolean
 
     ch_hybrid_transcriptome_bam = channel.empty()
+    ch_hybrid_genome_bam        = channel.empty()
 
     if (extended_orf_active) {
         EXTENDED_ORF_SECOND_PASS_ALIGN(
@@ -439,16 +444,18 @@ workflow RIBOSEQ {
         )
 
         ch_hybrid_transcriptome_bam = EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcriptome_bam
+        ch_hybrid_genome_bam        = EXTENDED_ORF_SECOND_PASS_ALIGN.out.genome_bam
+            .join(EXTENDED_ORF_SECOND_PASS_ALIGN.out.genome_bai, by: [0])
         ch_multiqc_files            = ch_multiqc_files.mix(EXTENDED_ORF_SECOND_PASS_ALIGN.out.multiqc_files)
 
-        // Deduplicate the hybrid transcriptome BAM with the same UMI subworkflow
-        // the primary path uses, so RiboCode sees unique molecules rather than
-        // PCR duplicates on both annotations. Only the transcriptome BAM is
-        // consumed downstream; the genome dedup is run to keep accounting
-        // identical to the primary path.
+        // Deduplicate the hybrid transcriptome and genome BAMs with the same
+        // UMI subworkflow the primary path uses, so RiboCode and the
+        // genome-BAM callers see unique molecules on the hybrid annotation too.
         if (umi_sample_ids) {
             ch_hybrid_transcriptome_bam_without_umi = EXTENDED_ORF_SECOND_PASS_ALIGN.out.transcriptome_bam
                 .filter { meta, _bam -> !umi_sample_ids.contains(meta.id) }
+            ch_hybrid_genome_bam_without_umi = ch_hybrid_genome_bam
+                .filter { meta, _bam, _bai -> !umi_sample_ids.contains(meta.id) }
 
             BAM_DEDUP_UMI_HYBRID(
                 EXTENDED_ORF_SECOND_PASS_ALIGN.out.genome_bam
@@ -463,6 +470,9 @@ workflow RIBOSEQ {
             )
             ch_hybrid_transcriptome_bam = BAM_DEDUP_UMI_HYBRID.out.transcriptome_bam
                 .mix(ch_hybrid_transcriptome_bam_without_umi)
+            ch_hybrid_genome_bam = BAM_DEDUP_UMI_HYBRID.out.bam
+                .join(BAM_DEDUP_UMI_HYBRID.out.index, by: [0])
+                .mix(ch_hybrid_genome_bam_without_umi)
         }
     }
 
@@ -486,6 +496,14 @@ workflow RIBOSEQ {
 
     ch_bams_for_analysis = ch_genome_bam_by_type.riboseq.join(ch_genome_bam_index)
 
+    // ORF calling reads the hybrid-aligned genome BAM in extended mode so
+    // novel-transcript splice junctions missing from the primary alignment's
+    // splice-junction database are captured. P-site quantification against
+    // the canonical annotation keeps using the primary alignment.
+    ch_bams_for_orf_calling = extended_orf_active ?
+        ch_hybrid_genome_bam :
+        ch_bams_for_analysis
+
     // Full reference with the novel transcripts appended: a superset of every
     // annotation the ORF callers are given, the annotation Rp-Bp and PRICE run
     // against directly, and the reference the ORF-level DTE RNA denominator is
@@ -501,7 +519,7 @@ workflow RIBOSEQ {
     }
 
     ORF_CALLER_DISPATCH(
-        ch_bams_for_analysis,
+        ch_bams_for_orf_calling,
         ch_transcriptome_bam,
         ch_hybrid_transcriptome_bam,
         ch_fasta,
