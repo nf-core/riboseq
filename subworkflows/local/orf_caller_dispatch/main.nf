@@ -1,12 +1,13 @@
 //
 // Conditional ORF-caller dispatch for the riboseq pipeline.
 //
-// Runs each enabled caller against the appropriate annotation: when extended
-// ORF analysis is active, genome-BAM callers (Ribo-TISH
-// predict, Ribotricer, Rp-Bp, PRICE) receive the hybrid GTF and RiboCode
-// receives the hybrid transcriptome BAM + hybrid GTF. Otherwise everything
-// stays on the canonical backbone. Ribo-TISH additionally takes the canonical
-// backbone via -a for background + classification.
+// Runs each enabled caller against the appropriate reference: when extended
+// ORF analysis is active, genome-BAM callers (Ribo-TISH predict, Ribotricer,
+// Rp-Bp, PRICE) receive the hybrid-aligned genome BAM plus the hybrid GTF,
+// and RiboCode receives the hybrid transcriptome BAM plus the hybrid GTF.
+// Otherwise everything stays on the canonical backbone. Ribo-TISH
+// additionally takes the canonical backbone via -a for background +
+// classification.
 //
 // Per-caller gating (params.skip_ribotish / params.run_*) lives here; the
 // downstream catalogue gating still lives at the call site.
@@ -31,7 +32,7 @@ include { GEDI_PRICE                                      } from '../../../modul
 workflow ORF_CALLER_DISPATCH {
 
     take:
-    ch_bams_for_analysis     // channel: [ val(meta), path(bam), path(bai) ] - riboseq genome BAMs
+    ch_bams_for_analysis     // channel: [ val(meta), path(bam), path(bai) ] - riboseq genome BAMs; hybrid-aligned when extended_orf_active, primary otherwise
     ch_transcriptome_bam     // channel: [ val(meta), path(bam) ] - all sample types, canonical transcriptome
     ch_hybrid_transcriptome_bam // channel: [ val(meta), path(bam) ] - riboseq only, hybrid transcriptome (or empty)
     // The four reference channels below must be value channels: they are paired with the per-sample
