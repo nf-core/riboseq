@@ -1,0 +1,77 @@
+nextflow_process {
+
+    name "Test Process DTE_COUNTS_PREP"
+    script "../main.nf"
+    process "DTE_COUNTS_PREP"
+
+    tag "modules"
+    tag "modules_local"
+    tag "dte_counts_prep"
+
+    test("stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'cohort' ],
+                    file('orf_psite_counts.tsv'),
+                    file('gene_counts.tsv'),
+                    file('orf_to_gene.tsv'),
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    test("join replicates the host gene RNA across its ORFs and drops unmatched ORFs") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'cohort' ],
+                    file("\${projectDir}/modules/local/dte_counts_prep/tests/dte_primary.tsv", checkIfExists: true),
+                    file("\${projectDir}/modules/local/dte_counts_prep/tests/dte_secondary.tsv", checkIfExists: true),
+                    file("\${projectDir}/modules/local/dte_counts_prep/tests/dte_mapping.tsv", checkIfExists: true),
+                ]
+                """
+            }
+        }
+
+        then {
+            def lines = path(process.out.counts[0][1]).readLines()
+            assertAll(
+                { assert process.success },
+                // Column order is primary (Ribo) then surviving secondary (RNA); the
+                // secondary `gene_name` label column and the `ribo1` column that
+                // overlaps the primary sample set are both dropped.
+                { assert lines[0] == 'orf_id\tribo1\tribo2\trna1\trna2' },
+                // orfA and orfB both map to geneX, so geneX's RNA counts (100, 200)
+                // are replicated onto both ORF rows.
+                { assert lines.contains('orfA\t10\t20\t100\t200') },
+                { assert lines.contains('orfB\t5\t7\t100\t200') },
+                // orfC maps to geneY and geneW; geneW is absent from the RNA matrix,
+                // so geneY (30, 40) is used.
+                { assert lines.contains('orfC\t3\t4\t30\t40') },
+                // orfG maps to geneL then geneH, both present; the higher-total-count
+                // gene (geneH, 3000 > geneL, 3) is chosen over file order.
+                { assert lines.contains('orfG\t6\t7\t1000\t2000') },
+                // orfD maps only to geneZ (absent from the RNA matrix) and orfF has
+                // no mapping row, so both are dropped: header + 4 kept ORFs.
+                { assert lines.size() == 5 },
+                { assert !lines.any { it.startsWith('orfD\t') } },
+                { assert !lines.any { it.startsWith('orfF\t') } }
+            )
+        }
+    }
+}

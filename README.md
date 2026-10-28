@@ -7,7 +7,7 @@
 
 [![Open in GitHub Codespaces](https://img.shields.io/badge/Open_In_GitHub_Codespaces-black?labelColor=grey&logo=github)](https://github.com/codespaces/new/nf-core/riboseq)
 [![GitHub Actions CI Status](https://github.com/nf-core/riboseq/actions/workflows/nf-test.yml/badge.svg)](https://github.com/nf-core/riboseq/actions/workflows/nf-test.yml)
-[![GitHub Actions Linting Status](https://github.com/nf-core/riboseq/actions/workflows/linting.yml/badge.svg)](https://github.com/nf-core/riboseq/actions/workflows/linting.yml)[![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/riboseq/results)[![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.XXXXXXX)
+[![GitHub Actions Linting Status](https://github.com/nf-core/riboseq/actions/workflows/linting.yml/badge.svg)](https://github.com/nf-core/riboseq/actions/workflows/linting.yml)[![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/riboseq/results)[![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.10966364-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.10966364)
 [![nf-test](https://img.shields.io/badge/unit_tests-nf--test-337ab7.svg)](https://www.nf-test.com)
 
 [![Nextflow](https://img.shields.io/badge/version-%E2%89%A525.10.4-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)](https://www.nextflow.io/)
@@ -21,42 +21,56 @@
 
 ## Introduction
 
-**nf-core/riboseq** is a bioinformatics pipeline that ...
+**nf-core/riboseq** is a bioinformatics pipeline for analysis of Ribo-seq data. It borrows heavily from nf-core/rnaseq in the preprocessing stages:
 
-<!-- TODO nf-core:
-   Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a brief overview of the
-   major pipeline sections and the types of output it produces. You're giving an overview to someone new
-   to nf-core here, in 15-20 seconds. For an example, see https://github.com/nf-core/rnaseq/blob/master/README.md#introduction
--->
+![nf-core/riboseq metro map](docs/images/nf-core-riboseq_metro_map_animated.svg)
 
-<!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
-     workflows use the "tube map" design for that. See https://nf-co.re/docs/community/brand/workflow-schematics#examples for examples.   -->
-<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+> In case the image above is not loading, please have a look at the [static version](docs/images/nf-core-riboseq_metro_map.png).
+
+1. Merge re-sequenced FastQ files ([`cat`](http://www.linfo.org/cat.html))
+2. Sub-sample FastQ files and auto-infer strandedness ([`fq`](https://github.com/stjude-rust-labs/fq), [`Salmon`](https://combine-lab.github.io/salmon/))
+3. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
+4. UMI extraction ([`UMI-tools`](https://github.com/CGATOxford/UMI-tools))
+5. Adapter and quality trimming (`--trimmer`: [`Trim Galore!`](https://github.com/FelixKrueger/TrimGalore) (default) or [`fastp`](https://github.com/OpenGene/fastp))
+6. (optional, `--equalise_read_lengths`) Hard-trim RNA-seq reads to match the Ribo-seq read-length distribution before alignment-based TE quantification
+7. Removal of genome contaminants ([`BBSplit`](http://seqanswers.com/forums/showthread.php?t=41288))
+8. Removal of ribosomal RNA (`--ribo_removal_tool`: [`SortMeRNA`](https://github.com/biocore/sortmerna) (default), [`Bowtie2`](https://github.com/BenLangmead/bowtie2) or [`RiboDetector`](https://github.com/hzi-bifo/RiboDetector))
+9. Genome alignment of reads, outputting both genome and transcriptome alignments with [`STAR`](https://github.com/alexdobin/STAR); a second alignment against a hybrid canonical + novel-transcript reference when `--extended_orf_analysis` is set with a novel-transcript source
+10. Sort and index alignments ([`SAMtools`](https://sourceforge.net/projects/samtools/files/samtools/))
+11. UMI-based deduplication (`--umi_dedup_tool`: [`UMI-tools`](https://github.com/CGATOxford/UMI-tools) (default) or [`UMICollapse`](https://github.com/Daniel-Liu-c0deb0t/UMICollapse))
+12. (optional, `--skip_coverage_tracks false`) Genome-browser bigWig coverage tracks ([`bedGraphToBigWig`](https://genome.ucsc.edu/goldenPath/help/bigWig.html))
+
+Differences occur in the downstream analysis steps. Currently these specialist steps are:
+
+1. Check reads distribution around annotated protein coding regions on user provided transcripts, show frame bias and estimate P-site offset for different group of reads ([`Ribo-TISH`](https://github.com/zhpn1024/ribotish))
+2. (default, optional) Predict translated open reading frames and/or translation initiation sites _de novo_ from alignment data ([`Ribo-TISH`](https://github.com/zhpn1024/ribotish))
+3. (opt-in, `--run_ribotricer`) Derive candidate ORFs from reference data and detect translated ORFs from that list ([`Ribotricer`](https://github.com/smithlabcode/ribotricer)). Disabled by default: benchmarking found its ORF-score column is rank-unstable across biological replicates, so it is excluded from the default caller set and from cross-caller rank aggregation when enabled.
+4. (default, optional) Identify translated ORFs using P-site periodicity and read density ([`RiboCode`](https://github.com/zhengtaoxiao/RiboCode))
+5. (opt-in, `--run_price`) Predict ORFs from genome-level alignments with a codon-resolution generative model ([`PRICE`](https://github.com/erhard-lab/gedi)/GEDI)
+6. (opt-in, `--run_rpbp`) Bayesian prediction of translated ORFs from ribosome profiling ([`Rp-Bp`](https://github.com/dieterich-lab/rp-bp))
+7. (optional, `--novel_gtf` or StringTie) Novel-transcript discovery, merging a reference-guided assembly with the canonical annotation into a hybrid GTF used by the genome-coordinate ORF callers ([`StringTie`](https://ccb.jhu.edu/software/stringtie/), [`gffcompare`](https://ccb.jhu.edu/software/stringtie/gffcompare.shtml))
+8. (opt-in, `--extended_orf_analysis`) Build a cross-caller cohort ORF catalogue with smORF peptide collapse and a consensus view across enabled callers ([`MMseqs2`](https://github.com/soedinglab/MMseqs2))
+9. (default, optional) Derive P-sites and QC from transcriptome alignments ([`riboWaltz`](https://github.com/LabTranslationalArchitectomics/riboWaltz), [`plastid`](https://plastid.readthedocs.io/en/latest/index.html)); plastid P-sites also feed the default gene- and ORF-level quantification (`--te_quantification_method plastid_psite`)
+10. (opt-in, `--extended_orf_analysis`) Per-ORF in-frame P-site quantification, emitting an ORF x sample count matrix
+11. (optional) Use a translational efficiency approach to study the dynamics of transcription and translation between matched RNA-seq and Ribo-seq data, at the gene level (`--translational_efficiency_method`: [anota2seq](https://bioconductor.org/packages/release/bioc/html/anota2seq.html) (default) or deltaTE (DESeq2)) and, when an ORF catalogue is built, at the ORF level (adding [DOTSeq](https://bioconductor.org/packages/release/bioc/html/DOTSeq.html)). **requires matched RNA-seq and Ribo-seq data**
 
 ## Usage
 
 > [!NOTE]
 > If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/get_started/environment_setup/overview) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/get_started/run-your-first-pipeline) with `-profile test` before running the workflow on actual data.
 
-<!-- TODO nf-core: Describe the minimum required steps to execute the pipeline, e.g. how to prepare samplesheets.
-     Explain what rows and columns represent. For instance (please edit as appropriate):
-
 First, prepare a samplesheet with your input data that looks as follows:
 
 `samplesheet.csv`:
 
 ```csv
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
+sample,fastq_1,fastq_2,strandedness,type
+CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz,forward,riboseq
 ```
 
-Each row represents a fastq file (single-end) or a pair of fastq files (paired end).
-
--->
+Each row represents a fastq file (single-end) or a pair of fastq files (paired end). Each row should have a 'type' value of `riboseq`, `tiseq` or `rnaseq`. Set this to `riboseq` or `tiseq` for regular Ribo-seq or TI-seq data respectively; set it to `rnaseq` for matched RNA-seq samples used in the translational efficiency analysis described below.
 
 Now, you can run the pipeline using:
-
-<!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
 
 ```bash
 nextflow run nf-core/riboseq \
@@ -64,6 +78,26 @@ nextflow run nf-core/riboseq \
    --input samplesheet.csv \
    --outdir <OUTDIR>
 ```
+
+### Including a translational efficiency analysis
+
+![anota2seq - fold change plot](docs/images/fc.png)
+
+In the translational efficiency analysis provided by [anota2seq](https://bioconductor.org/packages/release/bioc/html/anota2seq.html), we use matched pairs of Ribo-seq and RNA-seq data to study the relationship between transcription and translation as they differ between two treatment groups. For example the test data for this workflow has a contrasts file like:
+
+```csv
+id,variable,reference,target,batch,pair
+treated_vs_control,treatment,control,treated,,pair
+```
+
+This describes how to compare groups of samples between treatment groups, and between RNA-seq and Ribo-seq. In order the columns are:
+
+- `id`: a unique identifier to use for the contrast
+- `variable`: which variable (column) of the sample sheet should be used to separate the treatment groups?
+- `reference`: which value of the variable column should be used to select samples to be used as the reference/ base group?
+- `target`: which value of the variable column should be used to select samples to be used as the target/treated group?
+- `batch`: (optional) specify a variable in the sample sheet that defines sample batches
+- `pair`: (optional) specify a variable in the sample sheet that defines sample pairing between RNA-seq and Ribo-seq samples. If not specified, it is assumed that the two types of sample are ordered the same.
 
 > [!WARNING]
 > Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_; see [docs](https://nf-co.re/docs/running/run-pipelines#using-parameter-files).
@@ -78,11 +112,17 @@ For more details about the output files and reports, please refer to the
 
 ## Credits
 
-nf-core/riboseq was originally written by Jonathan Manning.
+nf-core/riboseq was originally written by [Jonathan Manning](https://github.com/pinin4fjords) (Bioinformatics Engineer at Seqera) with support from [Altos Labs](https://www.altoslabs.com/) and in discussion with [Felix Krueger](https://github.com/FelixKrueger) and [Christel Krueger](https://github.com/ChristelKrueger). We thank the following people for their input:
 
-We thank the following people for their extensive assistance in the development of this pipeline:
-
-<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
+- Anne Bresciani (ZS)
+- [Felipe Almeida](https://github.com/fmalmeida) (ZS)
+- [Mikhail Osipovitch](https://github.com/mosi223) (ZS)
+- [Edward Wallace](https://github.com/ewallace) (University of Edinburgh)
+- [Jack Tierney](https://github.com/JackCurragh) (University College Cork)
+- [Maxime U Garcia](https://github.com/maxulysse) (Seqera)
+- [Ira A Iosub](https://github.com/iraiosub) (The Francis Crick Institute)
+- [Sebastian Uhrig](https://github.com/suhrig) (Freelance bioinformatician)
+- [@bediagan](https://github.com/bediagan)
 
 ## Contributions and Support
 
@@ -92,10 +132,7 @@ For further information or help, don't hesitate to get in touch on the [Slack `#
 
 ## Citations
 
-<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
-<!-- If you use nf-core/riboseq for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
-
-<!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
+If you use nf-core/riboseq for your analysis, please cite it using the following doi: [10.5281/zenodo.10966364](https://doi.org/10.5281/zenodo.10966364)
 
 An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 

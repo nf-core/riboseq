@@ -1,0 +1,34 @@
+{
+    "synthetic data - bedGraph": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "sample1"
+                    },
+                    "sample1.gene_inframe_psite_counts.tsv:md5,30e7900bd62e3179a4487c56b7b04aad"
+                ]
+            ],
+            [
+                "versions.yml:md5,c155a8f4212fc1b6000d9d9ca52a4bf2"
+            ]
+        ],
+        "timestamp": "2026-04-09T12:30:49.458818704",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    },
+    "synthetic data - stub": {
+        "content": [
+            [
+                "versions.yml:md5,c155a8f4212fc1b6000d9d9ca52a4bf2"
+            ]
+        ],
+        "timestamp": "2026-04-09T10:09:52.786416424",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "25.10.4"
+        }
+    }
+}

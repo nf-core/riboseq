@@ -1,0 +1,5 @@
+pipeline_riboseq:
+  - "**.nf"
+  - "**.config"
+  - "**.nf.test"
+  - "**.json"
