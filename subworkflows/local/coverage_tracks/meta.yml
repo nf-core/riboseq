@@ -1,0 +1,36 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "coverage_tracks"
+description: |
+  Generate strand-aware genome-coverage tracks (bedgraph + bigWig) from
+  alignment BAMs. Stranded libraries are split by mate-1 strand via
+  `samtools view` flag filters before counting; unstranded libraries are
+  passed through. Designed for the riboseq pipeline's genome-BAM channels.
+keywords:
+  - coverage
+  - bigwig
+  - bedgraph
+  - stranded
+  - riboseq
+components:
+  - samtools/view
+  - bedtools/genomecov
+  - ucsc/bedgraphtobigwig
+input:
+  - ch_genome_bam:
+      description: Genome alignment BAMs
+      pattern: "*.bam"
+  - ch_genome_bam_index:
+      description: BAM indices, joined by meta to `ch_genome_bam`
+      pattern: "*.bai"
+  - ch_fai:
+      description: Reference FASTA index (used as the genome sizes file)
+      pattern: "*.fai"
+output:
+  - bigwig:
+      description: Per-sample, per-strand coverage bigWig
+      pattern: "*.bw"
+authors:
+  - "@pinin4fjords"
+maintainers:
+  - "@pinin4fjords"

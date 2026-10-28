@@ -1,5 +1,7 @@
 lint:
   actions_nf_test: false
+  merge_markers:
+    - modules/nf-core/bowtie2/align/tests/main.nf.test.snap
   files_unchanged:
     - .gitignore
     - assets/nf-core-riboseq_logo_light.png
@@ -7,8 +9,6 @@ lint:
     - docs/images/nf-core-riboseq_logo_light.png
     - .github/workflows/branch.yml
     - .github/workflows/linting.yml
-  merge_markers:
-    - modules/nf-core/bowtie2/align/tests/main.nf.test.snap
   nextflow_config:
     - config_defaults:
         - params.ribo_database_manifest

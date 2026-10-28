@@ -1,0 +1,14 @@
+{
+    "one sample with zero counts is still zero-filled, not dropped": {
+        "content": [
+            [
+                "versions.yml:md5,bfb53944c4d1d212aae3385753156f2f"
+            ]
+        ],
+        "timestamp": "2026-09-06T23:33:01.247339728",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.04.6"
+        }
+    }
+}

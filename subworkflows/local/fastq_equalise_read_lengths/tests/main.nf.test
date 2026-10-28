@@ -1,0 +1,171 @@
+nextflow_workflow {
+
+    name "Test Subworkflow FASTQ_EQUALISE_READ_LENGTHS"
+    script "../main.nf"
+    workflow "FASTQ_EQUALISE_READ_LENGTHS"
+
+    tag "subworkflows"
+    tag "subworkflows_local"
+    tag "subworkflows/fastq_equalise_read_lengths"
+    tag "seqkit/stats"
+    tag "trimgalore"
+
+    test("paired_samples - riboseq_rnaseq") {
+        config "./nextflow.config"
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of(
+                    [
+                        [ id:'ribo_sample', single_end:true, sample_type:'riboseq', pair:'1' ],
+                        [ file(params.modules_testdata_base_path + 'genomics/homo_sapiens/illumina/fastq/test_rnaseq_1.fastq.gz', checkIfExists: true) ]
+                    ],
+                    [
+                        [ id:'rna_sample', single_end:false, sample_type:'rnaseq', pair:'1' ],
+                        [
+                            file(params.modules_testdata_base_path + 'genomics/homo_sapiens/illumina/fastq/test_rnaseq_1.fastq.gz', checkIfExists: true),
+                            file(params.modules_testdata_base_path + 'genomics/homo_sapiens/illumina/fastq/test_rnaseq_2.fastq.gz', checkIfExists: true)
+                        ]
+                    ]
+                )
+                input[1] = null  // equalise_read_lengths_target
+                """
+            }
+        }
+
+        then {
+            // Get the trimmed RNA-seq reads
+            def rnaseq_output = workflow.out.reads.find { it[0].id == 'rna_sample' }
+            def riboseq_output = workflow.out.reads.find { it[0].id == 'ribo_sample' }
+
+            // Check seqkit stats output for riboseq sample
+            def stats_file = path(workflow.out.riboseq_stats[0][1])
+            def stats_lines = stats_file.readLines()
+            def header = stats_lines[0].split('\t')
+            def values = stats_lines[1].split('\t')
+            def avg_len_idx = header.findIndexOf { it == 'avg_len' }
+            def avg_len = Math.round(values[avg_len_idx].toFloat())
+
+            // Verify the trimmed reads exist and are single-end
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.out.reads.size() == 2 },
+                { assert workflow.out.riboseq_stats.size() == 1 },
+                // RNA-seq sample should be trimmed and converted to single-end
+                { assert rnaseq_output[0].single_end == true },
+                { assert rnaseq_output[0].resolved_trim_length == avg_len },
+                // Riboseq sample should pass through unchanged
+                { assert riboseq_output[0].sample_type == 'riboseq' },
+                // Check file output exists (single file for hardtrimmed output)
+                { assert path(rnaseq_output[1]).exists() },
+                { assert snapshot(
+                    workflow.out.reads,
+                    workflow.out.riboseq_stats
+                ).match() }
+            )
+        }
+    }
+
+    test("global_target_length") {
+        config "./nextflow.config"
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of(
+                    [
+                        [ id:'rna_sample_no_pair', single_end:true, sample_type:'rnaseq' ],
+                        [ file(params.modules_testdata_base_path + 'genomics/homo_sapiens/illumina/fastq/test_rnaseq_1.fastq.gz', checkIfExists: true) ]
+                    ]
+                )
+                input[1] = 30  // equalise_read_lengths_target
+                """
+            }
+        }
+
+        then {
+            def rnaseq_output = workflow.out.reads.find { it[0].id == 'rna_sample_no_pair' }
+
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.out.reads.size() == 1 },
+                // Should use global target length of 30
+                { assert rnaseq_output[0].resolved_trim_length == 30 },
+                // Should still be single-end (was already single-end)
+                { assert rnaseq_output[0].single_end == true },
+                { assert path(rnaseq_output[1]).exists() },
+                { assert snapshot(
+                    workflow.out.reads
+                ).match() }
+            )
+        }
+    }
+
+    test("per_sample_trim_length") {
+        config "./nextflow.config"
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of(
+                    [
+                        [ id:'rna_sample_custom_length', single_end:true, sample_type:'rnaseq', trim_length:25 ],
+                        [ file(params.modules_testdata_base_path + 'genomics/homo_sapiens/illumina/fastq/test_rnaseq_1.fastq.gz', checkIfExists: true) ]
+                    ]
+                )
+                input[1] = null  // equalise_read_lengths_target
+                """
+            }
+        }
+
+        then {
+            def rnaseq_output = workflow.out.reads.find { it[0].id == 'rna_sample_custom_length' }
+
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.out.reads.size() == 1 },
+                // Should use per-sample trim_length of 25
+                { assert rnaseq_output[0].resolved_trim_length == 25 },
+                { assert rnaseq_output[0].trim_length == 25 },
+                { assert path(rnaseq_output[1]).exists() },
+                { assert snapshot(
+                    workflow.out.reads
+                ).match() }
+            )
+        }
+    }
+
+    test("passthrough_other_types") {
+        config "./nextflow.config"
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of(
+                    [
+                        [ id:'tiseq_sample', single_end:true, sample_type:'tiseq' ],
+                        [ file(params.modules_testdata_base_path + 'genomics/homo_sapiens/illumina/fastq/test_rnaseq_1.fastq.gz', checkIfExists: true) ]
+                    ]
+                )
+                input[1] = 30  // equalise_read_lengths_target
+                """
+            }
+        }
+
+        then {
+            def tiseq_output = workflow.out.reads.find { it[0].id == 'tiseq_sample' }
+
+            assertAll(
+                { assert workflow.success },
+                { assert workflow.out.reads.size() == 1 },
+                // tiseq should pass through without trimming - no resolved_trim_length
+                { assert tiseq_output[0].sample_type == 'tiseq' },
+                { assert tiseq_output[0].resolved_trim_length == null },
+                // No riboseq stats since no riboseq samples
+                { assert workflow.out.riboseq_stats.size() == 0 },
+                { assert snapshot(workflow.out.reads).match() }
+            )
+        }
+    }
+}
