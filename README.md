@@ -19,6 +19,23 @@
 
 [![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23riboseq-4A154B?labelColor=000000&logo=slack)](https://nfcore.slack.com/channels/riboseq)[![Follow on Bluesky](https://img.shields.io/badge/bluesky-%40nf__core-1185fe?labelColor=000000&logo=bluesky)](https://bsky.app/profile/nf-co.re)[![Follow on Mastodon](https://img.shields.io/badge/mastodon-nf__core-6364ff?labelColor=FFFFFF&logo=mastodon)](https://mstdn.science/@nf_core)[![Watch on YouTube](http://img.shields.io/badge/youtube-nf--core-FF0000?labelColor=000000&logo=youtube)](https://www.youtube.com/c/nf-core)
 
+## About this fork (childrens-bti)
+
+This is the childrens-bti fork of nf-core/riboseq, released as `v1.0.0` and based on nf-core/riboseq 2.0.0. Fork-specific behavior:
+
+- **CRAM output:** genome and transcriptome alignments are saved as CRAM, with the references needed to read them (`genome/cram_reference/`).
+- **Export manifest:** a successful run writes `<outdir>/export_manifest.txt`, listing the files to deliver (`params.export_paths`). Delivery is manual for now: copy the listed files plus `pipeline_info/`. See [docs/output_policy.md](docs/output_policy.md).
+- **Less saved by default:** `save_align_intermeds = false`, and RiboCode's reference-derived `annotation/` is not published.
+
+### Releasing
+
+Releases use semantic versioning (`vMAJOR.MINOR.PATCH`); `manifest.version` stays at the upstream version. To release:
+
+1. Run the tests on the release branch (`nf-test test`, or at least `nextflow run . -profile test,docker -stub-run --outdir <dir>` and check `export_manifest.txt`).
+2. Upload the branch to CAVATICA as a development app revision and run one small cohort.
+3. Merge, then tag the merge commit on `main` and push the tag (`git tag <new-tag> && git push origin <new-tag>`).
+4. Upload the release app revision and record the tag in the revision note.
+
 ## Introduction
 
 **nf-core/riboseq** is a bioinformatics pipeline for analysis of Ribo-seq data. It borrows heavily from nf-core/rnaseq in the preprocessing stages:
@@ -109,6 +126,8 @@ For more details and further functionality, please refer to the [usage documenta
 To see the results of an example test run with a full size dataset refer to the [results](https://nf-co.re/riboseq/results) tab on the nf-core website pipeline page.
 For more details about the output files and reports, please refer to the
 [output documentation](https://nf-co.re/riboseq/output).
+
+For what this fork saves, exports and deletes after QC, see [docs/output_policy.md](docs/output_policy.md).
 
 ## Credits
 

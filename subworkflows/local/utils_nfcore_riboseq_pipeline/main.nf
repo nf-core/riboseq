@@ -152,11 +152,14 @@ workflow PIPELINE_COMPLETION {
     main:
     summary_params = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
     def multiqc_reports = multiqc_report.toList()
+    def export_paths = params.export_paths
 
     //
     // Completion email and summary
     //
     workflow.onComplete {
+        writeExportManifest(outdir, export_paths)
+
         if (email || email_on_fail) {
             completionEmail(
                 summary_params,
@@ -182,6 +185,47 @@ workflow PIPELINE_COMPLETION {
     FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+//
+// Write <outdir>/export_manifest.txt: published files matching params.export_paths
+// (globs relative to outdir; a leading "!" excludes matches), one relative path per
+// line, sorted. Patterns that match nothing are logged as warnings. See
+// docs/output_policy.md.
+//
+def writeExportManifest(outdir, patterns) {
+    if (!workflow.success) {
+        return
+    }
+    def root = java.nio.file.Paths.get(outdir.toString()).toAbsolutePath().normalize()
+    if (!java.nio.file.Files.isDirectory(root)) {
+        log.warn "Export manifest not written: ${outdir} is not a local directory"
+        return
+    }
+    def fs      = java.nio.file.FileSystems.getDefault()
+    def include = patterns.findAll { !it.startsWith('!') }
+    def exclude = patterns.findAll { it.startsWith('!') }.collect { fs.getPathMatcher("glob:${it.substring(1)}") }
+
+    def files = []
+    java.nio.file.Files.walk(root).withCloseable { stream ->
+        stream.filter { java.nio.file.Files.isRegularFile(it) }.forEach { files << root.relativize(it) }
+    }
+
+    def selected  = [] as Set
+    def unmatched = []
+    include.each { pattern ->
+        def matcher = fs.getPathMatcher("glob:${pattern}")
+        def hits    = files.findAll { matcher.matches(it) }
+        if (hits) { selected.addAll(hits) } else { unmatched << pattern }
+    }
+    selected.removeAll { rel -> exclude.any { it.matches(rel) } }
+
+    def manifest = root.resolve('export_manifest.txt')
+    manifest.text = selected.collect { it.toString() }.sort().join('\n') + (selected ? '\n' : '')
+    log.info "Export manifest: ${selected.size()} files listed in ${manifest}"
+    if (unmatched) {
+        log.warn "Export paths that matched no files (expected if that analysis was not run):\n  " + unmatched.join('\n  ')
+    }
+}
+
 //
 // Check and validate pipeline parameters
 //

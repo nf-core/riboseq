@@ -678,7 +678,7 @@
                     "description": "Save intermediate alignment BAMs in BAM output mode.",
                     "help_text": "Final CRAMs are always published in CRAM mode. In BAM mode, this parameter retains the release's intermediate BAM publication behavior.",
                     "fa_icon": "fas fa-save",
-                    "default": true
+                    "default": false
                 },
                 "save_unaligned": {
                     "type": "boolean",
@@ -949,6 +949,32 @@
                     "fa_icon": "fas fa-copy",
                     "enum": ["symlink", "rellink", "link", "copy", "copyNoFollow", "move"],
                     "hidden": true
+                },
+                "export_paths": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "description": "Globs (relative to outdir) for files listed in export_manifest.txt; a leading '!' excludes matches.",
+                    "help_text": "Default: the export list in docs/output_policy.md. Override with -params-file. Paths that match nothing are reported as warnings, not errors.",
+                    "fa_icon": "fas fa-file-export",
+                    "hidden": true,
+                    "default": [
+                        "alignment/star/sorted/*.sorted.cram",
+                        "alignment/star/sorted/*.sorted.cram.crai",
+                        "genome/cram_reference/genome.*",
+                        "genome/cram_reference/transcriptome.*",
+                        "multiqc/**",
+                        "coverage/*.bigWig",
+                        "psites/ribowaltz/ribowaltz_qc/*",
+                        "quantification/salmon/salmon.merged.*",
+                        "quantification/inframe_psite/gene_counts.tsv",
+                        "quantification/orf_level/orf_psite_counts.tsv",
+                        "orf_predictions/catalogue/**",
+                        "orf_predictions/ribotish_all/allsamples_*",
+                        "translational_efficiency/**.tsv",
+                        "translational_efficiency/**.rds",
+                        "transcript_assembly/stringtie/*.gtf",
+                        "!transcript_assembly/stringtie/*.denovo.transcripts.gtf"
+                    ]
                 },
                 "email_on_fail": {
                     "type": "string",
